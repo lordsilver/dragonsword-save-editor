@@ -113,6 +113,13 @@ CREATE TABLE tb_team (
   SLOT3_CHARACTER_CID INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (USER_DBID, PAGE_ID)
 );
+CREATE TABLE tb_title (
+  USER_DBID INTEGER NOT NULL DEFAULT 0,
+  CATEGORY INTEGER NOT NULL DEFAULT 0,
+  BIT_FIELD INTEGER NOT NULL DEFAULT 0,
+  FAV_BIT_FIELD INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (USER_DBID, CATEGORY)
+);
 CREATE TABLE tb_skill_growth (
   USER_DBID INTEGER NOT NULL DEFAULT 0,
   CHARACTER_CID INTEGER NOT NULL DEFAULT 0,
@@ -206,7 +213,7 @@ fn fixture_with_gold(name: &str, gold: i64) -> PathBuf {
             .expect("page size");
         conn.execute_batch(SCHEMA).expect("schema");
         conn.execute(
-            "INSERT INTO tb_user (USER_DBID, SKIP_CACHE) VALUES (?, NULL)",
+            "INSERT INTO tb_user (USER_DBID, SKIP_CACHE, TITLE_CID) VALUES (?, NULL, 2100000)",
             [USER],
         )
         .expect("user");
@@ -234,6 +241,15 @@ fn fixture_with_gold(name: &str, gold: i64) -> PathBuf {
             rusqlite::params![USER, USER, USER],
         )
         .expect("teams");
+        // Title 2100000 is unlocked and favorited, and selected in tb_user.
+        // Title 2100001 is locked but favorited, so unlock-all can prove it
+        // preserves favorites instead of clearing the field.
+        conn.execute(
+            "INSERT INTO tb_title (USER_DBID, CATEGORY, BIT_FIELD, FAV_BIT_FIELD)
+             VALUES (?, 32812, ?, ?)",
+            rusqlite::params![USER, 1i64 << 32, (1i64 << 32) | (1i64 << 33)],
+        )
+        .expect("titles");
         for offset in 0..3 {
             conn.execute(
                 "INSERT INTO tb_equipment (ITEM_DBID, USER_DBID, ITEM_CID)
@@ -961,6 +977,64 @@ fn removing_a_character_refuses_the_active_team_and_compacts_other_pages() {
     }
 
     let report = session.write().expect("the compacted teams write");
+    assert!(report.consistency.is_clean());
+}
+
+#[test]
+fn locking_a_title_clears_its_favorite_and_selected_title() {
+    let path = fixture("title-lock");
+    let mut session = SaveSession::open(&path).expect("open");
+    {
+        let mut game = Game::new(&mut session, Catalog::shared());
+        let before = game
+            .titles()
+            .expect("titles")
+            .into_iter()
+            .find(|title| title.id == 2_100_000)
+            .expect("seed title");
+        assert!(before.unlocked);
+        assert!(before.favorite);
+
+        game.set_title_unlocked(2_100_000, false)
+            .expect("lock the selected title");
+        let after = game
+            .titles()
+            .expect("titles")
+            .into_iter()
+            .find(|title| title.id == 2_100_000)
+            .expect("seed title");
+        assert!(!after.unlocked);
+        assert!(!after.favorite, "locking must clear the favorite bit");
+
+        // Unlocking every title must leave the other title's favorite alone.
+        game.unlock_all_titles().expect("unlock all titles");
+        let titles = game.titles().expect("titles");
+        assert!(titles.iter().all(|title| title.unlocked));
+        assert!(
+            titles
+                .iter()
+                .find(|title| title.id == 2_100_001)
+                .expect("second title")
+                .favorite,
+            "unlock-all must preserve favorites"
+        );
+        assert!(
+            !titles
+                .iter()
+                .find(|title| title.id == 2_100_000)
+                .expect("first title")
+                .favorite,
+            "a title locked earlier stays unfavorited"
+        );
+    }
+    let page = session.raw_page("tb_user", 0, 10, None).expect("user page");
+    let title_cid = column_index(&page, "TITLE_CID");
+    assert_eq!(
+        integer(&page.rows[0].cells[title_cid]),
+        0,
+        "locking the selected title must clear TITLE_CID"
+    );
+    let report = session.write().expect("title edits write");
     assert!(report.consistency.is_clean());
 }
 

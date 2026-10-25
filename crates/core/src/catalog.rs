@@ -76,10 +76,15 @@ impl Item {
     }
 
     /// Whether the game stores this item as a row in `tb_stackable_item`.
-    /// Karma and titles live in their own tables even though the catalog files
-    /// them under `material`; food is cooked into instances instead.
+    /// Karma, titles, gems and character souls live in their own tables even
+    /// though the catalog files them under `material`; food is cooked into
+    /// instances instead.
     pub fn is_stackable(&self) -> bool {
-        self.category == "material" && !matches!(self.kind.as_str(), "KARMA" | "ACCOUNT_TITLE")
+        self.category == "material"
+            && !matches!(
+                self.kind.as_str(),
+                "KARMA" | "ACCOUNT_TITLE" | "GEM" | "CHARACTER_SOUL"
+            )
     }
 }
 
@@ -432,5 +437,15 @@ mod tests {
         let item = catalog.lookup(999_999_999);
         assert!(!item.known);
         assert!(item.name_en.contains("999999999"));
+    }
+
+    #[test]
+    fn gems_and_character_souls_are_not_stackable() {
+        let catalog = Catalog::shared();
+        assert_eq!(catalog.lookup(1_310_001).kind, "GEM");
+        assert!(!catalog.lookup(1_310_001).is_stackable());
+        assert_eq!(catalog.lookup(1_120_001).kind, "CHARACTER_SOUL");
+        assert!(!catalog.lookup(1_120_001).is_stackable());
+        assert!(catalog.lookup(1_000_501).is_stackable());
     }
 }

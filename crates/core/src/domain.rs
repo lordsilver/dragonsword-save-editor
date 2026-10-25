@@ -1411,7 +1411,23 @@ impl<'a> Game<'a> {
         let bit = id % 64;
         let current = self.read_bitmask("tb_title", category)?;
         let field = set_bit(current, bit, unlocked);
-        self.upsert_title_field(category, field)?;
+        if unlocked {
+            self.upsert_title_field(category, field)?;
+        } else {
+            // A locked title cannot stay favorited or selected: the game would
+            // show a title the account no longer owns. Keep every other
+            // favorite in the category untouched.
+            let favorites = self
+                .favorite_title_bits()?
+                .get(&category)
+                .copied()
+                .unwrap_or(0);
+            self.upsert_title_fields(category, field, set_bit(favorites, bit, false))?;
+            self.conn().execute(
+                "UPDATE tb_user SET TITLE_CID=0 WHERE USER_DBID=? AND TITLE_CID=?",
+                params![self.user_id, id],
+            )?;
+        }
         self.touch();
         Ok(())
     }
@@ -1434,6 +1450,17 @@ impl<'a> Game<'a> {
             "INSERT INTO tb_title (USER_DBID, CATEGORY, BIT_FIELD, FAV_BIT_FIELD) VALUES (?,?,?,0)
              ON CONFLICT(USER_DBID, CATEGORY) DO UPDATE SET BIT_FIELD=excluded.BIT_FIELD",
             params![self.user_id, category, field as i64],
+        )?;
+        Ok(())
+    }
+
+    fn upsert_title_fields(&self, category: i64, field: u64, favorites: u64) -> Result<()> {
+        self.conn().execute(
+            "INSERT INTO tb_title (USER_DBID, CATEGORY, BIT_FIELD, FAV_BIT_FIELD) VALUES (?,?,?,?)
+             ON CONFLICT(USER_DBID, CATEGORY) DO UPDATE SET
+                 BIT_FIELD=excluded.BIT_FIELD,
+                 FAV_BIT_FIELD=excluded.FAV_BIT_FIELD",
+            params![self.user_id, category, field as i64, favorites as i64],
         )?;
         Ok(())
     }

@@ -32,21 +32,23 @@ fn every_mutation_survives_a_write() {
     let original = fs::read(&path).expect("read original");
     let catalog = Catalog::shared();
 
-    let (character_a, character_b, gem_dbid, equipment_dbid, karma_dbid, stackable_cid, team_page): (
-        i64,
-        i64,
-        i64,
-        i64,
-        i64,
-        i64,
-        i64,
-    );
+    let (
+        character_a,
+        character_b,
+        mut gem_dbid,
+        equipment_dbid,
+        karma_dbid,
+        stackable_cid,
+        team_page,
+    ): (i64, i64, i64, i64, i64, i64, i64);
+    let baseline;
+    let expected_team_slots;
     {
         let mut session = SaveSession::open(&path).expect("open");
-        assert!(
-            !session.consistency().is_clean(),
-            "the save's known broken gem links are reported at open"
-        );
+        // A clean game-written save and a save that already has damage both
+        // exercise the same mutations. The test repairs gem links below, but
+        // any team problems the save already had must survive untouched.
+        baseline = session.consistency().clone();
         {
             let mut game = session.catalog_game(catalog);
 
@@ -115,20 +117,42 @@ fn every_mutation_survives_a_write() {
                     .any(|skill| skill.type_value == 3 && skill.level == 4)
             );
             game.remove_skill(first, 3).expect("skill remove");
-            team_page = game
+            let team = game
                 .teams()
                 .expect("teams")
-                .first()
-                .expect("team page")
-                .page_id;
-            game.set_team_slot(team_page, 1, first).expect("team slot");
+                .into_iter()
+                .next()
+                .expect("team page");
+            team_page = team.page_id;
+            let original_slots: Vec<i64> = team.slots.iter().map(|slot| slot.cid).collect();
+            let candidate = game
+                .characters()
+                .expect("characters")
+                .into_iter()
+                .map(|character| character.cid)
+                .find(|cid| !original_slots.contains(cid));
+            let mut expected_slots = original_slots.clone();
+            if let Some(candidate) = candidate
+                && let Some(empty) = original_slots.iter().position(|cid| *cid == 0)
+            {
+                game.set_team_slot(team_page, (empty + 1) as i64, candidate)
+                    .expect("team slot");
+                expected_slots[empty] = candidate;
+            } else {
+                // The page is full, or every owned character is already on it.
+                // Assigning the current occupant is still a valid no-op.
+                game.set_team_slot(team_page, 1, original_slots[0])
+                    .expect("team slot no-op");
+            }
             let page = game
                 .teams()
                 .expect("teams")
                 .into_iter()
                 .find(|page| page.page_id == team_page)
                 .expect("team page");
-            assert_eq!(page.slots[0].cid, first);
+            let slots: Vec<i64> = page.slots.iter().map(|slot| slot.cid).collect();
+            assert_eq!(slots, expected_slots);
+            expected_team_slots = expected_slots;
 
             // Recruiting is disabled: tb_init_character is the new-account
             // seed, not the roster of characters this save owns. Both the
@@ -156,29 +180,39 @@ fn every_mutation_survives_a_write() {
                         .expect("clear dangling gem link");
                 }
             }
-            let linked: HashSet<i64> = game
-                .equipment()
-                .expect("equipment")
-                .into_iter()
-                .map(|piece| piece.gem_dbid.parse().expect("gem link"))
-                .filter(|link| *link != 0)
-                .collect();
-            let gem = game
-                .gems()
-                .expect("gems")
-                .into_iter()
-                .find(|gem| {
-                    let dbid: i64 = gem.dbid.parse().expect("gem id");
-                    !linked.contains(&dbid)
-                })
-                .expect("an unlinked gem");
-            gem_dbid = gem.dbid.parse().expect("gem dbid");
-
             // Equipment: ordinary columns, the 64-bit gem id and a stat value.
             let equipment = game.equipment().expect("equipment");
             let piece = equipment.first().expect("equipment row");
             equipment_dbid = piece.dbid.parse().expect("equipment dbid");
             assert!(equipment_dbid > 9_007_199_254_740_992);
+
+            // A clean game-written save may have every gem linked. Use the
+            // first piece's gem, unlinking it first so it can be linked back;
+            // fall back to any unlinked gem, and skip gem-specific edits if the
+            // save has none at all.
+            gem_dbid = piece.gem_dbid.parse().expect("gem link");
+            if gem_dbid != 0 {
+                game.set_equipment_gem(equipment_dbid, 0)
+                    .expect("unlink the gem under test");
+            } else {
+                let linked: HashSet<i64> = game
+                    .equipment()
+                    .expect("equipment")
+                    .into_iter()
+                    .map(|piece| piece.gem_dbid.parse().expect("gem link"))
+                    .filter(|link| *link != 0)
+                    .collect();
+                gem_dbid = game
+                    .gems()
+                    .expect("gems")
+                    .into_iter()
+                    .find(|gem| {
+                        let dbid: i64 = gem.dbid.parse().expect("gem id");
+                        !linked.contains(&dbid)
+                    })
+                    .map(|gem| gem.dbid.parse().expect("gem dbid"))
+                    .unwrap_or(0);
+            }
             assert!(
                 game.set_equipment(equipment_dbid, "enchantLevel", 16)
                     .is_err()
@@ -200,19 +234,25 @@ fn every_mutation_survives_a_write() {
                     .is_err(),
                 "a link to a missing gem is refused"
             );
-            game.set_equipment_gem(equipment_dbid, gem_dbid)
-                .expect("gem dbid");
-            let other = game
-                .equipment()
-                .expect("equipment")
-                .into_iter()
-                .find(|piece| piece.dbid != equipment_dbid.to_string())
-                .expect("second equipment row");
-            assert!(
-                game.set_equipment_gem(other.dbid.parse().expect("equipment dbid"), gem_dbid)
-                    .is_err(),
-                "a gem can only be linked to one piece"
-            );
+            if gem_dbid != 0 {
+                game.set_equipment_gem(equipment_dbid, gem_dbid)
+                    .expect("gem dbid");
+                if let Some(other) = game
+                    .equipment()
+                    .expect("equipment")
+                    .into_iter()
+                    .find(|piece| piece.dbid != equipment_dbid.to_string())
+                {
+                    assert!(
+                        game.set_equipment_gem(
+                            other.dbid.parse().expect("equipment dbid"),
+                            gem_dbid
+                        )
+                        .is_err(),
+                        "a gem can only be linked to one piece"
+                    );
+                }
+            }
             if piece.has_stat_values {
                 game.set_equipment(equipment_dbid, "mainStatValue", 321)
                     .expect("stat value");
@@ -229,18 +269,20 @@ fn every_mutation_survives_a_write() {
             assert_eq!(piece.gem_dbid, gem_dbid.to_string());
 
             // Gems: stat info, lock and the item-CID type guard.
-            assert!(game.set_gem(gem_dbid, "itemCid", 1_110_001).is_err());
-            game.set_gem(gem_dbid, "statInfoCid", 654_321)
-                .expect("gem stat");
-            game.set_gem(gem_dbid, "isLock", 1).expect("gem lock");
-            let gem = game
-                .gems()
-                .expect("gems")
-                .into_iter()
-                .find(|gem| gem.dbid == gem_dbid.to_string())
-                .expect("gem");
-            assert_eq!(gem.stat_info_cid, 654_321);
-            assert!(gem.is_lock);
+            if gem_dbid != 0 {
+                assert!(game.set_gem(gem_dbid, "itemCid", 1_110_001).is_err());
+                game.set_gem(gem_dbid, "statInfoCid", 654_321)
+                    .expect("gem stat");
+                game.set_gem(gem_dbid, "isLock", 1).expect("gem lock");
+                let gem = game
+                    .gems()
+                    .expect("gems")
+                    .into_iter()
+                    .find(|gem| gem.dbid == gem_dbid.to_string())
+                    .expect("gem");
+                assert_eq!(gem.stat_info_cid, 654_321);
+                assert!(gem.is_lock);
+            }
 
             // Karma: stats and moving the owner between characters.
             let karma = game
@@ -492,8 +534,8 @@ fn every_mutation_survives_a_write() {
         let report = session.write().expect("write");
         assert!(report.backup.is_some());
         assert!(
-            report.consistency.is_clean(),
-            "the repaired gem links are clean after the write"
+            report.consistency.new_since(&baseline).is_clean(),
+            "the write introduces no consistency problem beyond the save's baseline"
         );
         assert!(!session.dirty());
         session.close();
@@ -550,16 +592,14 @@ fn every_mutation_survives_a_write() {
                 .iter()
                 .any(|skill| skill.type_value == 3)
         );
-        assert_eq!(
-            game.teams()
-                .expect("teams")
-                .into_iter()
-                .find(|page| page.page_id == team_page)
-                .expect("team page")
-                .slots[0]
-                .cid,
-            character_a
-        );
+        let team = game
+            .teams()
+            .expect("teams")
+            .into_iter()
+            .find(|page| page.page_id == team_page)
+            .expect("team page");
+        let slots: Vec<i64> = team.slots.iter().map(|slot| slot.cid).collect();
+        assert_eq!(slots, expected_team_slots);
 
         let piece = game
             .equipment()
@@ -597,14 +637,16 @@ fn every_mutation_survives_a_write() {
             );
         }
 
-        let gem = game
-            .gems()
-            .expect("gems")
-            .into_iter()
-            .find(|gem| gem.dbid == gem_dbid.to_string())
-            .expect("gem");
-        assert_eq!(gem.stat_info_cid, 654_321);
-        assert!(gem.is_lock);
+        if gem_dbid != 0 {
+            let gem = game
+                .gems()
+                .expect("gems")
+                .into_iter()
+                .find(|gem| gem.dbid == gem_dbid.to_string())
+                .expect("gem");
+            assert_eq!(gem.stat_info_cid, 654_321);
+            assert!(gem.is_lock);
+        }
 
         let karma = game.karma().expect("karma");
         let karma_entry = karma
@@ -638,8 +680,8 @@ fn every_mutation_survives_a_write() {
         );
     }
     assert!(
-        session.consistency().is_clean(),
-        "the reopened save has no broken gem links"
+        session.consistency().new_since(&baseline).is_clean(),
+        "the reopened save has no consistency problem beyond its baseline"
     );
     session.close();
 

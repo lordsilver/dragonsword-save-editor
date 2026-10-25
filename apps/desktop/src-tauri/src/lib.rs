@@ -5,6 +5,7 @@ mod settings;
 
 use std::path::PathBuf;
 use std::sync::{Mutex, PoisonError};
+use std::time::{Duration, Instant};
 
 use dsa_core::catalog::STAT_NAMES;
 use dsa_core::domain::{
@@ -15,12 +16,18 @@ use dsa_core::raw::{RawPage, RawTable, RawValue};
 use dsa_core::{Catalog, Error, SaveSession, SlotInfo, WriteReport};
 use serde::Serialize;
 use tauri::{Emitter, Manager, State};
+use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
 
 use settings::{Settings, SettingsStore};
+
+/// Two native close requests inside this window mean the UI is not responding
+/// to the first one, so the Rust side offers a native escape hatch.
+const CLOSE_FALLBACK: Duration = Duration::from_secs(3);
 
 pub struct AppState {
     session: Mutex<Option<SaveSession>>,
     settings: Mutex<SettingsStore>,
+    last_close: Mutex<Option<Instant>>,
 }
 
 impl AppState {
@@ -28,6 +35,7 @@ impl AppState {
         Self {
             session: Mutex::new(None),
             settings: Mutex::new(settings),
+            last_close: Mutex::new(None),
         }
     }
 
@@ -38,6 +46,57 @@ impl AppState {
     fn settings(&self) -> std::sync::MutexGuard<'_, SettingsStore> {
         self.settings.lock().unwrap_or_else(PoisonError::into_inner)
     }
+
+    /// Record a close request and return true when it is a repeat inside the
+    /// fallback window. A repeat clears the timer so a third request starts
+    /// over instead of immediately forcing another dialog.
+    fn repeat_close_request(&self) -> bool {
+        let mut last = self
+            .last_close
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        let now = Instant::now();
+        let repeated = last.is_some_and(|previous| now.duration_since(previous) <= CLOSE_FALLBACK);
+        *last = if repeated { None } else { Some(now) };
+        repeated
+    }
+
+    fn clear_close_request(&self) {
+        *self
+            .last_close
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner) = None;
+    }
+}
+
+/// Show a native confirmation when the webview did not handle a repeat close
+/// request. `close` drops the session and exits or destroys the window.
+fn show_close_fallback(app: &tauri::AppHandle, dirty: bool, close: impl FnOnce() + Send + 'static) {
+    let handle = app.clone();
+    let message = if dirty {
+        "The editor did not respond to the close request. Close without saving? Unsaved changes will be lost."
+    } else {
+        "The editor did not respond to the close request. Close it now?"
+    };
+    let mut dialog = app
+        .dialog()
+        .message(message)
+        .title("Close DragonSword Save Editor?")
+        .buttons(MessageDialogButtons::OkCancelCustom(
+            "Close without saving".into(),
+            "Keep editing".into(),
+        ));
+    if let Some(window) = app.get_webview_window("main") {
+        dialog = dialog.parent(&window);
+    }
+    dialog.show(move |confirmed| {
+        if confirmed {
+            handle.state::<AppState>().session().take();
+            close();
+        } else {
+            handle.state::<AppState>().clear_close_request();
+        }
+    });
 }
 
 /// A command failure as the webview sees it: a stable kind plus a message.
@@ -242,7 +301,15 @@ fn save_current(state: State<'_, AppState>) -> Option<SaveHandle> {
 
 #[tauri::command]
 fn save_close(state: State<'_, AppState>) {
+    state.clear_close_request();
     state.session().take();
+}
+
+/// The UI kept editing after a native close request, so the next request
+/// should ask the UI again instead of opening the native fallback.
+#[tauri::command]
+fn close_request_cancelled(state: State<'_, AppState>) {
+    state.clear_close_request();
 }
 
 /// Close the native window after the UI has saved or discarded.
@@ -253,6 +320,7 @@ fn save_close(state: State<'_, AppState>) {
 /// removes its temporary plaintext database.
 #[tauri::command]
 fn window_close(state: State<'_, AppState>, window: tauri::Window) -> CommandResult<()> {
+    state.clear_close_request();
     state.session().take();
     window.destroy().map_err(|error| error.to_string())?;
     Ok(())
@@ -587,6 +655,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
+            dsa_core::save::sweep_stale_temp_files();
             let settings_path = app
                 .path()
                 .app_data_dir()
@@ -603,6 +672,7 @@ pub fn run() {
             save_open,
             save_current,
             save_close,
+            close_request_cancelled,
             window_close,
             save_write,
             save_backup,
@@ -663,7 +733,15 @@ pub fn run() {
                 let state = window.app_handle().state::<AppState>();
                 if let Some(dirty) = session_dirty(state.inner()) {
                     api.prevent_close();
-                    let _ = window.emit("window-close-requested", dirty);
+                    if state.inner().repeat_close_request() {
+                        let app = window.app_handle().clone();
+                        let window = window.clone();
+                        show_close_fallback(&app, dirty, move || {
+                            let _ = window.destroy();
+                        });
+                    } else {
+                        let _ = window.emit("window-close-requested", dirty);
+                    }
                 }
             }
         })
@@ -671,14 +749,23 @@ pub fn run() {
         .expect("error while building DragonSword Save Editor")
         .run(|app_handle, event| {
             // Quitting through the menu or Cmd+Q does not raise a window
-            // close request. Ask the UI through the same event instead.
+            // close request. Ask the UI through the same event instead, but
+            // only when there is a window to ask. Without one, let the app
+            // exit instead of preventing every exit request forever.
             if let tauri::RunEvent::ExitRequested { api, .. } = event {
                 let state = app_handle.state::<AppState>();
-                if let Some(dirty) = session_dirty(state.inner()) {
-                    api.prevent_exit();
-                    if let Some(window) = app_handle.get_webview_window("main") {
-                        let _ = window.emit("window-close-requested", dirty);
-                    }
+                let Some(dirty) = session_dirty(state.inner()) else {
+                    return;
+                };
+                let Some(window) = app_handle.get_webview_window("main") else {
+                    return;
+                };
+                api.prevent_exit();
+                if state.inner().repeat_close_request() {
+                    let handle = app_handle.clone();
+                    show_close_fallback(app_handle, dirty, move || handle.exit(0));
+                } else {
+                    let _ = window.emit("window-close-requested", dirty);
                 }
             }
         });
@@ -700,6 +787,26 @@ mod tests {
             let parsed = instance_id(id, "id").expect("parse");
             assert_eq!(parsed.to_string(), id);
         }
+    }
+
+    #[test]
+    fn a_second_close_request_is_the_fallback() {
+        let state = AppState::new(SettingsStore::open(
+            std::env::temp_dir().join("dsa-close-request-test.json"),
+        ));
+        assert!(
+            !state.repeat_close_request(),
+            "the first request asks the UI"
+        );
+        assert!(
+            state.repeat_close_request(),
+            "a repeat inside the window opens the native fallback"
+        );
+        assert!(
+            !state.repeat_close_request(),
+            "the fallback resets the timer instead of repeating forever"
+        );
+        state.clear_close_request();
     }
 
     #[test]

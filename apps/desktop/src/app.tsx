@@ -14,7 +14,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
-import { closeWindow, pickSaveFile } from '@/lib/api';
+import { closeRequestCancelled, closeWindow, pickSaveFile } from '@/lib/api';
 import { useApp } from '@/lib/store';
 import type { Section } from '@/lib/types';
 import { CharactersScreen } from '@/screens/characters';
@@ -171,7 +171,13 @@ export function App() {
         </div>
       </div>
 
-      <Dialog open={closeRequestOpen} onOpenChange={setCloseRequestOpen}>
+      <Dialog
+        open={closeRequestOpen}
+        onOpenChange={(open) => {
+          setCloseRequestOpen(open);
+          if (!open) void closeRequestCancelled().catch(() => undefined);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Close the editor?</DialogTitle>

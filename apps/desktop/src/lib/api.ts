@@ -124,6 +124,11 @@ export async function closeSave(): Promise<void> {
   await invoke('save_close');
 }
 
+/** The UI kept editing, so the next native close should ask it again. */
+export async function closeRequestCancelled(): Promise<void> {
+  await invoke('close_request_cancelled');
+}
+
 /** Close the native window after the session has been saved or discarded. */
 export async function closeWindow(): Promise<void> {
   await invoke('window_close');

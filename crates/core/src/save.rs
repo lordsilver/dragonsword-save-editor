@@ -130,9 +130,7 @@ impl SaveSession {
             )?;
             let integrity = integrity_check(&conn)?;
             if integrity != "ok" {
-                return Err(Error::Schema(format!(
-                    "save database failed SQLite integrity_check: {integrity}"
-                )));
+                return Err(integrity_failure(&path, &integrity));
             }
             let has_user: Option<String> = conn
                 .query_row(
@@ -375,6 +373,17 @@ fn sidecar(path: &Path, suffix: &str) -> PathBuf {
     PathBuf::from(name)
 }
 
+/// Explain a failed integrity check. A hot journal is the most likely reason a
+/// half-finished game save is unreadable, so its recovery instructions take
+/// precedence over SQLite's raw message.
+fn integrity_failure(path: &Path, integrity: &str) -> Error {
+    blocking_sidecar(path).unwrap_or_else(|| {
+        Error::Schema(format!(
+            "save database failed SQLite integrity_check: {integrity}"
+        ))
+    })
+}
+
 /// A journal or WAL that makes writing unsafe. A zero-length journal is not
 /// hot, so it does not block a write; any WAL does.
 fn blocking_sidecar(path: &Path) -> Option<Error> {
@@ -428,6 +437,56 @@ fn temp_path() -> PathBuf {
         .map(|duration| duration.as_nanos())
         .unwrap_or_default();
     std::env::temp_dir().join(format!("dsa-save-{}-{nanos}.db", std::process::id()))
+}
+
+/// Remove plaintext databases left behind by an editor process that is no
+/// longer running. A live process keeps its own temp file; another live
+/// process keeps its own too.
+pub fn sweep_stale_temp_files() {
+    let Ok(entries) = fs::read_dir(std::env::temp_dir()) else {
+        return;
+    };
+    let current = std::process::id();
+    for entry in entries.flatten() {
+        let name = entry.file_name();
+        let Some(name) = name.to_str() else {
+            continue;
+        };
+        let Some(pid) = temp_owner_pid(name) else {
+            continue;
+        };
+        if pid == current || process_alive(pid) {
+            continue;
+        }
+        let _ = fs::remove_file(entry.path());
+    }
+}
+
+fn temp_owner_pid(name: &str) -> Option<u32> {
+    let rest = name.strip_prefix("dsa-save-")?;
+    let (pid, suffix) = rest.split_once('-')?;
+    if !suffix.ends_with(".db") {
+        return None;
+    }
+    pid.parse().ok()
+}
+
+#[cfg(unix)]
+fn process_alive(pid: u32) -> bool {
+    std::process::Command::new("kill")
+        .args(["-0", &pid.to_string()])
+        .stderr(std::process::Stdio::null())
+        .status()
+        .map(|status| status.success())
+        // If the check itself fails, keeping the file is safer than deleting it.
+        .unwrap_or(true)
+}
+
+#[cfg(not(unix))]
+fn process_alive(_pid: u32) -> bool {
+    // There is no portable, dependency-free liveness check here. Keep the
+    // file rather than risk deleting a live editor's plaintext database.
+    true
 }
 
 fn write_private(path: &Path, bytes: &[u8]) -> Result<()> {
@@ -674,6 +733,55 @@ mod tests {
             parse_slot(Path::new("/saves/123456789/123456789_SlotX.db")),
             None
         );
+    }
+
+    #[test]
+    fn a_hot_journal_explains_an_integrity_failure() {
+        let root = std::env::temp_dir().join(format!("dsa-integrity-{}", std::process::id()));
+        fs::create_dir_all(&root).expect("mkdir");
+        let path = root.join("1000_Slot1.db");
+        fs::write(&path, b"x").expect("write");
+
+        let plain = integrity_failure(&path, "database disk image is malformed");
+        assert_eq!(plain.kind(), "schema");
+
+        let journal = sidecar(&path, "-journal");
+        fs::write(&journal, b"hot").expect("journal");
+        let hot = integrity_failure(&path, "database disk image is malformed");
+        assert_eq!(hot.kind(), "blocked");
+        assert!(hot.to_string().contains("rollback journal"));
+
+        fs::remove_file(&journal).expect("remove journal");
+        let wal = sidecar(&path, "-wal");
+        fs::write(&wal, b"").expect("wal");
+        let wal = integrity_failure(&path, "database disk image is malformed");
+        assert_eq!(wal.kind(), "blocked");
+        assert!(wal.to_string().contains("write-ahead log"));
+
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn stale_plaintext_temps_are_swept_but_live_ones_remain() {
+        let root = std::env::temp_dir();
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|duration| duration.as_nanos())
+            .unwrap_or_default();
+        let mut child = std::process::Command::new("true").spawn().expect("child");
+        let dead_pid = child.id();
+        child.wait().expect("wait");
+        let dead = root.join(format!("dsa-save-{dead_pid}-{nanos}.db"));
+        let live = root.join(format!("dsa-save-{}-{nanos}.db", std::process::id()));
+        fs::write(&dead, b"dead").expect("dead temp");
+        fs::write(&live, b"live").expect("live temp");
+
+        sweep_stale_temp_files();
+
+        assert!(!dead.exists(), "a dead process's plaintext is removed");
+        assert!(live.exists(), "the running process's plaintext is kept");
+        let _ = fs::remove_file(live);
     }
 
     #[test]
