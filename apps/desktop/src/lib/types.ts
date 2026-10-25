@@ -78,7 +78,6 @@ export interface Settings {
 
 export interface Counts {
   characters: number;
-  charactersTotal: number;
   currencies: number;
   stackables: number;
   equipment: number;

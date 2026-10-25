@@ -214,11 +214,11 @@ fn handle(session: &SaveSession) -> SaveHandle {
 
 #[tauri::command]
 fn save_open(state: State<'_, AppState>, path: String) -> CommandResult<SaveHandle> {
-    let mut guard = state.session();
-    guard.take();
+    // Open the new session first. If that fails (the game is still running, a
+    // journal is present, the file moved), the current session stays usable.
     let session = SaveSession::open(path)?;
     let handle = handle(&session);
-    *guard = Some(session);
+    *state.session() = Some(session);
     Ok(handle)
 }
 

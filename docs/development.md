@@ -55,7 +55,7 @@ cargo test --workspace
 
 ## Testing against a real save
 
-The normal test suite is self-contained. `crates/core/tests/phase0.rs` builds a small encrypted save from a synthetic database and covers the stale-file guard, backups, dense 64-bit ids, the raw editor's rules, and the recruit gate. Two tests need a real save because the schema and the interesting data cannot be synthesized safely. They copy the file to a temporary directory, so the source is never modified.
+The normal test suite is self-contained. `crates/core/tests/phase0.rs` builds a small encrypted save from a synthetic database and covers the stale-file guard, journal and WAL refusal, backups, dense 64-bit ids, the raw editor's rules, and the disabled recruit path. Two tests need a real save because the schema and the interesting data cannot be synthesized safely. They copy the file to a temporary directory, so the source is never modified.
 
 ```bash
 DSA_SAVE="$HOME/Games/DragonSword Awakening/DS/Saved/SaveGames/1000/1000_Slot3.db" \
@@ -82,7 +82,7 @@ Do not add a command that accepts a 64-bit ID as a JSON number. Raw rowids are 6
 
 ## Character roster
 
-`add_character` only accepts a CID that is in `tb_init_character` and in the 10xxx range. The bundled catalog's `character` category is not a roster: it also contains character items (111xxxx) and skins (999xxxx). `unlock_all_characters` walks the same seed table. The UI keeps both recruit buttons disabled until the roster is checked against the game's own data.
+Recruiting is disabled. `add_character` and `unlock_all_characters` return an error until the editor has a verified roster. Do not use `tb_init_character` as that roster: it is the game's new-account seed, with three `NORMAL` starters and twenty `MASTER` rows for what looks like a developer account, and it does not match the characters a save owns. The bundled catalog's `character` category is not a roster either, because it also contains character items (111xxxx) and skins (999xxxx). A real roster has to come from the game's paks or from CIDs observed in game-written saves.
 
 ## Adding a typed field
 

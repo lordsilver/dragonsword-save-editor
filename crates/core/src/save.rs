@@ -201,32 +201,21 @@ impl SaveSession {
     ///
     /// Refuses to write when the file on disk is no longer the one this session
     /// opened or last wrote, so a save made by the game after the editor opened
-    /// cannot be overwritten silently. The file on disk is copied to a
+    /// cannot be overwritten silently. Also refuses while the game has left a
+    /// hot journal or a WAL beside the save. The file on disk is copied to a
     /// timestamped `.bak` whenever it is not the editor's own last output.
     pub fn write(&mut self) -> Result<WriteReport> {
+        // A journal or WAL means the game is mid-save. Replacing the main file
+        // now would let SQLite replay the old journal onto the new database.
+        if let Some(error) = blocking_sidecar(&self.path) {
+            return Err(error);
+        }
+
         let current = fs::read(&self.path)?;
         let disk = DiskState::of(&self.path, &current);
         let expected = self.written.as_ref().unwrap_or(&self.opened);
         if !disk.same_bytes(expected) {
-            let when = chrono::DateTime::from_timestamp_millis(disk.modified_ms)
-                .map(|time| {
-                    time.with_timezone(&chrono::Local)
-                        .format("%Y-%m-%d %H:%M:%S")
-                        .to_string()
-                })
-                .unwrap_or_else(|| "unknown time".into());
-            return Err(Error::Stale(format!(
-                "The save file changed on disk since this editor {} it \
-                 ({} bytes now, {} bytes then, last modified {when}). Reopen the save \
-                 to load the newer progress; writing now would overwrite it.",
-                if self.written.is_some() {
-                    "last wrote"
-                } else {
-                    "opened"
-                },
-                disk.len,
-                expected.len
-            )));
+            return Err(stale_error(self.written.is_some(), &disk, expected));
         }
 
         let _ = self
@@ -237,15 +226,26 @@ impl SaveSession {
         let plain = fs::read(&self.temp)?;
         let encrypted = sqlcipher::encrypt_verified(&plain, sqlcipher::PASSPHRASE, &self.salt)?;
 
+        // Key derivation and encryption take long enough for the game to save
+        // underneath us, so re-read the file before anything touches it.
+        let latest = fs::read(&self.path)?;
+        let latest_state = DiskState::of(&self.path, &latest);
+        if !latest_state.same_bytes(&disk) {
+            return Err(stale_error(self.written.is_some(), &latest_state, &disk));
+        }
+        if let Some(error) = blocking_sidecar(&self.path) {
+            return Err(error);
+        }
+
         // The editor's own last output needs no backup; anything else does.
         let backup = if self
             .written
             .as_ref()
-            .is_some_and(|written| written.same_bytes(&disk))
+            .is_some_and(|written| written.same_bytes(&latest_state))
         {
             None
         } else {
-            let backup = self.make_backup(&current)?;
+            let backup = self.make_backup(&latest)?;
             Some(backup.to_string_lossy().to_string())
         };
 
@@ -292,7 +292,7 @@ impl SaveSession {
         }
         let _ = fs::remove_file(&self.temp);
         for suffix in ["-journal", "-wal", "-shm"] {
-            let _ = fs::remove_file(format!("{}{suffix}", self.temp.display()));
+            let _ = fs::remove_file(sidecar(&self.temp, suffix));
         }
     }
 }
@@ -303,19 +303,74 @@ impl Drop for SaveSession {
     }
 }
 
+fn stale_error(wrote_before: bool, disk: &DiskState, expected: &DiskState) -> Error {
+    let when = chrono::DateTime::from_timestamp_millis(disk.modified_ms)
+        .map(|time| {
+            time.with_timezone(&chrono::Local)
+                .format("%Y-%m-%d %H:%M:%S")
+                .to_string()
+        })
+        .unwrap_or_else(|| "unknown time".into());
+    Error::Stale(format!(
+        "The save file changed on disk since this editor {} it \
+         ({} bytes now, {} bytes then, last modified {when}). Reopen the save \
+         to load the newer progress; writing now would overwrite it.",
+        if wrote_before { "last wrote" } else { "opened" },
+        disk.len,
+        expected.len
+    ))
+}
+
+/// A path beside the save, e.g. `1000_Slot5.db-journal`.
+fn sidecar(path: &Path, suffix: &str) -> PathBuf {
+    let mut name = path.as_os_str().to_os_string();
+    name.push(suffix);
+    PathBuf::from(name)
+}
+
+/// A journal or WAL that makes writing unsafe. A zero-length journal is not
+/// hot, so it does not block a write; any WAL does.
+fn blocking_sidecar(path: &Path) -> Option<Error> {
+    let journal = sidecar(path, "-journal");
+    if fs::metadata(&journal).is_ok_and(|meta| meta.is_file() && meta.len() > 0) {
+        return Some(Error::Blocked(
+            "The game stopped partway through saving this slot and left a rollback journal \
+             beside it. Start the game, load this slot, quit normally so the game finishes \
+             the save, then reopen the slot here. Writing now would corrupt the save."
+                .into(),
+        ));
+    }
+    let wal = sidecar(path, "-wal");
+    if fs::metadata(&wal).is_ok_and(|meta| meta.is_file()) {
+        return Some(Error::Blocked(
+            "The game left a write-ahead log beside this save. Start the game, load this \
+             slot, quit normally, then reopen the slot here. Writing now could lose the \
+             newest progress."
+                .into(),
+        ));
+    }
+    None
+}
+
 /// Problems with the save folder that should be shown before the first write.
 fn sidecar_warnings(path: &Path) -> Vec<String> {
     let mut warnings = Vec::new();
-    for (suffix, what) in [
-        ("-journal", "rollback journal"),
-        ("-wal", "write-ahead log"),
-    ] {
-        let sidecar = PathBuf::from(format!("{}{suffix}", path.display()));
-        if sidecar.is_file() {
-            warnings.push(format!(
-                "The game left a {what} beside this save. Close the game and let it finish saving before you write, or the newest progress can be lost."
-            ));
-        }
+    let journal = sidecar(path, "-journal");
+    if fs::metadata(&journal).is_ok_and(|meta| meta.is_file() && meta.len() > 0) {
+        warnings.push(
+            "The game stopped partway through saving this slot and left a rollback journal. \
+             Start the game, load this slot, then quit normally so the game finishes the \
+             save. The editor will not write until the journal is gone."
+                .into(),
+        );
+    }
+    let wal = sidecar(path, "-wal");
+    if fs::metadata(&wal).is_ok_and(|meta| meta.is_file()) {
+        warnings.push(
+            "The game left a write-ahead log beside this save. Start the game, load this \
+             slot, then quit normally. The editor will not write until the log is gone."
+                .into(),
+        );
     }
     warnings
 }

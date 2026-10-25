@@ -38,7 +38,7 @@ Lists stackable materials and cooked dishes. Edit a count, add a missing catalog
 ### Characters
 
 The character list selects one character at a time. Edit level, EXP, ascension, HP, transcendence, and soldier grade, manage skills, and fill the three slots of each team page.
-- Recruiting is switched off in this build. The catalog's character category mixes playable characters with character items and skins, so the roster has to be verified against the game's own data before the editor can create rows the game will load.
+- Recruiting is switched off in this build. There is no verified character roster yet: the catalog mixes playable characters with character items and skins, and the game's new-account seed is not a roster. Editing and removing existing characters still works.
 - Removing a character also clears their skills, team slots, loadout links, and costume assignments.
 - Skills are keyed by `TYPE_VALUE`; special skills use values around 801.
 
@@ -87,7 +87,7 @@ The escape hatch. Pick a table, search every column, page through rows, and clic
 
 If the game wrote the slot after you opened it, saving is refused with a **Reopen** action. Reopening loads the game's newer progress and drops the edits in the editor; that is deliberate, because writing would overwrite the game's save.
 
-Opening a save also warns when the game left a `-journal` or `-wal` file beside it. Close the game and let it finish saving before writing.
+If the game stopped partway through a save, it leaves a `-journal` beside the slot. The editor warns on open and refuses to write while a non-empty `-journal` or any `-wal` is there. Start the game, load the slot, quit normally so the game finishes the save, then reopen the slot here.
 
 Backups look like `1000_Slot5.db.20261025-015501.bak`. To recover, close the editor and copy the backup over the save, keeping the original name.
 
@@ -102,14 +102,15 @@ Backups look like `1000_Slot5.db.20261025-015501.bak`. To recover, close the edi
 
 ## Troubleshooting
 
-| Symptom                                             | What to check                                                                               |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| No saves found                                      | Point the scanner at the folder containing `<account>_Slot<N>.db`, not the game executable. |
-| "Save file is too small to be a SQLCipher database" | The selected file is not a save.                                                            |
-| "Page N failed its integrity check"                 | The file is corrupt or from a build that no longer uses the shared key. Restore a backup.   |
-| The game ignores the edit                           | Make sure the game was closed while saving and that you loaded the same slot.               |
-| "The save file changed on disk"                     | The game saved after you opened the slot. Choose **Reopen**, then reapply the edit.         |
-| A typed screen shows an unknown item                | Turn on **Show unknown items**, or inspect the CID in the raw browser.                      |
+| Symptom                                             | What to check                                                                                                            |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| No saves found                                      | Point the scanner at the folder containing `<account>_Slot<N>.db`, not the game executable.                              |
+| "Save file is too small to be a SQLCipher database" | The selected file is not a save.                                                                                         |
+| "Page N failed its integrity check"                 | The file is corrupt or from a build that no longer uses the shared key. Restore a backup.                                |
+| The game ignores the edit                           | Make sure the game was closed while saving and that you loaded the same slot.                                            |
+| "The save file changed on disk"                     | The game saved after you opened the slot. Choose **Reopen**, then reapply the edit.                                      |
+| "The game stopped partway through saving this slot" | The editor will not write while a journal is present. Start the game, load the slot, quit normally, then reopen it here. |
+| A typed screen shows an unknown item                | Turn on **Show unknown items**, or inspect the CID in the raw browser.                                                   |
 
 ## Keyboard shortcuts
 

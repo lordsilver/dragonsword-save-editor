@@ -113,36 +113,15 @@ fn every_mutation_survives_a_write() {
                 .expect("team page");
             assert_eq!(page.slots[0].cid, first);
 
-            // Recruiting only accepts characters the game itself defines. The
-            // catalog's "character" category also holds character items and
-            // skins (111xxxx, 999xxxx) that have no playable row.
+            // Recruiting is disabled: tb_init_character is the new-account
+            // seed, not the roster of characters this save owns. Both the
+            // single and the bulk path must refuse.
+            assert!(game.add_character(10_002).is_err());
+            assert!(game.add_character(10_015).is_err());
             assert!(game.add_character(1_110_001).is_err());
-            assert!(game.add_character(9_990_002).is_err());
-            let mut recruited = false;
-            for entry in game.character_catalog().expect("character catalog") {
-                let cid = entry.item.cid;
-                if entry.owned || !(10_000..100_000).contains(&cid) {
-                    continue;
-                }
-                // Catalog entries the game does not define as characters error
-                // or report "already owned"; both are fine here.
-                if let Ok(true) = game.add_character(cid) {
-                    recruited = true;
-                    game.remove_character(cid).expect("dismiss");
-                    break;
-                }
-            }
-            assert!(recruited, "a catalog character the game defines");
-            let added = game.unlock_all_characters().expect("recruit all");
+            assert!(game.unlock_all_characters().is_err());
             let roster = game.characters().expect("characters");
-            assert_eq!(roster.len() as i64, characters.len() as i64 + added);
-            for character in &roster {
-                assert!(
-                    (10_000..100_000).contains(&character.cid),
-                    "{} is not a character id",
-                    character.cid
-                );
-            }
+            assert_eq!(roster.len(), characters.len(), "no character was added");
 
             // Equipment: ordinary columns, the 64-bit gem id and a stat value.
             let equipment = game.equipment().expect("equipment");

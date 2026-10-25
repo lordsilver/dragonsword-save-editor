@@ -20,6 +20,9 @@ pub enum Error {
     /// The file on disk is no longer the one this session opened or wrote.
     #[error("{0}")]
     Stale(String),
+    /// The save folder is not safe to write into yet, e.g. a hot journal.
+    #[error("{0}")]
+    Blocked(String),
     #[error("Save file not found: {path}", path = .0.display())]
     Missing(PathBuf),
 }
@@ -38,6 +41,7 @@ impl Error {
             Error::NotOpen => "notOpen",
             Error::Schema(_) => "schema",
             Error::Stale(_) => "stale",
+            Error::Blocked(_) => "blocked",
         }
     }
 

@@ -347,7 +347,15 @@ fn column_is_protected(name: &str, primary_key: bool) -> bool {
         || name == "CHARACTER_CID"
         || name.ends_with("_CHARACTER_CID")
         || name.starts_with("ACC_")
-        || matches!(name, "KARMA" | "VEHICLE" | "CATEGORY" | "USER_DB_VERSION")
+        || matches!(
+            name,
+            "KARMA"
+                | "VEHICLE"
+                | "CATEGORY"
+                | "USER_DB_VERSION"
+                | "SELECTED_TEAM_PAGE_ID"
+                | "SELECTED_PAGE_SLOT_INDEX"
+        )
 }
 
 /// The game's own seed tables. They describe what a new save starts with and

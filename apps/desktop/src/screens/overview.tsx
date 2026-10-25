@@ -143,7 +143,7 @@ export function OverviewScreen() {
       <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <Panel title="Collection progress" description="Counts come from the save, not from the catalog.">
           <div className="space-y-4">
-            <ProgressRow label="Characters" icon={<Users />} value={counts.characters} total={counts.charactersTotal} />
+            <ProgressRow label="Characters" icon={<Users />} value={counts.characters} />
             <ProgressRow label="Titles" icon={<Crown />} value={counts.titlesUnlocked} total={counts.titlesTotal} />
             <ProgressRow
               label="Cooking recipes"

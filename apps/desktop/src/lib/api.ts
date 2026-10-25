@@ -28,7 +28,17 @@ import type {
   WriteReport,
 } from './types.ts';
 
-export type ErrorKind = 'io' | 'sqlite' | 'json' | 'crypto' | 'invalid' | 'notOpen' | 'schema' | 'stale' | 'failed';
+export type ErrorKind =
+  | 'io'
+  | 'sqlite'
+  | 'json'
+  | 'crypto'
+  | 'invalid'
+  | 'notOpen'
+  | 'schema'
+  | 'stale'
+  | 'blocked'
+  | 'failed';
 
 export class CommandError extends Error {
   readonly kind: ErrorKind;

@@ -37,7 +37,6 @@ const SLOT_LABELS: Array<[keyof Omit<Loadout, 'characterCid'>, string]> = [
 
 export function CharactersScreen() {
   const characters = useApp((state) => state.characters);
-  const catalog = useApp((state) => state.characterCatalog);
   const selectedCharacter = useApp((state) => state.selectedCharacter);
   const skills = useApp((state) => state.skills);
   const teams = useApp((state) => state.teams);
@@ -66,10 +65,6 @@ export function CharactersScreen() {
   }, [characters, query]);
 
   const highest = characters.reduce((level, character) => Math.max(level, character.level), 0);
-  // The catalog's "character" category also holds items and skins; only 10xxx
-  // ids are characters the game can load.
-  const playable = catalog.filter((entry) => entry.item.cid >= 10000 && entry.item.cid < 100000).length;
-  const missing = catalog.filter((entry) => !entry.owned && entry.item.cid >= 10000 && entry.item.cid < 100000).length;
 
   if (!save) return null;
 
@@ -104,19 +99,13 @@ export function CharactersScreen() {
       />
 
       <InfoNote tone="warning">
-        <span className="font-medium text-amber-200">Recruiting is disabled in this build.</span> The catalog's
-        character list mixes playable characters with character items and skins, so a recruited row would not load in
-        the game. Editing and removing existing characters still works.
+        <span className="font-medium text-amber-200">Recruiting is disabled in this build.</span> There is no verified
+        character roster yet: the catalog mixes playable characters with character items and skins, and the game's
+        new-account seed is not a roster. Editing and removing existing characters still works.
       </InfoNote>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatTile
-          icon={<Users />}
-          label="Owned"
-          value={formatNumber(characters.length)}
-          detail={`of ${playable} catalog characters`}
-        />
-        <StatTile icon={<UserPlus />} label="Missing" value={formatNumber(missing)} detail="Not in this save" />
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <StatTile icon={<Users />} label="Owned" value={formatNumber(characters.length)} detail="In this save" />
         <StatTile
           icon={<BadgeCheck />}
           label="Highest level"

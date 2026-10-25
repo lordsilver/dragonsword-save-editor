@@ -24,6 +24,8 @@ CREATE TABLE tb_user (
   SKIP_CACHE INTEGER DEFAULT 0,
   USER_DB_VERSION INTEGER NOT NULL DEFAULT 0,
   TITLE_CID INTEGER NOT NULL DEFAULT 0,
+  SELECTED_TEAM_PAGE_ID INTEGER NOT NULL DEFAULT 0,
+  SELECTED_PAGE_SLOT_INDEX INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (USER_DBID)
 );
 CREATE TABLE tb_character (
@@ -171,7 +173,9 @@ fn fixture(name: &str) -> PathBuf {
         conn.execute(
             "INSERT INTO tb_init_character
                 (ACCOUNT_TYPE, CHARACTER_CID, LEVEL, EXP, ASCEND, TRANSCEND)
-             VALUES ('NORMAL', 10001, 1, 0, 1, 0), ('NORMAL', 10002, 5, 0, 1, 2)",
+             VALUES ('NORMAL', 10001, 1, 0, 1, 0), ('NORMAL', 10002, 5, 0, 1, 2),
+                    ('MASTER', 10015, 1, 0, 1, 0), ('MASTER', 10019, 1, 0, 1, 0),
+                    ('MASTER', 10033, 1, 0, 1, 0)",
             [],
         )
         .expect("seed characters");
@@ -318,6 +322,53 @@ fn only_the_editors_own_last_output_skips_the_backup() {
 }
 
 #[test]
+fn a_leftover_journal_or_wal_blocks_the_write() {
+    let path = fixture("sidecars");
+    let mut session = SaveSession::open(&path).expect("open");
+    let journal = PathBuf::from(format!("{}-journal", path.display()));
+    let wal = PathBuf::from(format!("{}-wal", path.display()));
+
+    // An empty journal is not hot and does not block a write.
+    {
+        let mut game = Game::new(&mut session, Catalog::shared());
+        game.set_stack("cook", BASE, 2).expect("edit");
+    }
+    fs::write(&journal, b"").expect("empty journal");
+    session.write().expect("an empty journal is harmless");
+    fs::remove_file(&journal).expect("remove journal");
+
+    // A non-empty journal means the game stopped partway through a save.
+    {
+        let mut game = Game::new(&mut session, Catalog::shared());
+        game.set_stack("cook", BASE, 3).expect("edit");
+    }
+    fs::write(&journal, b"hot journal").expect("hot journal");
+    let before = fs::read(&path).expect("read");
+    let error = session
+        .write()
+        .expect_err("a hot journal must block the write");
+    assert_eq!(error.kind(), "blocked");
+    assert_eq!(
+        fs::read(&path).expect("read"),
+        before,
+        "a blocked write must leave the save untouched"
+    );
+    fs::remove_file(&journal).expect("remove journal");
+    session.write().expect("write after the journal is gone");
+
+    // Any WAL blocks, even an empty one.
+    {
+        let mut game = Game::new(&mut session, Catalog::shared());
+        game.set_stack("cook", BASE, 4).expect("edit");
+    }
+    fs::write(&wal, b"").expect("wal");
+    let error = session.write().expect_err("a wal must block the write");
+    assert_eq!(error.kind(), "blocked");
+    fs::remove_file(&wal).expect("remove wal");
+    session.write().expect("write after the wal is gone");
+}
+
+#[test]
 fn ids_above_2_pow_53_address_exactly_one_row() {
     let path = fixture("dense-ids");
     let mut session = SaveSession::open(&path).expect("open");
@@ -448,6 +499,31 @@ fn raw_editor_keeps_keys_and_types_locked() {
         .raw_update("tb_user", USER, "SKIP_CACHE", &RawValue::Null, false)
         .expect("nullable column accepts NULL");
 
+    // The active-team pointers are link columns too.
+    for column in ["SELECTED_TEAM_PAGE_ID", "SELECTED_PAGE_SLOT_INDEX"] {
+        assert!(
+            session
+                .raw_update(
+                    "tb_user",
+                    USER,
+                    column,
+                    &RawValue::Integer("1".into()),
+                    false,
+                )
+                .is_err(),
+            "{column} should need advanced editing"
+        );
+    }
+    session
+        .raw_update(
+            "tb_user",
+            USER,
+            "SELECTED_TEAM_PAGE_ID",
+            &RawValue::Integer("1".into()),
+            true,
+        )
+        .expect("advanced editing unlocks the team pointer");
+
     // Seed tables are browsable but never writable.
     let seed = session
         .raw_page("tb_init_character", 0, 10, None)
@@ -475,31 +551,20 @@ fn raw_editor_keeps_keys_and_types_locked() {
 }
 
 #[test]
-fn recruiting_only_accepts_characters_the_game_defines() {
+fn recruiting_is_disabled_until_a_verified_roster_exists() {
     let path = fixture("recruit");
     let mut session = SaveSession::open(&path).expect("open");
+    let mut game = Game::new(&mut session, Catalog::shared());
 
-    {
-        let mut game = Game::new(&mut session, Catalog::shared());
-
-        // Character items and skins share the catalog's character category.
-        assert!(game.add_character(1_110_001).is_err());
-        assert!(game.add_character(9_990_002).is_err());
-        // 10xxx but absent from the game's seed table.
-        assert!(game.add_character(10_099).is_err());
-
-        assert!(game.add_character(10_002).expect("recruit"));
-        assert!(!game.add_character(10_002).expect("already owned"));
-
-        let added = game.unlock_all_characters().expect("recruit all");
-        assert_eq!(added, 1, "10001 is added, 10002 is already owned");
-
-        let roster: Vec<i64> = game
-            .characters()
-            .expect("characters")
-            .into_iter()
-            .map(|character| character.cid)
-            .collect();
-        assert_eq!(roster, vec![10_001, 10_002]);
+    // NORMAL starters, MASTER developer rows, character items, skins, and an
+    // unknown 10xxx id all fail: tb_init_character is a new-account seed, not
+    // the list of characters a save owns.
+    for cid in [
+        10_001, 10_002, 10_015, 10_019, 10_033, 10_099, 1_110_001, 9_990_002,
+    ] {
+        let error = game.add_character(cid).expect_err("recruiting is off");
+        assert_eq!(error.kind(), "invalid");
     }
+    assert!(game.unlock_all_characters().is_err());
+    assert!(game.characters().expect("characters").is_empty());
 }

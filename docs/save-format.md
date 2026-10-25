@@ -102,12 +102,14 @@ Opening a save never modifies it:
 3. Apply edits to the temporary database.
 
 Saving is explicit:
-1. Read the file on disk and compare its SHA-256 with the bytes the editor opened or last wrote. If they differ, refuse with a `stale` error and leave the file untouched.
-2. Flush the connection and read the plaintext database.
-3. Back up the on-disk file to `<save>.<YYYYMMDD-HHMMSS>.bak` whenever it is not the editor's own last output. In a normal session that is the first write.
+1. Refuse while a non-empty `<save>-journal` or any `<save>-wal` sits beside the save. A journal means the game stopped mid-save; replacing the main file would let SQLite replay the old journal onto the new database.
+2. Read the file on disk and compare its SHA-256 with the bytes the editor opened or last wrote. If they differ, refuse with a `stale` error and leave the file untouched.
+3. Flush the connection and read the plaintext database.
 4. Encrypt with the original salt.
-5. Write to a temporary file in the save directory, `fsync` it, then rename it over the original.
-6. `fsync` the directory on Unix.
+5. Re-read the file and repeat the digest and journal checks, because key derivation takes long enough for the game to save underneath the editor.
+6. Back up the on-disk file to `<save>.<YYYYMMDD-HHMMSS>.bak` whenever it is not the editor's own last output. In a normal session that is the first write.
+7. Write to a temporary file in the save directory, `fsync` it, then rename it over the original.
+8. `fsync` the directory on Unix.
 
 The original encrypted file is never partially overwritten: a failed write leaves the previous file in place. The plaintext temporary database is created with owner-only permissions on Unix and deleted when the session closes or the app exits.
 
@@ -116,4 +118,4 @@ The original encrypted file is never partially overwritten: a failed write leave
 - The editor leaves the sibling `.sav` and screenshot alone. The game reads the `.db` for the data shown in the editor.
 - Unknown tables and columns are preserved because edits are ordinary SQL statements against a full copy of the database.
 - A future game build can change the schema. The raw browser and the schema dialog are the escape hatch; the typed screens fail loudly rather than guessing.
-- Close the game before saving. The stale check catches a save the game made before the editor writes, but a running game keeps the database open and can still write over the file after the editor replaces it. Opening a slot warns when a `-journal` or `-wal` file is present.
+- Close the game before saving. The editor refuses while a non-empty `-journal` or any `-wal` is beside the save, and the stale check catches a save the game made before the editor writes. A running game can still write over the file after the editor replaces it.

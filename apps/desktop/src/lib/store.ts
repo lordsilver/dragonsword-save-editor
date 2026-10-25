@@ -310,6 +310,7 @@ export const useApp = create<Store>((set, get) => {
           const path = get().save?.path;
           toast.error(message(error), {
             duration: 20000,
+            description: 'Reopening discards the edits you have not saved.',
             action: path ? { label: 'Reopen', onClick: () => void get().openSave(path) } : undefined,
           });
         } else {
