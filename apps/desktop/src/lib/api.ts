@@ -38,6 +38,7 @@ export type ErrorKind =
   | 'schema'
   | 'stale'
   | 'blocked'
+  | 'inconsistent'
   | 'failed';
 
 export class CommandError extends Error {

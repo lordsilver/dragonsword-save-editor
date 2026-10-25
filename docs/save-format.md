@@ -49,7 +49,7 @@ The result is a normal SQLite database with 80 reserved bytes at the end of ever
 3. Derive the keys from the original salt.
 4. Encrypt every page, generate a new IV, compute the HMAC, and write both into the page's reserved area.
 5. Write the salt back over the SQLite header area of page 1.
-6. Replace the original file atomically.
+6. Replace the original file atomically after the temporary file reads back byte-for-byte.
 
 ## Database schema
 
@@ -99,17 +99,20 @@ Equipment stat CIDs pack a stat type and a value: the main stat uses `5000 + typ
 Opening a save never modifies it:
 1. Read the encrypted file and decrypt it to a private temporary file.
 2. Open the temporary file with `rusqlite`, foreign keys off, journal mode `DELETE`.
-3. Apply edits to the temporary database.
+3. Run `PRAGMA integrity_check` and refuse to open a structurally corrupt database.
+4. Record the consistency baseline: gem links that already point at a missing or deleted gem, and gems linked to more than one equipment piece. The baseline is shown in the overview and does not block editing.
+5. Apply edits to the temporary database.
 
 Saving is explicit:
 1. Refuse while a non-empty `<save>-journal` or any `<save>-wal` sits beside the save. A journal means the game stopped mid-save; replacing the main file would let SQLite replay the old journal onto the new database.
 2. Read the file on disk and compare its SHA-256 with the bytes the editor opened or last wrote. If they differ, refuse with a `stale` error and leave the file untouched.
-3. Flush the connection and read the plaintext database.
-4. Encrypt with the original salt.
-5. Re-read the file and repeat the digest and journal checks, because key derivation takes long enough for the game to save underneath the editor.
-6. Back up the on-disk file to `<save>.<YYYYMMDD-HHMMSS>.bak` whenever it is not the editor's own last output. In a normal session that is the first write.
-7. Write to a temporary file in the save directory, `fsync` it, then rename it over the original.
-8. `fsync` the directory on Unix.
+3. Flush the connection, then run `PRAGMA integrity_check` on the edited database. If it is not `ok`, refuse and leave the file untouched.
+4. Run the consistency check again and compare it with the baseline. A save that already had a broken gem link may keep it, so the damage can be repaired; a link the edit introduces is refused with an `inconsistent` error.
+5. Read the plaintext database and encrypt it with the original salt.
+6. Re-read the file and repeat the digest and journal checks, because key derivation takes long enough for the game to save underneath the editor.
+7. Back up the on-disk file to `<save>.<YYYYMMDD-HHMMSS>.bak` whenever it is not the editor's own last output. In a normal session that is the first write.
+8. Write to a temporary file in the save directory, `fsync` it, read it back and compare it byte-for-byte with the encrypted output, then rename it over the original.
+9. `fsync` the directory on Unix.
 
 The original encrypted file is never partially overwritten: a failed write leaves the previous file in place. The plaintext temporary database is created with owner-only permissions on Unix and deleted when the session closes or the app exits.
 

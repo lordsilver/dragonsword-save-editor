@@ -199,6 +199,8 @@ struct SaveHandle {
     dirty: bool,
     /// Problems noticed at open, e.g. a journal the game left behind.
     warnings: Vec<String>,
+    /// Broken cross-row links as the save stood at open.
+    consistency: dsa_core::ConsistencyReport,
 }
 
 fn handle(session: &SaveSession) -> SaveHandle {
@@ -209,6 +211,7 @@ fn handle(session: &SaveSession) -> SaveHandle {
         user_id: session.user_id(),
         dirty: session.dirty(),
         warnings: session.warnings().to_vec(),
+        consistency: session.consistency().clone(),
     }
 }
 

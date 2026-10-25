@@ -55,7 +55,7 @@ cargo test --workspace
 
 ## Testing against a real save
 
-The normal test suite is self-contained. `crates/core/tests/phase0.rs` builds a small encrypted save from a synthetic database and covers the stale-file guard, journal and WAL refusal, backups, dense 64-bit ids, the raw editor's rules, and the disabled recruit path. Two tests need a real save because the schema and the interesting data cannot be synthesized safely. They copy the file to a temporary directory, so the source is never modified.
+The normal test suite is self-contained. `crates/core/tests/phase0.rs` builds a small encrypted save from a synthetic database and covers the stale-file guard, journal and WAL refusal, backups, dense 64-bit ids, the raw editor's rules, the refusal of a newly broken gem link, and the disabled recruit path. Two tests need a real save because the schema and the interesting data cannot be synthesized safely. They copy the file to a temporary directory, so the source is never modified.
 
 ```bash
 DSA_SAVE="$HOME/Games/DragonSword Awakening/DS/Saved/SaveGames/1000/1000_Slot3.db" \
@@ -65,7 +65,7 @@ DSA_SAVE="$HOME/Games/DragonSword Awakening/DS/Saved/SaveGames/1000/1000_Slot5.d
   cargo test -p dsa-core --test domain_mutations -- --ignored --nocapture
 ```
 
-`real_save` checks the read path: overview, characters, inventory, teams, skills, loadout, recipes, and a write/reopen round trip. `domain_mutations` exercises every typed mutation, backups, raw updates, and persistence after reopening.
+`real_save` checks the read path: overview, characters, inventory, teams, skills, loadout, recipes, and a write/reopen round trip. `domain_mutations` exercises every typed mutation, backups, raw updates, the pre-existing broken-link baseline and its repair, and persistence after reopening.
 
 The phase0 fixture writes a plaintext database and then rewrites each page to reserve the 80 bytes SQLCipher needs for its IV and HMAC, because SQLite only exposes that setting through a C file control. The fixture runs `PRAGMA integrity_check` on the rewritten pages before encrypting them.
 

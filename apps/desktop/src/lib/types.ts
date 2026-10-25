@@ -36,6 +36,21 @@ export interface ScanResult {
   slots: SlotInfo[];
 }
 
+export interface GemLink {
+  equipmentDbid: string;
+  gemDbid: string;
+}
+
+export interface DuplicateGemLink {
+  gemDbid: string;
+  equipmentDbids: string[];
+}
+
+export interface ConsistencyReport {
+  danglingGemLinks: GemLink[];
+  duplicateGemLinks: DuplicateGemLink[];
+}
+
 export interface SaveHandle {
   path: string;
   accountId: string;
@@ -43,12 +58,14 @@ export interface SaveHandle {
   userId: number;
   dirty: boolean;
   warnings: string[];
+  consistency: ConsistencyReport;
 }
 
 export interface WriteReport {
   backup: string | null;
   bytes: number;
   path: string;
+  consistency: ConsistencyReport;
 }
 
 export interface CatalogInfo {

@@ -13,6 +13,7 @@ use sha2::{Digest, Sha256};
 use walkdir::WalkDir;
 
 use crate::catalog::Catalog;
+use crate::consistency::{self, ConsistencyReport};
 use crate::error::{Error, Result};
 use crate::sqlcipher;
 
@@ -37,6 +38,9 @@ pub struct WriteReport {
     pub backup: Option<String>,
     pub bytes: i64,
     pub path: String,
+    /// Broken links after the write. A save may already have had them; the
+    /// write only refuses links the edit introduced.
+    pub consistency: ConsistencyReport,
 }
 
 /// The state of the save file on disk at a point in time. The digest is
@@ -67,6 +71,11 @@ impl DiskState {
     }
 }
 
+/// SQLite's own structural check. Returns `"ok"` or the first problem.
+fn integrity_check(conn: &Connection) -> Result<String> {
+    Ok(conn.query_row("PRAGMA integrity_check", [], |row| row.get(0))?)
+}
+
 /// An open save. The encrypted file stays untouched until [`SaveSession::write`];
 /// edits happen in a temporary plaintext SQLite database.
 pub struct SaveSession {
@@ -82,6 +91,9 @@ pub struct SaveSession {
     written: Option<DiskState>,
     warnings: Vec<String>,
     last_backup: Option<PathBuf>,
+    /// Broken links as the save stood when this session opened it, or after the
+    /// last successful write. Only issues beyond this baseline block a write.
+    consistency: ConsistencyReport,
 }
 
 impl SaveSession {
@@ -104,7 +116,7 @@ impl SaveSession {
 
         let temp = temp_path();
         write_private(&temp, &plain)?;
-        let result = (|| -> Result<(Connection, i64)> {
+        let result = (|| -> Result<(Connection, i64, ConsistencyReport)> {
             let conn = Connection::open_with_flags(
                 &temp,
                 OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_NO_MUTEX,
@@ -116,6 +128,12 @@ impl SaveSession {
                  PRAGMA synchronous=FULL;
                  PRAGMA temp_store=MEMORY;",
             )?;
+            let integrity = integrity_check(&conn)?;
+            if integrity != "ok" {
+                return Err(Error::Schema(format!(
+                    "save database failed SQLite integrity_check: {integrity}"
+                )));
+            }
             let has_user: Option<String> = conn
                 .query_row(
                     "SELECT name FROM sqlite_master WHERE type='table' AND name='tb_user'",
@@ -130,10 +148,11 @@ impl SaveSession {
                 conn.query_row("SELECT USER_DBID FROM tb_user LIMIT 1", [], |row| {
                     row.get(0)
                 })?;
-            Ok((conn, user_id))
+            let consistency = consistency::check(&conn, user_id)?;
+            Ok((conn, user_id, consistency))
         })();
         match result {
-            Ok((conn, user_id)) => Ok(Self {
+            Ok((conn, user_id, consistency)) => Ok(Self {
                 path,
                 salt,
                 temp,
@@ -144,6 +163,7 @@ impl SaveSession {
                 written: None,
                 warnings,
                 last_backup: None,
+                consistency,
             }),
             Err(error) => {
                 let _ = fs::remove_file(&temp);
@@ -171,6 +191,11 @@ impl SaveSession {
     /// Problems noticed at open that the UI should show before the first write.
     pub fn warnings(&self) -> &[String] {
         &self.warnings
+    }
+
+    /// Broken links as the save stood at open, or after the last write.
+    pub fn consistency(&self) -> &ConsistencyReport {
+        &self.consistency
     }
 
     pub fn account_id(&self) -> String {
@@ -223,6 +248,26 @@ impl SaveSession {
             .execute_batch("PRAGMA wal_checkpoint(TRUNCATE);");
         self.conn().cache_flush()?;
 
+        // The edits must leave a logically sound database. Check before
+        // encrypting so a corrupt result never reaches the save folder.
+        let integrity = integrity_check(self.conn())?;
+        if integrity != "ok" {
+            return Err(Error::Schema(format!(
+                "the edited database failed SQLite integrity_check, so the save was not written: {integrity}"
+            )));
+        }
+
+        // A save may already contain broken links; only the ones this edit
+        // introduces are refused. That lets a damaged save be repaired.
+        let consistency = consistency::check(self.conn(), self.user_id)?;
+        let introduced = consistency.new_since(&self.consistency);
+        if !introduced.is_clean() {
+            return Err(Error::Inconsistent(format!(
+                "The save would introduce broken gem links: {}. Fix the links or undo before writing.",
+                introduced.details()
+            )));
+        }
+
         let plain = fs::read(&self.temp)?;
         let encrypted = sqlcipher::encrypt_verified(&plain, sqlcipher::PASSPHRASE, &self.salt)?;
 
@@ -252,10 +297,12 @@ impl SaveSession {
         atomic_write(&self.path, &encrypted)?;
         self.written = Some(DiskState::of(&self.path, &encrypted));
         self.dirty = false;
+        self.consistency = consistency.clone();
         Ok(WriteReport {
             backup,
             bytes: encrypted.len() as i64,
             path: self.path.to_string_lossy().to_string(),
+            consistency,
         })
     }
 
@@ -419,6 +466,17 @@ fn atomic_write(path: &Path, bytes: &[u8]) -> Result<()> {
         .unwrap_or_default();
     let temporary = directory.join(format!(".dsa-write-{}-{nanos}", std::process::id()));
     write_private(&temporary, bytes)?;
+    // Read back the exact bytes that are about to replace the save. The
+    // encryption round-trip was verified in memory; this proves the file on
+    // disk holds those same bytes before the rename.
+    let written = fs::read(&temporary)?;
+    if written != bytes {
+        let _ = fs::remove_file(&temporary);
+        return Err(Error::Crypto(
+            "the temporary save did not read back byte-for-byte; the original was not replaced"
+                .into(),
+        ));
+    }
     if let Err(error) = fs::rename(&temporary, path) {
         let _ = fs::remove_file(&temporary);
         return Err(error.into());

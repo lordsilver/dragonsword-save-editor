@@ -6,6 +6,7 @@
 //! the original salt so the game can read it unchanged.
 
 pub mod catalog;
+pub mod consistency;
 pub mod domain;
 pub mod error;
 pub mod raw;
@@ -13,5 +14,6 @@ pub mod save;
 pub mod sqlcipher;
 
 pub use catalog::{Catalog, Item};
+pub use consistency::ConsistencyReport;
 pub use error::{Error, Result};
 pub use save::{SaveSession, SlotInfo, WriteReport};

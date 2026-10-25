@@ -628,3 +628,54 @@ fn typed_limits_match_the_reference_save() {
     assert!(game.set_stack("stackable", 1_420_001, 61_526).is_err());
     assert!(game.set_stack("cook", BASE, 61_526).is_err());
 }
+
+#[test]
+fn a_new_broken_gem_link_blocks_the_write() {
+    let path = fixture("consistency");
+    let mut session = SaveSession::open(&path).expect("open");
+    assert!(
+        session.consistency().is_clean(),
+        "the synthetic save starts with sound gem links"
+    );
+
+    let page = session
+        .raw_page("tb_equipment", 0, 5, None)
+        .expect("equipment page");
+    let row = page.rows.first().expect("equipment row");
+    let rowid = row.rowid.parse().expect("rowid");
+    session
+        .raw_update(
+            "tb_equipment",
+            rowid,
+            "GEM_DBID",
+            &RawValue::Integer("123".into()),
+            true,
+        )
+        .expect("dangling link");
+
+    let before = fs::read(&path).expect("read");
+    let error = session
+        .write()
+        .expect_err("a new dangling link must block the write");
+    assert_eq!(error.kind(), "inconsistent");
+    assert_eq!(
+        fs::read(&path).expect("read"),
+        before,
+        "the save is untouched when the consistency check refuses"
+    );
+
+    session
+        .raw_update(
+            "tb_equipment",
+            rowid,
+            "GEM_DBID",
+            &RawValue::Integer("0".into()),
+            true,
+        )
+        .expect("clear the link");
+    let report = session.write().expect("write after the link is cleared");
+    assert!(report.consistency.is_clean());
+    session.close();
+
+    fs::remove_dir_all(path.parent().expect("parent")).expect("cleanup");
+}

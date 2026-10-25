@@ -23,6 +23,9 @@ pub enum Error {
     /// The save folder is not safe to write into yet, e.g. a hot journal.
     #[error("{0}")]
     Blocked(String),
+    /// The edit would introduce a broken cross-row link.
+    #[error("{0}")]
+    Inconsistent(String),
     #[error("Save file not found: {path}", path = .0.display())]
     Missing(PathBuf),
 }
@@ -42,6 +45,7 @@ impl Error {
             Error::Schema(_) => "schema",
             Error::Stale(_) => "stale",
             Error::Blocked(_) => "blocked",
+            Error::Inconsistent(_) => "inconsistent",
         }
     }
 

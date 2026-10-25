@@ -84,12 +84,14 @@ The escape hatch. Pick a table, search every column, page through rows, and clic
 
 ## Saving, backups, and recovery
 
-- **Save changes** or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>S</kbd>: checks that the file on disk is still the one the editor opened or last wrote, backs it up when it is not the editor's own output, re-encrypts, verifies, and atomically replaces the save.
+- **Save changes** or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>S</kbd>: checks that the file on disk is still the one the editor opened or last wrote, runs SQLite's integrity check, refuses any gem link the edit would break, backs it up when it is not the editor's own output, re-encrypts, reads the temporary file back, and atomically replaces the save.
 - **Backup** or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>B</kbd>: copies the current on-disk save to a timestamped `.bak` without writing edits.
 - **Open another save** or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>O</kbd>: blocked while there are unsaved changes.
 - **Close save** asks before discarding unsaved changes.
 
 If the game wrote the slot after you opened it, saving is refused with a **Reopen** action. Reopening loads the game's newer progress and drops the edits in the editor; that is deliberate, because writing would overwrite the game's save.
+
+Opening a save runs SQLite's `integrity_check` and records any gem links that already point at a missing or deleted gem, or link one gem to more than one piece. The overview lists them. A save with existing damage can still be edited and written; only a link the edit introduces blocks the save. A new broken link is refused with an `inconsistent` error and the file is left untouched.
 
 If the game stopped partway through a save, it leaves a `-journal` beside the slot. The editor warns on open and refuses to write while a non-empty `-journal` or any `-wal` is there. Start the game, load the slot, quit normally so the game finishes the save, then reopen the slot here.
 
@@ -106,15 +108,17 @@ Backups look like `1000_Slot5.db.20261025-015501.bak`. To recover, close the edi
 
 ## Troubleshooting
 
-| Symptom                                             | What to check                                                                                                            |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| No saves found                                      | Point the scanner at the folder containing `<account>_Slot<N>.db`, not the game executable.                              |
-| "Save file is too small to be a SQLCipher database" | The selected file is not a save.                                                                                         |
-| "Page N failed its integrity check"                 | The file is corrupt or from a build that no longer uses the shared key. Restore a backup.                                |
-| The game ignores the edit                           | Make sure the game was closed while saving and that you loaded the same slot.                                            |
-| "The save file changed on disk"                     | The game saved after you opened the slot. Choose **Reopen**, then reapply the edit.                                      |
-| "The game stopped partway through saving this slot" | The editor will not write while a journal is present. Start the game, load the slot, quit normally, then reopen it here. |
-| A typed screen shows an unknown item                | Turn on **Show unknown items**, or inspect the CID in the raw browser.                                                   |
+| Symptom                                             | What to check                                                                                                                                             |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No saves found                                      | Point the scanner at the folder containing `<account>_Slot<N>.db`, not the game executable.                                                               |
+| "Save file is too small to be a SQLCipher database" | The selected file is not a save.                                                                                                                          |
+| "Page N failed its integrity check"                 | The file is corrupt or from a build that no longer uses the shared key. Restore a backup.                                                                 |
+| The game ignores the edit                           | Make sure the game was closed while saving and that you loaded the same slot.                                                                             |
+| "The save file changed on disk"                     | The game saved after you opened the slot. Choose **Reopen**, then reapply the edit.                                                                       |
+| "The game stopped partway through saving this slot" | The editor will not write while a journal is present. Start the game, load the slot, quit normally, then reopen it here.                                  |
+| "The save would introduce broken gem links"         | The edit points equipment at a missing gem or reuses a gem already linked to another piece. Fix the gem field or undo the edit; the file was not written. |
+| "failed SQLite integrity_check"                     | The edited database is structurally corrupt. The file was not written. Reopen the slot and reapply the edit, or restore a backup.                         |
+| A typed screen shows an unknown item                | Turn on **Show unknown items**, or inspect the CID in the raw browser.                                                                                    |
 
 ## Keyboard shortcuts
 

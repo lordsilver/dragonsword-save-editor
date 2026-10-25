@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   Clock3,
   Coins,
   Crown,
@@ -34,8 +35,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Spinner } from '@/components/ui/spinner';
+import { consistencyIssues } from '@/lib/consistency';
 import { MAX_ADV_EXP, MAX_ADV_GRADE, MAX_ADV_LEVEL, MAX_CURRENCY, MAX_PLAY_TIME, MAX_STACK } from '@/lib/limits';
 import { formatNumber, itemName, useApp } from '@/lib/store';
+import type { ConsistencyReport } from '@/lib/types';
 
 export function OverviewScreen() {
   const overview = useApp((state) => state.overview);
@@ -85,6 +88,8 @@ export function OverviewScreen() {
           </>
         }
       />
+
+      <ConsistencyPanel report={save.consistency} />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Metric
@@ -256,6 +261,36 @@ export function OverviewScreen() {
         }}
       />
     </div>
+  );
+}
+
+function ConsistencyPanel({ report }: { report: ConsistencyReport }) {
+  const issues = consistencyIssues(report);
+  if (issues.length === 0) return null;
+  return (
+    <Panel
+      className="border-amber-500/40"
+      title={
+        <span className="flex items-center gap-2">
+          <AlertTriangle className="size-4 text-amber-500" />
+          Broken gem links in this save
+        </span>
+      }
+      description="These links were already in the file when the editor opened it. The editor will not create new ones, and a new broken link blocks the write."
+    >
+      <ul className="space-y-1.5 text-xs">
+        {issues.map((issue) => (
+          <li key={issue} className="flex gap-2">
+            <span className="text-amber-500">•</span>
+            <span>{issue}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 text-xs text-muted-foreground">
+        Clear a broken link by setting the equipment's gem id to 0 on the Equipment screen, or link a live, unlinked
+        gem.
+      </p>
+    </Panel>
   );
 }
 

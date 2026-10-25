@@ -1,6 +1,7 @@
 import { toast } from 'sonner';
 import { create } from 'zustand';
 import * as api from './api.ts';
+import { consistencyIssues } from './consistency.ts';
 import type {
   AppInfo,
   CatalogEntry,
@@ -275,6 +276,12 @@ export const useApp = create<Store>((set, get) => {
         for (const warning of save.warnings ?? []) {
           toast.warning(warning, { duration: 15000 });
         }
+        if (consistencyIssues(save.consistency).length > 0) {
+          toast.warning('This save already has broken gem links', {
+            description: 'Open the overview to see them. The editor will not create new ones.',
+            duration: 20000,
+          });
+        }
         return true;
       } catch (error) {
         toast.error(message(error));
@@ -300,7 +307,10 @@ export const useApp = create<Store>((set, get) => {
       try {
         const report = await api.writeSave();
         const current = get().save;
-        set({ dirty: false, save: current ? { ...current, dirty: false } : null });
+        set({
+          dirty: false,
+          save: current ? { ...current, dirty: false, consistency: report.consistency } : null,
+        });
         toast.success(report.backup ? `Save written. Backup kept at ${report.backup}` : 'Save written.', {
           duration: 8000,
         });
@@ -313,6 +323,8 @@ export const useApp = create<Store>((set, get) => {
             description: 'Reopening discards the edits you have not saved.',
             action: path ? { label: 'Reopen', onClick: () => void get().openSave(path) } : undefined,
           });
+        } else if (errorKind(error) === 'inconsistent') {
+          toast.error(message(error), { duration: 20000 });
         } else {
           toast.error(message(error));
         }

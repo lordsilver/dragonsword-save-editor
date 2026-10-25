@@ -43,6 +43,10 @@ fn every_mutation_survives_a_write() {
     );
     {
         let mut session = SaveSession::open(&path).expect("open");
+        assert!(
+            !session.consistency().is_clean(),
+            "the save's known broken gem links are reported at open"
+        );
         {
             let mut game = session.catalog_game(catalog);
 
@@ -487,6 +491,10 @@ fn every_mutation_survives_a_write() {
         assert!(session.dirty());
         let report = session.write().expect("write");
         assert!(report.backup.is_some());
+        assert!(
+            report.consistency.is_clean(),
+            "the repaired gem links are clean after the write"
+        );
         assert!(!session.dirty());
         session.close();
     };
@@ -629,6 +637,10 @@ fn every_mutation_survives_a_write() {
                 .all(|entry| entry.known)
         );
     }
+    assert!(
+        session.consistency().is_clean(),
+        "the reopened save has no broken gem links"
+    );
     session.close();
 
     fs::remove_dir_all(directory).expect("cleanup");
