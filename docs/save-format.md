@@ -1,0 +1,118 @@
+# Save format reference
+
+This page describes the parts of a DragonSword Awakening save that the editor reads and writes. It was verified against real saves: decrypting both supplied files, editing them, re-encrypting, and reopening the result in the editor.
+
+## Files in a slot
+
+A slot folder contains:
+
+| File                   | Purpose                                                                   |
+| ---------------------- | ------------------------------------------------------------------------- |
+| `<account>_Slot<N>.db` | The encrypted SQLCipher database the game loads. This is the file edited. |
+| `SPack_Slot<N>.sav`    | Unreal `GVAS` save data. Read by the game, not modified by this editor.   |
+| `ScreenShot_<N>.png`   | Slot thumbnail. The game writes JPEG bytes with a `.png` extension.       |
+
+The account folder name is the same as the save prefix, for example `SaveGames/1000/1000_Slot5.db`.
+
+## Encryption
+
+The database uses SQLCipher with `PRAGMA cipher_compatibility = 4`:
+
+| Parameter           | Value                                                         |
+| ------------------- | ------------------------------------------------------------- |
+| Cipher              | AES-256-CBC                                                   |
+| Page size           | 4096 bytes                                                    |
+| Reserved bytes/page | 80 (16-byte IV + 64-byte HMAC-SHA512)                         |
+| Key derivation      | PBKDF2-HMAC-SHA512, 256,000 iterations                        |
+| HMAC key derivation | PBKDF2-HMAC-SHA512, 2 iterations, HMAC salt = salt XOR 0x3a   |
+| Salt                | First 16 bytes of the file                                    |
+| Page 1              | Salt replaces the SQLite header; ciphertext starts at byte 16 |
+
+The passphrase is a single constant shared by every save: `13314374259236352028`. It is derived by hashing a string embedded in the client with FNV-1a-64 over its UTF-16 code units, so the same key opens every save without user input.
+
+Each page is encrypted independently. The HMAC covers the ciphertext, the per-page IV, and the 1-based page number encoded little-endian. A fresh random IV is generated for every page when writing; the original salt is reused so the game derives the same key.
+
+### Decrypting
+
+1. Read the 16-byte salt from the start of the file.
+2. Derive the encryption key with PBKDF2-HMAC-SHA512 over the passphrase and salt.
+3. Derive the HMAC key with PBKDF2-HMAC-SHA512 over the encryption key and `salt XOR 0x3a`.
+4. For each 4096-byte page, verify the stored HMAC, then AES-256-CBC decrypt the page body with the stored IV.
+5. Write the standard SQLite header (`SQLite format 3\0`) over the salt area of page 1.
+
+The result is a normal SQLite database with 80 reserved bytes at the end of every page. SQLite itself ignores those bytes, so the editor can use an ordinary `rusqlite` connection while the reserved space stays available for re-encryption.
+
+### Encrypting
+
+1. Flush SQLite's WAL and cache.
+2. Read the plaintext database, which must stay a multiple of 4096 bytes.
+3. Derive the keys from the original salt.
+4. Encrypt every page, generate a new IV, compute the HMAC, and write both into the page's reserved area.
+5. Write the salt back over the SQLite header area of page 1.
+6. Replace the original file atomically.
+
+## Database schema
+
+The save is a full game database. These are the tables the typed screens use; the raw browser exposes every table in the save.
+
+| Table               | Used for                                                                                 |
+| ------------------- | ---------------------------------------------------------------------------------------- |
+| `tb_user`           | One row per account: `USER_DBID`, region, section, position, stamina, title, timestamps. |
+| `tb_advent_status`  | `ADV_GRADE`, `ADV_LEVEL`, `ADV_EXP`, `NICK_NAME`, `PLAY_TIME`.                           |
+| `tb_currency`       | `ITEM_CID`, `AMOUNT` for gold and aether crystals.                                       |
+| `tb_stackable_item` | `ITEM_CID`, `STACK_CNT` for materials and cooked food.                                   |
+| `tb_character`      | `CHARACTER_CID`, level, EXP, ascension, HP, transcendence, soldier grade.                |
+| `tb_skill_growth`   | `CHARACTER_CID`, `TYPE_VALUE`, `SLOT_LEVEL` for character skills.                        |
+| `tb_team`           | `PAGE_ID` and three character slots per team page.                                       |
+| `tb_equipment`      | `ITEM_DBID`, enchant, EXP, lock, `GEM_DBID`, main/sub stat CIDs and values.              |
+| `tb_gem`            | `ITEM_DBID`, `STAT_INFO_CID`, lock state.                                                |
+| `tb_karma`          | `ITEM_DBID`, EXP, ascension, transcendence, lock state.                                  |
+| `tb_equip_mount`    | Links a character to equipment slots, a karma spirit, and a mount.                       |
+| `tb_costume`        | `COSTUME_DBID`, `COSTUME_CID`, `EQUIP_CHARACTER_CID`, `PARTS_ON`, `IS_NEW`.              |
+| `tb_vehicle`        | `VEHICLE_DBID`, `VEHICLE_CID`, `CREATED_DATE` for mounts.                                |
+| `tb_title`          | Title unlock bits, grouped by `CATEGORY`, with `FAV_BIT_FIELD`.                          |
+| `tb_switch`         | General switch bits; cooking recipes use the `CATEGORY`/bit pairs.                       |
+
+`USER_DBID` scopes almost every gameplay row. The editor reads it once when opening the save and uses it in every query.
+
+## Bitmasks
+
+Titles and recipes are not rows per item. They are bits in a signed 64-bit column:
+
+```
+CATEGORY = id / 64
+bit      = id % 64
+```
+
+`tb_title` stores title bits and a separate favourites mask. The editor treats a missing `FAV_BIT_FIELD` as zero and preserves an existing mask when unlocking a title. `tb_switch` stores recipe bits; the catalog has 1,025 recipes across categories 15 through 62.
+
+## Content IDs and instance IDs
+
+Content IDs (`*_CID`) identify catalog entries: characters 10001–10040, currencies 1000001/1000002, mounts 132xxxx, costumes 999xxxx, gear 136–139xxxx, food 142xxxx, and titles 210xxxx. The bundled catalog maps CIDs to names, categories, and sprite positions.
+
+Instance IDs (`ITEM_DBID`, `GEM_DBID`, `COSTUME_DBID`, `VEHICLE_DBID`) are 64-bit values that identify a particular copy of an item. They routinely exceed JavaScript's safe integer range, so the Tauri boundary carries them as decimal strings and Rust parses them as `i64`.
+
+Equipment stat CIDs pack a stat type and a value: the main stat uses `5000 + type * 100 + value` and sub stats use `50000 + type * 100 + value`. The type table is not published, so the editor exposes the resulting CID as a raw number.
+
+## Write pipeline
+
+Opening a save never modifies it:
+1. Read the encrypted file and decrypt it to a private temporary file.
+2. Open the temporary file with `rusqlite`, foreign keys off, journal mode `DELETE`.
+3. Apply edits to the temporary database.
+
+Saving is explicit:
+1. Flush the connection and read the plaintext database.
+2. On the first write of a session, copy the original encrypted file to `<save>.<YYYYMMDD-HHMMSS>.bak`.
+3. Encrypt with the original salt.
+4. Write to a temporary file in the save directory, `fsync` it, then rename it over the original.
+5. `fsync` the directory on Unix.
+
+The original encrypted file is never partially overwritten: a failed write leaves the previous file in place. The plaintext temporary database is created with owner-only permissions on Unix and deleted when the session closes or the app exits.
+
+## Compatibility notes
+
+- The editor leaves the sibling `.sav` and screenshot alone. The game reads the `.db` for the data shown in the editor.
+- Unknown tables and columns are preserved because edits are ordinary SQL statements against a full copy of the database.
+- A future game build can change the schema. The raw browser and the schema dialog are the escape hatch; the typed screens fail loudly rather than guessing.
+- Close the game before saving. A running game keeps the database open and may write over the file after the editor replaces it.

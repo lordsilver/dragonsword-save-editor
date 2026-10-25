@@ -1,0 +1,487 @@
+//! Opening, editing, and writing back a save database.
+
+use std::fs::{self, File, OpenOptions};
+use std::io::Write;
+use std::path::{Path, PathBuf};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
+use base64::Engine;
+use base64::engine::general_purpose::STANDARD as BASE64;
+use rusqlite::{Connection, OpenFlags, OptionalExtension};
+use serde::Serialize;
+use walkdir::WalkDir;
+
+use crate::catalog::Catalog;
+use crate::error::{Error, Result};
+use crate::sqlcipher;
+
+/// A save slot found on disk, without decrypting it.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SlotInfo {
+    pub path: String,
+    pub account_id: String,
+    pub slot: i64,
+    /// Sibling `ScreenShot_<N>.png`, inlined as a data URL when present.
+    pub screenshot: Option<String>,
+    pub sav: Option<String>,
+    pub modified_ms: i64,
+    pub size: i64,
+}
+
+/// The result of writing an edited save.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WriteReport {
+    pub backup: Option<String>,
+    pub bytes: i64,
+    pub path: String,
+}
+
+/// An open save. The encrypted file stays untouched until [`SaveSession::write`];
+/// edits happen in a temporary plaintext SQLite database.
+pub struct SaveSession {
+    path: PathBuf,
+    salt: [u8; 16],
+    temp: PathBuf,
+    conn: Option<Connection>,
+    user_id: i64,
+    dirty: bool,
+    backup_made: bool,
+    last_backup: Option<PathBuf>,
+}
+
+impl SaveSession {
+    /// Decrypt `path` into a private temporary database and open it for editing.
+    pub fn open(path: impl AsRef<Path>) -> Result<Self> {
+        let path = path.as_ref().to_path_buf();
+        if !path.is_file() {
+            return Err(Error::Missing(path));
+        }
+        let encrypted = fs::read(&path)?;
+        let salt = sqlcipher::salt(&encrypted)?;
+        let plain = sqlcipher::decrypt(&encrypted, sqlcipher::PASSPHRASE)?;
+        if !plain.starts_with(b"SQLite format 3\0") {
+            return Err(Error::Crypto(
+                "decrypted save is not a SQLite database".into(),
+            ));
+        }
+
+        let temp = temp_path();
+        write_private(&temp, &plain)?;
+        let opened = (|| -> Result<(Connection, i64)> {
+            let conn = Connection::open_with_flags(
+                &temp,
+                OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_NO_MUTEX,
+            )?;
+            conn.busy_timeout(Duration::from_secs(10))?;
+            conn.execute_batch(
+                "PRAGMA journal_mode=DELETE;
+                 PRAGMA foreign_keys=OFF;
+                 PRAGMA synchronous=FULL;
+                 PRAGMA temp_store=MEMORY;",
+            )?;
+            let has_user: Option<String> = conn
+                .query_row(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='tb_user'",
+                    [],
+                    |row| row.get(0),
+                )
+                .optional()?;
+            if has_user.is_none() {
+                return Err(Error::Schema("save database has no tb_user table".into()));
+            }
+            let user_id: i64 =
+                conn.query_row("SELECT USER_DBID FROM tb_user LIMIT 1", [], |row| {
+                    row.get(0)
+                })?;
+            Ok((conn, user_id))
+        })();
+        match opened {
+            Ok((conn, user_id)) => Ok(Self {
+                path,
+                salt,
+                temp,
+                conn: Some(conn),
+                user_id,
+                dirty: false,
+                backup_made: false,
+                last_backup: None,
+            }),
+            Err(error) => {
+                let _ = fs::remove_file(&temp);
+                Err(error)
+            }
+        }
+    }
+
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+
+    pub fn user_id(&self) -> i64 {
+        self.user_id
+    }
+
+    pub fn dirty(&self) -> bool {
+        self.dirty
+    }
+
+    pub fn last_backup(&self) -> Option<&Path> {
+        self.last_backup.as_deref()
+    }
+
+    pub fn account_id(&self) -> String {
+        self.path
+            .parent()
+            .and_then(Path::file_name)
+            .map(|name| name.to_string_lossy().to_string())
+            .unwrap_or_default()
+    }
+
+    pub fn slot(&self) -> i64 {
+        parse_slot(&self.path).map(|(_, slot)| slot).unwrap_or(0)
+    }
+
+    pub(crate) fn conn(&self) -> &Connection {
+        self.conn.as_ref().expect("save connection is open")
+    }
+
+    pub(crate) fn touch(&mut self) {
+        self.dirty = true;
+    }
+
+    pub fn catalog_game<'a>(&'a mut self, catalog: &'a Catalog) -> crate::domain::Game<'a> {
+        crate::domain::Game::new(self, catalog)
+    }
+
+    /// Re-encrypt the edited database and atomically replace the save file. The
+    /// first write in a session copies the original to a timestamped `.bak`.
+    pub fn write(&mut self) -> Result<WriteReport> {
+        let _ = self
+            .conn()
+            .execute_batch("PRAGMA wal_checkpoint(TRUNCATE);");
+        self.conn().cache_flush()?;
+
+        let plain = fs::read(&self.temp)?;
+        let encrypted = sqlcipher::encrypt_verified(&plain, sqlcipher::PASSPHRASE, &self.salt)?;
+
+        let backup = if self.backup_made {
+            None
+        } else {
+            let original = fs::read(&self.path)?;
+            let backup = self.make_backup(&original)?;
+            self.backup_made = true;
+            Some(backup.to_string_lossy().to_string())
+        };
+
+        atomic_write(&self.path, &encrypted)?;
+        self.dirty = false;
+        Ok(WriteReport {
+            backup,
+            bytes: encrypted.len() as i64,
+            path: self.path.to_string_lossy().to_string(),
+        })
+    }
+
+    /// Copy the current on-disk save to a timestamped backup, even if this
+    /// session has not written yet.
+    pub fn backup_now(&mut self) -> Result<String> {
+        let original = fs::read(&self.path)?;
+        let path = self.make_backup(&original)?;
+        Ok(path.to_string_lossy().to_string())
+    }
+
+    fn make_backup(&mut self, bytes: &[u8]) -> Result<PathBuf> {
+        let stamp = chrono::Local::now().format("%Y%m%d-%H%M%S");
+        let base = format!("{}.{stamp}.bak", self.path.display());
+        let mut candidate = PathBuf::from(&base);
+        let mut index = 1;
+        while candidate.exists() {
+            candidate = PathBuf::from(format!("{base}-{index}"));
+            index += 1;
+        }
+        write_new(&candidate, bytes)?;
+        self.last_backup = Some(candidate.clone());
+        Ok(candidate)
+    }
+
+    /// Release the database and delete the plaintext temporary file.
+    pub fn close(mut self) {
+        self.cleanup();
+    }
+
+    fn cleanup(&mut self) {
+        if let Some(conn) = self.conn.take() {
+            drop(conn);
+        }
+        let _ = fs::remove_file(&self.temp);
+        for suffix in ["-journal", "-wal", "-shm"] {
+            let _ = fs::remove_file(format!("{}{suffix}", self.temp.display()));
+        }
+    }
+}
+
+impl Drop for SaveSession {
+    fn drop(&mut self) {
+        self.cleanup();
+    }
+}
+
+fn temp_path() -> PathBuf {
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_nanos())
+        .unwrap_or_default();
+    std::env::temp_dir().join(format!("dsa-save-{}-{nanos}.db", std::process::id()))
+}
+
+fn write_private(path: &Path, bytes: &[u8]) -> Result<()> {
+    let mut options = OpenOptions::new();
+    options.write(true).create_new(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    let mut file = options.open(path)?;
+    file.write_all(bytes)?;
+    file.sync_all()?;
+    Ok(())
+}
+
+fn write_new(path: &Path, bytes: &[u8]) -> Result<()> {
+    let mut options = OpenOptions::new();
+    options.write(true).create_new(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    let mut file = options.open(path)?;
+    file.write_all(bytes)?;
+    file.sync_all()?;
+    Ok(())
+}
+
+fn atomic_write(path: &Path, bytes: &[u8]) -> Result<()> {
+    let directory = path.parent().unwrap_or_else(|| Path::new("."));
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_nanos())
+        .unwrap_or_default();
+    let temporary = directory.join(format!(".dsa-write-{}-{nanos}", std::process::id()));
+    write_private(&temporary, bytes)?;
+    if let Err(error) = fs::rename(&temporary, path) {
+        let _ = fs::remove_file(&temporary);
+        return Err(error.into());
+    }
+    // Flush the directory entry where the platform supports it.
+    #[cfg(unix)]
+    if let Ok(directory) = File::open(directory) {
+        let _ = directory.sync_all();
+    }
+    Ok(())
+}
+
+/// Parse `<account>_Slot<N>.db` into its account id and slot number.
+pub fn parse_slot(path: &Path) -> Option<(String, i64)> {
+    let name = path.file_name()?.to_str()?;
+    let (account, rest) = name.split_once("_Slot")?;
+    let slot = rest.strip_suffix(".db")?.parse::<i64>().ok()?;
+    Some((account.to_string(), slot))
+}
+
+/// List save slots under a game folder (or a single `.db` file), newest first.
+pub fn discover(root: impl AsRef<Path>) -> Result<Vec<SlotInfo>> {
+    let root = root.as_ref();
+    if !root.exists() {
+        return Err(Error::Missing(root.to_path_buf()));
+    }
+    let mut files = Vec::new();
+    if root.is_file() {
+        if parse_slot(root).is_some() {
+            files.push(root.to_path_buf());
+        }
+    } else {
+        for entry in WalkDir::new(root)
+            .max_depth(8)
+            .follow_links(false)
+            .into_iter()
+            .filter_map(std::result::Result::ok)
+        {
+            let path = entry.path();
+            if entry.file_type().is_file() && parse_slot(path).is_some() {
+                files.push(path.to_path_buf());
+            }
+        }
+    }
+
+    let mut slots = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+    for path in files {
+        let Ok(canonical) = fs::canonicalize(&path) else {
+            continue;
+        };
+        if !seen.insert(canonical.clone()) {
+            continue;
+        }
+        let Some((account_id, slot)) = parse_slot(&path) else {
+            continue;
+        };
+        let metadata = match fs::metadata(&path) {
+            Ok(metadata) => metadata,
+            Err(_) => continue,
+        };
+        let parent = path.parent().unwrap_or_else(|| Path::new("."));
+        let screenshot_path = parent.join(format!("ScreenShot_{slot}.png"));
+        let sav_path = parent.join(format!("SPack_Slot{slot}.sav"));
+        let modified_ms = metadata
+            .modified()
+            .ok()
+            .and_then(|time| time.duration_since(UNIX_EPOCH).ok())
+            .map(|duration| duration.as_millis() as i64)
+            .unwrap_or(0);
+        slots.push(SlotInfo {
+            path: path.to_string_lossy().to_string(),
+            account_id,
+            slot,
+            screenshot: thumbnail_data_url(&screenshot_path),
+            sav: sav_path
+                .is_file()
+                .then(|| sav_path.to_string_lossy().to_string()),
+            modified_ms,
+            size: metadata.len() as i64,
+        });
+    }
+    slots.sort_by(|left, right| {
+        right
+            .modified_ms
+            .cmp(&left.modified_ms)
+            .then_with(|| left.path.cmp(&right.path))
+    });
+    Ok(slots)
+}
+
+/// Read a slot screenshot and inline it. The game names these `.png` but writes
+/// JPEG data, so the MIME type is sniffed from the bytes.
+pub fn thumbnail_data_url(path: &Path) -> Option<String> {
+    let bytes = fs::read(path).ok()?;
+    let mime = if bytes.starts_with(&[0xff, 0xd8, 0xff]) {
+        "image/jpeg"
+    } else if bytes.starts_with(&[0x89, b'P', b'N', b'G']) {
+        "image/png"
+    } else if bytes.len() > 12 && &bytes[..4] == b"RIFF" && &bytes[8..12] == b"WEBP" {
+        "image/webp"
+    } else {
+        return None;
+    };
+    Some(format!("data:{mime};base64,{}", BASE64.encode(bytes)))
+}
+
+/// Likely install locations for the game, for the "scan automatically" action.
+pub fn suggest_roots() -> Vec<PathBuf> {
+    let mut roots = Vec::new();
+    if cfg!(windows) {
+        if let Some(local) = std::env::var_os("LOCALAPPDATA") {
+            let local = PathBuf::from(local);
+            roots.push(local.join("DragonSword Awakening"));
+            roots.push(local.join("DS"));
+        }
+        if let Some(profile) = std::env::var_os("USERPROFILE") {
+            roots.push(
+                PathBuf::from(profile)
+                    .join("Documents")
+                    .join("DragonSword Awakening"),
+            );
+        }
+        for steam in [
+            PathBuf::from(r"C:\Program Files (x86)\Steam"),
+            PathBuf::from(r"C:\Program Files\Steam"),
+        ] {
+            roots.extend(steam_libraries(&steam));
+        }
+    } else if cfg!(target_os = "macos") {
+        if let Some(home) = std::env::var_os("HOME") {
+            let home = PathBuf::from(home);
+            roots.push(
+                home.join(
+                    "Library/Application Support/Steam/steamapps/common/DragonSword Awakening",
+                ),
+            );
+        }
+    } else if let Some(home) = std::env::var_os("HOME") {
+        let home = PathBuf::from(home);
+        for steam in [
+            home.join(".local/share/Steam"),
+            home.join(".steam/steam"),
+            home.join(".var/app/com.valvesoftware.Steam/data/Steam"),
+        ] {
+            roots.extend(steam_libraries(&steam));
+        }
+        roots.push(home.join("Games/DragonSword Awakening"));
+    }
+    roots.retain(|path| path.is_dir());
+    roots.sort();
+    roots.dedup();
+    roots
+}
+
+fn steam_libraries(steam: &Path) -> Vec<PathBuf> {
+    let mut libraries = vec![steam.join("steamapps/common/DragonSword Awakening")];
+    let vdf = steam.join("steamapps/libraryfolders.vdf");
+    if let Ok(contents) = fs::read_to_string(vdf) {
+        for line in contents.lines() {
+            let line = line.trim();
+            let Some(rest) = line.strip_prefix("\"path\"") else {
+                continue;
+            };
+            let Some(value) = rest.trim().strip_prefix('"') else {
+                continue;
+            };
+            let Some(end) = value.rfind('"') else {
+                continue;
+            };
+            let path = value[..end].replace("\\\\", "\\");
+            libraries.push(PathBuf::from(path).join("steamapps/common/DragonSword Awakening"));
+        }
+    }
+    libraries
+}
+
+/// Whether a path looks like a save database (without decrypting it).
+pub fn looks_like_save(path: &Path) -> bool {
+    parse_slot(path).is_some()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_slot_names() {
+        assert_eq!(
+            parse_slot(Path::new("/saves/123456789/123456789_Slot3.db")),
+            Some(("123456789".into(), 3))
+        );
+        assert_eq!(parse_slot(Path::new("/saves/123456789/notes.db")), None);
+        assert_eq!(
+            parse_slot(Path::new("/saves/123456789/123456789_SlotX.db")),
+            None
+        );
+    }
+
+    #[test]
+    fn discovers_and_sorts_slots() {
+        let root = std::env::temp_dir().join(format!("dsa-discover-{}", std::process::id()));
+        let account = root.join("123456789");
+        fs::create_dir_all(&account).expect("mkdir");
+        let first = account.join("123456789_Slot1.db");
+        let second = account.join("123456789_Slot2.db");
+        fs::write(&first, b"x").expect("write");
+        fs::write(&second, b"x").expect("write");
+        let slots = discover(&root).expect("discover");
+        assert_eq!(slots.len(), 2);
+        let _ = fs::remove_dir_all(&root);
+    }
+}

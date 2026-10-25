@@ -1,0 +1,26 @@
+[package]
+name = "dsa-core"
+description = "Save format, catalog, and editing engine for DragonSword Awakening"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[dependencies]
+aes = { workspace = true }
+base64 = { workspace = true }
+cbc = { workspace = true }
+chrono = { workspace = true }
+hmac = { workspace = true }
+pbkdf2 = { workspace = true }
+rand = { workspace = true }
+rusqlite = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+subtle = { workspace = true }
+thiserror = { workspace = true }
+walkdir = { workspace = true }
+
+[lints]
+workspace = true

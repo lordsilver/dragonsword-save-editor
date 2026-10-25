@@ -1,0 +1,4 @@
+{
+  "_note": "Curated bilingual names for items the datamined catalog still lacks (e.g. a few CIDs with no resolvable string). Merged into the catalog only for CIDs absent from items.json. Currently empty.",
+  "items": {}
+}
