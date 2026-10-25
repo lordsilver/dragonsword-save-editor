@@ -9,11 +9,12 @@ export function TopBar() {
   const section = useApp((state) => state.section);
   const save = useApp((state) => state.save);
   const dirty = useApp((state) => state.dirty);
+  const draftCount = useApp((state) => state.draftCount);
   const pending = useApp((state) => state.pending);
   const saveNow = useApp((state) => state.saveNow);
   const backupNow = useApp((state) => state.backupNow);
 
-  const busy = pending !== null;
+  const hasChanges = dirty || draftCount > 0;
 
   return (
     <header className="flex h-13 shrink-0 items-center justify-between gap-4 border-b bg-background/55 px-5 backdrop-blur">
@@ -25,7 +26,7 @@ export function TopBar() {
             <span className="truncate font-mono text-[11px] text-muted-foreground" title={save.path}>
               {save.path.split(/[\\/]/).slice(-2).join('/')}
             </span>
-            {dirty && (
+            {hasChanges && (
               <Badge variant="outline" className="border-brand/30 bg-brand/10 text-brand">
                 Unsaved
               </Badge>
@@ -43,11 +44,11 @@ export function TopBar() {
         )}
         {save && (
           <>
-            <Button variant="ghost" size="sm" disabled={busy} onClick={() => void backupNow()}>
+            <Button variant="ghost" size="sm" onClick={() => void backupNow()}>
               <HardDriveDownload />
               Backup
             </Button>
-            <Button size="sm" disabled={busy || !dirty} onClick={() => void saveNow()}>
+            <Button size="sm" disabled={pending === 'Writing save'} onClick={() => void saveNow()}>
               <Save />
               Save changes
             </Button>

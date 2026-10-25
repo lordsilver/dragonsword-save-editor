@@ -48,6 +48,8 @@ export interface AppState {
   scan: ScanResult;
   save: SaveHandle | null;
   dirty: boolean;
+  /// Number of number fields currently holding an uncommitted draft.
+  draftCount: number;
   section: Section;
   loading: boolean;
   pending: string | null;
@@ -79,8 +81,12 @@ export interface AppActions {
   refreshScan(path?: string): Promise<void>;
   openSave(path: string): Promise<boolean>;
   closeCurrent(): Promise<void>;
-  saveNow(): Promise<void>;
+  /** Drop the session whatever its dirty state. */
+  discardCurrent(refresh?: boolean): Promise<void>;
+  saveNow(): Promise<boolean>;
   backupNow(): Promise<void>;
+  /** Record or release one field's uncommitted draft. */
+  markDraft(active: boolean): void;
   setSettings(patch: Partial<Settings>): Promise<void>;
   setSection(section: Section): void;
   loadSection(section?: Section): Promise<void>;
@@ -157,6 +163,7 @@ function initialState(): AppState {
     scan: EMPTY_SCAN,
     save: null,
     dirty: false,
+    draftCount: 0,
     section: 'overview',
     loading: false,
     pending: null,
@@ -185,18 +192,41 @@ function initialState(): AppState {
 }
 
 export const useApp = create<Store>((set, get) => {
+  // One action at a time. A save must wait for every mutation that was
+  // started before it, and two writes must never overlap. Loads are not
+  // queued: they only read, and queueing them would deadlock the reload that
+  // a mutation performs inside its own task.
+  let queue: Promise<unknown> = Promise.resolve();
+  let savePromise: Promise<boolean> | null = null;
+
+  function enqueue<T>(label: string, task: () => Promise<T>): Promise<T> {
+    const start = async (): Promise<T> => {
+      set({ pending: label });
+      try {
+        return await task();
+      } finally {
+        set({ pending: null });
+      }
+    };
+    const run = queue.then(start, start);
+    queue = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    return run;
+  }
+
   async function attempt<T>(label: string, action: () => Promise<T>, after?: () => Promise<void>): Promise<T | null> {
-    set({ pending: label });
     try {
-      const result = await action();
-      set({ dirty: true });
-      if (after) await after();
-      return result;
+      return await enqueue(label, async () => {
+        const result = await action();
+        set({ dirty: true });
+        if (after) await after();
+        return result;
+      });
     } catch (error) {
       toast.error(message(error));
       return null;
-    } finally {
-      set({ pending: null });
     }
   }
 
@@ -247,103 +277,136 @@ export const useApp = create<Store>((set, get) => {
     },
 
     async openSave(path) {
-      set({ pending: 'Opening save' });
-      try {
-        const save = await api.openSave(path);
-        const folder = path.replace(/[\\/][^\\/]+$/, '');
-        set({
-          save,
-          dirty: false,
-          section: 'overview',
-          overview: null,
-          currencies: [],
-          inventory: [],
-          characters: [],
-          selectedCharacter: null,
-          equipment: [],
-          gems: [],
-          karma: [],
-          costumes: [],
-          mounts: [],
-          titles: [],
-          recipes: [],
-          rawTables: [],
-          rawPage: null,
-        });
-        await get().setSettings({ lastFolder: folder });
-        await get().loadSection('overview');
-        toast.success(`Opened slot ${save.slot} of account ${save.accountId}`);
-        for (const warning of save.warnings ?? []) {
-          toast.warning(warning, { duration: 15000 });
-        }
-        if (consistencyIssues(save.consistency).length > 0) {
-          toast.warning('This save already has broken gem links', {
-            description: 'Open the overview to see them. The editor will not create new ones.',
-            duration: 20000,
+      return enqueue('Opening save', async () => {
+        try {
+          const save = await api.openSave(path);
+          const folder = path.replace(/[\\/][^\\/]+$/, '');
+          set({
+            save,
+            dirty: false,
+            draftCount: 0,
+            section: 'overview',
+            overview: null,
+            currencies: [],
+            inventory: [],
+            characters: [],
+            selectedCharacter: null,
+            equipment: [],
+            gems: [],
+            karma: [],
+            costumes: [],
+            mounts: [],
+            titles: [],
+            recipes: [],
+            rawTables: [],
+            rawPage: null,
           });
+          await get().setSettings({ lastFolder: folder });
+          await get().loadSection('overview');
+          toast.success(`Opened slot ${save.slot} of account ${save.accountId}`);
+          for (const warning of save.warnings ?? []) {
+            toast.warning(warning, { duration: 15000 });
+          }
+          if (consistencyIssues(save.consistency).length > 0) {
+            toast.warning('This save already has broken gem links', {
+              description: 'Open the overview to see them. The editor will not create new ones.',
+              duration: 20000,
+            });
+          }
+          return true;
+        } catch (error) {
+          toast.error(message(error));
+          return false;
         }
-        return true;
-      } catch (error) {
-        toast.error(message(error));
-        return false;
-      } finally {
-        set({ pending: null });
-      }
+      });
     },
 
     async closeCurrent() {
-      if (get().dirty) {
+      if (get().dirty || get().draftCount > 0) {
         toast.error('Save or discard your changes before closing this save.');
         return;
       }
-      await api.closeSave();
-      set({ save: null, overview: null, section: 'overview' });
-      await get().refreshScan(get().settings.lastFolder ?? undefined);
+      await get().discardCurrent();
+    },
+
+    async discardCurrent(refresh = true) {
+      try {
+        await enqueue('Closing save', async () => {
+          await api.closeSave();
+          set({ save: null, dirty: false, draftCount: 0, overview: null, section: 'overview' });
+          if (refresh) await get().refreshScan(get().settings.lastFolder ?? undefined);
+        });
+      } catch (error) {
+        toast.error(message(error));
+      }
     },
 
     async saveNow() {
-      if (get().pending) return;
-      set({ pending: 'Writing save' });
-      try {
-        const report = await api.writeSave();
-        const current = get().save;
-        set({
-          dirty: false,
-          save: current ? { ...current, dirty: false, consistency: report.consistency } : null,
-        });
-        toast.success(report.backup ? `Save written. Backup kept at ${report.backup}` : 'Save written.', {
-          duration: 8000,
-        });
-        await get().loadOverview();
-      } catch (error) {
-        if (errorKind(error) === 'stale') {
-          const path = get().save?.path;
-          toast.error(message(error), {
-            duration: 20000,
-            description: 'Reopening discards the edits you have not saved.',
-            action: path ? { label: 'Reopen', onClick: () => void get().openSave(path) } : undefined,
+      // A focused number field has not committed yet. Blurring queues its
+      // mutation before the save, so the save waits for it instead of writing
+      // the value that was on screen before the user started typing.
+      if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      if (savePromise) return savePromise;
+      savePromise = enqueue('Writing save', async () => {
+        try {
+          const current = await api.currentSave();
+          if (!current) {
+            toast.error('No save is open.');
+            return false;
+          }
+          if (!current.dirty) {
+            toast.info('No changes to save.');
+            return true;
+          }
+          const report = await api.writeSave();
+          set({
+            dirty: false,
+            draftCount: 0,
+            save: { ...current, dirty: false, consistency: report.consistency },
           });
-        } else if (errorKind(error) === 'inconsistent') {
-          toast.error(message(error), { duration: 20000 });
-        } else {
-          toast.error(message(error));
+          toast.success(report.backup ? `Save written. Backup kept at ${report.backup}` : 'Save written.', {
+            duration: 8000,
+          });
+          await get().loadOverview();
+          return true;
+        } catch (error) {
+          if (errorKind(error) === 'stale') {
+            const path = get().save?.path;
+            toast.error(message(error), {
+              duration: 20000,
+              description: 'Reopening discards the edits you have not saved.',
+              action: path ? { label: 'Reopen', onClick: () => void get().openSave(path) } : undefined,
+            });
+          } else if (errorKind(error) === 'inconsistent') {
+            toast.error(message(error), { duration: 20000 });
+          } else {
+            toast.error(message(error));
+          }
+          return false;
         }
+      });
+      try {
+        return await savePromise;
       } finally {
-        set({ pending: null });
+        savePromise = null;
       }
     },
 
     async backupNow() {
-      if (get().pending) return;
-      set({ pending: 'Copying backup' });
-      try {
-        const path = await api.backupSave();
-        toast.success(`Backup written to ${path}`, { duration: 8000 });
-      } catch (error) {
-        toast.error(message(error));
-      } finally {
-        set({ pending: null });
-      }
+      await enqueue('Copying backup', async () => {
+        try {
+          const path = await api.backupSave();
+          toast.success(`Backup written to ${path}`, { duration: 8000 });
+        } catch (error) {
+          toast.error(message(error));
+        }
+      });
+    },
+
+    markDraft(active) {
+      set((state) => ({ draftCount: Math.max(0, state.draftCount + (active ? 1 : -1)) }));
     },
 
     async setSettings(patch) {

@@ -76,10 +76,12 @@ export function Sidebar() {
 function SaveDock() {
   const save = useApp((state) => state.save);
   const dirty = useApp((state) => state.dirty);
+  const draftCount = useApp((state) => state.draftCount);
   const pending = useApp((state) => state.pending);
   const saveNow = useApp((state) => state.saveNow);
   const backupNow = useApp((state) => state.backupNow);
   const closeCurrent = useApp((state) => state.closeCurrent);
+  const discardCurrent = useApp((state) => state.discardCurrent);
   const [closeOpen, setCloseOpen] = useState(false);
 
   if (!save) {
@@ -93,7 +95,7 @@ function SaveDock() {
     );
   }
 
-  const busy = pending !== null;
+  const hasChanges = dirty || draftCount > 0;
 
   return (
     <div className="space-y-2 border-t bg-background/30 p-3">
@@ -106,20 +108,14 @@ function SaveDock() {
             <span
               className={cn(
                 'size-1.5 rounded-full',
-                dirty ? 'bg-brand shadow-[0_0_6px_var(--brand)]' : 'bg-emerald-400/70',
+                hasChanges ? 'bg-brand shadow-[0_0_6px_var(--brand)]' : 'bg-emerald-400/70',
               )}
             />
-            {dirty ? 'Unsaved changes' : 'Save file is current'}
+            {hasChanges ? 'Unsaved changes' : 'Save file is current'}
           </div>
         </div>
         <div className="flex shrink-0 gap-1">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            title="Write a backup copy now"
-            disabled={busy}
-            onClick={() => void backupNow()}
-          >
+          <Button variant="ghost" size="icon-sm" title="Write a backup copy now" onClick={() => void backupNow()}>
             <HardDriveDownload />
             <span className="sr-only">Backup now</span>
           </Button>
@@ -127,8 +123,18 @@ function SaveDock() {
             variant="ghost"
             size="icon-sm"
             title="Close this save"
-            disabled={busy}
-            onClick={() => (dirty ? setCloseOpen(true) : void closeCurrent())}
+            onClick={() => {
+              const state = useApp.getState();
+              if (
+                state.dirty ||
+                state.draftCount > 0 ||
+                (state.pending !== null && state.pending !== 'Copying backup')
+              ) {
+                setCloseOpen(true);
+              } else {
+                void closeCurrent();
+              }
+            }}
           >
             <LogOut />
             <span className="sr-only">Close save</span>
@@ -136,9 +142,9 @@ function SaveDock() {
         </div>
       </div>
 
-      <Button className="w-full" disabled={busy || !dirty} onClick={() => void saveNow()}>
+      <Button className="w-full" disabled={pending === 'Writing save'} onClick={() => void saveNow()}>
         {pending === 'Writing save' ? <Spinner /> : <Save />}
-        {pending === 'Writing save' ? 'Writing…' : dirty ? 'Save changes' : 'No changes to save'}
+        {pending === 'Writing save' ? 'Writing…' : hasChanges ? 'Save changes' : 'No changes to save'}
       </Button>
 
       <Dialog open={closeOpen} onOpenChange={setCloseOpen}>
@@ -159,16 +165,17 @@ function SaveDock() {
                 variant="outline"
                 onClick={() => {
                   setCloseOpen(false);
-                  void closeCurrent();
+                  void discardCurrent();
                 }}
               >
                 Discard changes
               </Button>
               <Button
                 onClick={async () => {
-                  await saveNow();
-                  setCloseOpen(false);
-                  await closeCurrent();
+                  if (await saveNow()) {
+                    setCloseOpen(false);
+                    await closeCurrent();
+                  }
                 }}
               >
                 Save and close

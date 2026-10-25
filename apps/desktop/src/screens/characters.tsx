@@ -347,7 +347,7 @@ function CharacterHero({
         </div>
         <ConfirmButton
           title={`Remove ${itemName(character.item, language)}?`}
-          description="Deletes the character row, their skills, their team placements and their equipment links. This cannot be undone except by discarding changes."
+          description="Deletes the character row, their skills, their team placements and their equipment links. Before saving, Discard changes undoes this along with every other unsaved edit."
           confirmLabel="Remove character"
           variant="destructive"
           size="sm"

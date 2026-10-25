@@ -1,10 +1,20 @@
+import { listen } from '@tauri-apps/api/event';
 import { AppWindow, FolderOpen, ShieldCheck, Terminal } from 'lucide-react';
-import { type ReactElement, type ReactNode, useEffect, useRef } from 'react';
+import { type ReactElement, type ReactNode, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Sidebar } from '@/components/sidebar';
 import { TopBar } from '@/components/top-bar';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
-import { pickSaveFile } from '@/lib/api';
+import { closeWindow, pickSaveFile } from '@/lib/api';
 import { useApp } from '@/lib/store';
 import type { Section } from '@/lib/types';
 import { CharactersScreen } from '@/screens/characters';
@@ -45,10 +55,13 @@ export function App() {
   const section = useApp((state) => state.section);
   const loading = useApp((state) => state.loading);
   const dirty = useApp((state) => state.dirty);
+  const draftCount = useApp((state) => state.draftCount);
   const boot = useApp((state) => state.boot);
   const saveNow = useApp((state) => state.saveNow);
+  const discardCurrent = useApp((state) => state.discardCurrent);
   const backupNow = useApp((state) => state.backupNow);
   const openSave = useApp((state) => state.openSave);
+  const [closeRequestOpen, setCloseRequestOpen] = useState(false);
   const started = useRef(false);
 
   useEffect(() => {
@@ -64,14 +77,39 @@ export function App() {
   }, [save]);
 
   useEffect(() => {
-    if (!dirty) return undefined;
+    if (!dirty && draftCount === 0) return undefined;
     const onBeforeUnload = (event: BeforeUnloadEvent): void => {
       event.preventDefault();
       event.returnValue = '';
     };
     window.addEventListener('beforeunload', onBeforeUnload);
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, [dirty]);
+  }, [dirty, draftCount]);
+
+  useEffect(() => {
+    if (!desktop) return undefined;
+    let disposed = false;
+    let unlisten: (() => void) | undefined;
+    void listen<boolean>('window-close-requested', (event) => {
+      const state = useApp.getState();
+      // The backend says whether the session is dirty. A field draft or an
+      // action that has not finished yet also counts as unsaved work.
+      if (!event.payload && state.draftCount === 0 && state.pending === null) {
+        void closeWindow().catch((error) => {
+          toast.error(error instanceof Error ? error.message : String(error));
+        });
+        return;
+      }
+      setCloseRequestOpen(true);
+    }).then((stop) => {
+      if (disposed) stop();
+      else unlisten = stop;
+    });
+    return () => {
+      disposed = true;
+      unlisten?.();
+    };
+  }, [desktop]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
@@ -80,7 +118,7 @@ export function App() {
       const key = event.key.toLowerCase();
       if (key === 's') {
         event.preventDefault();
-        if (save && dirty) void saveNow();
+        if (save) void saveNow();
         return;
       }
       if (key === 'b') {
@@ -90,7 +128,7 @@ export function App() {
       }
       if (key === 'o') {
         event.preventDefault();
-        if (dirty) {
+        if (dirty || draftCount > 0) {
           toast.error('Save or discard your changes before opening another save.');
           return;
         }
@@ -106,7 +144,7 @@ export function App() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [backupNow, dirty, openSave, save, saveNow]);
+  }, [backupNow, dirty, draftCount, openSave, save, saveNow]);
 
   if (!booted) return <BootSplash />;
   if (!desktop) return <DesktopRequired />;
@@ -132,6 +170,53 @@ export function App() {
           )}
         </div>
       </div>
+
+      <Dialog open={closeRequestOpen} onOpenChange={setCloseRequestOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Close the editor?</DialogTitle>
+            <DialogDescription>
+              You have unsaved changes. Saving writes the encrypted file and keeps a timestamped backup. Discarding
+              leaves the original file untouched.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:justify-between">
+            <Button variant="ghost" onClick={() => setCloseRequestOpen(false)}>
+              Cancel
+            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  setCloseRequestOpen(false);
+                  await discardCurrent(false);
+                  try {
+                    await closeWindow();
+                  } catch (error) {
+                    toast.error(error instanceof Error ? error.message : String(error));
+                  }
+                }}
+              >
+                Discard and close
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (await saveNow()) {
+                    setCloseRequestOpen(false);
+                    try {
+                      await closeWindow();
+                    } catch (error) {
+                      toast.error(error instanceof Error ? error.message : String(error));
+                    }
+                  }
+                }}
+              >
+                Save and close
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -88,6 +88,7 @@ The escape hatch. Pick a table, search every column, page through rows, and clic
 - **Backup** or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>B</kbd>: copies the current on-disk save to a timestamped `.bak` without writing edits.
 - **Open another save** or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>O</kbd>: blocked while there are unsaved changes.
 - **Close save** asks before discarding unsaved changes.
+- **Close the window**: asks to save and close, discard and close, or cancel when the save has unsaved changes or a value is still being typed. A clean save closes immediately.
 
 If the game wrote the slot after you opened it, saving is refused with a **Reopen** action. Reopening loads the game's newer progress and drops the edits in the editor; that is deliberate, because writing would overwrite the game's save.
 

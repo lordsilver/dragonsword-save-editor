@@ -14,7 +14,7 @@ use dsa_core::domain::{
 use dsa_core::raw::{RawPage, RawTable, RawValue};
 use dsa_core::{Catalog, Error, SaveSession, SlotInfo, WriteReport};
 use serde::Serialize;
-use tauri::{Manager, State};
+use tauri::{Emitter, Manager, State};
 
 use settings::{Settings, SettingsStore};
 
@@ -87,6 +87,15 @@ fn game<T>(
     let session = guard.as_mut().ok_or(Error::NotOpen)?;
     let mut game = session.catalog_game(Catalog::shared());
     run(&mut game).map_err(Into::into)
+}
+
+/// `None` when no save is open, otherwise the session's dirty flag.
+///
+/// The lock is released before the result is used, so emitting an event that
+/// makes the UI call back into a save command cannot deadlock.
+fn session_dirty(state: &AppState) -> Option<bool> {
+    let guard = state.session();
+    guard.as_ref().map(|session| session.dirty())
 }
 
 #[derive(Debug, Serialize)]
@@ -234,6 +243,19 @@ fn save_current(state: State<'_, AppState>) -> Option<SaveHandle> {
 #[tauri::command]
 fn save_close(state: State<'_, AppState>) {
     state.session().take();
+}
+
+/// Close the native window after the UI has saved or discarded.
+///
+/// The close guard refuses every native close while a session is open, so the
+/// session must be dropped before `destroy`; otherwise the close would be
+/// prevented again and the UI would be asked twice. Dropping the session also
+/// removes its temporary plaintext database.
+#[tauri::command]
+fn window_close(state: State<'_, AppState>, window: tauri::Window) -> CommandResult<()> {
+    state.session().take();
+    window.destroy().map_err(|error| error.to_string())?;
+    Ok(())
 }
 
 #[tauri::command]
@@ -581,6 +603,7 @@ pub fn run() {
             save_open,
             save_current,
             save_close,
+            window_close,
             save_write,
             save_backup,
             overview_get,
@@ -631,8 +654,34 @@ pub fn run() {
             raw_page,
             raw_update
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running DragonSword Save Editor");
+        .on_window_event(|window, event| {
+            // The webview's `beforeunload` does not run for a native close.
+            // Intercept it while a save is open and let the UI decide whether
+            // to save, discard or stay. A clean save still goes through the UI
+            // so a field that has not been committed yet is not lost.
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                let state = window.app_handle().state::<AppState>();
+                if let Some(dirty) = session_dirty(state.inner()) {
+                    api.prevent_close();
+                    let _ = window.emit("window-close-requested", dirty);
+                }
+            }
+        })
+        .build(tauri::generate_context!())
+        .expect("error while building DragonSword Save Editor")
+        .run(|app_handle, event| {
+            // Quitting through the menu or Cmd+Q does not raise a window
+            // close request. Ask the UI through the same event instead.
+            if let tauri::RunEvent::ExitRequested { api, .. } = event {
+                let state = app_handle.state::<AppState>();
+                if let Some(dirty) = session_dirty(state.inner()) {
+                    api.prevent_exit();
+                    if let Some(window) = app_handle.get_webview_window("main") {
+                        let _ = window.emit("window-close-requested", dirty);
+                    }
+                }
+            }
+        });
 }
 
 #[cfg(test)]

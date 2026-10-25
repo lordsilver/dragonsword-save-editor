@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
+import { useApp } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
 /**
@@ -26,12 +27,29 @@ export function NumberField({
   ariaLabel?: string;
 }) {
   const [draft, setDraft] = useState(String(value));
+  const draftActive = useRef(false);
 
   useEffect(() => {
     setDraft(String(value));
   }, [value]);
 
+  useEffect(() => {
+    return () => {
+      if (draftActive.current) {
+        draftActive.current = false;
+        useApp.getState().markDraft(false);
+      }
+    };
+  }, []);
+
+  const markDraft = (active: boolean): void => {
+    if (draftActive.current === active) return;
+    draftActive.current = active;
+    useApp.getState().markDraft(active);
+  };
+
   const commit = (): void => {
+    markDraft(false);
     const parsed = Number(draft.replaceAll(',', '').trim());
     if (!Number.isFinite(parsed)) {
       setDraft(String(value));
@@ -53,12 +71,16 @@ export function NumberField({
       value={draft}
       disabled={disabled}
       placeholder={placeholder}
-      onChange={(event) => setDraft(event.target.value)}
+      onChange={(event) => {
+        setDraft(event.target.value);
+        markDraft(true);
+      }}
       onBlur={commit}
       onKeyDown={(event) => {
         if (event.key === 'Enter') event.currentTarget.blur();
         if (event.key === 'Escape') {
           setDraft(String(value));
+          markDraft(false);
           event.currentTarget.blur();
         }
       }}
@@ -93,12 +115,29 @@ export function BigNumberField({
   ariaLabel?: string;
 }) {
   const [draft, setDraft] = useState(value);
+  const draftActive = useRef(false);
 
   useEffect(() => {
     setDraft(value);
   }, [value]);
 
+  useEffect(() => {
+    return () => {
+      if (draftActive.current) {
+        draftActive.current = false;
+        useApp.getState().markDraft(false);
+      }
+    };
+  }, []);
+
+  const markDraft = (active: boolean): void => {
+    if (draftActive.current === active) return;
+    draftActive.current = active;
+    useApp.getState().markDraft(active);
+  };
+
   const commit = (): void => {
+    markDraft(false);
     const trimmed = draft.replaceAll(',', '').trim();
     if (!/^\d+$/.test(trimmed)) {
       setDraft(value);
@@ -121,12 +160,16 @@ export function BigNumberField({
       value={draft}
       disabled={disabled}
       placeholder={placeholder}
-      onChange={(event) => setDraft(event.target.value)}
+      onChange={(event) => {
+        setDraft(event.target.value);
+        markDraft(true);
+      }}
       onBlur={commit}
       onKeyDown={(event) => {
         if (event.key === 'Enter') event.currentTarget.blur();
         if (event.key === 'Escape') {
           setDraft(value);
+          markDraft(false);
           event.currentTarget.blur();
         }
       }}

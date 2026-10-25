@@ -124,6 +124,11 @@ export async function closeSave(): Promise<void> {
   await invoke('save_close');
 }
 
+/** Close the native window after the session has been saved or discarded. */
+export async function closeWindow(): Promise<void> {
+  await invoke('window_close');
+}
+
 export async function writeSave(): Promise<WriteReport> {
   return invoke<WriteReport>('save_write');
 }
