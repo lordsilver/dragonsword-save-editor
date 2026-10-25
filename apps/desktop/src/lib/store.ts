@@ -104,7 +104,7 @@ export interface AppActions {
   setAdventureBatch(patch: Record<string, number>): Promise<void>;
   setCurrency(cid: number, amount: number): Promise<void>;
   setAllCurrencies(amount: number): Promise<void>;
-  setStack(kind: string, id: number, count: number): Promise<void>;
+  setStack(kind: string, id: string, count: number): Promise<void>;
   addStack(cid: number, count: number): Promise<void>;
   fillStacks(count: number): Promise<void>;
   setCharacter(cid: number, field: string, value: number): Promise<void>;
@@ -127,13 +127,23 @@ export interface AppActions {
   unlockAllTitles(): Promise<void>;
   setRecipe(key: number, known: boolean): Promise<void>;
   unlockAllRecipes(): Promise<void>;
-  rawUpdate(table: string, rowid: string, column: string, value: RawValue): Promise<void>;
+  rawUpdate(table: string, rowid: string, column: string, value: RawValue, advanced: boolean): Promise<void>;
 }
 
 export type Store = AppState & AppActions;
 
 function message(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  if (error && typeof error === 'object' && 'message' in error) {
+    return String((error as { message: unknown }).message);
+  }
+  return String(error);
+}
+
+/** The stable kind the Rust command error carries, when there is one. */
+function errorKind(error: unknown): string | null {
+  return error && typeof error === 'object' && 'kind' in error ? String((error as { kind: unknown }).kind) : null;
 }
 
 function initialState(): AppState {
@@ -262,6 +272,9 @@ export const useApp = create<Store>((set, get) => {
         await get().setSettings({ lastFolder: folder });
         await get().loadSection('overview');
         toast.success(`Opened slot ${save.slot} of account ${save.accountId}`);
+        for (const warning of save.warnings ?? []) {
+          toast.warning(warning, { duration: 15000 });
+        }
         return true;
       } catch (error) {
         toast.error(message(error));
@@ -293,7 +306,15 @@ export const useApp = create<Store>((set, get) => {
         });
         await get().loadOverview();
       } catch (error) {
-        toast.error(message(error));
+        if (errorKind(error) === 'stale') {
+          const path = get().save?.path;
+          toast.error(message(error), {
+            duration: 20000,
+            action: path ? { label: 'Reopen', onClick: () => void get().openSave(path) } : undefined,
+          });
+        } else {
+          toast.error(message(error));
+        }
       } finally {
         set({ pending: null });
       }
@@ -798,10 +819,10 @@ export const useApp = create<Store>((set, get) => {
       if (count !== null) toast.success('Every recipe is known.');
     },
 
-    async rawUpdate(table, rowid, column, value) {
+    async rawUpdate(table, rowid, column, value, advanced) {
       await attempt(
         'Writing cell',
-        () => api.rawUpdate(table, rowid, column, value),
+        () => api.rawUpdate(table, rowid, column, value, advanced),
         async () => {
           const page = get().rawPage;
           if (page) await get().loadRawPage(table, page.offset, page.search ?? '');

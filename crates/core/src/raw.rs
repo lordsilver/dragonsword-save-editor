@@ -28,6 +28,52 @@ impl RawValue {
         RawValue::Integer(value.to_string())
     }
 
+    fn type_name(&self) -> &'static str {
+        match self {
+            RawValue::Null => "NULL",
+            RawValue::Integer(_) => "integer",
+            RawValue::Real(_) => "real",
+            RawValue::Text(_) => "text",
+            RawValue::Blob(_) => "blob",
+        }
+    }
+
+    /// Reject a value the column's declared type would not store as written.
+    /// NULL is allowed only where the schema allows it.
+    fn check_type(&self, column: &RawColumn) -> Result<()> {
+        if matches!(self, RawValue::Null) {
+            if column.not_null {
+                return Err(Error::invalid(format!(
+                    "{} is NOT NULL; a null value cannot be written",
+                    column.name
+                )));
+            }
+            return Ok(());
+        }
+        let affinity = affinity(&column.kind);
+        let accepted = match (affinity, self) {
+            (Affinity::Integer, RawValue::Integer(_)) => true,
+            (Affinity::Real | Affinity::Numeric, RawValue::Integer(_) | RawValue::Real(_)) => true,
+            (Affinity::Text, RawValue::Text(_)) => true,
+            (Affinity::Any, RawValue::Blob(_)) => false,
+            (Affinity::Any, _) => true,
+            _ => false,
+        };
+        if !accepted {
+            return Err(Error::invalid(format!(
+                "{} is declared {}; a {} value cannot be written to it",
+                column.name,
+                if column.kind.is_empty() {
+                    "without a type"
+                } else {
+                    &column.kind
+                },
+                self.type_name()
+            )));
+        }
+        Ok(())
+    }
+
     fn to_sql(&self) -> Result<rusqlite::types::Value> {
         use rusqlite::types::Value;
         Ok(match self {
@@ -49,6 +95,8 @@ pub struct RawTable {
     pub name: String,
     pub rows: i64,
     pub columns: i64,
+    /// Seed tables (`tb_init_*`) are listed but never written.
+    pub read_only: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -59,6 +107,8 @@ pub struct RawColumn {
     pub kind: String,
     pub not_null: bool,
     pub primary_key: bool,
+    /// Keys and link columns. Editable only with advanced editing turned on.
+    pub read_only: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -80,6 +130,8 @@ pub struct RawPage {
     pub limit: i64,
     /// The search text used to filter rows, if any.
     pub search: Option<String>,
+    /// Seed tables are browsable but not writable.
+    pub read_only: bool,
 }
 
 impl SaveSession {
@@ -103,9 +155,10 @@ impl SaveSession {
             )?;
             let columns = columns(conn, &name)?.len() as i64;
             out.push(RawTable {
-                name,
+                name: name.clone(),
                 rows,
                 columns,
+                read_only: is_seed_table(&name),
             });
         }
         Ok(out)
@@ -173,6 +226,7 @@ impl SaveSession {
             });
         }
 
+        let read_only = is_seed_table(&table);
         Ok(RawPage {
             table,
             columns,
@@ -181,19 +235,28 @@ impl SaveSession {
             offset,
             limit,
             search: search.map(str::to_string),
+            read_only,
         })
     }
 
     /// Write one cell, addressed by `rowid`. The table, column and row are all
     /// checked before the update so a stale UI cannot write into another table.
+    /// Key and link columns need `advanced`, and the value must match the
+    /// column's declared type.
     pub fn raw_update(
         &mut self,
         table: &str,
         rowid: i64,
         column: &str,
         value: &RawValue,
+        advanced: bool,
     ) -> Result<()> {
         let table = validate_table(self.conn(), table)?;
+        if is_seed_table(&table) {
+            return Err(Error::invalid(format!(
+                "{table} is one of the game's seed tables and is read-only"
+            )));
+        }
         let columns = columns(self.conn(), &table)?;
         let Some(target) = columns.iter().find(|candidate| candidate.name == column) else {
             return Err(Error::invalid(format!(
@@ -205,6 +268,13 @@ impl SaveSession {
                 "USER_DBID identifies the account and cannot be edited",
             ));
         }
+        if target.read_only && !advanced {
+            return Err(Error::invalid(format!(
+                "{} is a key or link column; turn on advanced editing to change it",
+                target.name
+            )));
+        }
+        value.check_type(target)?;
         let sql_value = value.to_sql()?;
 
         let changed = self.conn().execute(
@@ -241,7 +311,8 @@ fn read_cell(value: ValueRef<'_>) -> RawValue {
 fn validate_table(conn: &Connection, table: &str) -> Result<String> {
     let found: Option<String> = conn
         .query_row(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+            "SELECT name FROM sqlite_master
+              WHERE type='table' AND name=? AND name NOT LIKE 'sqlite_%'",
             params![table],
             |row| row.get(0),
         )
@@ -257,9 +328,57 @@ fn columns(conn: &Connection, table: &str) -> Result<Vec<RawColumn>> {
             kind: row.get::<_, Option<String>>(2)?.unwrap_or_default(),
             not_null: row.get::<_, i64>(3)? != 0,
             primary_key: row.get::<_, i64>(5)? != 0,
+            read_only: false,
         })
     })?;
-    Ok(rows.collect::<std::result::Result<_, _>>()?)
+    let mut columns = rows.collect::<std::result::Result<Vec<_>, _>>()?;
+    for column in &mut columns {
+        column.read_only = column_is_protected(&column.name, column.primary_key);
+    }
+    Ok(columns)
+}
+
+/// Keys and link columns. Changing one moves or orphans the rows that point at
+/// it, so the raw editor keeps them read-only unless advanced editing is on.
+fn column_is_protected(name: &str, primary_key: bool) -> bool {
+    primary_key
+        || name == "USER_DBID"
+        || name.ends_with("_DBID")
+        || name == "CHARACTER_CID"
+        || name.ends_with("_CHARACTER_CID")
+        || name.starts_with("ACC_")
+        || matches!(name, "KARMA" | "VEHICLE" | "CATEGORY" | "USER_DB_VERSION")
+}
+
+/// The game's own seed tables. They describe what a new save starts with and
+/// are never edited.
+fn is_seed_table(table: &str) -> bool {
+    table.starts_with("tb_init_")
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Affinity {
+    Integer,
+    Real,
+    Numeric,
+    Text,
+    Any,
+}
+
+/// SQLite's declared-type affinity rules.
+fn affinity(kind: &str) -> Affinity {
+    let upper = kind.to_ascii_uppercase();
+    if upper.contains("INT") {
+        Affinity::Integer
+    } else if upper.contains("CHAR") || upper.contains("CLOB") || upper.contains("TEXT") {
+        Affinity::Text
+    } else if upper.contains("BLOB") || upper.is_empty() {
+        Affinity::Any
+    } else if upper.contains("REAL") || upper.contains("FLOA") || upper.contains("DOUB") {
+        Affinity::Real
+    } else {
+        Affinity::Numeric
+    }
 }
 
 /// Quote an SQLite identifier. Names come from the schema, but quoting keeps

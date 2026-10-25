@@ -133,7 +133,14 @@ impl<'a> Game<'a> {
             .count() as i64;
         Ok(Counts {
             characters: count("SELECT count(*) FROM tb_character WHERE USER_DBID=?")?,
-            characters_total: self.catalog.entries_in("character").len() as i64,
+            // The catalog's character category also holds character items and
+            // skins; only 10xxx ids are characters the game can load.
+            characters_total: self
+                .catalog
+                .entries_in("character")
+                .into_iter()
+                .filter(|item| (10_000..100_000).contains(&item.cid))
+                .count() as i64,
             currencies: count("SELECT count(*) FROM tb_currency WHERE USER_DBID=?")?,
             stackables: count("SELECT count(*) FROM tb_stackable_item WHERE USER_DBID=?")?,
             equipment: count(
@@ -431,9 +438,20 @@ impl<'a> Game<'a> {
     }
 
     pub fn add_character(&mut self, cid: i64) -> Result<bool> {
+        // Only characters the game itself defines are accepted. The item
+        // catalog's "character" category also contains character items and
+        // skins (111xxxx, 999xxxx) that have no row the game can load.
+        if !(10_000..=99_999).contains(&cid) {
+            return Err(Error::invalid(format!("CID {cid} is not a character id")));
+        }
         if self.catalog.lookup(cid).category != "character" {
             return Err(Error::invalid(format!("CID {cid} is not a character")));
         }
+        let Some(defaults) = self.init_character(cid)? else {
+            return Err(Error::invalid(format!(
+                "the game does not define CID {cid} as a playable character"
+            )));
+        };
         let exists: i64 = self.conn().query_row(
             "SELECT count(*) FROM tb_character WHERE USER_DBID=? AND CHARACTER_CID=?",
             params![self.user_id, cid],
@@ -442,24 +460,6 @@ impl<'a> Game<'a> {
         if exists > 0 {
             return Ok(false);
         }
-        let defaults = self
-            .conn()
-            .query_row(
-                "SELECT LEVEL, EXP, ASCEND, TRANSCEND FROM tb_init_character
-                  WHERE CHARACTER_CID=?
-                  ORDER BY CASE ACCOUNT_TYPE WHEN 'NORMAL' THEN 0 ELSE 1 END LIMIT 1",
-                params![cid],
-                |row| {
-                    Ok((
-                        row.get::<_, i64>(0)?,
-                        row.get::<_, i64>(1)?,
-                        row.get::<_, i64>(2)?,
-                        row.get::<_, i64>(3)?,
-                    ))
-                },
-            )
-            .optional()?
-            .unwrap_or((1, 0, 0, 0));
         let hp = self.default_hp(defaults.0)?;
         self.conn().execute(
             "INSERT INTO tb_character
@@ -480,6 +480,27 @@ impl<'a> Game<'a> {
         Ok(true)
     }
 
+    /// The game's own starting values for a character, when it defines one.
+    fn init_character(&self, cid: i64) -> Result<Option<(i64, i64, i64, i64)>> {
+        Ok(self
+            .conn()
+            .query_row(
+                "SELECT LEVEL, EXP, ASCEND, TRANSCEND FROM tb_init_character
+                  WHERE CHARACTER_CID=?
+                  ORDER BY CASE ACCOUNT_TYPE WHEN 'NORMAL' THEN 0 ELSE 1 END LIMIT 1",
+                params![cid],
+                |row| {
+                    Ok((
+                        row.get::<_, i64>(0)?,
+                        row.get::<_, i64>(1)?,
+                        row.get::<_, i64>(2)?,
+                        row.get::<_, i64>(3)?,
+                    ))
+                },
+            )
+            .optional()?)
+    }
+
     fn default_hp(&self, level: i64) -> Result<i64> {
         let hp: Option<i64> = self
             .conn()
@@ -498,15 +519,21 @@ impl<'a> Game<'a> {
             .into_iter()
             .map(|character| character.cid)
             .collect();
-        let missing: Vec<i64> = self
-            .catalog
-            .entries_in("character")
-            .into_iter()
-            .map(|item| item.cid)
-            .filter(|cid| !owned.contains(cid))
-            .collect();
+        let defined: Vec<i64> = {
+            let mut statement = self.conn().prepare(
+                "SELECT DISTINCT CHARACTER_CID FROM tb_init_character
+                  WHERE CHARACTER_CID BETWEEN 10000 AND 99999
+                  ORDER BY CHARACTER_CID",
+            )?;
+            statement
+                .query_map([], |row| row.get(0))?
+                .collect::<std::result::Result<_, _>>()?
+        };
         let mut added = 0;
-        for cid in missing {
+        for cid in defined {
+            if owned.contains(&cid) {
+                continue;
+            }
             if self.add_character(cid)? {
                 added += 1;
             }
@@ -802,7 +829,6 @@ impl<'a> Game<'a> {
             "enchantLevel" => "ENCHANT_LEVEL",
             "exp" => "EXP",
             "isLock" => "IS_LOCK",
-            "gemDbid" => "GEM_DBID",
             "mainStatCid" => "MAIN_STAT_CID",
             "subStatCid1" => "SUB_STAT_CID1",
             "subStatCid2" => "SUB_STAT_CID2",
@@ -829,8 +855,6 @@ impl<'a> Game<'a> {
             999
         } else if column == "EXP" {
             MAX_EXP
-        } else if column == "GEM_DBID" {
-            i64::MAX
         } else {
             MAX_STAT
         };
@@ -842,6 +866,27 @@ impl<'a> Game<'a> {
         let changed = self.conn().execute(
             &format!("UPDATE tb_equipment SET {column}=? WHERE USER_DBID=? AND ITEM_DBID=?"),
             params![value, self.user_id, dbid],
+        )?;
+        if changed != 1 {
+            return Err(Error::invalid(
+                "that equipment piece is not present in this save",
+            ));
+        }
+        self.touch();
+        Ok(())
+    }
+
+    /// Link a gem instance to a piece of equipment. `0` clears the link.
+    ///
+    /// The gem id is a 64-bit instance id, so it has its own command instead of
+    /// going through [`Game::set_equipment`]'s generic numeric fields.
+    pub fn set_equipment_gem(&mut self, dbid: i64, gem_dbid: i64) -> Result<()> {
+        if gem_dbid < 0 {
+            return Err(Error::invalid("gem id must be zero or a positive id"));
+        }
+        let changed = self.conn().execute(
+            "UPDATE tb_equipment SET GEM_DBID=? WHERE USER_DBID=? AND ITEM_DBID=?",
+            params![gem_dbid, self.user_id, dbid],
         )?;
         if changed != 1 {
             return Err(Error::invalid(

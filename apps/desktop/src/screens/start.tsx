@@ -100,8 +100,8 @@ export function StartScreen() {
                 <span className="text-brand">unlocked.</span>
               </h1>
               <p className="max-w-xl text-[15px] leading-relaxed text-muted-foreground">
-                Edit DragonSword Awakening saves without touching the encryption. Change currencies, recruit characters,
-                complete the cookbook, and tune your gear — then write the file back exactly as the game expects it.
+                Edit DragonSword Awakening saves without touching the encryption. Change currencies, tune characters,
+                complete the cookbook, and adjust your gear — then write the file back exactly as the game expects it.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -118,8 +118,8 @@ export function StartScreen() {
               <Feature icon={<ShieldCheck />} title="Keeps the salt" text="Reuses the original SQLCipher salt." />
               <Feature
                 icon={<HardDriveDownload />}
-                title="Backs up first"
-                text="A timestamped .bak on the first write."
+                title="Won't overwrite"
+                text="Refuses if the game saved after you opened it."
               />
               <Feature icon={<FileWarning />} title="Never auto-saves" text="Nothing is written until you say so." />
             </div>

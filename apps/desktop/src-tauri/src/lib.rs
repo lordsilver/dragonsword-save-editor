@@ -197,6 +197,8 @@ struct SaveHandle {
     slot: i64,
     user_id: i64,
     dirty: bool,
+    /// Problems noticed at open, e.g. a journal the game left behind.
+    warnings: Vec<String>,
 }
 
 fn handle(session: &SaveSession) -> SaveHandle {
@@ -206,6 +208,7 @@ fn handle(session: &SaveSession) -> SaveHandle {
         slot: session.slot(),
         user_id: session.user_id(),
         dirty: session.dirty(),
+        warnings: session.warnings().to_vec(),
     }
 }
 
@@ -277,7 +280,13 @@ fn inventory_get(state: State<'_, AppState>) -> CommandResult<Vec<Stack>> {
 }
 
 #[tauri::command]
-fn stack_set(state: State<'_, AppState>, kind: String, id: i64, count: i64) -> CommandResult<()> {
+fn stack_set(
+    state: State<'_, AppState>,
+    kind: String,
+    id: String,
+    count: i64,
+) -> CommandResult<()> {
+    let id = instance_id(&id, "stack id")?;
     game(&state, |game| game.set_stack(&kind, id, count))
 }
 
@@ -395,7 +404,7 @@ fn equipment_gem_set(
 ) -> CommandResult<()> {
     let dbid = instance_id(&dbid, "equipment id")?;
     let gem_dbid = instance_id(&gem_dbid, "gem id")?;
-    game(&state, |game| game.set_equipment(dbid, "gemDbid", gem_dbid))
+    game(&state, |game| game.set_equipment_gem(dbid, gem_dbid))
 }
 
 #[tauri::command]
@@ -538,13 +547,15 @@ fn raw_page(
 fn raw_update(
     state: State<'_, AppState>,
     table: String,
-    rowid: i64,
+    rowid: String,
     column: String,
     value: RawValue,
+    advanced: bool,
 ) -> CommandResult<()> {
+    let rowid = instance_id(&rowid, "row id")?;
     let mut guard = state.session();
     let session = guard.as_mut().ok_or(Error::NotOpen)?;
-    Ok(session.raw_update(&table, rowid, &column, &value)?)
+    Ok(session.raw_update(&table, rowid, &column, &value, advanced)?)
 }
 
 pub fn run() {
@@ -619,4 +630,33 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running DragonSword Save Editor");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn instance_ids_cross_the_ipc_boundary_exactly() {
+        // Values above 2^53 that a JavaScript `Number` cannot represent.
+        for id in [
+            "73605708196654092",
+            "70000000823123456",
+            "9007199254740993",
+            "0",
+        ] {
+            let parsed = instance_id(id, "id").expect("parse");
+            assert_eq!(parsed.to_string(), id);
+        }
+    }
+
+    #[test]
+    fn instance_ids_reject_junk_and_fractions() {
+        for raw in ["", "abc", "1.5", "1e9", " 12 34", "-"] {
+            assert!(
+                instance_id(raw, "id").is_err(),
+                "{raw:?} should be rejected"
+            );
+        }
+    }
 }

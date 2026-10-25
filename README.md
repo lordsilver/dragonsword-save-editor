@@ -6,29 +6,29 @@ A local desktop save editor for **DragonSword Awakening (2026)**. It opens the g
 
 ## Features
 
-| Feature                     | What it does                                                                                                                                               |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Save discovery**          | Scans a folder for `<account>_Slot<N>.db` saves, shows the slot screenshot, and opens a file directly.                                                     |
-| **Overview and rename**     | Account, player name, adventure rank and level, EXP, play time, stamina, location, collection progress, and save file metadata. Rename the player.         |
-| **Currencies**              | Edit gold and aether crystals, or fill either with the editor's maximum in one click.                                                                      |
-| **Inventory**               | Edit stack counts, add a missing stackable from the catalog, or fill every stack to a chosen count.                                                        |
-| **Characters**              | Recruit or remove characters, edit level, EXP, ascension, HP, transcendence, and soldier grade, manage skills, and fill team slots.                        |
-| **Equipment**               | Edit enchant level, item EXP, lock state, linked gem, and raw main/sub stat CIDs and values.                                                               |
-| **Gems**                    | Edit each gem's raw stat CID and lock state.                                                                                                               |
-| **Karma**                   | Edit EXP, ascension, and transcendence, and equip a spirit to a character; the previous owner's slot is cleared.                                           |
-| **Costumes and mounts**     | Unlock catalog entries, equip them per character, and toggle costume parts and new-item flags.                                                             |
-| **Titles**                  | Browse all 108 titles with their colour and stat bonus, unlock them individually or all at once, and keep existing favourites intact.                      |
-| **Cooking**                 | Browse all 1,025 recipes with ingredients and effects, toggle known state, or learn every recipe.                                                          |
-| **Raw database**            | Browse every table in the save, search every column, page through rows, inspect the schema, and edit one validated cell at a time.                         |
-| **Preferences**             | Light, dark, or system theme; English or French catalog; compact rows; show or hide unknown items; save folder and backups.                                |
-| **Safe writes**             | Nothing is written until you save. The first write creates a timestamped `.bak`, the file is re-encrypted and integrity-checked, then atomically replaced. |
-| **Offline and local-first** | No network, accounts, telemetry, or updates. Everything happens on your computer.                                                                          |
+| Feature                     | What it does                                                                                                                                                                                                          |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Save discovery**          | Scans a folder for `<account>_Slot<N>.db` saves, shows the slot screenshot, and opens a file directly.                                                                                                                |
+| **Overview and rename**     | Account, player name, adventure rank and level, EXP, play time, stamina, location, collection progress, and save file metadata. Rename the player.                                                                    |
+| **Currencies**              | Edit gold and aether crystals, or fill either with the editor's maximum in one click.                                                                                                                                 |
+| **Inventory**               | Edit stack counts, add a missing stackable from the catalog, or fill every stack to a chosen count.                                                                                                                   |
+| **Characters**              | Edit level, EXP, ascension, HP, transcendence, and soldier grade, remove characters, manage skills, and fill team slots. Recruiting is switched off until the roster is verified.                                     |
+| **Equipment**               | Edit enchant level, item EXP, lock state, the linked gem (by 64-bit instance id), and raw main/sub stat CIDs and values.                                                                                              |
+| **Gems**                    | Edit each gem's raw stat CID and lock state.                                                                                                                                                                          |
+| **Karma**                   | Edit EXP, ascension, and transcendence, and equip a spirit to a character; the previous owner's slot is cleared.                                                                                                      |
+| **Costumes and mounts**     | Unlock catalog entries, equip them per character, and toggle costume parts and new-item flags.                                                                                                                        |
+| **Titles**                  | Browse all 108 titles with their colour and stat bonus, unlock them individually or all at once, and keep existing favourites intact.                                                                                 |
+| **Cooking**                 | Browse all 1,025 recipes with ingredients and effects, toggle known state, or learn every recipe.                                                                                                                     |
+| **Raw database**            | Browse every table, search every column, page through rows, inspect the schema, and edit one type-checked cell at a time. Key and link columns stay locked until advanced editing is turned on.                       |
+| **Preferences**             | Light, dark, or system theme; English or French catalog; compact rows; show or hide unknown items; save folder and backups.                                                                                           |
+| **Safe writes**             | Nothing is written until you save. A write is refused if the file changed on disk since the editor opened or last wrote it; otherwise the on-disk file is backed up, re-encrypted, verified, and atomically replaced. |
+| **Offline and local-first** | No network, accounts, telemetry, or updates. Everything happens on your computer.                                                                                                                                     |
 
 ## How it works
 
 1. Point the editor at the folder that contains your save, or open a `.db` file directly.
 2. Edit the data you care about. Changes stay in a private temporary database and the encrypted file is untouched.
-3. Choose **Save changes** (or press <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>S</kbd>). The editor writes a timestamped backup next to the save, re-encrypts the database, verifies the round trip, and atomically replaces the original file.
+3. Choose **Save changes** (or press <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>S</kbd>). The editor first checks that the file on disk is still the one it opened or last wrote, then backs it up, re-encrypts the database, verifies the round trip, and atomically replaces the original file.
 4. Start the game and load the slot.
 
 The editor never auto-saves and never modifies the sibling `SPack_SlotN.sav` or screenshot. Close the game before writing: a running game keeps the database open and can overwrite your changes. The [user guide](docs/guide.md) walks through each screen, backups, recovery, and troubleshooting.
@@ -69,6 +69,7 @@ The [save format reference](docs/save-format.md) documents the page layout, key 
 
 ## Limitations
 
+- Recruiting is disabled in this build. The bundled catalog's character category mixes playable characters with character items and skins, so the old recruit path could add rows the game cannot load. Removing characters, editing an existing character, and the raw editor still work.
 - Equipment and gem stat CIDs are exposed as raw numbers because the game's stat type table is not published. The editor can change the numbers but cannot name the stat; copy values from an item that already has the effect you want.
 - New costume and mount instances are minted with random nonzero 32-bit IDs stored in the 64-bit columns, matching the range seen in real saves. The editor writes and reopens them, but this is not an official creation path.
 - The editor is tested against saves from the current game build. A game update can change the schema; unknown columns are preserved, and the raw database browser is there when a typed screen does not cover a field.

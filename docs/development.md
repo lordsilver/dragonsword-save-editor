@@ -55,7 +55,7 @@ cargo test --workspace
 
 ## Testing against a real save
 
-The normal test suite is self-contained. Two tests need a real save because the schema and the interesting data cannot be synthesized safely. They copy the file to a temporary directory, so the source is never modified.
+The normal test suite is self-contained. `crates/core/tests/phase0.rs` builds a small encrypted save from a synthetic database and covers the stale-file guard, backups, dense 64-bit ids, the raw editor's rules, and the recruit gate. Two tests need a real save because the schema and the interesting data cannot be synthesized safely. They copy the file to a temporary directory, so the source is never modified.
 
 ```bash
 DSA_SAVE="$HOME/Games/DragonSword Awakening/DS/Saved/SaveGames/1000/1000_Slot3.db" \
@@ -67,6 +67,8 @@ DSA_SAVE="$HOME/Games/DragonSword Awakening/DS/Saved/SaveGames/1000/1000_Slot5.d
 
 `real_save` checks the read path: overview, characters, inventory, teams, skills, loadout, recipes, and a write/reopen round trip. `domain_mutations` exercises every typed mutation, backups, raw updates, and persistence after reopening.
 
+The phase0 fixture writes a plaintext database and then rewrites each page to reserve the 80 bytes SQLCipher needs for its IV and HMAC, because SQLite only exposes that setting through a C file control. The fixture runs `PRAGMA integrity_check` on the rewritten pages before encrypting them.
+
 ## 64-bit instance IDs
 
 `ITEM_DBID`, `GEM_DBID`, `COSTUME_DBID`, and `VEHICLE_DBID` are 64-bit values. JavaScript cannot represent all of them exactly: `Number("70000000823123456")` becomes `70000000823123460`. The rules are:
@@ -76,7 +78,11 @@ DSA_SAVE="$HOME/Games/DragonSword Awakening/DS/Saved/SaveGames/1000/1000_Slot5.d
 - Sorting uses `compareDbid`, which compares decimal strings without converting to `Number`.
 - Inputs are parsed in Rust, not in the webview, when the value crosses the boundary.
 
-Do not add a command that accepts a 64-bit ID as a JSON number.
+Do not add a command that accepts a 64-bit ID as a JSON number. Raw rowids are 64-bit ids too: `tb_equipment`, `tb_gem`, and `tb_karma` use `ITEM_DBID` as their primary key, so the raw editor addresses rows by string.
+
+## Character roster
+
+`add_character` only accepts a CID that is in `tb_init_character` and in the 10xxx range. The bundled catalog's `character` category is not a roster: it also contains character items (111xxxx) and skins (999xxxx). `unlock_all_characters` walks the same seed table. The UI keeps both recruit buttons disabled until the roster is checked against the game's own data.
 
 ## Adding a typed field
 

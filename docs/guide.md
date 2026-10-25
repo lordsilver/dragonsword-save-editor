@@ -38,7 +38,7 @@ Lists stackable materials and cooked dishes. Edit a count, add a missing catalog
 ### Characters
 
 The character list selects one character at a time. Edit level, EXP, ascension, HP, transcendence, and soldier grade, manage skills, and fill the three slots of each team page.
-- **Recruit** adds a character from the catalog.
+- Recruiting is switched off in this build. The catalog's character category mixes playable characters with character items and skins, so the roster has to be verified against the game's own data before the editor can create rows the game will load.
 - Removing a character also clears their skills, team slots, loadout links, and costume assignments.
 - Skills are keyed by `TYPE_VALUE`; special skills use values around 801.
 
@@ -73,15 +73,21 @@ The cookbook lists all 1,025 recipes with ingredients and effects. Toggle a reci
 The escape hatch. Pick a table, search every column, page through rows, and click a cell to edit it. The schema dialog lists column types, nullability, primary keys, and which columns the editor protects.
 - Integer values are carried as strings so 64-bit IDs survive the round trip.
 - Blob cells are shown as base64 and are read-only.
-- `USER_DBID` is protected.
-- Every value is validated before it is written. Raw edits bypass the typed rules for foreign keys, so keep a backup.
+- `USER_DBID` is protected and cannot be changed, even in advanced mode.
+- Key and link columns (primary keys, `*_DBID`, `CHARACTER_CID`, `*_CHARACTER_CID`, `ACC_*`, `KARMA`, `VEHICLE`, `CATEGORY`, `USER_DB_VERSION`) are read-only until you turn on **Advanced editing**. Editing one moves the row or leaves the rows that point at it orphaned.
+- Seed tables (`tb_init_*`) are shown for reference and are never written.
+- Every value is checked against the column's declared type before it is written, and NULL is only accepted in a nullable column. Raw edits still bypass the typed rules for foreign keys, so keep a backup.
 
 ## Saving, backups, and recovery
 
-- **Save changes** or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>S</kbd>: writes a backup on the first save of the session, re-encrypts, verifies, and atomically replaces the save.
+- **Save changes** or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>S</kbd>: checks that the file on disk is still the one the editor opened or last wrote, backs it up when it is not the editor's own output, re-encrypts, verifies, and atomically replaces the save.
 - **Backup** or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>B</kbd>: copies the current on-disk save to a timestamped `.bak` without writing edits.
 - **Open another save** or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>O</kbd>: blocked while there are unsaved changes.
 - **Close save** asks before discarding unsaved changes.
+
+If the game wrote the slot after you opened it, saving is refused with a **Reopen** action. Reopening loads the game's newer progress and drops the edits in the editor; that is deliberate, because writing would overwrite the game's save.
+
+Opening a save also warns when the game left a `-journal` or `-wal` file beside it. Close the game and let it finish saving before writing.
 
 Backups look like `1000_Slot5.db.20261025-015501.bak`. To recover, close the editor and copy the backup over the save, keeping the original name.
 
@@ -102,6 +108,7 @@ Backups look like `1000_Slot5.db.20261025-015501.bak`. To recover, close the edi
 | "Save file is too small to be a SQLCipher database" | The selected file is not a save.                                                            |
 | "Page N failed its integrity check"                 | The file is corrupt or from a build that no longer uses the shared key. Restore a backup.   |
 | The game ignores the edit                           | Make sure the game was closed while saving and that you loaded the same slot.               |
+| "The save file changed on disk"                     | The game saved after you opened the slot. Choose **Reopen**, then reapply the edit.         |
 | A typed screen shows an unknown item                | Turn on **Show unknown items**, or inspect the CID in the raw browser.                      |
 
 ## Keyboard shortcuts

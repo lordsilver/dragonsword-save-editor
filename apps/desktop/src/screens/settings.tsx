@@ -248,8 +248,9 @@ export function SettingsScreen() {
             <div className="border-t pt-3">
               <InfoNote>
                 The first write of each session creates a timestamped <span className="font-mono">.bak</span> next to
-                the save. Writes are atomic: the editor re-encrypts to a temporary file and swaps it in only after the
-                round trip succeeds.
+                the save, and writing is refused if the file changed on disk since it was opened or last written. Writes
+                are atomic: the editor re-encrypts to a temporary file and swaps it in only after the round trip
+                succeeds.
               </InfoNote>
             </div>
           </div>

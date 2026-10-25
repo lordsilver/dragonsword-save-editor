@@ -17,6 +17,9 @@ pub enum Error {
     NotOpen,
     #[error("{0}")]
     Schema(String),
+    /// The file on disk is no longer the one this session opened or wrote.
+    #[error("{0}")]
+    Stale(String),
     #[error("Save file not found: {path}", path = .0.display())]
     Missing(PathBuf),
 }
@@ -34,6 +37,7 @@ impl Error {
             Error::Invalid(_) => "invalid",
             Error::NotOpen => "notOpen",
             Error::Schema(_) => "schema",
+            Error::Stale(_) => "stale",
         }
     }
 

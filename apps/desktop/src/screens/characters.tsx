@@ -5,7 +5,7 @@ import { NumberField } from '@/components/fields';
 import { ItemIcon, gradeTone } from '@/components/item-icon';
 import { PageHeader, Panel } from '@/components/page';
 import { NativeSelect } from '@/components/select';
-import { CountPill, FieldRow, StatTile } from '@/components/summary';
+import { CountPill, FieldRow, InfoNote, StatTile } from '@/components/summary';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -48,9 +48,7 @@ export function CharactersScreen() {
   const selectCharacter = useApp((state) => state.selectCharacter);
   const setCharacter = useApp((state) => state.setCharacter);
   const removeCharacter = useApp((state) => state.removeCharacter);
-  const unlockAllCharacters = useApp((state) => state.unlockAllCharacters);
   const [query, setQuery] = useState('');
-  const [recruitOpen, setRecruitOpen] = useState(false);
   const [skillOpen, setSkillOpen] = useState(false);
 
   const selected = characters.find((character) => character.cid === selectedCharacter) ?? null;
@@ -68,7 +66,10 @@ export function CharactersScreen() {
   }, [characters, query]);
 
   const highest = characters.reduce((level, character) => Math.max(level, character.level), 0);
-  const missing = catalog.filter((entry) => !entry.owned).length;
+  // The catalog's "character" category also holds items and skins; only 10xxx
+  // ids are characters the game can load.
+  const playable = catalog.filter((entry) => entry.item.cid >= 10000 && entry.item.cid < 100000).length;
+  const missing = catalog.filter((entry) => !entry.owned && entry.item.cid >= 10000 && entry.item.cid < 100000).length;
 
   if (!save) return null;
 
@@ -80,34 +81,42 @@ export function CharactersScreen() {
         description="The roster, each character's growth values, their skills, saved teams, and the gear they currently wear."
         actions={
           <>
-            <Button variant="outline" size="sm" disabled={busy} onClick={() => setRecruitOpen(true)}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled
+              title="Recruiting is turned off in this build: the catalog's character list includes items and skins that the game cannot load. It comes back once the roster is verified against the game's own data."
+            >
               <UserPlus />
               Recruit character
             </Button>
-            <ConfirmButton
-              title="Recruit every character?"
-              description="Adds every catalog character the save does not already own. New rows use the game's initial level, EXP, ascend and transcend values."
-              confirmLabel="Recruit all"
+            <Button
               variant="outline"
               size="sm"
-              disabled={busy || missing === 0}
-              onConfirm={() => void unlockAllCharacters()}
+              disabled
+              title="Recruiting is turned off in this build: the catalog's character list includes items and skins that the game cannot load."
             >
               <Users />
               Recruit all
-            </ConfirmButton>
+            </Button>
           </>
         }
       />
+
+      <InfoNote tone="warning">
+        <span className="font-medium text-amber-200">Recruiting is disabled in this build.</span> The catalog's
+        character list mixes playable characters with character items and skins, so a recruited row would not load in
+        the game. Editing and removing existing characters still works.
+      </InfoNote>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatTile
           icon={<Users />}
           label="Owned"
           value={formatNumber(characters.length)}
-          detail={`of ${catalog.length} catalog characters`}
+          detail={`of ${playable} catalog characters`}
         />
-        <StatTile icon={<UserPlus />} label="Missing" value={formatNumber(missing)} detail="Can be recruited here" />
+        <StatTile icon={<UserPlus />} label="Missing" value={formatNumber(missing)} detail="Not in this save" />
         <StatTile
           icon={<BadgeCheck />}
           label="Highest level"
@@ -275,24 +284,11 @@ export function CharactersScreen() {
           <EmptyPanel
             icon={<Users />}
             title="No character selected"
-            description="Pick someone from the roster, or recruit a character to get started."
-            action={
-              <Button size="sm" onClick={() => setRecruitOpen(true)}>
-                <UserPlus />
-                Recruit character
-              </Button>
-            }
+            description="Pick someone from the roster to edit their stats, skills and team slots."
           />
         )}
       </div>
 
-      <RecruitDialog
-        open={recruitOpen}
-        onOpenChange={setRecruitOpen}
-        catalog={catalog}
-        language={language}
-        busy={busy}
-      />
       <SkillDialog
         open={skillOpen}
         onOpenChange={setSkillOpen}
@@ -500,115 +496,6 @@ function TeamCard({
         })}
       </div>
     </div>
-  );
-}
-
-function RecruitDialog({
-  open,
-  onOpenChange,
-  catalog,
-  language,
-  busy,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  catalog: Array<{ item: Character['item']; owned: boolean }>;
-  language: string;
-  busy: boolean;
-}) {
-  const addCharacter = useApp((state) => state.addCharacter);
-  const [query, setQuery] = useState('');
-  const [showOwned, setShowOwned] = useState(false);
-  const needle = query.trim().toLowerCase();
-  const results = catalog.filter((entry) => {
-    if (!showOwned && entry.owned) return false;
-    if (!needle) return true;
-    return (
-      entry.item.nameEn.toLowerCase().includes(needle) ||
-      entry.item.nameFr.toLowerCase().includes(needle) ||
-      entry.item.cid.toString().includes(needle)
-    );
-  });
-  const missing = catalog.filter((entry) => !entry.owned).length;
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Recruit a character</DialogTitle>
-          <DialogDescription>
-            {missing === 0
-              ? 'Every catalog character is already in this save.'
-              : `${missing} catalog characters are missing. New rows start from tb_init_character.`}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative min-w-52 flex-1">
-              <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search the character catalog"
-                className="h-8 pl-8 text-xs"
-              />
-            </div>
-            <label className="flex items-center gap-2 text-xs text-muted-foreground">
-              <input
-                type="checkbox"
-                checked={showOwned}
-                onChange={(event) => setShowOwned(event.target.checked)}
-                className="size-3.5 accent-[var(--brand)]"
-              />
-              Show owned
-            </label>
-          </div>
-          <div className="scroll-thin max-h-80 overflow-y-auto rounded-lg border">
-            {results.length === 0 ? (
-              <p className="p-6 text-center text-xs text-muted-foreground">
-                {missing === 0 && !showOwned
-                  ? 'Every character is owned. Turn on "Show owned" to browse the catalog.'
-                  : 'No character matches that search.'}
-              </p>
-            ) : (
-              <div className="divide-y">
-                {results.map((entry) => (
-                  <div key={entry.item.cid} className="flex items-center gap-3 px-3 py-2">
-                    <ItemIcon item={entry.item} size={34} />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium">{itemName(entry.item, language)}</div>
-                      <div className="text-[10px] text-muted-foreground">
-                        CID {entry.item.cid} · {entry.item.grade || entry.item.category}
-                      </div>
-                    </div>
-                    {entry.owned ? (
-                      <Badge variant="outline" className="text-[10px]">
-                        Owned
-                      </Badge>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={busy}
-                        onClick={() => void addCharacter(entry.item.cid)}
-                      >
-                        <Plus />
-                        Recruit
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
 

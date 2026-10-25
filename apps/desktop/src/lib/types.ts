@@ -42,6 +42,7 @@ export interface SaveHandle {
   slot: number;
   userId: number;
   dirty: boolean;
+  warnings: string[];
 }
 
 export interface WriteReport {
@@ -276,6 +277,7 @@ export interface RawTable {
   name: string;
   rows: number;
   columns: number;
+  readOnly: boolean;
 }
 
 export interface RawColumn {
@@ -283,6 +285,7 @@ export interface RawColumn {
   kind: string;
   notNull: boolean;
   primaryKey: boolean;
+  readOnly: boolean;
 }
 
 export type RawValue =
@@ -305,6 +308,7 @@ export interface RawPage {
   offset: number;
   limit: number;
   search: string | null;
+  readOnly: boolean;
 }
 
 export type Section =

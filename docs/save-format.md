@@ -90,7 +90,7 @@ bit      = id % 64
 
 Content IDs (`*_CID`) identify catalog entries: characters 10001–10040, currencies 1000001/1000002, mounts 132xxxx, costumes 999xxxx, gear 136–139xxxx, food 142xxxx, and titles 210xxxx. The bundled catalog maps CIDs to names, categories, and sprite positions.
 
-Instance IDs (`ITEM_DBID`, `GEM_DBID`, `COSTUME_DBID`, `VEHICLE_DBID`) are 64-bit values that identify a particular copy of an item. They routinely exceed JavaScript's safe integer range, so the Tauri boundary carries them as decimal strings and Rust parses them as `i64`.
+Instance IDs (`ITEM_DBID`, `GEM_DBID`, `COSTUME_DBID`, `VEHICLE_DBID`) are 64-bit values that identify a particular copy of an item. They routinely exceed JavaScript's safe integer range, so the Tauri boundary carries them as decimal strings and Rust parses them as `i64`. Raw rowids cross the same way, because in tables such as `tb_equipment` the rowid is an alias for the 64-bit `ITEM_DBID` primary key.
 
 Equipment stat CIDs pack a stat type and a value: the main stat uses `5000 + type * 100 + value` and sub stats use `50000 + type * 100 + value`. The type table is not published, so the editor exposes the resulting CID as a raw number.
 
@@ -102,11 +102,12 @@ Opening a save never modifies it:
 3. Apply edits to the temporary database.
 
 Saving is explicit:
-1. Flush the connection and read the plaintext database.
-2. On the first write of a session, copy the original encrypted file to `<save>.<YYYYMMDD-HHMMSS>.bak`.
-3. Encrypt with the original salt.
-4. Write to a temporary file in the save directory, `fsync` it, then rename it over the original.
-5. `fsync` the directory on Unix.
+1. Read the file on disk and compare its SHA-256 with the bytes the editor opened or last wrote. If they differ, refuse with a `stale` error and leave the file untouched.
+2. Flush the connection and read the plaintext database.
+3. Back up the on-disk file to `<save>.<YYYYMMDD-HHMMSS>.bak` whenever it is not the editor's own last output. In a normal session that is the first write.
+4. Encrypt with the original salt.
+5. Write to a temporary file in the save directory, `fsync` it, then rename it over the original.
+6. `fsync` the directory on Unix.
 
 The original encrypted file is never partially overwritten: a failed write leaves the previous file in place. The plaintext temporary database is created with owner-only permissions on Unix and deleted when the session closes or the app exits.
 
@@ -115,4 +116,4 @@ The original encrypted file is never partially overwritten: a failed write leave
 - The editor leaves the sibling `.sav` and screenshot alone. The game reads the `.db` for the data shown in the editor.
 - Unknown tables and columns are preserved because edits are ordinary SQL statements against a full copy of the database.
 - A future game build can change the schema. The raw browser and the schema dialog are the escape hatch; the typed screens fail loudly rather than guessing.
-- Close the game before saving. A running game keeps the database open and may write over the file after the editor replaces it.
+- Close the game before saving. The stale check catches a save the game made before the editor writes, but a running game keeps the database open and can still write over the file after the editor replaces it. Opening a slot warns when a `-journal` or `-wal` file is present.

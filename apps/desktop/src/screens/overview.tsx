@@ -46,7 +46,6 @@ export function OverviewScreen() {
   const setPlayerName = useApp((state) => state.setPlayerName);
   const setAdventureBatch = useApp((state) => state.setAdventureBatch);
   const setCurrency = useApp((state) => state.setCurrency);
-  const unlockAllCharacters = useApp((state) => state.unlockAllCharacters);
   const unlockAllTitles = useApp((state) => state.unlockAllTitles);
   const unlockAllRecipes = useApp((state) => state.unlockAllRecipes);
   const fillStacks = useApp((state) => state.fillStacks);
@@ -169,18 +168,15 @@ export function OverviewScreen() {
           description="Bulk edits. Each one only changes this save; nothing is written until you save."
         >
           <div className="space-y-2">
-            <ConfirmButton
-              title="Recruit every character?"
-              description="Adds any catalog character the save does not already own, using the game's initial level values."
-              confirmLabel="Recruit all"
-              disabled={counts.characters >= counts.charactersTotal}
-              onConfirm={() => void unlockAllCharacters()}
+            <Button
               variant="outline"
               className="w-full justify-start"
+              disabled
+              title="Recruiting is turned off in this build: the catalog's character list includes items and skins that the game cannot load."
             >
               <Users />
               Recruit every character
-            </ConfirmButton>
+            </Button>
             <ConfirmButton
               title="Unlock every title?"
               description="Sets every title bit while preserving the favorite-title mask."

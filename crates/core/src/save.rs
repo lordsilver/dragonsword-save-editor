@@ -9,6 +9,7 @@ use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64;
 use rusqlite::{Connection, OpenFlags, OptionalExtension};
 use serde::Serialize;
+use sha2::{Digest, Sha256};
 use walkdir::WalkDir;
 
 use crate::catalog::Catalog;
@@ -38,6 +39,34 @@ pub struct WriteReport {
     pub path: String,
 }
 
+/// The state of the save file on disk at a point in time. The digest is
+/// authoritative; size and mtime only make an error message useful.
+#[derive(Debug, Clone)]
+struct DiskState {
+    len: u64,
+    modified_ms: i64,
+    digest: [u8; 32],
+}
+
+impl DiskState {
+    fn of(path: &Path, bytes: &[u8]) -> Self {
+        let metadata = fs::metadata(path).ok();
+        Self {
+            len: bytes.len() as u64,
+            modified_ms: metadata
+                .and_then(|metadata| metadata.modified().ok())
+                .and_then(|time| time.duration_since(UNIX_EPOCH).ok())
+                .map(|duration| duration.as_millis() as i64)
+                .unwrap_or(0),
+            digest: Sha256::digest(bytes).into(),
+        }
+    }
+
+    fn same_bytes(&self, other: &DiskState) -> bool {
+        self.digest == other.digest
+    }
+}
+
 /// An open save. The encrypted file stays untouched until [`SaveSession::write`];
 /// edits happen in a temporary plaintext SQLite database.
 pub struct SaveSession {
@@ -47,7 +76,11 @@ pub struct SaveSession {
     conn: Option<Connection>,
     user_id: i64,
     dirty: bool,
-    backup_made: bool,
+    /// The file as it was when this session opened it.
+    opened: DiskState,
+    /// The file as this session last left it, if it has written yet.
+    written: Option<DiskState>,
+    warnings: Vec<String>,
     last_backup: Option<PathBuf>,
 }
 
@@ -59,6 +92,8 @@ impl SaveSession {
             return Err(Error::Missing(path));
         }
         let encrypted = fs::read(&path)?;
+        let opened = DiskState::of(&path, &encrypted);
+        let warnings = sidecar_warnings(&path);
         let salt = sqlcipher::salt(&encrypted)?;
         let plain = sqlcipher::decrypt(&encrypted, sqlcipher::PASSPHRASE)?;
         if !plain.starts_with(b"SQLite format 3\0") {
@@ -69,7 +104,7 @@ impl SaveSession {
 
         let temp = temp_path();
         write_private(&temp, &plain)?;
-        let opened = (|| -> Result<(Connection, i64)> {
+        let result = (|| -> Result<(Connection, i64)> {
             let conn = Connection::open_with_flags(
                 &temp,
                 OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_NO_MUTEX,
@@ -97,7 +132,7 @@ impl SaveSession {
                 })?;
             Ok((conn, user_id))
         })();
-        match opened {
+        match result {
             Ok((conn, user_id)) => Ok(Self {
                 path,
                 salt,
@@ -105,7 +140,9 @@ impl SaveSession {
                 conn: Some(conn),
                 user_id,
                 dirty: false,
-                backup_made: false,
+                opened,
+                written: None,
+                warnings,
                 last_backup: None,
             }),
             Err(error) => {
@@ -129,6 +166,11 @@ impl SaveSession {
 
     pub fn last_backup(&self) -> Option<&Path> {
         self.last_backup.as_deref()
+    }
+
+    /// Problems noticed at open that the UI should show before the first write.
+    pub fn warnings(&self) -> &[String] {
+        &self.warnings
     }
 
     pub fn account_id(&self) -> String {
@@ -155,9 +197,38 @@ impl SaveSession {
         crate::domain::Game::new(self, catalog)
     }
 
-    /// Re-encrypt the edited database and atomically replace the save file. The
-    /// first write in a session copies the original to a timestamped `.bak`.
+    /// Re-encrypt the edited database and atomically replace the save file.
+    ///
+    /// Refuses to write when the file on disk is no longer the one this session
+    /// opened or last wrote, so a save made by the game after the editor opened
+    /// cannot be overwritten silently. The file on disk is copied to a
+    /// timestamped `.bak` whenever it is not the editor's own last output.
     pub fn write(&mut self) -> Result<WriteReport> {
+        let current = fs::read(&self.path)?;
+        let disk = DiskState::of(&self.path, &current);
+        let expected = self.written.as_ref().unwrap_or(&self.opened);
+        if !disk.same_bytes(expected) {
+            let when = chrono::DateTime::from_timestamp_millis(disk.modified_ms)
+                .map(|time| {
+                    time.with_timezone(&chrono::Local)
+                        .format("%Y-%m-%d %H:%M:%S")
+                        .to_string()
+                })
+                .unwrap_or_else(|| "unknown time".into());
+            return Err(Error::Stale(format!(
+                "The save file changed on disk since this editor {} it \
+                 ({} bytes now, {} bytes then, last modified {when}). Reopen the save \
+                 to load the newer progress; writing now would overwrite it.",
+                if self.written.is_some() {
+                    "last wrote"
+                } else {
+                    "opened"
+                },
+                disk.len,
+                expected.len
+            )));
+        }
+
         let _ = self
             .conn()
             .execute_batch("PRAGMA wal_checkpoint(TRUNCATE);");
@@ -166,16 +237,20 @@ impl SaveSession {
         let plain = fs::read(&self.temp)?;
         let encrypted = sqlcipher::encrypt_verified(&plain, sqlcipher::PASSPHRASE, &self.salt)?;
 
-        let backup = if self.backup_made {
+        // The editor's own last output needs no backup; anything else does.
+        let backup = if self
+            .written
+            .as_ref()
+            .is_some_and(|written| written.same_bytes(&disk))
+        {
             None
         } else {
-            let original = fs::read(&self.path)?;
-            let backup = self.make_backup(&original)?;
-            self.backup_made = true;
+            let backup = self.make_backup(&current)?;
             Some(backup.to_string_lossy().to_string())
         };
 
         atomic_write(&self.path, &encrypted)?;
+        self.written = Some(DiskState::of(&self.path, &encrypted));
         self.dirty = false;
         Ok(WriteReport {
             backup,
@@ -226,6 +301,23 @@ impl Drop for SaveSession {
     fn drop(&mut self) {
         self.cleanup();
     }
+}
+
+/// Problems with the save folder that should be shown before the first write.
+fn sidecar_warnings(path: &Path) -> Vec<String> {
+    let mut warnings = Vec::new();
+    for (suffix, what) in [
+        ("-journal", "rollback journal"),
+        ("-wal", "write-ahead log"),
+    ] {
+        let sidecar = PathBuf::from(format!("{}{suffix}", path.display()));
+        if sidecar.is_file() {
+            warnings.push(format!(
+                "The game left a {what} beside this save. Close the game and let it finish saving before you write, or the newest progress can be lost."
+            ));
+        }
+    }
+    warnings
 }
 
 fn temp_path() -> PathBuf {

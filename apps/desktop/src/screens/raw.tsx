@@ -17,6 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { Switch } from '@/components/ui/switch';
 import { formatNumber, useApp } from '@/lib/store';
 import type { RawColumn, RawPage, RawValue } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -36,6 +37,7 @@ export function RawScreen() {
   const [cell, setCell] = useState<CellTarget | null>(null);
   const [schemaOpen, setSchemaOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [advanced, setAdvanced] = useState(false);
 
   const tables = useMemo(() => {
     const needle = tableQuery.trim().toLowerCase();
@@ -180,7 +182,33 @@ export function RawScreen() {
                 <Eye />
                 Schema
               </Button>
+              <div className="flex items-center gap-2 rounded-md border border-dashed px-2 py-1.5 text-[11px]">
+                <Switch checked={advanced} onCheckedChange={setAdvanced} aria-label="Advanced editing" />
+                <span className={cn('font-medium', advanced ? 'text-amber-300' : 'text-muted-foreground')}>
+                  Advanced editing
+                </span>
+              </div>
             </div>
+
+            {rawPage.readOnly && (
+              <InfoNote tone="warning">
+                <span className="inline-flex items-center gap-1 font-medium text-amber-200">
+                  <ShieldAlert className="size-3" />
+                  Seed table.
+                </span>{' '}
+                {rawPage.table} describes what a new save starts with. It is shown for reference and cannot be edited.
+              </InfoNote>
+            )}
+            {advanced && !rawPage.readOnly && (
+              <InfoNote tone="warning">
+                <span className="inline-flex items-center gap-1 font-medium text-amber-200">
+                  <ShieldAlert className="size-3" />
+                  Advanced editing is on.
+                </span>{' '}
+                Key and link columns can now be changed. Editing an id moves the row or leaves the rows that point at it
+                orphaned, and the game may refuse the save.
+              </InfoNote>
+            )}
 
             <Panel contentClassName="p-0" className="overflow-hidden">
               <div className="scroll-thin max-h-[62vh] overflow-auto">
@@ -216,7 +244,12 @@ export function RawScreen() {
                         </td>
                         {row.cells.map((value, index) => {
                           const column = rawPage.columns[index];
-                          const locked = column?.name === 'USER_DBID' || value.type === 'blob';
+                          const locked =
+                            !column ||
+                            rawPage.readOnly ||
+                            column.name === 'USER_DBID' ||
+                            value.type === 'blob' ||
+                            (column.readOnly && !advanced);
                           return (
                             <td key={column?.name ?? index} className="max-w-64 border-b p-0">
                               <button
@@ -260,7 +293,8 @@ export function RawScreen() {
                   <ShieldAlert className="size-3" />
                   Raw edits bypass the typed validation.
                 </span>{' '}
-                USER_DBID is protected, but other columns are not. Keep a backup before changing foreign keys.
+                Keys and link columns are locked until you turn on advanced editing. Keep a backup before changing
+                anything that another row points at.
               </InfoNote>
             </div>
           </div>
@@ -279,10 +313,11 @@ export function RawScreen() {
           target={cell}
           open={cell !== null}
           busy={busy}
+          advanced={advanced}
           onOpenChange={(open) => !open && setCell(null)}
           onSave={(column, value) => {
             if (!cell) return;
-            void rawUpdateCell(rawPage.table, cell.rowid, column, value);
+            void rawUpdateCell(rawPage.table, cell.rowid, column, value, advanced);
             setCell(null);
           }}
         />
@@ -292,8 +327,14 @@ export function RawScreen() {
     </div>
   );
 
-  async function rawUpdateCell(table: string, rowid: string, column: string, value: RawValue): Promise<void> {
-    await useApp.getState().rawUpdate(table, rowid, column, value);
+  async function rawUpdateCell(
+    table: string,
+    rowid: string,
+    column: string,
+    value: RawValue,
+    advancedEditing: boolean,
+  ): Promise<void> {
+    await useApp.getState().rawUpdate(table, rowid, column, value, advancedEditing);
   }
 }
 
@@ -336,6 +377,7 @@ function CellDialog({
   target,
   open,
   busy,
+  advanced,
   onOpenChange,
   onSave,
 }: {
@@ -343,6 +385,7 @@ function CellDialog({
   target: CellTarget | null;
   open: boolean;
   busy: boolean;
+  advanced: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (column: string, value: RawValue) => void;
 }) {
@@ -354,18 +397,22 @@ function CellDialog({
   const [wasOpen, setWasOpen] = useState(false);
   const [wasSignature, setWasSignature] = useState('');
 
+  const allowed = allowedTypes(column);
+
   if (open && (!wasOpen || wasSignature !== signature)) {
     setWasOpen(true);
     setWasSignature(signature);
     if (value) {
-      setType(initialType(value, column));
+      const preferred = initialType(value, column);
+      setType(allowed.includes(preferred) ? preferred : (allowed[0] ?? 'text'));
       setDraft(displayDraft(value));
     }
   } else if (!open && wasOpen) {
     setWasOpen(false);
   }
 
-  const locked = !column || column.name === 'USER_DBID' || value?.type === 'blob';
+  const keyLocked = Boolean(column?.readOnly) && !advanced;
+  const locked = !column || page.readOnly || column.name === 'USER_DBID' || value?.type === 'blob' || keyLocked;
   const valid =
     type === 'null' || (type === 'integer' ? validInteger(draft) : type === 'real' ? validReal(draft) : true);
 
@@ -387,9 +434,13 @@ function CellDialog({
         {locked ? (
           <div className="space-y-3">
             <InfoNote tone="warning">
-              {column?.name === 'USER_DBID'
-                ? 'USER_DBID identifies the account and is protected from edits.'
-                : 'Blob columns are shown for inspection but cannot be written by the editor.'}
+              {page.readOnly
+                ? 'Seed tables describe a new save and are never edited.'
+                : column?.name === 'USER_DBID'
+                  ? 'USER_DBID identifies the account and is protected from edits.'
+                  : keyLocked
+                    ? 'This is a key or link column. Turn on advanced editing to change it.'
+                    : 'Blob columns are shown for inspection but cannot be written by the editor.'}
             </InfoNote>
             <pre className="scroll-thin max-h-48 overflow-auto rounded-lg border bg-muted/30 p-3 font-mono text-[11px] whitespace-pre-wrap break-all">
               {value ? rawText(value) : 'NULL'}
@@ -406,10 +457,11 @@ function CellDialog({
                   onChange={(event) => setType(event.target.value as EditType)}
                   className="w-full"
                 >
-                  <option value="integer">Integer</option>
-                  <option value="real">Real</option>
-                  <option value="text">Text</option>
-                  <option value="null">NULL</option>
+                  {allowed.map((option) => (
+                    <option key={option} value={option}>
+                      {option === 'null' ? 'NULL' : option.charAt(0).toUpperCase() + option.slice(1)}
+                    </option>
+                  ))}
                 </NativeSelect>
               </div>
               <div className="space-y-1.5">
@@ -443,8 +495,8 @@ function CellDialog({
               </p>
             )}
             <p className="text-[11px] text-muted-foreground">
-              SQLite columns are dynamically typed, so the editor lets you change the storage class. Prefer keeping the
-              original type unless you know the game expects otherwise.
+              Only the storage classes this column can hold are offered. The value is checked again in Rust before it is
+              written.
             </p>
           </div>
         )}
@@ -532,6 +584,11 @@ function SchemaRow({ column }: { column: RawColumn }) {
               protected
             </Badge>
           )}
+          {column.readOnly && !column.primaryKey && column.name !== 'USER_DBID' && (
+            <Badge variant="outline" className="text-[9px]">
+              link
+            </Badge>
+          )}
         </div>
       </td>
     </tr>
@@ -548,6 +605,25 @@ function initialType(value: RawValue, column: RawColumn | undefined): EditType {
   if (value.type === 'integer') return 'integer';
   if (value.type === 'real') return 'real';
   return 'text';
+}
+
+/** The storage classes the backend will accept for this column. */
+function allowedTypes(column: RawColumn | undefined): EditType[] {
+  const kind = (column?.kind ?? '').toUpperCase();
+  let types: EditType[];
+  if (!kind || kind.includes('BLOB')) {
+    types = ['integer', 'real', 'text'];
+  } else if (kind.includes('INT')) {
+    types = ['integer'];
+  } else if (kind.includes('CHAR') || kind.includes('CLOB') || kind.includes('TEXT')) {
+    types = ['text'];
+  } else if (kind.includes('REAL') || kind.includes('FLOA') || kind.includes('DOUB')) {
+    types = ['real', 'integer'];
+  } else {
+    types = ['real', 'integer'];
+  }
+  if (column && !column.notNull) types.push('null');
+  return types;
 }
 
 function displayDraft(value: RawValue): string {

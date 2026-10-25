@@ -28,7 +28,7 @@ import type {
   WriteReport,
 } from './types.ts';
 
-export type ErrorKind = 'io' | 'sqlite' | 'json' | 'crypto' | 'invalid' | 'notOpen' | 'schema' | 'failed';
+export type ErrorKind = 'io' | 'sqlite' | 'json' | 'crypto' | 'invalid' | 'notOpen' | 'schema' | 'stale' | 'failed';
 
 export class CommandError extends Error {
   readonly kind: ErrorKind;
@@ -145,7 +145,7 @@ export async function inventory(): Promise<Stack[]> {
   return invoke<Stack[]>('inventory_get');
 }
 
-export async function setStack(kind: string, id: number, count: number): Promise<void> {
+export async function setStack(kind: string, id: string, count: number): Promise<void> {
   await invoke('stack_set', { kind, id, count });
 }
 
@@ -305,8 +305,14 @@ export async function rawPage(table: string, offset: number, limit: number, sear
   return invoke<RawPage>('raw_page', { table, offset, limit, search: search ?? null });
 }
 
-export async function rawUpdate(table: string, rowid: string, column: string, value: RawValue): Promise<void> {
-  await invoke('raw_update', { table, rowid: Number(rowid), column, value });
+export async function rawUpdate(
+  table: string,
+  rowid: string,
+  column: string,
+  value: RawValue,
+  advanced: boolean,
+): Promise<void> {
+  await invoke('raw_update', { table, rowid, column, value, advanced });
 }
 
 export type { SlotInfo };

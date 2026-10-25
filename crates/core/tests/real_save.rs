@@ -70,6 +70,7 @@ fn reads_and_writes_a_real_save() {
             row.rowid.parse().expect("rowid"),
             "AMOUNT",
             &RawValue::Integer("4242".into()),
+            false,
         )
         .expect("raw update");
 

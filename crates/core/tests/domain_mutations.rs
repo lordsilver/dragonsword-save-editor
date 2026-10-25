@@ -113,23 +113,36 @@ fn every_mutation_survives_a_write() {
                 .expect("team page");
             assert_eq!(page.slots[0].cid, first);
 
-            let owned: HashSet<i64> = characters.iter().map(|character| character.cid).collect();
-            let missing = game
-                .character_catalog()
-                .expect("character catalog")
-                .into_iter()
-                .find(|entry| !owned.contains(&entry.item.cid))
-                .expect("a missing character")
-                .item
-                .cid;
-            assert!(game.add_character(missing).expect("recruit"));
-            game.remove_character(missing).expect("dismiss");
+            // Recruiting only accepts characters the game itself defines. The
+            // catalog's "character" category also holds character items and
+            // skins (111xxxx, 999xxxx) that have no playable row.
+            assert!(game.add_character(1_110_001).is_err());
+            assert!(game.add_character(9_990_002).is_err());
+            let mut recruited = false;
+            for entry in game.character_catalog().expect("character catalog") {
+                let cid = entry.item.cid;
+                if entry.owned || !(10_000..100_000).contains(&cid) {
+                    continue;
+                }
+                // Catalog entries the game does not define as characters error
+                // or report "already owned"; both are fine here.
+                if let Ok(true) = game.add_character(cid) {
+                    recruited = true;
+                    game.remove_character(cid).expect("dismiss");
+                    break;
+                }
+            }
+            assert!(recruited, "a catalog character the game defines");
             let added = game.unlock_all_characters().expect("recruit all");
-            assert!(added > 0);
-            assert_eq!(
-                game.characters().expect("characters").len() as i64,
-                game.catalog().entries_in("character").len() as i64
-            );
+            let roster = game.characters().expect("characters");
+            assert_eq!(roster.len() as i64, characters.len() as i64 + added);
+            for character in &roster {
+                assert!(
+                    (10_000..100_000).contains(&character.cid),
+                    "{} is not a character id",
+                    character.cid
+                );
+            }
 
             // Equipment: ordinary columns, the 64-bit gem id and a stat value.
             let equipment = game.equipment().expect("equipment");
@@ -142,7 +155,12 @@ fn every_mutation_survives_a_write() {
                 .expect("equipment exp");
             game.set_equipment(equipment_dbid, "isLock", 1)
                 .expect("lock");
-            game.set_equipment(equipment_dbid, "gemDbid", 70_000_000_823_123_456)
+            assert!(
+                game.set_equipment(equipment_dbid, "gemDbid", 70_000_000_823_123_456)
+                    .is_err(),
+                "the generic field list must not write 64-bit gem ids"
+            );
+            game.set_equipment_gem(equipment_dbid, 70_000_000_823_123_456)
                 .expect("gem dbid");
             if piece.has_stat_values {
                 game.set_equipment(equipment_dbid, "mainStatValue", 321)
@@ -371,8 +389,51 @@ fn every_mutation_survives_a_write() {
                 row.rowid.parse().expect("rowid"),
                 "AMOUNT",
                 &RawValue::Integer("1234".into()),
+                false,
             )
             .expect("raw update");
+
+        // Key columns stay locked unless advanced editing is on, and the
+        // account column is never writable.
+        let equipment_page = session
+            .raw_page("tb_equipment", 0, 5, None)
+            .expect("equipment page");
+        let equipment_row = equipment_page.rows.first().expect("equipment row");
+        let equipment_rowid = equipment_row.rowid.parse().expect("rowid");
+        assert!(
+            session
+                .raw_update(
+                    "tb_equipment",
+                    equipment_rowid,
+                    "ITEM_DBID",
+                    &RawValue::Integer("1".into()),
+                    false,
+                )
+                .is_err()
+        );
+        assert!(
+            session
+                .raw_update(
+                    "tb_equipment",
+                    equipment_rowid,
+                    "USER_DBID",
+                    &RawValue::Integer("1".into()),
+                    true,
+                )
+                .is_err()
+        );
+        assert!(
+            session
+                .raw_update(
+                    "tb_equipment",
+                    equipment_rowid,
+                    "ENCHANT_LEVEL",
+                    &RawValue::Text("not a number".into()),
+                    false,
+                )
+                .is_err()
+        );
+        assert!(session.raw_page("sqlite_master", 0, 5, None).is_err());
 
         assert!(session.dirty());
         let report = session.write().expect("write");

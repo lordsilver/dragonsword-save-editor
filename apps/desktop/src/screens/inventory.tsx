@@ -222,7 +222,7 @@ export function InventoryScreen() {
                 <div className="flex items-center justify-end gap-2">
                   <NumberField
                     value={stack.count}
-                    onCommit={(count) => void setStack(stack.kind, Number(stack.id), count)}
+                    onCommit={(count) => void setStack(stack.kind, stack.id, count)}
                     max={MAX_STACK}
                     disabled={busy}
                     className="w-28"
@@ -232,7 +232,7 @@ export function InventoryScreen() {
                     type="button"
                     className="text-[10px] text-brand hover:underline disabled:opacity-50"
                     disabled={busy || stack.count === MAX_STACK}
-                    onClick={() => void setStack(stack.kind, Number(stack.id), MAX_STACK)}
+                    onClick={() => void setStack(stack.kind, stack.id, MAX_STACK)}
                   >
                     Max
                   </button>
