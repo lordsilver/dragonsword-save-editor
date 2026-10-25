@@ -46,9 +46,16 @@ export interface DuplicateGemLink {
   equipmentDbids: string[];
 }
 
+export interface TeamIssue {
+  pageId: number;
+  kind: string;
+  detail: string;
+}
+
 export interface ConsistencyReport {
   danglingGemLinks: GemLink[];
   duplicateGemLinks: DuplicateGemLink[];
+  teamIssues: TeamIssue[];
 }
 
 export interface SaveHandle {
@@ -169,6 +176,7 @@ export interface TeamSlot {
 export interface TeamPage {
   pageId: number;
   slots: TeamSlot[];
+  selected: boolean;
 }
 
 export interface LoadoutEntry {

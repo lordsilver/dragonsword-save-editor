@@ -239,7 +239,10 @@ export function CharactersScreen() {
               )}
             </Panel>
 
-            <Panel title="Saved teams" description="Each page has three slots. Setting a slot to Empty clears it.">
+            <Panel
+              title="Saved teams"
+              description="Each page has three slots. Empty slots must stay at the end, and the active team's selected slot cannot be emptied."
+            >
               <div className="grid gap-3 lg:grid-cols-3">
                 {teams.map((team) => (
                   <TeamCard key={team.pageId} team={team} characters={characters} language={language} busy={busy} />
@@ -347,7 +350,7 @@ function CharacterHero({
         </div>
         <ConfirmButton
           title={`Remove ${itemName(character.item, language)}?`}
-          description="Deletes the character row, their skills, their team placements and their equipment links. Before saving, Discard changes undoes this along with every other unsaved edit."
+          description="Deletes the character row, their skills, their team placements and their equipment links. A character in the active team must be moved off it first; other team pages compact forward. Before saving, Discard changes undoes this along with every other unsaved edit."
           confirmLabel="Remove character"
           variant="destructive"
           size="sm"
@@ -459,8 +462,15 @@ function TeamCard({
   const setTeamSlot = useApp((state) => state.setTeamSlot);
   return (
     <div className="rounded-lg border bg-background/30 p-3">
-      <div className="mb-2 flex items-center justify-between">
-        <span className="text-xs font-medium">Page {team.pageId}</span>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="text-xs font-medium">Page {team.pageId}</span>
+          {team.selected && (
+            <Badge variant="outline" className="border-brand/50 text-[10px] text-brand">
+              Active
+            </Badge>
+          )}
+        </div>
         <CountPill>{team.slots.filter((slot) => slot.cid !== 0).length}/3</CountPill>
       </div>
       <div className="space-y-2">

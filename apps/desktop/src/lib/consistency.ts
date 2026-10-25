@@ -1,8 +1,8 @@
 import type { ConsistencyReport } from './types.ts';
 
 /**
- * Human-readable descriptions of the broken links a save already had. The
- * editor never creates these, but both reference saves contain some.
+ * Human-readable descriptions of the consistency problems a save already had.
+ * The editor never creates new ones, but both reference saves contain some.
  */
 export function consistencyIssues(report: ConsistencyReport | undefined): string[] {
   if (!report) return [];
@@ -14,6 +14,9 @@ export function consistencyIssues(report: ConsistencyReport | undefined): string
     issues.push(
       `Gem ${link.gemDbid} is linked to ${link.equipmentDbids.length} pieces: ${link.equipmentDbids.join(', ')}.`,
     );
+  }
+  for (const issue of report.teamIssues) {
+    issues.push(issue.detail);
   }
   return issues;
 }

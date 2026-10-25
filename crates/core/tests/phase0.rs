@@ -28,6 +28,12 @@ CREATE TABLE tb_user (
   SELECTED_PAGE_SLOT_INDEX INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (USER_DBID)
 );
+CREATE TABLE tb_init_character (
+  ACCOUNT_TYPE TEXT NOT NULL DEFAULT '',
+  CHARACTER_CID INTEGER NOT NULL DEFAULT 0,
+  LEVEL INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (ACCOUNT_TYPE, CHARACTER_CID)
+);
 CREATE TABLE tb_character (
   USER_DBID INTEGER NOT NULL DEFAULT 0,
   CHARACTER_CID INTEGER NOT NULL DEFAULT 0,
@@ -41,16 +47,6 @@ CREATE TABLE tb_character (
   SOLDIER_GRADE_POINT INTEGER NOT NULL DEFAULT 0,
   CREATED_DATE INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (USER_DBID, CHARACTER_CID)
-);
-CREATE TABLE tb_init_character (
-  ACCOUNT_TYPE TEXT NOT NULL DEFAULT '',
-  CHARACTER_CID INTEGER NOT NULL DEFAULT 0,
-  LEVEL INTEGER NOT NULL DEFAULT 0,
-  EXP INTEGER NOT NULL DEFAULT 0,
-  ASCEND INTEGER NOT NULL DEFAULT 0,
-  TRANSCEND INTEGER NOT NULL DEFAULT 0,
-  VEHICLE_CID INTEGER NOT NULL DEFAULT 0,
-  PRIMARY KEY (ACCOUNT_TYPE, CHARACTER_CID)
 );
 CREATE TABLE tb_equipment (
   ITEM_DBID INTEGER NOT NULL,
@@ -102,6 +98,36 @@ CREATE TABLE tb_stackable_item (
   ITEM_CID INTEGER NOT NULL DEFAULT 0,
   STACK_CNT INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (USER_DBID, ITEM_CID)
+);
+CREATE TABLE tb_currency (
+  USER_DBID INTEGER NOT NULL DEFAULT 0,
+  ITEM_CID INTEGER NOT NULL DEFAULT 0,
+  AMOUNT INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (USER_DBID, ITEM_CID)
+);
+CREATE TABLE tb_team (
+  USER_DBID INTEGER NOT NULL DEFAULT 0,
+  PAGE_ID INTEGER NOT NULL DEFAULT 0,
+  SLOT1_CHARACTER_CID INTEGER NOT NULL DEFAULT 0,
+  SLOT2_CHARACTER_CID INTEGER NOT NULL DEFAULT 0,
+  SLOT3_CHARACTER_CID INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (USER_DBID, PAGE_ID)
+);
+CREATE TABLE tb_skill_growth (
+  USER_DBID INTEGER NOT NULL DEFAULT 0,
+  CHARACTER_CID INTEGER NOT NULL DEFAULT 0,
+  TYPE_VALUE INTEGER NOT NULL DEFAULT 0,
+  SLOT_LEVEL INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (USER_DBID, CHARACTER_CID, TYPE_VALUE)
+);
+CREATE TABLE tb_equip_mount (
+  USER_DBID INTEGER NOT NULL DEFAULT 0,
+  CHARACTER_CID INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (USER_DBID, CHARACTER_CID)
+);
+CREATE TABLE tb_costume (
+  USER_DBID INTEGER NOT NULL DEFAULT 0,
+  EQUIP_CHARACTER_CID INTEGER NOT NULL DEFAULT 0
 );
 ";
 
@@ -165,6 +191,10 @@ fn reserve_tail(database: &mut [u8]) {
 
 /// Write a synthetic plaintext save, encrypt it, and return the `.db` path.
 fn fixture(name: &str) -> PathBuf {
+    fixture_with_gold(name, 100)
+}
+
+fn fixture_with_gold(name: &str, gold: i64) -> PathBuf {
     let directory = std::env::temp_dir().join(format!("dsa-phase0-{}-{name}", std::process::id()));
     let _ = fs::remove_dir_all(&directory);
     fs::create_dir_all(&directory).expect("mkdir");
@@ -181,22 +211,29 @@ fn fixture(name: &str) -> PathBuf {
         )
         .expect("user");
         conn.execute(
-            "INSERT INTO tb_init_character
-                (ACCOUNT_TYPE, CHARACTER_CID, LEVEL, EXP, ASCEND, TRANSCEND)
-             VALUES ('NORMAL', 10001, 1, 0, 1, 0), ('NORMAL', 10002, 5, 0, 1, 2),
-                    ('MASTER', 10015, 1, 0, 1, 0), ('MASTER', 10019, 1, 0, 1, 0),
-                    ('MASTER', 10033, 1, 0, 1, 0)",
+            "INSERT INTO tb_init_character (ACCOUNT_TYPE, CHARACTER_CID, LEVEL)
+             VALUES ('NORMAL', 10001, 1)",
             [],
         )
-        .expect("seed characters");
+        .expect("seed table");
         conn.execute(
             "INSERT INTO tb_character
                 (USER_DBID, CHARACTER_CID, LEVEL, EXP, ASCEND, HP, TRANSCEND,
                  TRANSCEND_TOTAL, SOLDIER_GRADE, SOLDIER_GRADE_POINT, CREATED_DATE)
-             VALUES (?, 10001, 1, 0, 1, 461, 0, 0, 0, 0, 0)",
-            [USER],
+             VALUES (?, 10001, 1, 0, 1, 461, 0, 0, 0, 0, 0),
+                    (?, 10002, 5, 0, 1, 900, 2, 0, 0, 0, 0),
+                    (?, 10003, 3, 0, 1, 700, 0, 0, 0, 0, 0)",
+            rusqlite::params![USER, USER, USER],
         )
-        .expect("owned character");
+        .expect("owned characters");
+        conn.execute(
+            "INSERT INTO tb_team
+                (USER_DBID, PAGE_ID, SLOT1_CHARACTER_CID, SLOT2_CHARACTER_CID, SLOT3_CHARACTER_CID)
+             VALUES (?, 0, 10001, 10002, 0), (?, 1, 10003, 10002, 0),
+                    (?, 2, 10001, 10003, 10002)",
+            rusqlite::params![USER, USER, USER],
+        )
+        .expect("teams");
         for offset in 0..3 {
             conn.execute(
                 "INSERT INTO tb_equipment (ITEM_DBID, USER_DBID, ITEM_CID)
@@ -216,6 +253,34 @@ fn fixture(name: &str) -> PathBuf {
             [USER],
         )
         .expect("stackable");
+        let catalog = Catalog::shared();
+        for (kind, count) in [
+            ("COMMON", 7),
+            ("QUEST", 1),
+            ("MAP", 0),
+            ("ACHIEVEMENT_POINT", 150),
+            ("CHARACTER_MASTER_SOUL", 3),
+            ("COOKING_INGREDIENT", 2),
+            ("GEM_SOCKET_MATERIAL", 1),
+            ("CHANGE_EQUIPMENT_SUB_STAT", 5),
+            ("CHARACTER_EXP", 100),
+        ] {
+            let item = catalog
+                .entries()
+                .into_iter()
+                .find(|item| item.kind == kind && item.category == "material")
+                .unwrap_or_else(|| panic!("catalog has no {kind} material"));
+            conn.execute(
+                "INSERT INTO tb_stackable_item (USER_DBID, ITEM_CID, STACK_CNT) VALUES (?, ?, ?)",
+                rusqlite::params![USER, item.cid, count],
+            )
+            .expect("typed stackable");
+        }
+        conn.execute(
+            "INSERT INTO tb_currency (USER_DBID, ITEM_CID, AMOUNT) VALUES (?, 1000001, ?), (?, 1000002, 0)",
+            rusqlite::params![USER, gold, USER],
+        )
+        .expect("currencies");
         conn.execute(
             "INSERT INTO tb_gem (USER_DBID, ITEM_DBID, ITEM_CID, STAT_INFO_CID, IS_LOCK, DELETED_DATE)
              VALUES (?, 70000008231234560, 1310405, 50401, 0, 0)",
@@ -289,6 +354,13 @@ fn cook_count(session: &SaveSession, dbid: i64) -> i64 {
         .find(|row| integer(&row.cells[id]) == dbid)
         .expect("cook row");
     integer(&row.cells[count])
+}
+
+fn fillable_kind(kind: &str) -> bool {
+    matches!(
+        kind,
+        "COMMON" | "COOKING_INGREDIENT" | "GEM_SOCKET_MATERIAL" | "CHANGE_EQUIPMENT_SUB_STAT"
+    ) || kind.ends_with("_EXP")
 }
 
 #[test]
@@ -579,6 +651,7 @@ fn recruiting_is_disabled_until_a_verified_roster_exists() {
     let path = fixture("recruit");
     let mut session = SaveSession::open(&path).expect("open");
     let mut game = Game::new(&mut session, Catalog::shared());
+    let before = game.characters().expect("characters").len();
 
     // NORMAL starters, MASTER developer rows, character items, skins, and an
     // unknown 10xxx id all fail: tb_init_character is a new-account seed, not
@@ -592,7 +665,7 @@ fn recruiting_is_disabled_until_a_verified_roster_exists() {
     assert!(game.unlock_all_characters().is_err());
     assert_eq!(
         game.characters().expect("characters").len(),
-        1,
+        before,
         "recruiting added nothing"
     );
 }
@@ -627,6 +700,332 @@ fn typed_limits_match_the_reference_save() {
         .expect("max stack");
     assert!(game.set_stack("stackable", 1_420_001, 61_526).is_err());
     assert!(game.set_stack("cook", BASE, 61_526).is_err());
+}
+
+#[test]
+fn fill_only_raises_safe_inventory_kinds() {
+    let path = fixture("fill");
+    let mut session = SaveSession::open(&path).expect("open");
+    let mut game = Game::new(&mut session, Catalog::shared());
+    let before: Vec<(String, i64, i64, String)> = game
+        .inventory()
+        .expect("inventory")
+        .into_iter()
+        .map(|stack| (stack.kind, stack.item.cid, stack.count, stack.item.kind))
+        .collect();
+
+    let updated = game.fill_stackables(1_000).expect("fill");
+    let after: Vec<(String, i64, i64, String)> = game
+        .inventory()
+        .expect("inventory")
+        .into_iter()
+        .map(|stack| (stack.kind, stack.item.cid, stack.count, stack.item.kind))
+        .collect();
+    assert_eq!(before.len(), after.len());
+
+    let mut expected_updates = 0;
+    for ((kind, cid, old, item_kind), (_, _, new, _)) in before.iter().zip(&after) {
+        let should_fill = kind == "stackable" && fillable_kind(item_kind);
+        let expected = if should_fill { (*old).max(1_000) } else { *old };
+        assert_eq!(
+            *new, expected,
+            "{kind} row {cid} ({item_kind}) changed to {new} instead of {expected}"
+        );
+        if *new > *old {
+            expected_updates += 1;
+        }
+    }
+    assert_eq!(
+        updated, expected_updates,
+        "Fill reports the rows it changed"
+    );
+    assert_eq!(game.fill_stackables(1_000).expect("second fill"), 0);
+}
+
+#[test]
+fn fill_does_nothing_when_the_target_changes_no_row() {
+    let path = fixture("fill-noop");
+    let mut session = SaveSession::open(&path).expect("open");
+    {
+        let mut game = Game::new(&mut session, Catalog::shared());
+        assert_eq!(game.fill_stackables(0).expect("fill zero"), 0);
+    }
+    assert!(
+        !session.dirty(),
+        "a no-op Fill must not mark the save dirty"
+    );
+}
+
+#[test]
+fn currency_limits_are_per_cid() {
+    let path = fixture("currency");
+    let mut session = SaveSession::open(&path).expect("open");
+    {
+        let mut game = Game::new(&mut session, Catalog::shared());
+        game.set_currency(1_000_001, 47_451_809)
+            .expect("gold reference");
+        assert!(game.set_currency(1_000_001, 47_451_810).is_err());
+        game.set_currency(1_000_002, 47_451_810)
+            .expect("aether uses the safety cap, not gold's balance");
+        assert!(game.set_currency(1_000_002, 2_147_483_648).is_err());
+    }
+
+    let path = fixture_with_gold("currency-high", 50_000_000);
+    let mut session = SaveSession::open(&path).expect("open");
+    let mut game = Game::new(&mut session, Catalog::shared());
+    game.set_currency(1_000_001, 50_000_000)
+        .expect("same above reference");
+    game.set_currency(1_000_001, 49_000_000)
+        .expect("explicit lower");
+    assert!(game.set_currency(1_000_001, 49_000_001).is_err());
+    game.set_currency(1_000_001, 47_451_810)
+        .expect("explicit lower, still above the reference");
+    assert!(game.set_currency(1_000_001, 47_451_811).is_err());
+}
+
+#[test]
+fn values_above_a_reference_limit_stay_editable() {
+    let path = fixture("above-limits");
+    let mut session = SaveSession::open(&path).expect("open");
+
+    let page = session
+        .raw_page("tb_stackable_item", 0, 100, None)
+        .expect("stack page");
+    let cid = column_index(&page, "ITEM_CID");
+    let row = page
+        .rows
+        .iter()
+        .find(|row| integer(&row.cells[cid]) == 1_420_001)
+        .expect("stack row");
+    let rowid = row.rowid.parse().expect("rowid");
+    session
+        .raw_update(
+            "tb_stackable_item",
+            rowid,
+            "STACK_CNT",
+            &RawValue::Integer("70000".into()),
+            false,
+        )
+        .expect("high stack");
+
+    let page = session
+        .raw_page("tb_character", 0, 100, None)
+        .expect("character page");
+    let cid = column_index(&page, "CHARACTER_CID");
+    let row = page
+        .rows
+        .iter()
+        .find(|row| integer(&row.cells[cid]) == 10_001)
+        .expect("character row");
+    let rowid = row.rowid.parse().expect("rowid");
+    session
+        .raw_update(
+            "tb_character",
+            rowid,
+            "LEVEL",
+            &RawValue::Integer("75".into()),
+            false,
+        )
+        .expect("high level");
+
+    let mut game = Game::new(&mut session, Catalog::shared());
+    game.set_stack("stackable", 1_420_001, 70_000)
+        .expect("same above the stack limit");
+    game.set_stack("stackable", 1_420_001, 69_999)
+        .expect("explicit lower");
+    assert!(game.set_stack("stackable", 1_420_001, 70_000).is_err());
+    game.set_character(10_001, "level", 75)
+        .expect("same above the level limit");
+    game.set_character(10_001, "level", 74)
+        .expect("explicit lower");
+    assert!(game.set_character(10_001, "level", 75).is_err());
+}
+
+#[test]
+fn team_slots_refuse_duplicates_gaps_and_an_empty_active_slot() {
+    let path = fixture("team-slots");
+    let mut session = SaveSession::open(&path).expect("open");
+    assert!(session.consistency().is_clean(), "fixture starts clean");
+
+    // Make page 1 active with its second slot selected. Page 0 is then free to
+    // edit without tripping the active-team guards.
+    session
+        .raw_update(
+            "tb_user",
+            USER,
+            "SELECTED_TEAM_PAGE_ID",
+            &RawValue::Integer("1".into()),
+            true,
+        )
+        .expect("select page 1");
+    session
+        .raw_update(
+            "tb_user",
+            USER,
+            "SELECTED_PAGE_SLOT_INDEX",
+            &RawValue::Integer("1".into()),
+            true,
+        )
+        .expect("select slot 2");
+
+    {
+        let mut game = Game::new(&mut session, Catalog::shared());
+        let teams = game.teams().expect("teams");
+        assert_eq!(teams.len(), 3);
+        assert!(!teams[0].selected);
+        assert!(teams[1].selected);
+        assert!(!teams[2].selected);
+
+        assert!(
+            game.set_team_slot(0, 3, 10_001).is_err(),
+            "a character already on the page cannot appear twice"
+        );
+        assert!(
+            game.set_team_slot(0, 3, 99_999).is_err(),
+            "only owned characters may be assigned"
+        );
+        assert!(
+            game.set_team_slot(1, 2, 0).is_err(),
+            "the active team's selected slot cannot be emptied"
+        );
+        assert!(
+            game.set_team_slot(1, 3, 10_003).is_err(),
+            "the duplicate guard also applies to the active page"
+        );
+
+        game.set_team_slot(1, 3, 10_001)
+            .expect("fill the next empty slot");
+        game.set_team_slot(1, 3, 0)
+            .expect("clear the last filled slot");
+
+        game.set_team_slot(2, 3, 0).expect("clear page 2 slot 3");
+        game.set_team_slot(2, 2, 0).expect("clear page 2 slot 2");
+        assert!(
+            game.set_team_slot(2, 1, 0).is_err(),
+            "a page must keep at least one character"
+        );
+        assert!(
+            game.set_team_slot(2, 3, 10_002).is_err(),
+            "a new character cannot leave a gap"
+        );
+        game.set_team_slot(2, 2, 10_003)
+            .expect("refill the first empty slot");
+        game.set_team_slot(2, 3, 10_002)
+            .expect("refill the next slot");
+        game.set_team_slot(2, 1, 10_001)
+            .expect("assigning the same value is a no-op");
+    }
+
+    let report = session.write().expect("valid team edits write");
+    assert!(report.consistency.is_clean());
+}
+
+#[test]
+fn removing_a_character_refuses_the_active_team_and_compacts_other_pages() {
+    let path = fixture("team-remove");
+    let mut session = SaveSession::open(&path).expect("open");
+    {
+        let mut game = Game::new(&mut session, Catalog::shared());
+        assert!(
+            game.remove_character(10_001).is_err(),
+            "a character in the active team cannot be removed"
+        );
+        assert!(
+            game.remove_character(10_002).is_err(),
+            "the guard covers every slot of the active page, not only the selected one"
+        );
+
+        game.remove_character(10_003)
+            .expect("remove a character from non-active pages");
+        assert!(
+            game.characters()
+                .expect("characters")
+                .iter()
+                .all(|character| character.cid != 10_003)
+        );
+        let teams = game.teams().expect("teams");
+        let slots = |page: usize| {
+            teams[page]
+                .slots
+                .iter()
+                .map(|slot| slot.cid)
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(slots(0), vec![10_001, 10_002, 0]);
+        assert_eq!(slots(1), vec![10_002, 0, 0], "the survivor moved forward");
+        assert_eq!(
+            slots(2),
+            vec![10_001, 10_002, 0],
+            "the middle survivor compacted"
+        );
+    }
+
+    let report = session.write().expect("the compacted teams write");
+    assert!(report.consistency.is_clean());
+}
+
+#[test]
+fn a_new_team_problem_blocks_the_write() {
+    let path = fixture("team-check-duplicate");
+    let mut session = SaveSession::open(&path).expect("open");
+    assert!(session.consistency().is_clean(), "fixture starts clean");
+
+    let page = session.raw_page("tb_team", 0, 10, None).expect("team page");
+    let page_id = column_index(&page, "PAGE_ID");
+    let row = page
+        .rows
+        .iter()
+        .find(|row| integer(&row.cells[page_id]) == 0)
+        .expect("page 0 row");
+    let rowid = row.rowid.parse().expect("rowid");
+    session
+        .raw_update(
+            "tb_team",
+            rowid,
+            "SLOT2_CHARACTER_CID",
+            &RawValue::Integer("10001".into()),
+            true,
+        )
+        .expect("introduce a duplicate");
+
+    let error = session.write().expect_err("a duplicate team must block");
+    assert_eq!(error.kind(), "inconsistent");
+    assert!(
+        error.to_string().contains("lists character 10001"),
+        "{error}"
+    );
+}
+
+#[test]
+fn the_checker_reports_a_gap_and_an_empty_active_slot() {
+    let path = fixture("team-check-gap");
+    let mut session = SaveSession::open(&path).expect("open");
+    let page = session.raw_page("tb_team", 0, 10, None).expect("team page");
+    let page_id = column_index(&page, "PAGE_ID");
+    let row = page
+        .rows
+        .iter()
+        .find(|row| integer(&row.cells[page_id]) == 0)
+        .expect("page 0 row");
+    let rowid = row.rowid.parse().expect("rowid");
+    session
+        .raw_update(
+            "tb_team",
+            rowid,
+            "SLOT1_CHARACTER_CID",
+            &RawValue::Integer("0".into()),
+            true,
+        )
+        .expect("empty the first slot");
+
+    let error = session.write().expect_err("a gap must block");
+    assert_eq!(error.kind(), "inconsistent");
+    let text = error.to_string();
+    assert!(text.contains("empty slot before a filled one"), "{text}");
+    assert!(
+        text.contains("active team slot on page 0 is empty"),
+        "{text}"
+    );
 }
 
 #[test]

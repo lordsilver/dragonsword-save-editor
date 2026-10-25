@@ -36,7 +36,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Spinner } from '@/components/ui/spinner';
 import { consistencyIssues } from '@/lib/consistency';
-import { MAX_ADV_EXP, MAX_ADV_GRADE, MAX_ADV_LEVEL, MAX_CURRENCY, MAX_PLAY_TIME, MAX_STACK } from '@/lib/limits';
+import { MAX_ADV_EXP, MAX_ADV_GRADE, MAX_ADV_LEVEL, MAX_PLAY_TIME, MAX_STACK, currencyLimit } from '@/lib/limits';
 import { formatNumber, itemName, useApp } from '@/lib/store';
 import type { ConsistencyReport } from '@/lib/types';
 
@@ -83,7 +83,7 @@ export function OverviewScreen() {
             </Button>
             <Button variant="outline" size="sm" onClick={() => setFillOpen(true)}>
               <Wand2 />
-              Fill every stack
+              Fill material stacks
             </Button>
           </>
         }
@@ -207,7 +207,7 @@ export function OverviewScreen() {
             </ConfirmButton>
             <Button variant="outline" className="w-full justify-start" onClick={() => setFillOpen(true)}>
               <Wand2 />
-              Fill every stack
+              Fill material stacks
             </Button>
           </div>
         </Panel>
@@ -273,10 +273,10 @@ function ConsistencyPanel({ report }: { report: ConsistencyReport }) {
       title={
         <span className="flex items-center gap-2">
           <AlertTriangle className="size-4 text-amber-500" />
-          Broken gem links in this save
+          Consistency problems in this save
         </span>
       }
-      description="These links were already in the file when the editor opened it. The editor will not create new ones, and a new broken link blocks the write."
+      description="These problems were already in the file when the editor opened it. The editor will not create new ones, and a new problem blocks the write."
     >
       <ul className="space-y-1.5 text-xs">
         {issues.map((issue) => (
@@ -287,8 +287,7 @@ function ConsistencyPanel({ report }: { report: ConsistencyReport }) {
         ))}
       </ul>
       <p className="mt-3 text-xs text-muted-foreground">
-        Clear a broken link by setting the equipment's gem id to 0 on the Equipment screen, or link a live, unlinked
-        gem.
+        Clear a broken gem link on the Equipment screen, or fix a team problem on the Characters screen.
       </p>
     </Panel>
   );
@@ -353,6 +352,7 @@ function CurrencyCard({
   busy: boolean;
   onCommit: (amount: number) => void;
 }) {
+  const limit = currencyLimit(cid);
   return (
     <div className="flex items-center gap-3 rounded-lg border bg-background/30 p-3">
       <ItemIcon item={icon} size={42} />
@@ -361,15 +361,25 @@ function CurrencyCard({
         <div className="font-mono text-[10px] text-muted-foreground">CID {cid}</div>
       </div>
       <div className="flex flex-col items-end gap-1">
-        <NumberField value={amount} onCommit={onCommit} max={MAX_CURRENCY} disabled={busy} />
-        <button
-          type="button"
-          className="text-[10px] text-brand hover:underline disabled:opacity-50"
-          disabled={busy}
-          onClick={() => onCommit(MAX_CURRENCY)}
-        >
-          Set highest seen
-        </button>
+        <NumberField value={amount} onCommit={onCommit} max={limit.max} disabled={busy} />
+        {limit.observed ? (
+          <button
+            type="button"
+            className="text-[10px] text-brand hover:underline disabled:opacity-50"
+            disabled={busy || amount >= limit.max}
+            title={amount >= limit.max ? 'Already at or above the highest seen balance' : undefined}
+            onClick={() => onCommit(limit.max)}
+          >
+            Set highest seen
+          </button>
+        ) : (
+          <span
+            className="text-[10px] text-muted-foreground"
+            title="No nonzero balance for this currency exists in the reference save"
+          >
+            No observed balance
+          </span>
+        )}
       </div>
     </div>
   );
@@ -528,9 +538,10 @@ function FillDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Fill every stack</DialogTitle>
+          <DialogTitle>Fill material stacks</DialogTitle>
           <DialogDescription>
-            Sets STACK_CNT on every row of tb_stackable_item. The highest count seen in the reference save is{' '}
+            Raises eligible material and EXP rows to at least the chosen count. It never lowers a count; quest, map,
+            achievement and master-soul rows are left alone. The highest count seen in the reference save is{' '}
             {formatNumber(MAX_STACK)}.
           </DialogDescription>
         </DialogHeader>
@@ -549,7 +560,7 @@ function FillDialog({
           </Button>
           <Button disabled={busy || count < 0 || count > MAX_STACK} onClick={() => onSave(count)}>
             {busy ? <Spinner /> : <Wand2 />}
-            Fill stacks
+            Fill material stacks
           </Button>
         </DialogFooter>
       </DialogContent>

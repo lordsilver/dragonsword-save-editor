@@ -173,8 +173,8 @@ export async function stackableCatalog(): Promise<import('./types.ts').Item[]> {
   return invoke('stackable_catalog');
 }
 
-export async function fillStacks(count: number): Promise<void> {
-  await invoke('stacks_fill', { count });
+export async function fillStacks(count: number): Promise<number> {
+  return invoke<number>('stacks_fill', { count });
 }
 
 export async function characters(): Promise<Character[]> {

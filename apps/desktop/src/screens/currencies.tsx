@@ -5,7 +5,7 @@ import { ItemIcon } from '@/components/item-icon';
 import { PageHeader, Panel } from '@/components/page';
 import { CountPill, InfoNote, StatTile } from '@/components/summary';
 import { Badge } from '@/components/ui/badge';
-import { MAX_CURRENCY } from '@/lib/limits';
+import { MAX_CURRENCY, currencyLimit } from '@/lib/limits';
 import { formatNumber, itemName, useApp } from '@/lib/store';
 
 export function CurrenciesScreen() {
@@ -24,6 +24,8 @@ export function CurrenciesScreen() {
     null,
   );
   const busy = pending !== null;
+  const observed = currencies.filter((currency) => currencyLimit(currency.item.cid).observed);
+  const canMaxAny = observed.some((currency) => currency.amount < currencyLimit(currency.item.cid).max);
 
   return (
     <div className="space-y-5">
@@ -33,13 +35,13 @@ export function CurrenciesScreen() {
         description="Every balance the save stores in tb_currency. Amounts are written immediately to the working copy; the encrypted file changes only when you save."
         actions={
           <ConfirmButton
-            title="Max out every currency?"
-            description={`Sets all ${currencies.length} currency rows to ${formatNumber(MAX_CURRENCY)}. This is the highest balance seen in the reference save.`}
-            confirmLabel="Max everything"
+            title="Max out observed balances?"
+            description={`Sets each currency with a balance seen in the reference save to its highest observed value. Gold is ${formatNumber(MAX_CURRENCY)}. Currencies with no nonzero balance, including Aether Crystals, are skipped, and a balance already at or above its reference is left alone.`}
+            confirmLabel="Max observed balances"
             variant="outline"
             size="sm"
-            disabled={busy || currencies.length === 0}
-            onConfirm={() => void setAllCurrencies(MAX_CURRENCY)}
+            disabled={busy || !canMaxAny}
+            onConfirm={() => void setAllCurrencies()}
           >
             <TrendingUp />
             Max every balance
@@ -63,9 +65,9 @@ export function CurrenciesScreen() {
         />
         <StatTile
           icon={<Gem />}
-          label="Highest balance seen"
+          label="Gold reference"
           value={formatNumber(MAX_CURRENCY)}
-          detail="Reference save"
+          detail="Highest balance seen in the reference save"
         />
       </div>
 
@@ -77,56 +79,72 @@ export function CurrenciesScreen() {
         />
       ) : (
         <div className="grid gap-3 lg:grid-cols-2">
-          {currencies.map((currency) => (
-            <div key={currency.item.cid} className="rounded-xl border bg-card/70 p-4 shadow-xs">
-              <div className="flex items-start gap-4">
-                <ItemIcon item={currency.item} size={56} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="truncate font-heading text-base font-semibold tracking-tight">
-                      {itemName(currency.item, language)}
-                    </h2>
-                    <Badge variant="outline" className="font-mono text-[10px]">
-                      CID {currency.item.cid}
-                    </Badge>
-                  </div>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {currency.item.grade || 'Currency'} · {currency.item.category}
-                  </p>
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <NumberField
-                      value={currency.amount}
-                      onCommit={(amount) => void setCurrency(currency.item.cid, amount)}
-                      max={MAX_CURRENCY}
-                      disabled={busy}
-                      className="h-9 w-40 text-left text-sm"
-                      ariaLabel={`${itemName(currency.item, language)} amount`}
-                    />
-                    <button
-                      type="button"
-                      className="text-[11px] text-brand hover:underline disabled:opacity-50"
-                      disabled={busy}
-                      onClick={() => void setCurrency(currency.item.cid, MAX_CURRENCY)}
-                    >
-                      Set highest seen
-                    </button>
+          {currencies.map((currency) => {
+            const limit = currencyLimit(currency.item.cid);
+            return (
+              <div key={currency.item.cid} className="rounded-xl border bg-card/70 p-4 shadow-xs">
+                <div className="flex items-start gap-4">
+                  <ItemIcon item={currency.item} size={56} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="truncate font-heading text-base font-semibold tracking-tight">
+                        {itemName(currency.item, language)}
+                      </h2>
+                      <Badge variant="outline" className="font-mono text-[10px]">
+                        CID {currency.item.cid}
+                      </Badge>
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {currency.item.grade || 'Currency'} · {currency.item.category}
+                    </p>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <NumberField
+                        value={currency.amount}
+                        onCommit={(amount) => void setCurrency(currency.item.cid, amount)}
+                        max={limit.max}
+                        disabled={busy}
+                        className="h-9 w-40 text-left text-sm"
+                        ariaLabel={`${itemName(currency.item, language)} amount`}
+                      />
+                      {limit.observed ? (
+                        <button
+                          type="button"
+                          className="text-[11px] text-brand hover:underline disabled:opacity-50"
+                          disabled={busy || currency.amount >= limit.max}
+                          title={
+                            currency.amount >= limit.max ? 'Already at or above the highest seen balance' : undefined
+                          }
+                          onClick={() => void setCurrency(currency.item.cid, limit.max)}
+                        >
+                          Set highest seen
+                        </button>
+                      ) : (
+                        <span
+                          className="text-[11px] text-muted-foreground"
+                          title="No nonzero balance for this currency exists in the reference save"
+                        >
+                          No observed balance
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
+                <div className="mt-3 flex items-center justify-between border-t pt-2 text-[10px] text-muted-foreground">
+                  <span className="font-mono">tb_currency · CID {currency.item.cid}</span>
+                  <CountPill>{formatNumber(currency.amount)}</CountPill>
+                </div>
               </div>
-              <div className="mt-3 flex items-center justify-between border-t pt-2 text-[10px] text-muted-foreground">
-                <span className="font-mono">tb_currency · CID {currency.item.cid}</span>
-                <CountPill>{formatNumber(currency.amount)}</CountPill>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
       <Panel title="How currency edits behave" description="A short note before you touch a balance.">
         <InfoNote>
-          The editor updates the existing row for each currency; it never creates or deletes balances. Balances are
-          capped at the highest value seen in the reference save ({formatNumber(MAX_CURRENCY)}), so a value above that
-          reference is not offered. Gold and premium currencies both live here.
+          The editor updates the existing row for each currency; it never creates or deletes balances. Gold is capped at
+          the highest balance seen in the reference save ({formatNumber(MAX_CURRENCY)}). Other currencies use a 32-bit
+          safety cap because the reference save has no nonzero balance for them, so Aether Crystals is left out of “Max
+          observed balances.” A value already above its limit stays editable and is never pulled down by a blur.
         </InfoNote>
       </Panel>
     </div>

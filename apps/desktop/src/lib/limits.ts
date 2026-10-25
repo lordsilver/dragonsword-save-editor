@@ -19,6 +19,7 @@ export const MAX_ADV_GRADE = 6;
 export const MAX_ADV_EXP = 962_500;
 export const MAX_CURRENCY = 47_451_809;
 export const MAX_STACK = 61_525;
+export const MAX_CURRENCY_SAFETY = 2_147_483_647;
 export const MAX_KARMA_EXP = 2_990_400;
 export const MAX_PLAY_TIME = 2_147_483_647;
 
@@ -30,3 +31,30 @@ export const MAX_SOLDIER_GRADE = 99;
 
 /** The only skill type values the game writes: regular slots 1–7 and 801. */
 export const SKILL_TYPES: readonly number[] = [1, 2, 3, 4, 5, 6, 7, 801];
+
+export interface CurrencyLimit {
+  max: number;
+  /** True only when a nonzero balance was seen in the reference save. */
+  observed: boolean;
+}
+
+/**
+ * Currency limits are per CID. Gold's reference balance bounds gold; every
+ * other currency, including Aether Crystals, gets a 32-bit safety cap because
+ * the reference save cannot tell us what a legitimate balance looks like.
+ */
+export function currencyLimit(cid: number): CurrencyLimit {
+  if (cid === 1_000_001) return { max: MAX_CURRENCY, observed: true };
+  return { max: MAX_CURRENCY_SAFETY, observed: false };
+}
+
+/** Item kinds Fill is allowed to raise. Keep this in step with dsa-core. */
+export function isFillableStackKind(kind: string): boolean {
+  return (
+    kind === 'COMMON' ||
+    kind === 'COOKING_INGREDIENT' ||
+    kind === 'GEM_SOCKET_MATERIAL' ||
+    kind === 'CHANGE_EQUIPMENT_SUB_STAT' ||
+    kind.endsWith('_EXP')
+  );
+}

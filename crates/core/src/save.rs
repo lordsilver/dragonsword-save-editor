@@ -263,7 +263,7 @@ impl SaveSession {
         let introduced = consistency.new_since(&self.consistency);
         if !introduced.is_clean() {
             return Err(Error::Inconsistent(format!(
-                "The save would introduce broken gem links: {}. Fix the links or undo before writing.",
+                "The save would introduce consistency problems: {}. Fix them or undo before writing.",
                 introduced.details()
             )));
         }

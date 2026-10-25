@@ -326,7 +326,7 @@ fn stackable_catalog(state: State<'_, AppState>) -> CommandResult<Vec<dsa_core::
 }
 
 #[tauri::command]
-fn stacks_fill(state: State<'_, AppState>, count: i64) -> CommandResult<()> {
+fn stacks_fill(state: State<'_, AppState>, count: i64) -> CommandResult<i64> {
     game(&state, |game| game.fill_stackables(count))
 }
 

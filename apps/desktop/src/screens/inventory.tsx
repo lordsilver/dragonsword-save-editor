@@ -18,13 +18,16 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { MAX_STACK } from '@/lib/limits';
+import { MAX_STACK, isFillableStackKind } from '@/lib/limits';
 import { formatNumber, itemName, useApp } from '@/lib/store';
 import type { Item } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 type Kind = 'all' | 'stackable' | 'cook';
 type Sort = 'name' | 'count' | 'cid';
+
+/** Progress counters that Fill and the one-click Max must not touch. */
+const UNSAFE_MAX_KINDS = new Set(['QUEST', 'MAP', 'ACHIEVEMENT_POINT', 'CHARACTER_MASTER_SOUL']);
 
 export function InventoryScreen() {
   const inventory = useApp((state) => state.inventory);
@@ -67,6 +70,9 @@ export function InventoryScreen() {
   const totalUnits = inventory.reduce((sum, stack) => sum + stack.count, 0);
   const stackCount = inventory.filter((stack) => stack.kind === 'stackable').length;
   const cookCount = inventory.filter((stack) => stack.kind === 'cook').length;
+  const fillableCount = inventory.filter(
+    (stack) => stack.kind === 'stackable' && isFillableStackKind(stack.item.kind),
+  ).length;
   const busy = pending !== null;
   const owned = useMemo(() => new Map(inventory.map((stack) => [stack.item.cid, stack.count])), [inventory]);
 
@@ -85,16 +91,16 @@ export function InventoryScreen() {
               Add stackable
             </Button>
             <ConfirmButton
-              title="Fill every stack?"
-              description={`Sets STACK_CNT to ${formatNumber(MAX_STACK)} on every row of tb_stackable_item. Cooked dishes are not changed.`}
-              confirmLabel="Fill stacks"
+              title="Fill material stacks?"
+              description={`Raises common materials, cooking ingredients, gem-socket materials, equipment-sub-stat items and *_EXP rows to at least ${formatNumber(MAX_STACK)}. It never lowers a count and leaves quest, map, achievement and master-soul rows alone. Cooked dishes are not changed.`}
+              confirmLabel="Fill material stacks"
               variant="outline"
               size="sm"
-              disabled={busy || inventory.length === 0}
+              disabled={busy || fillableCount === 0}
               onConfirm={() => void fillStacks(MAX_STACK)}
             >
               <Wand2 />
-              Fill stacks
+              Fill material stacks
             </ConfirmButton>
           </>
         }
@@ -191,57 +197,62 @@ export function InventoryScreen() {
               <span className="text-right">Count</span>
               <span className="text-right">Row</span>
             </div>
-            {visible.map((stack) => (
-              <div
-                key={`${stack.kind}:${stack.id}`}
-                className={cn(
-                  'grid gap-3 px-4 md:grid-cols-[minmax(0,1fr)_7rem_9rem_8rem] md:items-center md:gap-4',
-                  compactRows ? 'py-1.5' : 'py-2.5',
-                )}
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  <ItemIcon item={stack.item} size={compactRows ? 30 : 38} />
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-medium">{itemName(stack.item, language)}</div>
-                    <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
-                      <span className="font-mono">CID {stack.item.cid}</span>
-                      {stack.item.grade && (
-                        <span className={cn('rounded border px-1 py-px', gradeTone(stack.item.grade))}>
-                          {stack.item.grade}
-                        </span>
-                      )}
-                      {!stack.item.known && <span className="text-amber-300">unknown item</span>}
+            {visible.map((stack) => {
+              const showMax = stack.kind === 'cook' || !UNSAFE_MAX_KINDS.has(stack.item.kind);
+              return (
+                <div
+                  key={`${stack.kind}:${stack.id}`}
+                  className={cn(
+                    'grid gap-3 px-4 md:grid-cols-[minmax(0,1fr)_7rem_9rem_8rem] md:items-center md:gap-4',
+                    compactRows ? 'py-1.5' : 'py-2.5',
+                  )}
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <ItemIcon item={stack.item} size={compactRows ? 30 : 38} />
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium">{itemName(stack.item, language)}</div>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
+                        <span className="font-mono">CID {stack.item.cid}</span>
+                        {stack.item.grade && (
+                          <span className={cn('rounded border px-1 py-px', gradeTone(stack.item.grade))}>
+                            {stack.item.grade}
+                          </span>
+                        )}
+                        {!stack.item.known && <span className="text-amber-300">unknown item</span>}
+                      </div>
                     </div>
                   </div>
+                  <div>
+                    <Badge variant="outline" className="text-[10px]">
+                      {stack.kind === 'cook' ? 'Cooked dish' : 'Material'}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-end gap-2">
+                    <NumberField
+                      value={stack.count}
+                      onCommit={(count) => void setStack(stack.kind, stack.id, count)}
+                      max={MAX_STACK}
+                      disabled={busy}
+                      className="w-28"
+                      ariaLabel={`${itemName(stack.item, language)} count`}
+                    />
+                    {showMax && (
+                      <button
+                        type="button"
+                        className="text-[10px] text-brand hover:underline disabled:opacity-50"
+                        disabled={busy || stack.count >= MAX_STACK}
+                        onClick={() => void setStack(stack.kind, stack.id, MAX_STACK)}
+                      >
+                        Max
+                      </button>
+                    )}
+                  </div>
+                  <div className="hidden text-right font-mono text-[10px] text-muted-foreground md:block">
+                    {stack.kind === 'stackable' ? `CID ${stack.id}` : `DBID ${stack.id}`}
+                  </div>
                 </div>
-                <div>
-                  <Badge variant="outline" className="text-[10px]">
-                    {stack.kind === 'cook' ? 'Cooked dish' : 'Material'}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-end gap-2">
-                  <NumberField
-                    value={stack.count}
-                    onCommit={(count) => void setStack(stack.kind, stack.id, count)}
-                    max={MAX_STACK}
-                    disabled={busy}
-                    className="w-28"
-                    ariaLabel={`${itemName(stack.item, language)} count`}
-                  />
-                  <button
-                    type="button"
-                    className="text-[10px] text-brand hover:underline disabled:opacity-50"
-                    disabled={busy || stack.count === MAX_STACK}
-                    onClick={() => void setStack(stack.kind, stack.id, MAX_STACK)}
-                  >
-                    Max
-                  </button>
-                </div>
-                <div className="hidden text-right font-mono text-[10px] text-muted-foreground md:block">
-                  {stack.kind === 'stackable' ? `CID ${stack.id}` : `DBID ${stack.id}`}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           {!expanded && rows.length > visible.length && (
             <div className="border-t p-3 text-center">
@@ -262,6 +273,10 @@ export function InventoryScreen() {
           <InfoNote>
             Cooked dishes live in <span className="font-mono">tb_cook_item</span> and keep their own instance ids. Their
             counts are edited here but the rows are created by cooking in game.
+          </InfoNote>
+          <InfoNote>
+            Fill only raises normal material and EXP counts. Quest, map, achievement and master-soul rows are progress
+            data and keep the values the game wrote.
           </InfoNote>
         </div>
       </Panel>

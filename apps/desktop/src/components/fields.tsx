@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
+import { clampBigNumberDraft, clampNumberDraft } from '@/lib/numbers';
 import { useApp } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
@@ -55,11 +56,13 @@ export function NumberField({
       setDraft(String(value));
       return;
     }
-    let next = Math.trunc(parsed);
-    if (min !== undefined) next = Math.max(min, next);
-    if (max !== undefined) next = Math.min(max, next);
+    const next = clampNumberDraft(parsed, value, min, max);
+    if (next === null) {
+      setDraft(String(value));
+      return;
+    }
     setDraft(String(next));
-    if (next !== value) onCommit(next);
+    onCommit(next);
   };
 
   return (
@@ -143,12 +146,13 @@ export function BigNumberField({
       setDraft(value);
       return;
     }
-    let next = BigInt(trimmed);
-    if (next < min) next = min;
-    if (next > max) next = max;
-    const text = next.toString();
-    setDraft(text);
-    if (text !== value) onCommit(text);
+    const next = clampBigNumberDraft(BigInt(trimmed), BigInt(value), min, max);
+    if (next === null) {
+      setDraft(value);
+      return;
+    }
+    setDraft(next.toString());
+    onCommit(next.toString());
   };
 
   return (

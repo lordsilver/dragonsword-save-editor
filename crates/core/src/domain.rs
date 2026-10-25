@@ -24,6 +24,8 @@ const MAX_EQUIP_EXP: i64 = 90_000;
 const MAX_ADV_LEVEL: i64 = 80;
 const MAX_ADV_GRADE: i64 = 6;
 const MAX_ADV_EXP: i64 = 962_500;
+/// Gold's balance in the reference save. Every other currency gets a safety
+/// cap instead; Aether Crystals is premium currency and was zero everywhere.
 const MAX_AMOUNT: i64 = 47_451_809;
 const MAX_STACK: i64 = 61_525;
 const MAX_KARMA_EXP: i64 = 2_990_400;
@@ -33,12 +35,31 @@ const MAX_KARMA_EXP: i64 = 2_990_400;
 // ceiling, and raw stat data has no known range.
 const MAX_POINTS: i64 = 999_999_999;
 const MAX_STAT: i64 = 2_147_483_647;
+const MAX_CURRENCY_SAFETY: i64 = i32::MAX as i64;
 const MAX_PLAY_TIME: i64 = i32::MAX as i64;
 const MAX_TRANSCEND_TOTAL: i64 = 99;
 const MAX_SOLDIER_GRADE: i64 = 99;
 
 /// The only skill type values the game writes: regular slots 1–7 and 801.
 const SKILL_TYPES: [i64; 8] = [1, 2, 3, 4, 5, 6, 7, 801];
+
+fn currency_limit(cid: i64) -> i64 {
+    if cid == 1_000_001 {
+        MAX_AMOUNT
+    } else {
+        MAX_CURRENCY_SAFETY
+    }
+}
+
+/// Item kinds where a large stack is ordinary inventory. Everything else —
+/// quests, maps, achievement points and master souls — is progress data, and
+/// Fill must not touch it.
+fn fillable_kind(kind: &str) -> bool {
+    matches!(
+        kind,
+        "COMMON" | "COOKING_INGREDIENT" | "GEM_SOCKET_MATERIAL" | "CHANGE_EQUIPMENT_SUB_STAT"
+    ) || kind.ends_with("_EXP")
+}
 
 /// One open save, viewed through the catalog.
 pub struct Game<'a> {
@@ -63,6 +84,15 @@ impl<'a> Game<'a> {
 
     fn touch(&mut self) {
         self.session.touch();
+    }
+
+    /// Read the value a setter is about to replace. Limits are observations,
+    /// not game rules, so a save that already exceeds one stays editable.
+    fn current_i64(&self, sql: &str, params: impl rusqlite::Params) -> Result<Option<i64>> {
+        Ok(self
+            .conn()
+            .query_row(sql, params, |row| row.get(0))
+            .optional()?)
     }
 
     pub fn catalog(&self) -> &Catalog {
@@ -195,6 +225,13 @@ impl<'a> Game<'a> {
             "playTime" => ("PLAY_TIME", MAX_PLAY_TIME),
             _ => return Err(Error::invalid(format!("unknown adventure field {field:?}"))),
         };
+        let current = self
+            .current_i64(
+                &format!("SELECT {column} FROM tb_advent_status WHERE USER_DBID=?"),
+                params![self.user_id],
+            )?
+            .unwrap_or(0);
+        let max = max.max(current);
         if !(0..=max).contains(&value) {
             return Err(Error::invalid(format!(
                 "{field} must be between 0 and {max}"
@@ -229,20 +266,22 @@ impl<'a> Game<'a> {
     }
 
     pub fn set_currency(&mut self, cid: i64, amount: i64) -> Result<()> {
-        if !(0..=MAX_AMOUNT).contains(&amount) {
+        let current = self
+            .current_i64(
+                "SELECT AMOUNT FROM tb_currency WHERE USER_DBID=? AND ITEM_CID=?",
+                params![self.user_id, cid],
+            )?
+            .ok_or_else(|| Error::invalid(format!("currency {cid} is not present in this save")))?;
+        let max = currency_limit(cid).max(current);
+        if !(0..=max).contains(&amount) {
             return Err(Error::invalid(format!(
-                "currency must be between 0 and {MAX_AMOUNT}"
+                "currency must be between 0 and {max}"
             )));
         }
-        let changed = self.conn().execute(
+        self.conn().execute(
             "UPDATE tb_currency SET AMOUNT=? WHERE USER_DBID=? AND ITEM_CID=?",
             params![amount, self.user_id, cid],
         )?;
-        if changed != 1 {
-            return Err(Error::invalid(format!(
-                "currency {cid} is not present in this save"
-            )));
-        }
         self.touch();
         Ok(())
     }
@@ -301,9 +340,22 @@ impl<'a> Game<'a> {
     }
 
     pub fn set_stack(&mut self, kind: &str, id: i64, count: i64) -> Result<()> {
-        if !(0..=MAX_STACK).contains(&count) {
+        let current = match kind {
+            "stackable" => self.current_i64(
+                "SELECT STACK_CNT FROM tb_stackable_item WHERE USER_DBID=? AND ITEM_CID=?",
+                params![self.user_id, id],
+            )?,
+            "cook" => self.current_i64(
+                "SELECT STACK_CNT FROM tb_cook_item WHERE USER_DBID=? AND ITEM_DBID=?",
+                params![self.user_id, id],
+            )?,
+            _ => return Err(Error::invalid(format!("unknown stack kind {kind:?}"))),
+        }
+        .ok_or_else(|| Error::invalid("that stack is not present in this save"))?;
+        let max = MAX_STACK.max(current);
+        if !(0..=max).contains(&count) {
             return Err(Error::invalid(format!(
-                "stack count must be between 0 and {MAX_STACK}"
+                "stack count must be between 0 and {max}"
             )));
         }
         let changed = match kind {
@@ -315,7 +367,7 @@ impl<'a> Game<'a> {
                 "UPDATE tb_cook_item SET STACK_CNT=? WHERE USER_DBID=? AND ITEM_DBID=?",
                 params![count, self.user_id, id],
             )?,
-            _ => return Err(Error::invalid(format!("unknown stack kind {kind:?}"))),
+            _ => unreachable!("kind was validated above"),
         };
         if changed != 1 {
             return Err(Error::invalid("that stack is not present in this save"));
@@ -325,16 +377,23 @@ impl<'a> Game<'a> {
     }
 
     pub fn add_stackable(&mut self, cid: i64, count: i64) -> Result<()> {
-        if !(0..=MAX_STACK).contains(&count) {
-            return Err(Error::invalid(format!(
-                "stack count must be between 0 and {MAX_STACK}"
-            )));
-        }
         let item = self.catalog.lookup(cid);
         if !item.is_stackable() {
             return Err(Error::invalid(
                 "that item is not stored in the stackable inventory",
             ));
+        }
+        let current = self
+            .current_i64(
+                "SELECT STACK_CNT FROM tb_stackable_item WHERE USER_DBID=? AND ITEM_CID=?",
+                params![self.user_id, cid],
+            )?
+            .unwrap_or(0);
+        let max = MAX_STACK.max(current);
+        if !(0..=max).contains(&count) {
+            return Err(Error::invalid(format!(
+                "stack count must be between 0 and {max}"
+            )));
         }
         self.conn().execute(
             "INSERT INTO tb_stackable_item (USER_DBID, ITEM_CID, STACK_CNT) VALUES (?,?,?)
@@ -345,18 +404,46 @@ impl<'a> Game<'a> {
         Ok(())
     }
 
-    pub fn fill_stackables(&mut self, count: i64) -> Result<()> {
+    /// Raise only the kinds whose counts are normal inventory quantities.
+    /// Quest, map, achievement and master-soul rows keep whatever the game
+    /// wrote; no row is ever lowered, and the return value counts changed rows.
+    pub fn fill_stackables(&mut self, count: i64) -> Result<i64> {
         if !(0..=MAX_STACK).contains(&count) {
             return Err(Error::invalid(format!(
                 "stack count must be between 0 and {MAX_STACK}"
             )));
         }
-        self.conn().execute(
-            "UPDATE tb_stackable_item SET STACK_CNT=? WHERE USER_DBID=?",
-            params![count, self.user_id],
-        )?;
-        self.touch();
-        Ok(())
+        let cids: Vec<i64> = {
+            let mut statement = self
+                .conn()
+                .prepare("SELECT ITEM_CID FROM tb_stackable_item WHERE USER_DBID=?")?;
+            let rows = statement.query_map(params![self.user_id], |row| row.get(0))?;
+            rows.collect::<std::result::Result<Vec<_>, _>>()?
+        };
+        let fillable: Vec<i64> = cids
+            .into_iter()
+            .filter(|cid| fillable_kind(&self.catalog.lookup(*cid).kind))
+            .collect();
+        if fillable.is_empty() {
+            return Ok(0);
+        }
+
+        let transaction = self.conn().unchecked_transaction()?;
+        let mut updated = 0i64;
+        {
+            let mut statement = transaction.prepare(
+                "UPDATE tb_stackable_item SET STACK_CNT=MAX(STACK_CNT, ?)
+                  WHERE USER_DBID=? AND ITEM_CID=? AND STACK_CNT < ?",
+            )?;
+            for cid in fillable {
+                updated += statement.execute(params![count, self.user_id, cid, count])? as i64;
+            }
+        }
+        transaction.commit()?;
+        if updated > 0 {
+            self.touch();
+        }
+        Ok(updated)
     }
 
     pub fn catalog_entries(&self) -> Vec<Item> {
@@ -436,18 +523,22 @@ impl<'a> Game<'a> {
             "soldierGradePoint" => ("SOLDIER_GRADE_POINT", MAX_POINTS),
             _ => return Err(Error::invalid(format!("unknown character field {field:?}"))),
         };
+        let current = self
+            .current_i64(
+                &format!("SELECT {column} FROM tb_character WHERE USER_DBID=? AND CHARACTER_CID=?"),
+                params![self.user_id, cid],
+            )?
+            .ok_or_else(|| Error::invalid("that character is not owned in this save"))?;
+        let max = max.max(current);
         if !(0..=max).contains(&value) {
             return Err(Error::invalid(format!(
                 "{field} must be between 0 and {max}"
             )));
         }
-        let changed = self.conn().execute(
+        self.conn().execute(
             &format!("UPDATE tb_character SET {column}=? WHERE USER_DBID=? AND CHARACTER_CID=?"),
             params![value, self.user_id, cid],
         )?;
-        if changed != 1 {
-            return Err(Error::invalid("that character is not owned in this save"));
-        }
         self.touch();
         Ok(())
     }
@@ -467,6 +558,17 @@ impl<'a> Game<'a> {
 
     pub fn remove_character(&mut self, cid: i64) -> Result<()> {
         let transaction = self.conn().unchecked_transaction()?;
+        let selected = selected_team(&transaction, self.user_id)?;
+        let teams = team_rows(&transaction, self.user_id)?;
+        if let Some((page_id, _)) = selected
+            && teams
+                .iter()
+                .any(|(id, slots)| *id == page_id && slots.contains(&cid))
+        {
+            return Err(Error::invalid(
+                "that character is in the active team; select another team page before removing them",
+            ));
+        }
         let deleted = transaction.execute(
             "DELETE FROM tb_character WHERE USER_DBID=? AND CHARACTER_CID=?",
             params![self.user_id, cid],
@@ -478,14 +580,22 @@ impl<'a> Game<'a> {
             "DELETE FROM tb_skill_growth WHERE USER_DBID=? AND CHARACTER_CID=?",
             params![self.user_id, cid],
         )?;
-        for slot in [
-            "SLOT1_CHARACTER_CID",
-            "SLOT2_CHARACTER_CID",
-            "SLOT3_CHARACTER_CID",
-        ] {
+        for (page_id, slots) in &teams {
+            if !slots.contains(&cid) {
+                continue;
+            }
+            let mut compact = [0i64; 3];
+            let mut next = 0;
+            for slot in slots {
+                if *slot != 0 && *slot != cid {
+                    compact[next] = *slot;
+                    next += 1;
+                }
+            }
             transaction.execute(
-                &format!("UPDATE tb_team SET {slot}=0 WHERE USER_DBID=? AND {slot}=?"),
-                params![self.user_id, cid],
+                "UPDATE tb_team SET SLOT1_CHARACTER_CID=?, SLOT2_CHARACTER_CID=?,
+                    SLOT3_CHARACTER_CID=? WHERE USER_DBID=? AND PAGE_ID=?",
+                params![compact[0], compact[1], compact[2], self.user_id, page_id],
             )?;
         }
         transaction.execute(
@@ -519,9 +629,17 @@ impl<'a> Game<'a> {
         if !SKILL_TYPES.contains(&type_value) {
             return Err(Error::invalid("skill type must be 1–7 or 801"));
         }
-        if !(0..=MAX_SKILL_LEVEL).contains(&level) {
+        let current = self
+            .current_i64(
+                "SELECT COALESCE(SLOT_LEVEL, 0) FROM tb_skill_growth
+                  WHERE USER_DBID=? AND CHARACTER_CID=? AND TYPE_VALUE=?",
+                params![self.user_id, cid, type_value],
+            )?
+            .unwrap_or(0);
+        let max = MAX_SKILL_LEVEL.max(current);
+        if !(0..=max).contains(&level) {
             return Err(Error::invalid(format!(
-                "skill level must be between 0 and {MAX_SKILL_LEVEL}"
+                "skill level must be between 0 and {max}"
             )));
         }
         self.conn().execute(
@@ -548,6 +666,7 @@ impl<'a> Game<'a> {
             .into_iter()
             .map(|character| (character.cid, character.level))
             .collect();
+        let selected_page = selected_team(self.conn(), self.user_id)?.map(|(page, _)| page);
         let mut statement = self.conn().prepare(
             "SELECT PAGE_ID, SLOT1_CHARACTER_CID, SLOT2_CHARACTER_CID, SLOT3_CHARACTER_CID
                FROM tb_team WHERE USER_DBID=? ORDER BY PAGE_ID",
@@ -581,13 +700,18 @@ impl<'a> Game<'a> {
                     }
                 })
                 .collect();
-            out.push(TeamPage { page_id, slots });
+            out.push(TeamPage {
+                page_id,
+                slots,
+                selected: selected_page == Some(page_id),
+            });
         }
         Ok(out)
     }
 
     /// Assign a character to one of the three slots on a saved team page.
-    /// Passing CID 0 clears the slot.
+    /// Passing CID 0 clears the slot, subject to the same rules the checker
+    /// enforces: no duplicates, no gaps, no empty page and no empty active slot.
     pub fn set_team_slot(&mut self, page_id: i64, slot: i64, cid: i64) -> Result<()> {
         let column = match slot {
             1 => "SLOT1_CHARACTER_CID",
@@ -595,8 +719,40 @@ impl<'a> Game<'a> {
             3 => "SLOT3_CHARACTER_CID",
             _ => return Err(Error::invalid("team slot must be 1, 2 or 3")),
         };
-        if cid != 0 {
-            let owned: i64 = self.conn().query_row(
+        let transaction = self.conn().unchecked_transaction()?;
+        let teams = team_rows(&transaction, self.user_id)?;
+        let slots = teams
+            .iter()
+            .find(|(id, _)| *id == page_id)
+            .map(|(_, slots)| *slots)
+            .ok_or_else(|| Error::invalid("that team page does not exist"))?;
+        let index = (slot - 1) as usize;
+        let current = slots[index];
+        if cid == current {
+            return Ok(());
+        }
+
+        if cid == 0 {
+            if slots.iter().filter(|member| **member != 0).count() <= 1 {
+                return Err(Error::invalid(
+                    "a team page must keep at least one character",
+                ));
+            }
+            if slots[(index + 1)..].iter().any(|member| *member != 0) {
+                return Err(Error::invalid(
+                    "empty slots must stay at the end; clear the last filled slot first",
+                ));
+            }
+            if let Some((selected_page, selected_slot)) = selected_team(&transaction, self.user_id)?
+                && selected_page == page_id
+                && selected_slot == slot - 1
+            {
+                return Err(Error::invalid(
+                    "the active team's selected slot cannot be empty",
+                ));
+            }
+        } else {
+            let owned: i64 = transaction.query_row(
                 "SELECT count(*) FROM tb_character WHERE USER_DBID=? AND CHARACTER_CID=?",
                 params![self.user_id, cid],
                 |row| row.get(0),
@@ -604,14 +760,30 @@ impl<'a> Game<'a> {
             if owned == 0 {
                 return Err(Error::invalid("that character is not owned in this save"));
             }
+            if slots
+                .iter()
+                .enumerate()
+                .any(|(position, member)| position != index && *member == cid)
+            {
+                return Err(Error::invalid(
+                    "that character is already in another slot on this team page",
+                ));
+            }
+            if slots[..index].contains(&0) {
+                return Err(Error::invalid(
+                    "fill team slots from the first empty slot; do not leave a gap",
+                ));
+            }
         }
-        let changed = self.conn().execute(
+
+        let changed = transaction.execute(
             &format!("UPDATE tb_team SET {column}=? WHERE USER_DBID=? AND PAGE_ID=?"),
             params![cid, self.user_id, page_id],
         )?;
         if changed != 1 {
             return Err(Error::invalid("that team page does not exist"));
         }
+        transaction.commit()?;
         self.touch();
         Ok(())
     }
@@ -784,20 +956,22 @@ impl<'a> Game<'a> {
         } else {
             MAX_STAT
         };
+        let current = self
+            .current_i64(
+                &format!("SELECT {column} FROM tb_equipment WHERE USER_DBID=? AND ITEM_DBID=?"),
+                params![self.user_id, dbid],
+            )?
+            .ok_or_else(|| Error::invalid("that equipment piece is not present in this save"))?;
+        let max = max.max(current);
         if !(0..=max).contains(&value) {
             return Err(Error::invalid(format!(
                 "{field} must be between 0 and {max}"
             )));
         }
-        let changed = self.conn().execute(
+        self.conn().execute(
             &format!("UPDATE tb_equipment SET {column}=? WHERE USER_DBID=? AND ITEM_DBID=?"),
             params![value, self.user_id, dbid],
         )?;
-        if changed != 1 {
-            return Err(Error::invalid(
-                "that equipment piece is not present in this save",
-            ));
-        }
         self.touch();
         Ok(())
     }
@@ -946,18 +1120,22 @@ impl<'a> Game<'a> {
             "isLock" => ("IS_LOCK", 1),
             _ => return Err(Error::invalid(format!("unknown karma field {field:?}"))),
         };
+        let current = self
+            .current_i64(
+                &format!("SELECT {column} FROM tb_karma WHERE USER_DBID=? AND ITEM_DBID=?"),
+                params![self.user_id, dbid],
+            )?
+            .ok_or_else(|| Error::invalid("that karma is not present in this save"))?;
+        let max = max.max(current);
         if !(0..=max).contains(&value) {
             return Err(Error::invalid(format!(
                 "{field} must be between 0 and {max}"
             )));
         }
-        let changed = self.conn().execute(
+        self.conn().execute(
             &format!("UPDATE tb_karma SET {column}=? WHERE USER_DBID=? AND ITEM_DBID=?"),
             params![value, self.user_id, dbid],
         )?;
-        if changed != 1 {
-            return Err(Error::invalid("that karma is not present in this save"));
-        }
         self.touch();
         Ok(())
     }
@@ -1554,6 +1732,35 @@ pub struct Skill {
     pub level: i64,
 }
 
+fn team_rows(conn: &Connection, user_id: i64) -> Result<Vec<(i64, [i64; 3])>> {
+    let mut statement = conn.prepare(
+        "SELECT PAGE_ID, SLOT1_CHARACTER_CID, SLOT2_CHARACTER_CID, SLOT3_CHARACTER_CID
+           FROM tb_team WHERE USER_DBID=? ORDER BY PAGE_ID",
+    )?;
+    let rows = statement.query_map(params![user_id], |row| {
+        Ok((
+            row.get::<_, i64>(0)?,
+            [
+                row.get::<_, i64>(1)?,
+                row.get::<_, i64>(2)?,
+                row.get::<_, i64>(3)?,
+            ],
+        ))
+    })?;
+    Ok(rows.collect::<std::result::Result<Vec<_>, _>>()?)
+}
+
+fn selected_team(conn: &Connection, user_id: i64) -> Result<Option<(i64, i64)>> {
+    Ok(conn
+        .query_row(
+            "SELECT SELECTED_TEAM_PAGE_ID, SELECTED_PAGE_SLOT_INDEX
+               FROM tb_user WHERE USER_DBID=?",
+            params![user_id],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )
+        .optional()?)
+}
+
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TeamSlot {
@@ -1567,6 +1774,8 @@ pub struct TeamSlot {
 pub struct TeamPage {
     pub page_id: i64,
     pub slots: Vec<TeamSlot>,
+    /// True for the page the game currently treats as active.
+    pub selected: bool,
 }
 
 #[derive(Debug, Serialize)]

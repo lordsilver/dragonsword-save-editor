@@ -2,6 +2,7 @@ import { toast } from 'sonner';
 import { create } from 'zustand';
 import * as api from './api.ts';
 import { consistencyIssues } from './consistency.ts';
+import { currencyLimit } from './limits.ts';
 import type {
   AppInfo,
   CatalogEntry,
@@ -110,7 +111,7 @@ export interface AppActions {
   setAdventure(field: string, value: number): Promise<void>;
   setAdventureBatch(patch: Record<string, number>): Promise<void>;
   setCurrency(cid: number, amount: number): Promise<void>;
-  setAllCurrencies(amount: number): Promise<void>;
+  setAllCurrencies(): Promise<void>;
   setStack(kind: string, id: string, count: number): Promise<void>;
   addStack(cid: number, count: number): Promise<void>;
   fillStacks(count: number): Promise<void>;
@@ -308,7 +309,7 @@ export const useApp = create<Store>((set, get) => {
             toast.warning(warning, { duration: 15000 });
           }
           if (consistencyIssues(save.consistency).length > 0) {
-            toast.warning('This save already has broken gem links', {
+            toast.warning('This save already has consistency problems', {
               description: 'Open the overview to see them. The editor will not create new ones.',
               duration: 20000,
             });
@@ -618,13 +619,25 @@ export const useApp = create<Store>((set, get) => {
       );
     },
 
-    async setAllCurrencies(amount) {
+    async setAllCurrencies() {
       const rows = get().currencies;
+      const eligible = rows.filter((currency) => {
+        const limit = currencyLimit(currency.item.cid);
+        return limit.observed && currency.amount < limit.max;
+      });
+      if (eligible.length === 0) {
+        toast.info(
+          rows.some((currency) => currencyLimit(currency.item.cid).observed)
+            ? 'Every observed balance is already at or above its reference.'
+            : 'No currency has an observed reference balance.',
+        );
+        return;
+      }
       const updated = await attempt(
-        'Updating every currency',
+        'Updating observed currencies',
         async () => {
-          for (const currency of rows) {
-            await api.setCurrency(currency.item.cid, amount);
+          for (const currency of eligible) {
+            await api.setCurrency(currency.item.cid, currencyLimit(currency.item.cid).max);
           }
         },
         async () => {
@@ -632,7 +645,12 @@ export const useApp = create<Store>((set, get) => {
           await get().loadOverview();
         },
       );
-      if (updated !== null) toast.success('Every currency is at the requested amount.');
+      if (updated !== null) {
+        const skipped = rows.length - eligible.length;
+        toast.success(
+          `Set ${eligible.length.toLocaleString()} observed balance${eligible.length === 1 ? '' : 's'} to the highest seen value; ${skipped.toLocaleString()} row${skipped === 1 ? '' : 's'} left alone.`,
+        );
+      }
     },
 
     async setStack(kind, id, count) {
@@ -660,14 +678,21 @@ export const useApp = create<Store>((set, get) => {
 
     async fillStacks(count) {
       const filled = await attempt(
-        'Filling stacks',
+        'Filling material stacks',
         () => api.fillStacks(count),
         async () => {
           await get().loadInventory();
           await get().loadOverview();
         },
       );
-      if (filled !== null) toast.success(`Every stackable set to ${count.toLocaleString()}.`);
+      if (filled === null) return;
+      if (filled === 0) {
+        toast.info('No eligible material stack was below that count.');
+        return;
+      }
+      toast.success(
+        `Raised ${filled.toLocaleString()} eligible stack${filled === 1 ? '' : 's'} to at least ${count.toLocaleString()}; no count was lowered.`,
+      );
     },
 
     async setCharacter(cid, field, value) {
