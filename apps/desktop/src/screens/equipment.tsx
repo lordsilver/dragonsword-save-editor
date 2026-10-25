@@ -17,12 +17,11 @@ import {
 } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
+import { MAX_ENCHANT, MAX_EQUIP_EXP, MAX_STAT } from '@/lib/limits';
 import { formatNumber, itemName, useApp } from '@/lib/store';
 import type { Equipment } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
-const MAX_EXP = 999_999_999;
-const MAX_STAT = 2_147_483_647;
 type Filter = 'all' | 'locked' | 'stats';
 
 export function EquipmentScreen() {
@@ -163,7 +162,7 @@ export function EquipmentScreen() {
                     <NumberField
                       value={piece.enchantLevel}
                       onCommit={(value) => void setEquipment(piece.dbid, 'enchantLevel', value)}
-                      max={999}
+                      max={MAX_ENCHANT}
                       disabled={busy}
                       className="w-20"
                       ariaLabel="Enchant level"
@@ -171,7 +170,7 @@ export function EquipmentScreen() {
                     <NumberField
                       value={piece.exp}
                       onCommit={(value) => void setEquipment(piece.dbid, 'exp', value)}
-                      max={MAX_EXP}
+                      max={MAX_EQUIP_EXP}
                       disabled={busy}
                       className="w-24"
                       ariaLabel="Equipment experience"

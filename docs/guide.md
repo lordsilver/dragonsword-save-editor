@@ -16,6 +16,10 @@ If the folder has no saves, the editor says so and leaves the list empty. If the
 
 The slot cards show the screenshot the game saved with the slot, when one exists.
 
+## Value limits
+
+The typed screens cap values at the highest number seen in the 100% reference save: level 70, ascend 5, transcend 6, skill level 10, enchant 15, adventure level 80 and grade 6, gold 47,451,809, and a stack of 61,525, among others. These are conservative editor limits, not values read from the game's tables. The raw database browser can still write any value the column type accepts.
+
 ## Editing
 
 Every screen edits only the open temporary copy. The title bar shows **Unsaved** until you save, and the sidebar shows whether the file on disk is current.
@@ -24,27 +28,27 @@ Every screen edits only the open temporary copy. The title bar shows **Unsaved**
 
 Shows the account, player name, adventure grade and level, EXP, play time, stamina, location, collection progress, currencies, and the save file itself.
 - Click the pencil next to the name to rename the player.
-- **Edit adventure rank** changes grade, level, or EXP.
+- **Edit adventure rank** changes grade, level, or EXP. Grade is capped at 6, level at 80, and EXP at 962,500.
 - **Fill every stack** is the bulk inventory action; it is disabled when every stack is already full.
 
 ### Currencies
 
-Edit gold or aether crystals directly. **Set maximum** fills the field with the editor's limit, then you still press Save changes.
+Edit gold or aether crystals directly. **Set highest seen** fills the field with the largest balance in the reference save, 47,451,809, then you still press Save changes.
 
 ### Inventory
 
-Lists stackable materials and cooked dishes. Edit a count, add a missing catalog item with **Add stackable**, or use **Fill stacks** to set every row to a chosen count. Counts are capped at 9,999,999.
+Lists stackable materials and cooked dishes. Edit a count, add a missing catalog item with **Add stackable**, or use **Fill stacks** to set every row to a chosen count. Counts are capped at 61,525, the highest count seen in the reference save.
 
 ### Characters
 
 The character list selects one character at a time. Edit level, EXP, ascension, HP, transcendence, and soldier grade, manage skills, and fill the three slots of each team page.
 - Recruiting is switched off in this build. There is no verified character roster yet: the catalog mixes playable characters with character items and skins, and the game's new-account seed is not a roster. Editing and removing existing characters still works.
 - Removing a character also clears their skills, team slots, loadout links, and costume assignments.
-- Skills are keyed by `TYPE_VALUE`; special skills use values around 801.
+- Skills are keyed by `TYPE_VALUE`; the game writes 1–7 and 801, and the editor caps the level at 10.
 
 ### Equipment
 
-Each row is one equipment instance. Edit enchant level, item EXP, and lock state inline. The **gem** field links a gem by its 64-bit instance ID. **Stats** opens the raw main/sub stat CIDs and values.
+Each row is one equipment instance. Edit enchant level, item EXP, and lock state inline. Enchant is capped at 15 and item EXP at 90,000. The **gem** field links a gem by its 64-bit instance ID; the editor accepts only a live gem that is not already linked to another piece. **Stats** opens the raw main/sub stat CIDs and values.
 
 Equipment stat CIDs are packed numbers, not named stats. The note on the screen explains the encoding; the safest approach is to copy a CID from an item that already has the effect you want.
 
@@ -54,7 +58,7 @@ Edit each gem's raw `STAT_INFO_CID` and lock state. The catalog icon follows the
 
 ### Karma
 
-Edit a spirit's EXP, ascension, and transcendence, and equip it to a character. A spirit belongs to one character at a time: assigning a new owner clears the previous character's slot. Choosing **Not equipped** detaches it.
+Edit a spirit's EXP, ascension, and transcendence, and equip it to a character. Ascend is capped at 5, transcend at 6, and EXP at 2,990,400. A spirit belongs to one character at a time: assigning a new owner clears the previous character's slot. Choosing **Not equipped** detaches it.
 
 ### Costumes and mounts
 

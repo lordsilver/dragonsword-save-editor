@@ -46,9 +46,14 @@ fn every_mutation_survives_a_write() {
         {
             let mut game = session.catalog_game(catalog);
 
-            // Overview, adventure and currency.
+            // Overview, adventure and currency. Values above the reference
+            // maxima are refused before anything is written.
             game.set_player_name("Silver Test").expect("rename");
+            assert!(game.set_adventure("grade", 7).is_err());
+            assert!(game.set_adventure("level", 81).is_err());
+            assert!(game.set_adventure("exp", 962_501).is_err());
             game.set_adventure("level", 42).expect("adventure level");
+            assert!(game.set_currency(1_000_001, 47_451_810).is_err());
             game.set_currency(1_000_001, 987_654).expect("currency");
 
             // Inventory: change an existing stack and add a missing one.
@@ -58,6 +63,7 @@ fn every_mutation_survives_a_write() {
                 .find(|stack| stack.kind == "stackable")
                 .expect("a stackable stack");
             stackable_cid = first_stack.id.parse().expect("stack id");
+            assert!(game.set_stack("stackable", stackable_cid, 61_526).is_err());
             game.set_stack("stackable", stackable_cid, 777)
                 .expect("set stack");
 
@@ -86,10 +92,17 @@ fn every_mutation_survives_a_write() {
             character_a = characters[0].cid;
             character_b = characters[1].cid;
             let first = character_a;
+            assert!(game.set_character(first, "level", 71).is_err());
             game.set_character(first, "level", 55)
                 .expect("character level");
+            assert!(game.set_character(first, "exp", 2_990_401).is_err());
             game.set_character(first, "exp", 12_345)
                 .expect("character exp");
+            assert!(game.set_character(first, "ascend", 6).is_err());
+            assert!(game.set_character(first, "transcend", 7).is_err());
+            assert!(game.set_character(first, "hp", 22_230).is_err());
+            assert!(game.set_skill(first, 8, 1).is_err());
+            assert!(game.set_skill(first, 3, 11).is_err());
             game.set_skill(first, 3, 4).expect("skill upsert");
             assert!(
                 game.skills(first)
@@ -123,13 +136,52 @@ fn every_mutation_survives_a_write() {
             let roster = game.characters().expect("characters");
             assert_eq!(roster.len(), characters.len(), "no character was added");
 
+            // Gem links: both reference saves carry earlier tool damage (a
+            // GEM_DBID that names no live gem), so clear those first. Then
+            // pick a real gem that no piece uses.
+            let live: HashSet<i64> = game
+                .gems()
+                .expect("gems")
+                .into_iter()
+                .map(|gem| gem.dbid.parse().expect("gem id"))
+                .collect();
+            for piece in game.equipment().expect("equipment") {
+                let link: i64 = piece.gem_dbid.parse().expect("gem link");
+                if link != 0 && !live.contains(&link) {
+                    game.set_equipment_gem(piece.dbid.parse().expect("equipment dbid"), 0)
+                        .expect("clear dangling gem link");
+                }
+            }
+            let linked: HashSet<i64> = game
+                .equipment()
+                .expect("equipment")
+                .into_iter()
+                .map(|piece| piece.gem_dbid.parse().expect("gem link"))
+                .filter(|link| *link != 0)
+                .collect();
+            let gem = game
+                .gems()
+                .expect("gems")
+                .into_iter()
+                .find(|gem| {
+                    let dbid: i64 = gem.dbid.parse().expect("gem id");
+                    !linked.contains(&dbid)
+                })
+                .expect("an unlinked gem");
+            gem_dbid = gem.dbid.parse().expect("gem dbid");
+
             // Equipment: ordinary columns, the 64-bit gem id and a stat value.
             let equipment = game.equipment().expect("equipment");
             let piece = equipment.first().expect("equipment row");
             equipment_dbid = piece.dbid.parse().expect("equipment dbid");
             assert!(equipment_dbid > 9_007_199_254_740_992);
-            game.set_equipment(equipment_dbid, "enchantLevel", 33)
+            assert!(
+                game.set_equipment(equipment_dbid, "enchantLevel", 16)
+                    .is_err()
+            );
+            game.set_equipment(equipment_dbid, "enchantLevel", 15)
                 .expect("enchant");
+            assert!(game.set_equipment(equipment_dbid, "exp", 90_001).is_err());
             game.set_equipment(equipment_dbid, "exp", 1_234)
                 .expect("equipment exp");
             game.set_equipment(equipment_dbid, "isLock", 1)
@@ -139,8 +191,24 @@ fn every_mutation_survives_a_write() {
                     .is_err(),
                 "the generic field list must not write 64-bit gem ids"
             );
-            game.set_equipment_gem(equipment_dbid, 70_000_000_823_123_456)
+            assert!(
+                game.set_equipment_gem(equipment_dbid, 70_000_000_823_123_456)
+                    .is_err(),
+                "a link to a missing gem is refused"
+            );
+            game.set_equipment_gem(equipment_dbid, gem_dbid)
                 .expect("gem dbid");
+            let other = game
+                .equipment()
+                .expect("equipment")
+                .into_iter()
+                .find(|piece| piece.dbid != equipment_dbid.to_string())
+                .expect("second equipment row");
+            assert!(
+                game.set_equipment_gem(other.dbid.parse().expect("equipment dbid"), gem_dbid)
+                    .is_err(),
+                "a gem can only be linked to one piece"
+            );
             if piece.has_stat_values {
                 game.set_equipment(equipment_dbid, "mainStatValue", 321)
                     .expect("stat value");
@@ -151,14 +219,13 @@ fn every_mutation_survives_a_write() {
                 .into_iter()
                 .find(|piece| piece.dbid == equipment_dbid.to_string())
                 .expect("equipment row");
-            assert_eq!(piece.enchant_level, 33);
+            assert_eq!(piece.enchant_level, 15);
             assert_eq!(piece.exp, 1_234);
             assert!(piece.is_lock);
-            assert_eq!(piece.gem_dbid, "70000000823123456");
+            assert_eq!(piece.gem_dbid, gem_dbid.to_string());
 
-            // Gems: stat info and lock.
-            let gem = game.gems().expect("gems").into_iter().next().expect("gem");
-            gem_dbid = gem.dbid.parse().expect("gem dbid");
+            // Gems: stat info, lock and the item-CID type guard.
+            assert!(game.set_gem(gem_dbid, "itemCid", 1_110_001).is_err());
             game.set_gem(gem_dbid, "statInfoCid", 654_321)
                 .expect("gem stat");
             game.set_gem(gem_dbid, "isLock", 1).expect("gem lock");
@@ -179,9 +246,12 @@ fn every_mutation_survives_a_write() {
                 .next()
                 .expect("karma");
             karma_dbid = karma.dbid.parse().expect("karma dbid");
+            assert!(game.set_karma(karma_dbid, "exp", 2_990_401).is_err());
             game.set_karma(karma_dbid, "exp", 555).expect("karma exp");
+            assert!(game.set_karma(karma_dbid, "ascend", 6).is_err());
             game.set_karma(karma_dbid, "ascend", 2)
                 .expect("karma ascend");
+            assert!(game.set_karma(karma_dbid, "transcend", 7).is_err());
             game.set_karma(karma_dbid, "transcend", 1)
                 .expect("karma transcend");
             game.set_karma(karma_dbid, "isLock", 1).expect("karma lock");
@@ -489,10 +559,35 @@ fn every_mutation_survives_a_write() {
             .into_iter()
             .find(|piece| piece.dbid == equipment_dbid.to_string())
             .expect("equipment");
-        assert_eq!(piece.enchant_level, 33);
+        assert_eq!(piece.enchant_level, 15);
         assert_eq!(piece.exp, 1_234);
         assert!(piece.is_lock);
-        assert_eq!(piece.gem_dbid, "70000000823123456");
+        assert_eq!(piece.gem_dbid, gem_dbid.to_string());
+
+        let live: HashSet<i64> = game
+            .gems()
+            .expect("gems")
+            .into_iter()
+            .map(|gem| gem.dbid.parse().expect("gem id"))
+            .collect();
+        let mut seen = HashSet::new();
+        for piece in game.equipment().expect("equipment") {
+            let link: i64 = piece.gem_dbid.parse().expect("gem link");
+            if link == 0 {
+                continue;
+            }
+            assert!(
+                live.contains(&link),
+                "equipment {} links gem {}, which is not in the save",
+                piece.dbid,
+                link
+            );
+            assert!(
+                seen.insert(link),
+                "gem {} is linked to more than one piece",
+                link
+            );
+        }
 
         let gem = game
             .gems()

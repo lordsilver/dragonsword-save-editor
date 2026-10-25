@@ -9,10 +9,10 @@ import { CountPill, InfoNote, StatTile } from '@/components/summary';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { MAX_ASCEND, MAX_KARMA_EXP, MAX_TRANSCEND } from '@/lib/limits';
 import { compareDbid, formatNumber, itemName, useApp } from '@/lib/store';
 import type { Karma } from '@/lib/types';
 
-const MAX_EXP = 999_999_999;
 type Filter = 'all' | 'equipped' | 'idle';
 
 export function KarmaScreen() {
@@ -158,7 +158,7 @@ export function KarmaScreen() {
                     <NumberField
                       value={entry.exp}
                       onCommit={(value) => void setKarma(entry.dbid, 'exp', value)}
-                      max={MAX_EXP}
+                      max={MAX_KARMA_EXP}
                       disabled={busy}
                       className="w-full text-left"
                       ariaLabel="Karma experience"
@@ -169,7 +169,7 @@ export function KarmaScreen() {
                     <NumberField
                       value={entry.ascend}
                       onCommit={(value) => void setKarma(entry.dbid, 'ascend', value)}
-                      max={99}
+                      max={MAX_ASCEND}
                       disabled={busy}
                       className="w-full text-left"
                       ariaLabel="Karma ascend"
@@ -180,7 +180,7 @@ export function KarmaScreen() {
                     <NumberField
                       value={entry.transcend}
                       onCommit={(value) => void setKarma(entry.dbid, 'transcend', value)}
-                      max={99}
+                      max={MAX_TRANSCEND}
                       disabled={busy}
                       className="w-full text-left"
                       ariaLabel="Karma transcend"

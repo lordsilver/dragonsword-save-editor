@@ -18,11 +18,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { MAX_STACK } from '@/lib/limits';
 import { formatNumber, itemName, useApp } from '@/lib/store';
 import type { Item } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
-const MAX_STACK = 9_999_999;
 type Kind = 'all' | 'stackable' | 'cook';
 type Sort = 'name' | 'count' | 'cid';
 
@@ -121,9 +121,9 @@ export function InventoryScreen() {
         />
         <StatTile
           icon={<ChefHat />}
-          label="Maximum stack"
+          label="Highest stack seen"
           value={formatNumber(MAX_STACK)}
-          detail="Game and editor limit"
+          detail="Reference save"
         />
       </div>
 

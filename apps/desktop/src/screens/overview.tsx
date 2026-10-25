@@ -34,9 +34,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Spinner } from '@/components/ui/spinner';
+import { MAX_ADV_EXP, MAX_ADV_GRADE, MAX_ADV_LEVEL, MAX_CURRENCY, MAX_PLAY_TIME, MAX_STACK } from '@/lib/limits';
 import { formatNumber, itemName, useApp } from '@/lib/store';
-
-const MAX_CURRENCY = 999_999_999_999;
 
 export function OverviewScreen() {
   const overview = useApp((state) => state.overview);
@@ -334,7 +333,7 @@ function CurrencyCard({
           disabled={busy}
           onClick={() => onCommit(MAX_CURRENCY)}
         >
-          Set maximum
+          Set highest seen
         </button>
       </div>
     </div>
@@ -440,10 +439,10 @@ function RankDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Grade" value={grade} onChange={setGrade} max={99} />
-          <Field label="Level" value={level} onChange={setLevel} max={999} />
-          <Field label="EXP" value={exp} onChange={setExp} max={999_999_999} />
-          <Field label="Play time (seconds)" value={playTime} onChange={setPlayTime} />
+          <Field label="Grade" value={grade} onChange={setGrade} max={MAX_ADV_GRADE} />
+          <Field label="Level" value={level} onChange={setLevel} max={MAX_ADV_LEVEL} />
+          <Field label="EXP" value={exp} onChange={setExp} max={MAX_ADV_EXP} />
+          <Field label="Play time (seconds)" value={playTime} onChange={setPlayTime} max={MAX_PLAY_TIME} />
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
@@ -496,7 +495,8 @@ function FillDialog({
         <DialogHeader>
           <DialogTitle>Fill every stack</DialogTitle>
           <DialogDescription>
-            Sets STACK_CNT on every row of tb_stackable_item. The game's own limit is 9,999,999.
+            Sets STACK_CNT on every row of tb_stackable_item. The highest count seen in the reference save is{' '}
+            {formatNumber(MAX_STACK)}.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
@@ -512,7 +512,7 @@ function FillDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button disabled={busy || count < 0 || count > 9_999_999} onClick={() => onSave(count)}>
+          <Button disabled={busy || count < 0 || count > MAX_STACK} onClick={() => onSave(count)}>
             {busy ? <Spinner /> : <Wand2 />}
             Fill stacks
           </Button>

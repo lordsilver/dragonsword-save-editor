@@ -19,12 +19,22 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import {
+  MAX_ASCEND,
+  MAX_CHARACTER_EXP,
+  MAX_CHARACTER_HP,
+  MAX_LEVEL,
+  MAX_POINTS,
+  MAX_SKILL_LEVEL,
+  MAX_SOLDIER_GRADE,
+  MAX_TRANSCEND,
+  MAX_TRANSCEND_TOTAL,
+  SKILL_TYPES,
+} from '@/lib/limits';
 import { formatNumber, itemName, useApp } from '@/lib/store';
 import type { Character, Loadout, TeamPage } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
-const MAX_LEVEL = 999;
-const MAX_EXP = 999_999_999;
 const SLOT_LABELS: Array<[keyof Omit<Loadout, 'characterCid'>, string]> = [
   ['head', 'Head'],
   ['chest', 'Chest'],
@@ -208,7 +218,7 @@ export function CharactersScreen() {
                       <NumberField
                         value={skill.level}
                         onCommit={(level) => void setSkillLevel(skill.typeValue, level)}
-                        max={99}
+                        max={MAX_SKILL_LEVEL}
                         disabled={busy}
                         className="w-24"
                         ariaLabel={`Skill ${skill.typeValue} level`}
@@ -360,49 +370,49 @@ function CharacterHero({
         <EditField
           label="EXP"
           value={character.exp}
-          max={MAX_EXP}
+          max={MAX_CHARACTER_EXP}
           disabled={busy}
           onChange={(value) => onChange('exp', value)}
         />
         <EditField
           label="Ascend"
           value={character.ascend}
-          max={99}
+          max={MAX_ASCEND}
           disabled={busy}
           onChange={(value) => onChange('ascend', value)}
         />
         <EditField
           label="Transcend"
           value={character.transcend}
-          max={99}
+          max={MAX_TRANSCEND}
           disabled={busy}
           onChange={(value) => onChange('transcend', value)}
         />
         <EditField
           label="Transcend total"
           value={character.transcendTotal}
-          max={99}
+          max={MAX_TRANSCEND_TOTAL}
           disabled={busy}
           onChange={(value) => onChange('transcendTotal', value)}
         />
         <EditField
           label="HP"
           value={character.hp}
-          max={MAX_EXP}
+          max={MAX_CHARACTER_HP}
           disabled={busy}
           onChange={(value) => onChange('hp', value)}
         />
         <EditField
           label="Soldier grade"
           value={character.soldierGrade}
-          max={99}
+          max={MAX_SOLDIER_GRADE}
           disabled={busy}
           onChange={(value) => onChange('soldierGrade', value)}
         />
         <EditField
           label="Soldier grade points"
           value={character.soldierGradePoint}
-          max={MAX_EXP}
+          max={MAX_POINTS}
           disabled={busy}
           onChange={(value) => onChange('soldierGradePoint', value)}
         />
@@ -499,12 +509,11 @@ function SkillDialog({
   busy: boolean;
   onAdd: (typeValue: number, level: number) => void;
 }) {
-  const [typeValue, setTypeValue] = useState('0');
+  const [typeValue, setTypeValue] = useState('1');
   const [level, setLevel] = useState('1');
   const parsedType = Number(typeValue) || 0;
   const parsedLevel = Number(level) || 0;
-  const validType = (parsedType >= 0 && parsedType <= 99) || (parsedType >= 800 && parsedType <= 899);
-  const valid = validType && parsedLevel >= 0 && parsedLevel <= 99;
+  const valid = SKILL_TYPES.includes(parsedType) && parsedLevel >= 0 && parsedLevel <= MAX_SKILL_LEVEL;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -512,7 +521,7 @@ function SkillDialog({
         <DialogHeader>
           <DialogTitle>Add a skill row</DialogTitle>
           <DialogDescription>
-            TYPE_VALUE identifies the skill slot. Regular slots use 0–99; special skills use 800–899.
+            TYPE_VALUE identifies the skill slot. The game writes regular slots 1–7 and special skill 801.
           </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-3">
@@ -525,7 +534,7 @@ function SkillDialog({
               className="numeric"
               onChange={(event) => setTypeValue(event.target.value)}
             />
-            <p className="text-[10px] text-muted-foreground">0–99 or 800–899</p>
+            <p className="text-[10px] text-muted-foreground">1–7 or 801</p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="skill-level">Level</Label>
@@ -536,7 +545,7 @@ function SkillDialog({
               className="numeric"
               onChange={(event) => setLevel(event.target.value)}
             />
-            <p className="text-[10px] text-muted-foreground">0–99</p>
+            <p className="text-[10px] text-muted-foreground">0–10</p>
           </div>
         </div>
         <DialogFooter>

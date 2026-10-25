@@ -5,9 +5,8 @@ import { ItemIcon } from '@/components/item-icon';
 import { PageHeader, Panel } from '@/components/page';
 import { CountPill, InfoNote, StatTile } from '@/components/summary';
 import { Badge } from '@/components/ui/badge';
+import { MAX_CURRENCY } from '@/lib/limits';
 import { formatNumber, itemName, useApp } from '@/lib/store';
-
-const MAX_CURRENCY = 999_999_999_999;
 
 export function CurrenciesScreen() {
   const currencies = useApp((state) => state.currencies);
@@ -35,7 +34,7 @@ export function CurrenciesScreen() {
         actions={
           <ConfirmButton
             title="Max out every currency?"
-            description={`Sets all ${currencies.length} currency rows to ${formatNumber(MAX_CURRENCY)}. This is the largest value the editor accepts.`}
+            description={`Sets all ${currencies.length} currency rows to ${formatNumber(MAX_CURRENCY)}. This is the highest balance seen in the reference save.`}
             confirmLabel="Max everything"
             variant="outline"
             size="sm"
@@ -64,9 +63,9 @@ export function CurrenciesScreen() {
         />
         <StatTile
           icon={<Gem />}
-          label="Maximum allowed"
+          label="Highest balance seen"
           value={formatNumber(MAX_CURRENCY)}
-          detail="Editor safety limit"
+          detail="Reference save"
         />
       </div>
 
@@ -109,7 +108,7 @@ export function CurrenciesScreen() {
                       disabled={busy}
                       onClick={() => void setCurrency(currency.item.cid, MAX_CURRENCY)}
                     >
-                      Set maximum
+                      Set highest seen
                     </button>
                   </div>
                 </div>
@@ -125,9 +124,9 @@ export function CurrenciesScreen() {
 
       <Panel title="How currency edits behave" description="A short note before you touch a balance.">
         <InfoNote>
-          The editor updates the existing row for each currency; it never creates or deletes balances. Values above the
-          game's own cap may be clamped when the save is loaded, so prefer the maximum button when you only need a
-          generous balance. Gold and premium currencies both live here.
+          The editor updates the existing row for each currency; it never creates or deletes balances. Balances are
+          capped at the highest value seen in the reference save ({formatNumber(MAX_CURRENCY)}), so a value above that
+          reference is not offered. Gold and premium currencies both live here.
         </InfoNote>
       </Panel>
     </div>

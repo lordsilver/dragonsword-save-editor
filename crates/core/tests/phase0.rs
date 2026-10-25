@@ -76,6 +76,16 @@ CREATE TABLE tb_equipment (
   SUB_STAT_VALUE5 INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (ITEM_DBID)
 );
+CREATE TABLE tb_gem (
+  USER_DBID INTEGER NOT NULL DEFAULT 0,
+  ITEM_DBID INTEGER NOT NULL DEFAULT 0,
+  ITEM_CID INTEGER NOT NULL DEFAULT 0,
+  STAT_INFO_CID INTEGER NOT NULL DEFAULT 0,
+  IS_LOCK INTEGER NOT NULL DEFAULT 0,
+  CREATED_DATE INTEGER NOT NULL DEFAULT 0,
+  DELETED_DATE INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (USER_DBID, ITEM_DBID)
+);
 CREATE TABLE tb_cook_item (
   USER_DBID INTEGER NOT NULL DEFAULT 0,
   ITEM_DBID INTEGER NOT NULL DEFAULT 0,
@@ -179,6 +189,14 @@ fn fixture(name: &str) -> PathBuf {
             [],
         )
         .expect("seed characters");
+        conn.execute(
+            "INSERT INTO tb_character
+                (USER_DBID, CHARACTER_CID, LEVEL, EXP, ASCEND, HP, TRANSCEND,
+                 TRANSCEND_TOTAL, SOLDIER_GRADE, SOLDIER_GRADE_POINT, CREATED_DATE)
+             VALUES (?, 10001, 1, 0, 1, 461, 0, 0, 0, 0, 0)",
+            [USER],
+        )
+        .expect("owned character");
         for offset in 0..3 {
             conn.execute(
                 "INSERT INTO tb_equipment (ITEM_DBID, USER_DBID, ITEM_CID)
@@ -198,6 +216,12 @@ fn fixture(name: &str) -> PathBuf {
             [USER],
         )
         .expect("stackable");
+        conn.execute(
+            "INSERT INTO tb_gem (USER_DBID, ITEM_DBID, ITEM_CID, STAT_INFO_CID, IS_LOCK, DELETED_DATE)
+             VALUES (?, 70000008231234560, 1310405, 50401, 0, 0)",
+            [USER],
+        )
+        .expect("gem");
         conn.execute_batch("PRAGMA journal_mode=DELETE;")
             .expect("journal");
     }
@@ -566,5 +590,41 @@ fn recruiting_is_disabled_until_a_verified_roster_exists() {
         assert_eq!(error.kind(), "invalid");
     }
     assert!(game.unlock_all_characters().is_err());
-    assert!(game.characters().expect("characters").is_empty());
+    assert_eq!(
+        game.characters().expect("characters").len(),
+        1,
+        "recruiting added nothing"
+    );
+}
+
+#[test]
+fn typed_limits_match_the_reference_save() {
+    let path = fixture("limits");
+    let mut session = SaveSession::open(&path).expect("open");
+    let mut game = Game::new(&mut session, Catalog::shared());
+
+    game.set_character(10_001, "level", 70).expect("max level");
+    assert!(game.set_character(10_001, "level", 71).is_err());
+    game.set_character(10_001, "exp", 2_990_400)
+        .expect("max exp");
+    assert!(game.set_character(10_001, "exp", 2_990_401).is_err());
+    game.set_character(10_001, "ascend", 5).expect("max ascend");
+    assert!(game.set_character(10_001, "ascend", 6).is_err());
+    game.set_character(10_001, "transcend", 6)
+        .expect("max transcend");
+    assert!(game.set_character(10_001, "transcend", 7).is_err());
+    game.set_character(10_001, "hp", 22_229).expect("max hp");
+    assert!(game.set_character(10_001, "hp", 22_230).is_err());
+
+    game.set_equipment(BASE, "enchantLevel", 15)
+        .expect("max enchant");
+    assert!(game.set_equipment(BASE, "enchantLevel", 16).is_err());
+    game.set_equipment(BASE, "exp", 90_000)
+        .expect("max equipment exp");
+    assert!(game.set_equipment(BASE, "exp", 90_001).is_err());
+
+    game.set_stack("stackable", 1_420_001, 61_525)
+        .expect("max stack");
+    assert!(game.set_stack("stackable", 1_420_001, 61_526).is_err());
+    assert!(game.set_stack("cook", BASE, 61_526).is_err());
 }

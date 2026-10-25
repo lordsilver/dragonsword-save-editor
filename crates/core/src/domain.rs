@@ -11,11 +11,34 @@ use crate::catalog::{Catalog, EffectText, Item, TitleStat};
 use crate::error::{Error, Result};
 use crate::save::SaveSession;
 
-const MAX_AMOUNT: i64 = 999_999_999_999;
-const MAX_STACK: i64 = 9_999_999;
-const MAX_LEVEL: i64 = 999;
-const MAX_EXP: i64 = 999_999_999;
+// Ceilings observed in the 100% reference save (93265845_Slot2.db). The
+// game's own tables are not readable yet, so these stay conservative.
+const MAX_LEVEL: i64 = 70;
+const MAX_ASCEND: i64 = 5;
+const MAX_TRANSCEND: i64 = 6;
+const MAX_CHARACTER_EXP: i64 = 2_990_400;
+const MAX_CHARACTER_HP: i64 = 22_229;
+const MAX_SKILL_LEVEL: i64 = 10;
+const MAX_ENCHANT: i64 = 15;
+const MAX_EQUIP_EXP: i64 = 90_000;
+const MAX_ADV_LEVEL: i64 = 80;
+const MAX_ADV_GRADE: i64 = 6;
+const MAX_ADV_EXP: i64 = 962_500;
+const MAX_AMOUNT: i64 = 47_451_809;
+const MAX_STACK: i64 = 61_525;
+const MAX_KARMA_EXP: i64 = 2_990_400;
+
+// Safety caps, not claims about the game's limits. The reference save cannot
+// bound the fields that are zero in every row, play time has no observed
+// ceiling, and raw stat data has no known range.
+const MAX_POINTS: i64 = 999_999_999;
 const MAX_STAT: i64 = 2_147_483_647;
+const MAX_PLAY_TIME: i64 = i32::MAX as i64;
+const MAX_TRANSCEND_TOTAL: i64 = 99;
+const MAX_SOLDIER_GRADE: i64 = 99;
+
+/// The only skill type values the game writes: regular slots 1–7 and 801.
+const SKILL_TYPES: [i64; 8] = [1, 2, 3, 4, 5, 6, 7, 801];
 
 /// One open save, viewed through the catalog.
 pub struct Game<'a> {
@@ -166,10 +189,10 @@ impl<'a> Game<'a> {
 
     pub fn set_adventure(&mut self, field: &str, value: i64) -> Result<()> {
         let (column, max) = match field {
-            "grade" => ("ADV_GRADE", 99),
-            "level" => ("ADV_LEVEL", MAX_LEVEL),
-            "exp" => ("ADV_EXP", MAX_EXP),
-            "playTime" => ("PLAY_TIME", i64::MAX),
+            "grade" => ("ADV_GRADE", MAX_ADV_GRADE),
+            "level" => ("ADV_LEVEL", MAX_ADV_LEVEL),
+            "exp" => ("ADV_EXP", MAX_ADV_EXP),
+            "playTime" => ("PLAY_TIME", MAX_PLAY_TIME),
             _ => return Err(Error::invalid(format!("unknown adventure field {field:?}"))),
         };
         if !(0..=max).contains(&value) {
@@ -404,13 +427,13 @@ impl<'a> Game<'a> {
     pub fn set_character(&mut self, cid: i64, field: &str, value: i64) -> Result<()> {
         let (column, max) = match field {
             "level" => ("LEVEL", MAX_LEVEL),
-            "exp" => ("EXP", MAX_EXP),
-            "ascend" => ("ASCEND", 99),
-            "transcend" => ("TRANSCEND", 99),
-            "transcendTotal" => ("TRANSCEND_TOTAL", 99),
-            "hp" => ("HP", MAX_EXP),
-            "soldierGrade" => ("SOLDIER_GRADE", 99),
-            "soldierGradePoint" => ("SOLDIER_GRADE_POINT", MAX_EXP),
+            "exp" => ("EXP", MAX_CHARACTER_EXP),
+            "ascend" => ("ASCEND", MAX_ASCEND),
+            "transcend" => ("TRANSCEND", MAX_TRANSCEND),
+            "transcendTotal" => ("TRANSCEND_TOTAL", MAX_TRANSCEND_TOTAL),
+            "hp" => ("HP", MAX_CHARACTER_HP),
+            "soldierGrade" => ("SOLDIER_GRADE", MAX_SOLDIER_GRADE),
+            "soldierGradePoint" => ("SOLDIER_GRADE_POINT", MAX_POINTS),
             _ => return Err(Error::invalid(format!("unknown character field {field:?}"))),
         };
         if !(0..=max).contains(&value) {
@@ -493,11 +516,13 @@ impl<'a> Game<'a> {
     }
 
     pub fn set_skill(&mut self, cid: i64, type_value: i64, level: i64) -> Result<()> {
-        if !(0..=99).contains(&type_value) && !(800..=899).contains(&type_value) {
-            return Err(Error::invalid("skill type must be 0–99 or 800–899"));
+        if !SKILL_TYPES.contains(&type_value) {
+            return Err(Error::invalid("skill type must be 1–7 or 801"));
         }
-        if !(0..=99).contains(&level) {
-            return Err(Error::invalid("skill level must be between 0 and 99"));
+        if !(0..=MAX_SKILL_LEVEL).contains(&level) {
+            return Err(Error::invalid(format!(
+                "skill level must be between 0 and {MAX_SKILL_LEVEL}"
+            )));
         }
         self.conn().execute(
             "INSERT INTO tb_skill_growth (USER_DBID, CHARACTER_CID, TYPE_VALUE, SLOT_LEVEL) VALUES (?,?,?,?)
@@ -753,9 +778,9 @@ impl<'a> Game<'a> {
         let max = if column == "IS_LOCK" {
             1
         } else if column == "ENCHANT_LEVEL" {
-            999
+            MAX_ENCHANT
         } else if column == "EXP" {
-            MAX_EXP
+            MAX_EQUIP_EXP
         } else {
             MAX_STAT
         };
@@ -784,6 +809,32 @@ impl<'a> Game<'a> {
     pub fn set_equipment_gem(&mut self, dbid: i64, gem_dbid: i64) -> Result<()> {
         if gem_dbid < 0 {
             return Err(Error::invalid("gem id must be zero or a positive id"));
+        }
+        if gem_dbid != 0 {
+            let gem: Option<Option<i64>> = self
+                .conn()
+                .query_row(
+                    "SELECT DELETED_DATE FROM tb_gem WHERE USER_DBID=? AND ITEM_DBID=?",
+                    params![self.user_id, gem_dbid],
+                    |row| row.get(0),
+                )
+                .optional()?;
+            match gem {
+                None => return Err(Error::invalid("that gem is not in this save")),
+                Some(Some(0)) => {}
+                Some(_) => return Err(Error::invalid("that gem has been deleted")),
+            }
+            let linked: i64 = self.conn().query_row(
+                "SELECT count(*) FROM tb_equipment
+                  WHERE USER_DBID=? AND GEM_DBID=? AND ITEM_DBID<>? AND DELETED_DATE=0",
+                params![self.user_id, gem_dbid, dbid],
+                |row| row.get(0),
+            )?;
+            if linked > 0 {
+                return Err(Error::invalid(
+                    "that gem is already linked to another piece of equipment",
+                ));
+            }
         }
         let changed = self.conn().execute(
             "UPDATE tb_equipment SET GEM_DBID=? WHERE USER_DBID=? AND ITEM_DBID=?",
@@ -833,6 +884,9 @@ impl<'a> Game<'a> {
             return Err(Error::invalid(format!(
                 "{field} must be between 0 and {max}"
             )));
+        }
+        if column == "ITEM_CID" && self.catalog.lookup(value).kind != "GEM" {
+            return Err(Error::invalid("that CID is not a gem"));
         }
         let changed = self.conn().execute(
             &format!("UPDATE tb_gem SET {column}=? WHERE USER_DBID=? AND ITEM_DBID=?"),
@@ -886,9 +940,9 @@ impl<'a> Game<'a> {
 
     pub fn set_karma(&mut self, dbid: i64, field: &str, value: i64) -> Result<()> {
         let (column, max) = match field {
-            "exp" => ("EXP", MAX_EXP),
-            "ascend" => ("ASCEND", 99),
-            "transcend" => ("TRANSCEND", 99),
+            "exp" => ("EXP", MAX_KARMA_EXP),
+            "ascend" => ("ASCEND", MAX_ASCEND),
+            "transcend" => ("TRANSCEND", MAX_TRANSCEND),
             "isLock" => ("IS_LOCK", 1),
             _ => return Err(Error::invalid(format!("unknown karma field {field:?}"))),
         };

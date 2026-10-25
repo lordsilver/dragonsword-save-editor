@@ -7,9 +7,8 @@ import { PageHeader, Panel, Toolbar } from '@/components/page';
 import { CountPill, InfoNote, StatTile } from '@/components/summary';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { MAX_STAT } from '@/lib/limits';
 import { compareDbid, formatNumber, itemName, useApp } from '@/lib/store';
-
-const MAX_STAT = 2_147_483_647;
 
 export function GemsScreen() {
   const gems = useApp((state) => state.gems);
