@@ -37,17 +37,9 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Spinner } from '@/components/ui/spinner';
 import { consistencyIssues } from '@/lib/consistency';
-import {
-  FATES_INVITATION_CID,
-  MAX_ADV_EXP,
-  MAX_ADV_LEVEL,
-  MAX_BREAKTHROUGH,
-  MAX_PLAY_TIME,
-  MAX_STACK,
-  currencyLimit,
-} from '@/lib/limits';
+import { FATES_INVITATION_CID, MAX_PLAY_TIME, MAX_STACK, currencyLimit } from '@/lib/limits';
 import { formatNumber, itemName, useApp } from '@/lib/store';
-import type { ConsistencyReport } from '@/lib/types';
+import type { ConsistencyReport, GrowthLimits } from '@/lib/types';
 
 export function OverviewScreen() {
   const overview = useApp((state) => state.overview);
@@ -70,6 +62,8 @@ export function OverviewScreen() {
   }
 
   const counts = overview.counts;
+  const rankName =
+    (language === 'fr' ? overview.adventureRankFr : overview.adventureRankEn) || `Grade ${overview.adventureGrade}`;
 
   return (
     <div className="space-y-5">
@@ -105,8 +99,8 @@ export function OverviewScreen() {
         <Metric
           icon={<Trophy />}
           label="Mercenary Corps"
-          value={`Grade ${overview.adventureGrade} · Lv ${overview.adventureLevel}`}
-          detail={`${formatNumber(overview.adventureExp)} EXP · ${overview.maxAscend} of ${MAX_BREAKTHROUGH} breakthroughs unlocked`}
+          value={`${rankName} · Lv ${overview.adventureLevel}`}
+          detail={`Grade ${overview.adventureGrade} · ${formatNumber(overview.adventureExp)} EXP · promotions ${overview.promotionsCompleted} of ${overview.promotionsTotal}`}
         />
         <Metric
           icon={<Clock3 />}
@@ -255,6 +249,7 @@ export function OverviewScreen() {
           exp: overview.adventureExp,
           playTime: overview.playTime,
         }}
+        limits={overview.adventureLimits}
         busy={pending !== null}
         onSave={(patch) => {
           void setAdventureBatch(patch);
@@ -454,12 +449,14 @@ function RankDialog({
   open,
   onOpenChange,
   initial,
+  limits,
   busy,
   onSave,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initial: { grade: number; level: number; exp: number; playTime: number };
+  limits: GrowthLimits;
   busy: boolean;
   onSave: (patch: Record<string, number>) => void;
 }) {
@@ -476,9 +473,12 @@ function RankDialog({
     }
   }
 
+  // EXP is a running total that follows the level: a level change writes the
+  // new level's start EXP, so the EXP field only edits within the saved level.
+  const levelChanged = level !== initial.level;
   const patch: Record<string, number> = {};
-  if (level !== initial.level) patch.level = level;
-  if (exp !== initial.exp) patch.exp = exp;
+  if (levelChanged) patch.level = level;
+  else if (exp !== initial.exp) patch.exp = exp;
   if (playTime !== initial.playTime) patch.playTime = playTime;
 
   return (
@@ -493,13 +493,22 @@ function RankDialog({
             <Label>Grade</Label>
             <p className="numeric text-sm">{initial.grade}</p>
           </div>
-          <Field label="Level" value={level} onChange={setLevel} max={MAX_ADV_LEVEL} />
-          <Field label="EXP" value={exp} onChange={setExp} max={MAX_ADV_EXP} />
+          <Field label="Level" value={level} onChange={setLevel} min={1} max={Math.max(limits.level, initial.level)} />
+          <Field
+            label={levelChanged ? 'EXP (set by the new level)' : 'EXP'}
+            value={levelChanged ? initial.exp : exp}
+            onChange={setExp}
+            min={limits.expMin}
+            max={limits.exp}
+            disabled={levelChanged}
+          />
           <Field label="Play time (seconds)" value={playTime} onChange={setPlayTime} max={MAX_PLAY_TIME} />
         </div>
         <p className="text-[11px] text-muted-foreground">
           The grade is read-only. It follows the promotion quests the save records, and each promotion unlocks the next
-          hero and karma breakthrough. Play the game to advance it.
+          hero and karma breakthrough. Play the game to advance it. The live servers cap the corps at level{' '}
+          {limits.level}; EXP at level {initial.level} runs from {formatNumber(limits.expMin)} to{' '}
+          {formatNumber(limits.exp)}.
         </p>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
@@ -519,17 +528,21 @@ function Field({
   label,
   value,
   onChange,
+  min,
   max,
+  disabled,
 }: {
   label: string;
   value: number;
   onChange: (value: number) => void;
+  min?: number;
   max?: number;
+  disabled?: boolean;
 }) {
   return (
     <div className="space-y-1.5">
       <Label>{label}</Label>
-      <NumberField value={value} onCommit={onChange} max={max} className="w-full" />
+      <NumberField value={value} onCommit={onChange} min={min} max={max} disabled={disabled} className="w-full" />
     </div>
   );
 }

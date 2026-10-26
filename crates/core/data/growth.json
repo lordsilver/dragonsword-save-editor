@@ -1,0 +1,869 @@
+{
+  "_source": {
+    "game": "DragonSword Awakening, install checksum v1.1.1 (unconfirmed), extracted 2026-10-26",
+    "extracted": "DS/Content/__GeneratedGameData__/Server/XML/GameData/ from the game paks",
+    "tables": [
+      "PCCharacterLevelData",
+      "KarmaLevelData",
+      "KarmaData",
+      "PCSkillGrowthData",
+      "AdventLevelData",
+      "AdventGradeData",
+      "LocalizingControlData_KOR",
+      "LocalizingControlData_AMERICA",
+      "LocalizingControlData_EUROPE",
+      "LocalizingControlData_ASIA",
+      "LocalizingVersionData",
+      "PCCharacterTranscendData",
+      "KarmaTranscendData",
+      "StringData"
+    ],
+    "generator": "scripts/gen-growth.mjs",
+    "notes": [
+      "Every *StartExp array is a running total: index N − 1 is the EXP at which level N starts.",
+      "No table holds the level cap per breakthrough; levelCapBase + levelCapStep × stage matches every live maximum."
+    ]
+  },
+  "levelCapBase": 20,
+  "levelCapStep": 10,
+  "maxCharacterTranscend": 6,
+  "maxKarmaTranscend": 6,
+  "heroLevelStartExp": [
+    0,
+    150,
+    400,
+    900,
+    1600,
+    2600,
+    4000,
+    5800,
+    8000,
+    10700,
+    14000,
+    17900,
+    22500,
+    27800,
+    33800,
+    40600,
+    48300,
+    56900,
+    66400,
+    76900,
+    88500,
+    101200,
+    115100,
+    130200,
+    146500,
+    164100,
+    183100,
+    203500,
+    225300,
+    248600,
+    273500,
+    300000,
+    328200,
+    358100,
+    389700,
+    423100,
+    458400,
+    495600,
+    534700,
+    575800,
+    619000,
+    664300,
+    711800,
+    761500,
+    813400,
+    867600,
+    924200,
+    983200,
+    1044600,
+    1108500,
+    1175000,
+    1244100,
+    1315900,
+    1390400,
+    1467600,
+    1547600,
+    1630500,
+    1716300,
+    1805000,
+    1896700,
+    1991500,
+    2089400,
+    2190500,
+    2294800,
+    2402300,
+    2513100,
+    2627300,
+    2744900,
+    2865900,
+    2990400,
+    3118500,
+    3250200,
+    3385600,
+    3524700,
+    3667500,
+    3814100,
+    3964600,
+    4119000,
+    4277300,
+    4439600,
+    4606000,
+    4776500,
+    4951200,
+    5130100,
+    5313200,
+    5500600,
+    5692400,
+    5888600,
+    6089200,
+    6294300,
+    6504000,
+    6718300,
+    6937300,
+    7161000,
+    7389400,
+    7622600,
+    7860700,
+    8103700,
+    8351600,
+    8604500
+  ],
+  "karmaLevelStartExp": {
+    "RARE": [
+      0,
+      100,
+      300,
+      700,
+      1200,
+      2000,
+      3000,
+      4400,
+      6000,
+      8000,
+      10100,
+      12600,
+      15500,
+      18900,
+      22700,
+      27100,
+      32000,
+      37400,
+      43500,
+      50200,
+      57600,
+      65700,
+      74600,
+      84200,
+      94600,
+      105800,
+      118000,
+      131000,
+      144800,
+      159700,
+      175600,
+      192500,
+      210500,
+      229500,
+      249700,
+      271000,
+      293500,
+      317200,
+      342100,
+      368300,
+      395800,
+      424700,
+      455000,
+      486600,
+      519700,
+      554300,
+      590300,
+      628000,
+      667100,
+      707900,
+      750200,
+      794300,
+      840000,
+      887500,
+      936700,
+      987700,
+      1040600,
+      1095200,
+      1151800,
+      1210200,
+      1270700,
+      1333100,
+      1397500,
+      1464000,
+      1532600,
+      1603200,
+      1676000,
+      1751000,
+      1828200,
+      1907600,
+      1989200,
+      2073200,
+      2159500,
+      2248100,
+      2339200,
+      2432600,
+      2528600,
+      2627000,
+      2727900,
+      2831400
+    ],
+    "EPIC": [
+      0,
+      150,
+      400,
+      900,
+      1600,
+      2600,
+      4000,
+      5800,
+      8000,
+      10700,
+      13500,
+      16800,
+      20700,
+      25200,
+      30300,
+      36100,
+      42600,
+      49900,
+      58000,
+      66900,
+      76800,
+      87600,
+      99400,
+      112200,
+      126100,
+      141100,
+      157300,
+      174600,
+      193100,
+      212900,
+      234100,
+      256600,
+      280600,
+      306000,
+      332900,
+      361300,
+      391300,
+      422900,
+      456100,
+      491000,
+      527700,
+      566200,
+      606600,
+      648800,
+      692900,
+      739000,
+      787100,
+      837300,
+      889500,
+      943800,
+      1000300,
+      1059000,
+      1120000,
+      1183300,
+      1248900,
+      1316900,
+      1387400,
+      1460300,
+      1535700,
+      1613600,
+      1694200,
+      1777400,
+      1863300,
+      1952000,
+      2043400,
+      2137600,
+      2234700,
+      2334700,
+      2437600,
+      2543400,
+      2652300,
+      2764200,
+      2879300,
+      2997500,
+      3118900,
+      3243500,
+      3371400,
+      3502600,
+      3637200,
+      3775200
+    ],
+    "LEGENDARY": [
+      0,
+      200,
+      400,
+      900,
+      1600,
+      2600,
+      4000,
+      5800,
+      8000,
+      10700,
+      14000,
+      17900,
+      22500,
+      27800,
+      33800,
+      40600,
+      48300,
+      56900,
+      66400,
+      76900,
+      88500,
+      101200,
+      115100,
+      130200,
+      146500,
+      164100,
+      183100,
+      203500,
+      225300,
+      248600,
+      273500,
+      300000,
+      328200,
+      358100,
+      389700,
+      423100,
+      458400,
+      495600,
+      534700,
+      575800,
+      619000,
+      664300,
+      711800,
+      761500,
+      813400,
+      867600,
+      924200,
+      983200,
+      1044600,
+      1108500,
+      1175000,
+      1244100,
+      1315900,
+      1390400,
+      1467600,
+      1547600,
+      1630500,
+      1716300,
+      1805000,
+      1896700,
+      1991500,
+      2089400,
+      2190500,
+      2294800,
+      2402300,
+      2513100,
+      2627300,
+      2744900,
+      2865900,
+      2990400,
+      3118500,
+      3250200,
+      3385600,
+      3524700,
+      3667500,
+      3814100,
+      3964600,
+      4119000,
+      4277300,
+      4439600
+    ]
+  },
+  "karmaRarity": {
+    "1701301": "LEGENDARY",
+    "1701401": "LEGENDARY",
+    "1701402": "LEGENDARY",
+    "1701501": "LEGENDARY",
+    "1702301": "LEGENDARY",
+    "1702401": "LEGENDARY",
+    "1702402": "LEGENDARY",
+    "1702501": "LEGENDARY",
+    "1703301": "LEGENDARY",
+    "1703401": "LEGENDARY",
+    "1703402": "LEGENDARY",
+    "1703501": "LEGENDARY",
+    "1704301": "LEGENDARY",
+    "1704401": "LEGENDARY",
+    "1704402": "LEGENDARY",
+    "1704501": "LEGENDARY",
+    "1705301": "LEGENDARY",
+    "1705401": "LEGENDARY",
+    "1705402": "LEGENDARY",
+    "1706301": "LEGENDARY",
+    "1706401": "LEGENDARY",
+    "1706402": "LEGENDARY",
+    "1707301": "LEGENDARY",
+    "1707401": "LEGENDARY",
+    "1707402": "LEGENDARY",
+    "1708301": "LEGENDARY",
+    "1708401": "LEGENDARY",
+    "1708402": "LEGENDARY",
+    "1708501": "LEGENDARY",
+    "1709301": "LEGENDARY",
+    "1709401": "LEGENDARY",
+    "1709402": "LEGENDARY",
+    "1709501": "LEGENDARY",
+    "1710501": "LEGENDARY",
+    "1710502": "LEGENDARY",
+    "1710504": "LEGENDARY",
+    "1710505": "LEGENDARY",
+    "1710506": "LEGENDARY",
+    "1710507": "LEGENDARY",
+    "1710508": "LEGENDARY",
+    "1710509": "LEGENDARY",
+    "1710515": "LEGENDARY",
+    "1710516": "LEGENDARY",
+    "1710517": "LEGENDARY",
+    "1710525": "LEGENDARY",
+    "1710526": "LEGENDARY",
+    "1710527": "LEGENDARY",
+    "1710537": "LEGENDARY",
+    "1710538": "LEGENDARY",
+    "1710539": "LEGENDARY",
+    "1710540": "LEGENDARY",
+    "1710542": "LEGENDARY",
+    "1710544": "LEGENDARY"
+  },
+  "skills": {
+    "1": [
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 1,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 1,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 2,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 2,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 3,
+        "version": "M11_3"
+      },
+      {
+        "ascend": 3,
+        "version": "M11_3"
+      },
+      {
+        "ascend": 4,
+        "version": "M11_3"
+      }
+    ],
+    "2": [
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 1,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 1,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 2,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 2,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 3,
+        "version": "M11_3"
+      },
+      {
+        "ascend": 3,
+        "version": "M11_3"
+      },
+      {
+        "ascend": 4,
+        "version": "M11_3"
+      }
+    ],
+    "3": [
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 1,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 1,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 2,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 2,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 3,
+        "version": "M11_3"
+      },
+      {
+        "ascend": 3,
+        "version": "M11_3"
+      },
+      {
+        "ascend": 4,
+        "version": "M11_3"
+      }
+    ],
+    "4": [
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 1,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 1,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 2,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 2,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 3,
+        "version": "M11_3"
+      },
+      {
+        "ascend": 3,
+        "version": "M11_3"
+      },
+      {
+        "ascend": 4,
+        "version": "M11_3"
+      }
+    ],
+    "5": [
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 1,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 1,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 2,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 2,
+        "version": "M11_2"
+      }
+    ],
+    "6": [
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 1,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 1,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 2,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 2,
+        "version": "M11_2"
+      }
+    ],
+    "7": [
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 1,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 1,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 2,
+        "version": "M11_2"
+      },
+      {
+        "ascend": 2,
+        "version": "M11_2"
+      }
+    ],
+    "8": [
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      }
+    ],
+    "801": [
+      {
+        "ascend": 0,
+        "version": "M11_2"
+      }
+    ]
+  },
+  "adventLevelStartExp": [
+    0,
+    800,
+    1650,
+    2550,
+    3500,
+    4500,
+    5900,
+    7700,
+    9900,
+    12500,
+    15500,
+    19000,
+    23000,
+    27500,
+    32500,
+    38500,
+    45500,
+    53500,
+    62500,
+    72500,
+    83500,
+    95500,
+    108500,
+    122500,
+    137500,
+    152500,
+    167500,
+    182500,
+    197500,
+    212500,
+    227500,
+    242500,
+    257500,
+    272500,
+    287500,
+    302500,
+    317500,
+    332500,
+    347500,
+    362500,
+    377500,
+    392500,
+    407500,
+    422500,
+    437500,
+    452500,
+    467500,
+    482500,
+    497500,
+    512500,
+    527500,
+    542500,
+    557500,
+    572500,
+    587500,
+    602500,
+    617500,
+    632500,
+    647500,
+    662500,
+    677500,
+    692500,
+    707500,
+    722500,
+    737500,
+    752500,
+    767500,
+    782500,
+    797500,
+    812500,
+    827500,
+    842500,
+    857500,
+    872500,
+    887500,
+    902500,
+    917500,
+    932500,
+    947500,
+    962500,
+    977500
+  ],
+  "adventGrades": [
+    {
+      "grade": 1,
+      "nameEn": "Apprentice",
+      "nameFr": "Apprenti",
+      "promotionQuest": null,
+      "characterAscend": 0,
+      "karmaAscend": 0,
+      "titleItem": null
+    },
+    {
+      "grade": 2,
+      "nameEn": "Novice",
+      "nameFr": "Inférieur",
+      "promotionQuest": 40001,
+      "characterAscend": 1,
+      "karmaAscend": 1,
+      "titleItem": 2104100
+    },
+    {
+      "grade": 3,
+      "nameEn": "Intermediate",
+      "nameFr": "Intermédiaire",
+      "promotionQuest": 40011,
+      "characterAscend": 2,
+      "karmaAscend": 2,
+      "titleItem": 2104101
+    },
+    {
+      "grade": 4,
+      "nameEn": "Advanced",
+      "nameFr": "Supérieur",
+      "promotionQuest": 40021,
+      "characterAscend": 3,
+      "karmaAscend": 3,
+      "titleItem": 2104102
+    },
+    {
+      "grade": 5,
+      "nameEn": "Elite",
+      "nameFr": "Élite",
+      "promotionQuest": 40031,
+      "characterAscend": 4,
+      "karmaAscend": 4,
+      "titleItem": 2104103
+    },
+    {
+      "grade": 6,
+      "nameEn": "Veteran",
+      "nameFr": "Vétéran",
+      "promotionQuest": 40041,
+      "characterAscend": 5,
+      "karmaAscend": 5,
+      "titleItem": 2104104
+    }
+  ],
+  "regions": {
+    "KOR": {
+      "contentVersion": "M11_3",
+      "maxCharacterLevel": 70,
+      "maxCharacterAscend": 5,
+      "maxKarmaLevel": 70,
+      "maxKarmaAscend": 5,
+      "maxAdventLevel": 50,
+      "maxAdventGrade": 6,
+      "maxAdventDifficulty": 6
+    },
+    "GLOBAL": {
+      "contentVersion": "M11_2",
+      "maxCharacterLevel": 60,
+      "maxCharacterAscend": 4,
+      "maxKarmaLevel": 60,
+      "maxKarmaAscend": 4,
+      "maxAdventLevel": 50,
+      "maxAdventGrade": 5,
+      "maxAdventDifficulty": 5
+    }
+  }
+}

@@ -1,22 +1,17 @@
 import type { GrowthLimits } from './types.ts';
 
-/** The game has five breakthroughs above stage 0, one per promotion. */
-export const MAX_BREAKTHROUGH = 5;
-
 /**
  * One line describing a hero's breakthrough stage and the caps it sets. The
  * Rust core sends each row's own limits; this only formats them.
  */
 export function breakthroughSummary(limits: GrowthLimits, ascend: number): string {
-  const summary = `Breakthrough ${limits.stage} of ${MAX_BREAKTHROUGH} · level cap ${limits.level} · skill cap ${limits.skillLow}`;
+  const summary = `Breakthrough ${limits.stage} of ${limits.maxStage} · level cap ${limits.level} · skill cap ${limits.skillLow}`;
   return ascend > limits.ascend ? `${summary} · ASCEND ${ascend} is above this grade's limit` : summary;
 }
 
 export const MAX_CHARACTER_HP = 22_229;
 export const MAX_ENCHANT = 15;
 export const MAX_EQUIP_EXP = 90_000;
-export const MAX_ADV_LEVEL = 80;
-export const MAX_ADV_EXP = 962_500;
 export const MAX_CURRENCY = 47_451_809;
 export const MAX_STACK = 61_525;
 /** Cooked dishes are not material stacks; the 100% save tops out at 203. */

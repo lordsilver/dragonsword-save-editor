@@ -129,10 +129,15 @@ export interface Currency {
 export interface GrowthLimits {
   /** The row's ASCEND, clamped to the stages its grade unlocks. */
   stage: number;
-  level: number;
-  exp: number;
-  /** The grade's ascension cap, grade − 1. */
+  /** The breakthrough stages the grade unlocks, the ascension cap. */
   ascend: number;
+  /** The last breakthrough the region's live servers allow. */
+  maxStage: number;
+  /** The level cap at this stage. */
+  level: number;
+  /** The EXP range the row's current level allows; it includes the current value. */
+  expMin: number;
+  exp: number;
   transcend: number;
   /** Active/trigger skills, slots 1–4. */
   skillLow: number;
@@ -162,6 +167,13 @@ export interface Overview {
   currencies: Currency[];
   /** Breakthrough stages the Mercenary Corps grade unlocks. */
   maxAscend: number;
+  /** The grade's rank name in the game's own strings. */
+  adventureRankEn: string;
+  adventureRankFr: string;
+  promotionsCompleted: number;
+  promotionsTotal: number;
+  /** Corps level cap and the EXP range at the current corps level. */
+  adventureLimits: GrowthLimits;
 }
 
 export interface Stack {
@@ -252,6 +264,8 @@ export interface Karma {
   ascend: number;
   transcend: number;
   equippedBy: number | null;
+  /** The level the karma's EXP reaches in its rarity's table. */
+  level: number;
   limits: GrowthLimits;
 }
 

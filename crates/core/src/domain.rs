@@ -9,38 +9,16 @@ use serde::Serialize;
 
 use crate::catalog::{Catalog, EffectText, Item, TitleStat};
 use crate::error::{Error, Result};
+use crate::growth::{self, Growth, REGION};
 use crate::save::SaveSession;
 
-// Hero and karma growth follows each row's own breakthrough stage (`ASCEND`).
-// The Mercenary Corps grade (`ADV_GRADE`) only unlocks stages: each of its
-// five promotions unlocks the next hero and karma breakthrough, so grade g
-// allows stages 0..=g − 1 (official guides 3121 and 3158). The stage then caps
-// the level, the EXP and every skill (guide 3159). Awakening is not
-// stage-gated and tops out at 6 (guides 3160 and 3163). Karma uses the hero
-// rows until the game's own karma table is known. These rows are interim:
-// docs/game-rules.md lists what is sourced and what is still open.
-const LEVEL_CAPS: [i64; 6] = [20, 30, 40, 50, 60, 70];
-/// EXP is most likely a running total, not progress within the current level:
-/// karma has no level column, and the game-written save has heroes on the same
-/// EXP at the same level. Stage 0 uses 76,900, the EXP every level-20 hero has
-/// in the modder's saves and the lower of the two candidates. Stages 1–5 are
-/// unverified and have no known source.
-const EXP_CAPS: [i64; 6] = [76_900, 273_500, 619_000, 1_175_000, 1_991_500, 3_118_500];
-const ACTIVE_SKILL_CAPS: [i64; 6] = [3, 5, 7, 9, 10, 10];
-/// Basic skills (slots 5–7) cap at the smaller of the stage's active cap and
-/// 7. Unverified: the modder's grade-1 save has basic skills at 2.
-const BASIC_SKILL_CAP: i64 = 7;
-const SPECIAL_SKILL_CAP: i64 = 1;
-const MAX_TRANSCEND: i64 = 6;
+// Hero, karma and Mercenary Corps growth follows the game's own tables in
+// `growth`. Each hero's and karma's breakthrough stage (`ASCEND`) caps its
+// level, EXP and skills; the Mercenary Corps grade only unlocks stages.
 
 const MAX_CHARACTER_HP: i64 = 22_229;
 const MAX_ENCHANT: i64 = 15;
 const MAX_EQUIP_EXP: i64 = 90_000;
-const MAX_ADV_LEVEL: i64 = 80;
-/// The last grade, after all five promotions. Grades are read-only; this only
-/// bounds the breakthrough stages a save can unlock.
-const MAX_ADV_GRADE: i64 = 6;
-const MAX_ADV_EXP: i64 = 962_500;
 /// Gold's balance in the reference save. Every other currency gets a safety
 /// cap instead; Aether Crystals is premium currency and was zero everywhere.
 const MAX_AMOUNT: i64 = 47_451_809;
@@ -114,14 +92,14 @@ impl<'a> Game<'a> {
             .optional()?)
     }
 
-    /// A hero's level and breakthrough stage, which together bound every
+    /// A hero's level, EXP and breakthrough stage, which together bound every
     /// growth edit on that hero.
-    fn character_growth(&self, cid: i64) -> Result<(i64, i64)> {
+    fn character_growth(&self, cid: i64) -> Result<(i64, i64, i64)> {
         self.conn()
             .query_row(
-                "SELECT LEVEL, ASCEND FROM tb_character WHERE USER_DBID=? AND CHARACTER_CID=?",
+                "SELECT LEVEL, EXP, ASCEND FROM tb_character WHERE USER_DBID=? AND CHARACTER_CID=?",
                 params![self.user_id, cid],
-                |row| Ok((row.get(0)?, row.get(1)?)),
+                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
             )
             .optional()?
             .ok_or_else(|| Error::invalid("that character is not owned in this save"))
@@ -175,6 +153,8 @@ impl<'a> Game<'a> {
             .optional()?
             .unwrap_or_default();
 
+        let growth = Growth::shared();
+        let rank = growth.grade(advent.grade);
         Ok(Overview {
             account_id: user.account_id,
             player_name: advent.name,
@@ -194,6 +174,11 @@ impl<'a> Game<'a> {
             counts: self.counts()?,
             currencies: self.currencies()?,
             max_ascend: self.max_ascend()?,
+            adventure_rank_en: rank.map_or_else(String::new, |row| row.name_en.clone()),
+            adventure_rank_fr: rank.map_or_else(String::new, |row| row.name_fr.clone()),
+            promotions_completed: self.promotions_completed()?,
+            promotions_total: growth.promotion_quests(REGION).len() as i64,
+            adventure_limits: corps_limits(advent.level, advent.exp),
         })
     }
 
@@ -253,7 +238,32 @@ impl<'a> Game<'a> {
     /// The highest breakthrough stage the save's Mercenary Corps grade unlocks,
     /// which is also every hero's and karma's ascension cap.
     pub fn max_ascend(&self) -> Result<i64> {
-        Ok(unlocked_stage(self.adventure_grade()?))
+        Ok(Growth::shared().max_character_stage(self.adventure_grade()?, REGION))
+    }
+
+    /// How many of the region's promotion quests the save records as done.
+    fn promotions_completed(&self) -> Result<i64> {
+        let quests = Growth::shared().promotion_quests(REGION);
+        let exists: i64 = self.conn().query_row(
+            "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='tb_quest_complete'",
+            [],
+            |row| row.get(0),
+        )?;
+        if exists == 0 || quests.is_empty() {
+            return Ok(0);
+        }
+        let list = quests
+            .iter()
+            .map(i64::to_string)
+            .collect::<Vec<_>>()
+            .join(",");
+        Ok(self.conn().query_row(
+            &format!(
+                "SELECT count(*) FROM tb_quest_complete WHERE USER_DBID=? AND QUEST_CID IN ({list})"
+            ),
+            params![self.user_id],
+            |row| row.get(0),
+        )?)
     }
 
     fn adventure_grade(&self) -> Result<i64> {
@@ -279,8 +289,7 @@ impl<'a> Game<'a> {
                     "the Mercenary Corps grade follows quest progress and is read-only",
                 ));
             }
-            "level" => ("ADV_LEVEL", MAX_ADV_LEVEL),
-            "exp" => ("ADV_EXP", MAX_ADV_EXP),
+            "level" | "exp" => return self.set_corps_growth(field, value),
             "playTime" => ("PLAY_TIME", MAX_PLAY_TIME),
             _ => return Err(Error::invalid(format!("unknown adventure field {field:?}"))),
         };
@@ -298,6 +307,52 @@ impl<'a> Game<'a> {
         }
         self.conn().execute(
             &format!("UPDATE tb_advent_status SET {column}=? WHERE USER_DBID=?"),
+            params![value, self.user_id],
+        )?;
+        self.touch();
+        Ok(())
+    }
+
+    fn corps_status(&self) -> Result<(i64, i64)> {
+        Ok(self
+            .conn()
+            .query_row(
+                "SELECT ADV_LEVEL, ADV_EXP FROM tb_advent_status WHERE USER_DBID=?",
+                params![self.user_id],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )
+            .optional()?
+            .unwrap_or((1, 0)))
+    }
+
+    /// Corps level and EXP move together, like a hero's: setting the level
+    /// writes the EXP that starts it, and EXP stays inside the level.
+    fn set_corps_growth(&mut self, field: &str, value: i64) -> Result<()> {
+        let (level, exp) = self.corps_status()?;
+        let limits = corps_limits(level, exp);
+        if field == "level" {
+            let max = limits.level.max(level);
+            if !(1..=max).contains(&value) {
+                return Err(Error::invalid(format!("level must be between 1 and {max}")));
+            }
+            if value != level {
+                let start = growth::start_exp(Growth::shared().advent_exp(), value).unwrap_or(exp);
+                self.conn().execute(
+                    "UPDATE tb_advent_status SET ADV_LEVEL=?, ADV_EXP=? WHERE USER_DBID=?",
+                    params![value, start, self.user_id],
+                )?;
+                self.touch();
+            }
+            return Ok(());
+        }
+        if !(limits.exp_min..=limits.exp).contains(&value) {
+            return Err(Error::invalid(format!(
+                "EXP at corps level {level} must be between {} and {}",
+                limits.exp_min, limits.exp
+            )));
+        }
+        self.conn().execute(
+            "UPDATE tb_advent_status SET ADV_EXP=? WHERE USER_DBID=?",
             params![value, self.user_id],
         )?;
         self.touch();
@@ -544,7 +599,7 @@ impl<'a> Game<'a> {
                 soldier_grade: row.get(7)?,
                 soldier_grade_point: row.get(8)?,
                 created_at: row.get(9)?,
-                limits: growth_limits(row.get(3)?, grade),
+                limits: hero_limits(row.get(1)?, row.get(2)?, row.get(3)?, grade),
             })
         })?;
         let mut out = Vec::new();
@@ -557,8 +612,8 @@ impl<'a> Game<'a> {
     }
 
     pub fn set_character(&mut self, cid: i64, field: &str, value: i64) -> Result<()> {
-        let (level, ascend) = self.character_growth(cid)?;
-        let limits = growth_limits(ascend, self.adventure_grade()?);
+        let (level, exp, ascend) = self.character_growth(cid)?;
+        let limits = hero_limits(level, exp, ascend, self.adventure_grade()?);
         let (column, max) = match field {
             "level" => ("LEVEL", limits.level),
             "exp" => ("EXP", limits.exp),
@@ -577,19 +632,39 @@ impl<'a> Game<'a> {
             )?
             .ok_or_else(|| Error::invalid("that character is not owned in this save"))?;
         let max = max.max(current);
-        let min = if field == "level" { 1 } else { 0 };
+        let min = match field {
+            "level" => 1,
+            "exp" => limits.exp_min,
+            _ => 0,
+        };
         if !(min..=max).contains(&value) {
-            return Err(Error::invalid(format!(
-                "{field} must be between {min} and {max}"
-            )));
+            let message = if field == "exp" {
+                format!("EXP at level {level} must be between {min} and {max}")
+            } else {
+                format!("{field} must be between {min} and {max}")
+            };
+            return Err(Error::invalid(message));
         }
         if field == "ascend" && value < current {
-            let needed = stage_needed(&LEVEL_CAPS, level);
+            let needed = Growth::shared().stage_for_level(level);
             if value < needed {
                 return Err(Error::invalid(format!(
                     "level {level} needs breakthrough {needed}; lower the level first"
                 )));
             }
+        }
+        if field == "level" {
+            // A level change writes the EXP that starts the new level, so the
+            // pair stays one the game could have written.
+            if value != level {
+                let start = growth::start_exp(Growth::shared().hero_exp(), value).unwrap_or(exp);
+                self.conn().execute(
+                    "UPDATE tb_character SET LEVEL=?, EXP=? WHERE USER_DBID=? AND CHARACTER_CID=?",
+                    params![value, start, self.user_id, cid],
+                )?;
+                self.touch();
+            }
+            return Ok(());
         }
         self.conn().execute(
             &format!("UPDATE tb_character SET {column}=? WHERE USER_DBID=? AND CHARACTER_CID=?"),
@@ -685,8 +760,8 @@ impl<'a> Game<'a> {
         if !SKILL_TYPES.contains(&type_value) {
             return Err(Error::invalid("skill type must be 1–7 or 801"));
         }
-        let (_, ascend) = self.character_growth(cid)?;
-        let limits = growth_limits(ascend, self.adventure_grade()?);
+        let (hero_level, exp, ascend) = self.character_growth(cid)?;
+        let stage = hero_limits(hero_level, exp, ascend, self.adventure_grade()?).stage;
         let current = self
             .current_i64(
                 "SELECT COALESCE(SLOT_LEVEL, 0) FROM tb_skill_growth
@@ -694,7 +769,10 @@ impl<'a> Game<'a> {
                 params![self.user_id, cid, type_value],
             )?
             .unwrap_or(0);
-        let max = skill_limit(&limits, type_value).max(current);
+        let max = Growth::shared()
+            .skill_cap(type_value, stage, REGION)
+            .unwrap_or(0)
+            .max(current);
         if !(0..=max).contains(&level) {
             return Err(Error::invalid(format!(
                 "skill level must be between 0 and {max}"
@@ -1153,13 +1231,15 @@ impl<'a> Game<'a> {
                 ascend: row.get(4)?,
                 transcend: row.get(5)?,
                 equipped_by: row.get(6)?,
-                limits: growth_limits(row.get(4)?, grade),
+                level: 0,
+                limits: karma_limits(row.get(1)?, row.get(3)?, row.get(4)?, grade),
             })
         })?;
         let mut out = Vec::new();
         for row in rows {
             let mut karma = row?;
             karma.item = self.catalog.lookup_hint(karma.cid, "material");
+            karma.level = growth::level_for_exp(Growth::shared().karma_exp(karma.cid), karma.exp);
             out.push(karma);
         }
         Ok(out)
@@ -1173,16 +1253,16 @@ impl<'a> Game<'a> {
     }
 
     pub fn set_karma(&mut self, dbid: i64, field: &str, value: i64) -> Result<()> {
-        let (exp, ascend): (i64, i64) = self
+        let (cid, exp, ascend): (i64, i64, i64) = self
             .conn()
             .query_row(
-                "SELECT EXP, ASCEND FROM tb_karma WHERE USER_DBID=? AND ITEM_DBID=?",
+                "SELECT ITEM_CID, EXP, ASCEND FROM tb_karma WHERE USER_DBID=? AND ITEM_DBID=?",
                 params![self.user_id, dbid],
-                |row| Ok((row.get(0)?, row.get(1)?)),
+                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
             )
             .optional()?
             .ok_or_else(|| Error::invalid("that karma is not present in this save"))?;
-        let limits = growth_limits(ascend, self.adventure_grade()?);
+        let limits = karma_limits(cid, exp, ascend, self.adventure_grade()?);
         let (column, max) = match field {
             "exp" => ("EXP", limits.exp),
             "ascend" => ("ASCEND", limits.ascend),
@@ -1202,12 +1282,14 @@ impl<'a> Game<'a> {
                 "{field} must be between 0 and {max}"
             )));
         }
-        // Karma has no level column, so its EXP stands in for the level.
+        // Karma has no level column; its level comes from its EXP.
         if field == "ascend" && value < current {
-            let needed = stage_needed(&EXP_CAPS, exp);
+            let growth = Growth::shared();
+            let level = growth::level_for_exp(growth.karma_exp(cid), exp);
+            let needed = growth.stage_for_level(level);
             if value < needed {
                 return Err(Error::invalid(format!(
-                    "{exp} EXP needs breakthrough {needed}; lower the EXP first"
+                    "karma level {level} needs breakthrough {needed}; lower the EXP first"
                 )));
             }
         }
@@ -1737,18 +1819,25 @@ impl<'a> Game<'a> {
 
 // -------------------------------------------------------------------- types
 
-/// Growth ceilings for one hero or karma, from its own breakthrough stage.
-/// Existing values above a ceiling stay editable because every setter uses
-/// `max(limit, current)`.
+/// Growth ceilings for one hero, karma or the Mercenary Corps. Existing values
+/// above a ceiling stay editable because every setter uses `max(limit,
+/// current)`; the EXP range already includes the current value.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GrowthLimits {
     /// The row's `ASCEND`, clamped to the stages its grade unlocks.
     pub stage: i64,
-    pub level: i64,
-    pub exp: i64,
-    /// The grade's ascension cap, grade − 1.
+    /// The breakthrough stages the grade unlocks, the ascension cap.
     pub ascend: i64,
+    /// The last breakthrough the region's live servers allow.
+    pub max_stage: i64,
+    /// The level cap at this stage.
+    pub level: i64,
+    /// The lowest EXP the row's current level allows.
+    pub exp_min: i64,
+    /// The highest EXP the row's current level allows. A row at its level cap
+    /// sits at the level's start, because the game refunds EXP past the cap.
+    pub exp: i64,
     pub transcend: i64,
     /// Active skills, slots 1–4.
     pub skill_low: i64,
@@ -1758,44 +1847,69 @@ pub struct GrowthLimits {
     pub skill_special: i64,
 }
 
-/// The highest breakthrough stage a grade unlocks. Grades outside 1–6 use the
-/// nearest known grade, so a future save cannot silently remove the caps.
-fn unlocked_stage(grade: i64) -> i64 {
-    grade.clamp(1, MAX_ADV_GRADE) - 1
-}
-
-fn growth_limits(ascend: i64, grade: i64) -> GrowthLimits {
-    let unlocked = unlocked_stage(grade);
+fn hero_limits(level: i64, exp: i64, ascend: i64, grade: i64) -> GrowthLimits {
+    let growth = Growth::shared();
+    let unlocked = growth.max_character_stage(grade, REGION);
     let stage = ascend.clamp(0, unlocked);
-    let index = stage as usize;
+    let cap = growth.level_cap(stage);
+    let (low, high) = growth::exp_range(growth.hero_exp(), level, cap).unwrap_or((exp, exp));
+    let skill = |type_value| growth.skill_cap(type_value, stage, REGION).unwrap_or(0);
     GrowthLimits {
         stage,
-        level: LEVEL_CAPS[index],
-        exp: EXP_CAPS[index],
         ascend: unlocked,
-        transcend: MAX_TRANSCEND,
-        skill_low: ACTIVE_SKILL_CAPS[index],
-        skill_mid: ACTIVE_SKILL_CAPS[index].min(BASIC_SKILL_CAP),
-        skill_special: SPECIAL_SKILL_CAP,
+        max_stage: growth.region(REGION).max_character_ascend,
+        level: cap,
+        exp_min: low.min(exp),
+        exp: high.max(exp),
+        transcend: growth.max_character_transcend(),
+        skill_low: skill(1),
+        skill_mid: skill(5),
+        skill_special: skill(801),
     }
 }
 
-/// The lowest stage whose cap admits `value`. A value above every cap needs
-/// the top stage.
-fn stage_needed(caps: &[i64; 6], value: i64) -> i64 {
-    caps.iter()
-        .position(|cap| value <= *cap)
-        .unwrap_or(caps.len() - 1) as i64
+/// Karma has no level column: its EXP is a running total in the table for
+/// its rarity, so the EXP cap is the EXP that starts the stage's level cap.
+fn karma_limits(cid: i64, exp: i64, ascend: i64, grade: i64) -> GrowthLimits {
+    let growth = Growth::shared();
+    let unlocked = growth.max_karma_stage(grade, REGION);
+    let stage = ascend.clamp(0, unlocked);
+    let cap = growth.level_cap(stage);
+    let table = growth.karma_exp(cid);
+    let high = growth::start_exp(table, cap)
+        .or_else(|| table.last().copied())
+        .unwrap_or(exp);
+    GrowthLimits {
+        stage,
+        ascend: unlocked,
+        max_stage: growth.region(REGION).max_karma_ascend,
+        level: cap,
+        exp_min: 0,
+        exp: high,
+        transcend: growth.max_karma_transcend(),
+        skill_low: 0,
+        skill_mid: 0,
+        skill_special: 0,
+    }
 }
 
-/// Active slots 1–4 and basic slots 5–7 follow the stage; 801 caps at 1.
-fn skill_limit(limits: &GrowthLimits, type_value: i64) -> i64 {
-    if type_value == 801 {
-        limits.skill_special
-    } else if type_value >= 5 {
-        limits.skill_mid
-    } else {
-        limits.skill_low
+/// The Mercenary Corps has no breakthrough; its level caps at the region's
+/// live maximum.
+fn corps_limits(level: i64, exp: i64) -> GrowthLimits {
+    let growth = Growth::shared();
+    let cap = growth.region(REGION).max_advent_level;
+    let (low, high) = growth::exp_range(growth.advent_exp(), level, cap).unwrap_or((exp, exp));
+    GrowthLimits {
+        stage: 0,
+        ascend: 0,
+        max_stage: 0,
+        level: cap,
+        exp_min: low.min(exp),
+        exp: high.max(exp),
+        transcend: 0,
+        skill_low: 0,
+        skill_mid: 0,
+        skill_special: 0,
     }
 }
 
@@ -1821,6 +1935,14 @@ pub struct Overview {
     pub currencies: Vec<Currency>,
     /// Breakthrough stages the grade unlocks, the ascension cap for every row.
     pub max_ascend: i64,
+    /// The grade's rank name in the game's English and French strings.
+    pub adventure_rank_en: String,
+    pub adventure_rank_fr: String,
+    /// Promotion quests the save records as complete, out of the region's
+    /// total. Each one should match a grade above 1.
+    pub promotions_completed: i64,
+    pub promotions_total: i64,
+    pub adventure_limits: GrowthLimits,
 }
 
 struct OverviewUser {
@@ -2008,6 +2130,8 @@ pub struct Karma {
     pub ascend: i64,
     pub transcend: i64,
     pub equipped_by: Option<i64>,
+    /// The level the karma's EXP reaches in its rarity's table.
+    pub level: i64,
     pub limits: GrowthLimits,
 }
 

@@ -14,15 +14,17 @@ import type { GrowthLimits } from '@/lib/types';
 // at breakthrough 0 and one at breakthrough 2.
 const STAGE_ZERO: GrowthLimits = {
   stage: 0,
-  level: 20,
-  exp: 76_900,
   ascend: 2,
+  maxStage: 4,
+  level: 20,
+  expMin: 76_900,
+  exp: 76_900,
   transcend: 6,
   skillLow: 3,
   skillMid: 3,
   skillSpecial: 1,
 };
-const STAGE_TWO: GrowthLimits = { ...STAGE_ZERO, stage: 2, level: 40, exp: 619_000, skillLow: 7, skillMid: 7 };
+const STAGE_TWO: GrowthLimits = { ...STAGE_ZERO, stage: 2, level: 40, skillLow: 7, skillMid: 7 };
 
 describe('parseNumberDraft', () => {
   it('treats a blank draft as nothing to commit, not zero', () => {
@@ -108,8 +110,8 @@ describe('skillLimit', () => {
 
 describe('breakthroughSummary', () => {
   it("describes the row's own stage", () => {
-    expect(breakthroughSummary(STAGE_ZERO, 0)).toBe('Breakthrough 0 of 5 · level cap 20 · skill cap 3');
-    expect(breakthroughSummary(STAGE_TWO, 2)).toBe('Breakthrough 2 of 5 · level cap 40 · skill cap 7');
+    expect(breakthroughSummary(STAGE_ZERO, 0)).toBe('Breakthrough 0 of 4 · level cap 20 · skill cap 3');
+    expect(breakthroughSummary(STAGE_TWO, 2)).toBe('Breakthrough 2 of 4 · level cap 40 · skill cap 7');
   });
 
   it('flags an ASCEND above the grade limit', () => {

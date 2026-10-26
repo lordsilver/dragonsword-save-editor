@@ -59,8 +59,13 @@ fn every_mutation_survives_a_write() {
             for grade in [0, 1, 6, 7] {
                 assert!(game.set_adventure("grade", grade).is_err());
             }
-            assert!(game.set_adventure("level", 81).is_err());
-            assert!(game.set_adventure("exp", 962_501).is_err());
+            let corps = game.overview().expect("overview");
+            let corps_top = corps.adventure_limits.level.max(corps.adventure_level);
+            assert!(game.set_adventure("level", corps_top + 1).is_err());
+            assert!(
+                game.set_adventure("exp", corps.adventure_limits.exp + 1)
+                    .is_err()
+            );
             game.set_adventure("level", 42).expect("adventure level");
             assert!(game.set_currency(1_000_001, 47_451_810).is_err());
             game.set_currency(1_000_001, 987_654).expect("currency");
@@ -102,16 +107,27 @@ fn every_mutation_survives_a_write() {
             character_b = characters[1].cid;
             let first = character_a;
             let limits = characters[0].limits.clone();
-            assert!(
-                game.set_character(first, "level", limits.level + 1)
-                    .is_err()
-            );
+            let hero_limits = |game: &dsa_core::domain::Game<'_>| {
+                game.characters()
+                    .expect("characters")
+                    .into_iter()
+                    .find(|character| character.cid == first)
+                    .expect("character")
+                    .limits
+            };
+            // A save above the rules keeps its current level editable.
+            let top = limits.level.max(characters[0].level);
+            assert!(game.set_character(first, "level", top + 1).is_err());
             game.set_character(first, "level", limits.level)
                 .expect("character level");
-            assert!(game.set_character(first, "exp", limits.exp + 1).is_err());
-            game.set_character(first, "exp", limits.exp)
+            // The level edit wrote the level's start EXP; at the cap that is
+            // also the most the hero can hold.
+            let capped = hero_limits(&game);
+            assert_eq!(capped.exp_min, capped.exp);
+            assert!(game.set_character(first, "exp", capped.exp + 1).is_err());
+            game.set_character(first, "exp", capped.exp)
                 .expect("character exp");
-            (expected_level, expected_exp) = (limits.level, limits.exp);
+            (expected_level, expected_exp) = (limits.level, capped.exp);
             if limits.level > 20 {
                 assert!(
                     game.set_character(first, "ascend", 0).is_err(),
@@ -123,13 +139,7 @@ fn every_mutation_survives_a_write() {
                 .expect("character ascend");
             assert!(game.set_character(first, "ascend", ascend + 1).is_err());
             // The breakthrough may have moved, so read the hero's caps again.
-            let limits = game
-                .characters()
-                .expect("characters")
-                .into_iter()
-                .find(|character| character.cid == first)
-                .expect("character")
-                .limits;
+            let limits = hero_limits(&game);
             game.set_character(first, "transcend", 0)
                 .expect("reset transcend");
             assert!(

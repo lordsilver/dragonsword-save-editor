@@ -9,7 +9,6 @@ import { CountPill, InfoNote, StatTile } from '@/components/summary';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { MAX_BREAKTHROUGH } from '@/lib/limits';
 import { compareDbid, formatNumber, itemName, useApp } from '@/lib/store';
 import type { Karma } from '@/lib/types';
 
@@ -141,7 +140,8 @@ export function KarmaScreen() {
                       <span className="font-mono">DBID {entry.dbid}</span>
                     </div>
                     <div className="text-[10px] text-muted-foreground">
-                      Breakthrough {entry.limits.stage} of {MAX_BREAKTHROUGH} · EXP cap {formatNumber(entry.limits.exp)}
+                      Lv {entry.level} · breakthrough {entry.limits.stage} of {entry.limits.maxStage} · level cap{' '}
+                      {entry.limits.level} · EXP cap {formatNumber(entry.limits.exp)}
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5">

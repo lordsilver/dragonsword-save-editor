@@ -9,6 +9,7 @@ use std::path::{Path, PathBuf};
 use dsa_core::SaveSession;
 use dsa_core::catalog::Catalog;
 use dsa_core::domain::Game;
+use dsa_core::growth::{self, Growth};
 use dsa_core::raw::RawValue;
 use dsa_core::sqlcipher;
 use rusqlite::Connection;
@@ -219,7 +220,7 @@ fn reserve_tail(database: &mut [u8]) {
     }
 }
 
-/// The id of the fixture's one karma row.
+/// The id of the fixture's one karma row, a LEGENDARY karma (CID 1710501).
 const KARMA: i64 = BASE + 100;
 
 /// An encrypted fixture save. It derefs to the `.db` path, and dropping it
@@ -378,7 +379,7 @@ fn fixture_with(name: &str, gold: i64, grade: i64, version: i64) -> Fixture {
         .expect("gem");
         conn.execute(
             "INSERT INTO tb_karma (ITEM_DBID, USER_DBID, ITEM_CID, EXP, ASCEND, TRANSCEND)
-             VALUES (?, ?, 1210001, 0, 0, 0)",
+             VALUES (?, ?, 1710501, 0, 0, 0)",
             rusqlite::params![KARMA, USER],
         )
         .expect("karma");
@@ -784,39 +785,75 @@ fn karma(game: &Game<'_>) -> dsa_core::domain::Karma {
         .expect("karma row")
 }
 
+fn hero_start(level: i64) -> i64 {
+    growth::start_exp(Growth::shared().hero_exp(), level).expect("hero level")
+}
+
+fn karma_start(level: i64) -> i64 {
+    growth::start_exp(Growth::shared().karma_exp(1_710_501), level).expect("karma level")
+}
+
 #[test]
 fn every_breakthrough_stage_has_its_own_caps() {
+    // The editor applies the global live limits: breakthrough 4, grade 5, and
+    // active skills up to 7, because levels 8–10 are Korea-only content.
     let cases = [
-        (0, 20, 76_900, 3, 3),
-        (1, 30, 273_500, 5, 5),
-        (2, 40, 619_000, 7, 7),
-        (3, 50, 1_175_000, 9, 7),
-        (4, 60, 1_991_500, 10, 7),
-        (5, 70, 3_118_500, 10, 7),
+        (0, 20, 3, 3),
+        (1, 30, 5, 5),
+        (2, 40, 7, 7),
+        (3, 50, 7, 7),
+        (4, 60, 7, 7),
     ];
     let path = fixture_with_grade("limits-stages", 6);
     let mut session = SaveSession::open(&path).expect("open");
     let mut game = Game::new(&mut session, Catalog::shared());
-    assert_eq!(game.max_ascend().expect("max ascend"), 5);
+    assert_eq!(game.max_ascend().expect("max ascend"), 4);
 
-    for (stage, level, exp, active, basic) in cases {
+    for (stage, level, active, basic) in cases {
         game.set_character(10_001, "ascend", stage).expect("ascend");
         let limits = character(&game, 10_001).limits;
         assert_eq!(limits.stage, stage);
         assert_eq!(limits.level, level);
-        assert_eq!(limits.exp, exp);
-        assert_eq!(limits.ascend, 5);
+        assert_eq!(limits.ascend, 4);
         assert_eq!(limits.transcend, 6);
         assert_eq!(limits.skill_low, active);
         assert_eq!(limits.skill_mid, basic);
         assert_eq!(limits.skill_special, 1);
 
+        // One level below the cap, EXP may run up to the next level's start.
+        game.set_character(10_001, "level", level - 1)
+            .expect("level below the cap");
+        let hero = character(&game, 10_001);
+        assert_eq!(
+            hero.exp,
+            hero_start(level - 1),
+            "a level edit writes its start EXP"
+        );
+        assert_eq!(
+            (hero.limits.exp_min, hero.limits.exp),
+            (hero_start(level - 1), hero_start(level) - 1)
+        );
+        game.set_character(10_001, "exp", hero_start(level) - 1)
+            .expect("top of the level");
+        assert!(
+            game.set_character(10_001, "exp", hero_start(level))
+                .is_err()
+        );
+        assert!(
+            game.set_character(10_001, "exp", hero_start(level - 1) - 1)
+                .is_err()
+        );
+
+        // At the cap, EXP sits at the level's start.
         game.set_character(10_001, "level", level)
             .expect("character level");
         assert!(game.set_character(10_001, "level", level + 1).is_err());
-        game.set_character(10_001, "exp", exp)
-            .expect("character exp");
-        assert!(game.set_character(10_001, "exp", exp + 1).is_err());
+        assert_eq!(character(&game, 10_001).exp, hero_start(level));
+        assert!(
+            game.set_character(10_001, "exp", hero_start(level) + 1)
+                .is_err()
+        );
+
         game.set_skill(10_001, 1, active).expect("active skill");
         assert!(game.set_skill(10_001, 1, active + 1).is_err());
         game.set_skill(10_001, 5, basic).expect("basic skill");
@@ -826,15 +863,26 @@ fn every_breakthrough_stage_has_its_own_caps() {
 
         game.set_karma(KARMA, "ascend", stage)
             .expect("karma ascend");
-        let limits = karma(&game).limits;
-        assert_eq!((limits.stage, limits.exp), (stage, exp));
-        game.set_karma(KARMA, "exp", exp).expect("karma exp");
-        assert!(game.set_karma(KARMA, "exp", exp + 1).is_err());
+        let karma_row = karma(&game);
+        assert_eq!(
+            (karma_row.limits.stage, karma_row.limits.exp),
+            (stage, karma_start(level))
+        );
+        game.set_karma(KARMA, "exp", karma_start(level))
+            .expect("karma exp");
+        assert_eq!(karma(&game).level, level);
+        assert!(
+            game.set_karma(KARMA, "exp", karma_start(level) + 1)
+                .is_err()
+        );
     }
     game.set_character(10_001, "transcend", 6)
         .expect("character transcend");
     assert!(game.set_character(10_001, "transcend", 7).is_err());
-    assert!(game.set_character(10_001, "ascend", 6).is_err());
+    assert!(
+        game.set_character(10_001, "ascend", 5).is_err(),
+        "the global servers stop at breakthrough 4"
+    );
     assert!(game.set_skill(10_099, 1, 1).is_err(), "unowned character");
 }
 
@@ -883,17 +931,22 @@ fn growth_caps_follow_each_rows_own_breakthrough() {
         "level starts at 1"
     );
 
-    // Karma follows the same rules, with EXP standing in for the level.
+    // Karma follows the same rules, with its level coming from its EXP.
     let limits = karma(&game).limits;
-    assert_eq!((limits.stage, limits.exp, limits.ascend), (0, 76_900, 2));
-    assert!(game.set_karma(KARMA, "exp", 76_901).is_err());
+    assert_eq!(
+        (limits.stage, limits.exp, limits.ascend),
+        (0, karma_start(20), 2)
+    );
+    assert!(game.set_karma(KARMA, "exp", karma_start(20) + 1).is_err());
     game.set_karma(KARMA, "ascend", 2).expect("karma ascend 2");
-    assert_eq!(karma(&game).limits.exp, 619_000);
+    assert_eq!(karma(&game).limits.exp, karma_start(40));
     assert!(game.set_karma(KARMA, "ascend", 3).is_err());
-    game.set_karma(KARMA, "exp", 400_000).expect("karma exp");
+    game.set_karma(KARMA, "exp", karma_start(35))
+        .expect("karma exp");
+    assert_eq!(karma(&game).level, 35);
     let error = game
         .set_karma(KARMA, "ascend", 0)
-        .expect_err("400,000 EXP needs breakthrough 2");
+        .expect_err("karma level 35 needs breakthrough 2");
     assert!(error.to_string().contains("lower the EXP first"));
     game.set_karma(KARMA, "exp", 0).expect("lower the EXP");
     game.set_karma(KARMA, "ascend", 0)
@@ -924,7 +977,7 @@ fn reference_maxima_bound_the_other_fields() {
 
 #[test]
 fn out_of_range_grades_use_the_nearest_known_table() {
-    for (saved_grade, max_ascend) in [(0, 0), (7, 5)] {
+    for (saved_grade, max_ascend) in [(0, 0), (7, 4)] {
         let path = fixture_with_grade(&format!("limits-grade-{saved_grade}"), saved_grade);
         let mut session = SaveSession::open(&path).expect("open");
         let game = Game::new(&mut session, Catalog::shared());
@@ -950,8 +1003,16 @@ fn the_mercenary_corps_grade_is_read_only() {
                 .expect_err("no typed path writes the grade");
             assert_eq!(error.kind(), "invalid");
         }
+        // Corps EXP is a running total, like a hero's.
+        let corps = |level| growth::start_exp(Growth::shared().advent_exp(), level).unwrap();
         game.set_adventure("level", 42).expect("corps level");
-        game.set_adventure("exp", 1_234).expect("corps exp");
+        assert!(game.set_adventure("exp", corps(42) - 1).is_err());
+        assert!(game.set_adventure("exp", corps(43)).is_err());
+        game.set_adventure("exp", corps(42) + 1).expect("corps exp");
+        assert!(
+            game.set_adventure("level", 51).is_err(),
+            "live corps level stops at 50"
+        );
         let page = session
             .raw_page("tb_advent_status", 0, 10, None)
             .expect("advent page");
@@ -959,7 +1020,7 @@ fn the_mercenary_corps_grade_is_read_only() {
         let value = |name| integer(&row[column_index(&page, name)]);
         assert_eq!(value("ADV_GRADE"), grade);
         assert_eq!(value("ADV_LEVEL"), 42);
-        assert_eq!(value("ADV_EXP"), 1_234);
+        assert_eq!(value("ADV_EXP"), corps(42) + 1);
     }
 
     let path = fixture("grade-raw");

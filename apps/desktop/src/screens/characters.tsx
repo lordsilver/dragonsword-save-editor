@@ -362,6 +362,7 @@ function CharacterHero({
         <EditField
           label="Level"
           value={character.level}
+          min={1}
           max={limits.level}
           disabled={busy}
           onChange={(value) => onChange('level', value)}
@@ -369,6 +370,7 @@ function CharacterHero({
         <EditField
           label="EXP"
           value={character.exp}
+          min={limits.expMin}
           max={limits.exp}
           disabled={busy}
           onChange={(value) => onChange('exp', value)}
@@ -427,19 +429,29 @@ function CharacterHero({
 function EditField({
   label,
   value,
+  min,
   max,
   disabled,
   onChange,
 }: {
   label: string;
   value: number;
+  min?: number;
   max: number;
   disabled: boolean;
   onChange: (value: number) => void;
 }) {
+  const top = formatNumber(Math.max(max, value));
   return (
-    <FieldRow label={label} hint={`max ${formatNumber(Math.max(max, value))}`}>
-      <NumberField value={value} onCommit={onChange} max={max} disabled={disabled} className="w-full text-left" />
+    <FieldRow label={label} hint={min === undefined ? `max ${top}` : `${formatNumber(min)}–${top}`}>
+      <NumberField
+        value={value}
+        onCommit={onChange}
+        min={min}
+        max={max}
+        disabled={disabled}
+        className="w-full text-left"
+      />
     </FieldRow>
   );
 }
