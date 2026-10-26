@@ -84,7 +84,7 @@ describe('currencyLimit', () => {
 describe('skillLimit', () => {
   it('uses the grade-1 grouping', () => {
     expect(skillLimit(GRADE_ONE_CHARACTER_LIMITS, 1)).toBe(3);
-    expect(skillLimit(GRADE_ONE_CHARACTER_LIMITS, 5)).toBe(2);
+    expect(skillLimit(GRADE_ONE_CHARACTER_LIMITS, 5)).toBe(7);
     expect(skillLimit(GRADE_ONE_CHARACTER_LIMITS, 801)).toBe(1);
   });
 

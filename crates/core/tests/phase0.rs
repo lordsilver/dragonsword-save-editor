@@ -720,31 +720,69 @@ fn the_editor_refuses_to_insert_character_rows() {
 }
 
 #[test]
-fn grade_limits_match_the_known_progression_points() {
-    let path = fixture("limits-grade-one");
+fn grade_limits_follow_the_breakthrough_table() {
+    let cases = [
+        (1, 20, 88_500, 0, 3),
+        (2, 30, 273_500, 1, 5),
+        (3, 40, 619_000, 2, 7),
+        (4, 50, 1_175_000, 3, 9),
+        (5, 60, 1_991_500, 4, 10),
+        (6, 70, 3_118_500, 5, 10),
+    ];
+
+    for (grade, level, exp, ascend, active_skill) in cases {
+        let path = fixture_with_grade(&format!("limits-grade-{grade}"), grade);
+        let mut session = SaveSession::open(&path).expect("open");
+        let mut game = Game::new(&mut session, Catalog::shared());
+
+        let limits = game.character_limits().expect("limits");
+        assert_eq!(limits.grade, grade);
+        assert_eq!(limits.level, level);
+        assert_eq!(limits.exp, exp);
+        assert_eq!(limits.ascend, ascend);
+        assert_eq!(limits.transcend, 6);
+        assert_eq!(limits.skill_low, active_skill);
+        assert_eq!(limits.skill_mid, 7);
+        assert_eq!(limits.skill_special, 1);
+
+        game.set_character(10_001, "level", level)
+            .expect("character level");
+        assert!(game.set_character(10_001, "level", level + 1).is_err());
+        game.set_character(10_001, "exp", exp)
+            .expect("character exp");
+        assert!(game.set_character(10_001, "exp", exp + 1).is_err());
+        // The fixture starts at ascend 1, so lower grade 1 first to prove the
+        // cap is 0 and not just the current value.
+        if ascend == 0 {
+            game.set_character(10_001, "ascend", 0)
+                .expect("character ascend 0");
+        }
+        game.set_character(10_001, "ascend", ascend)
+            .expect("character ascend");
+        assert!(game.set_character(10_001, "ascend", ascend + 1).is_err());
+        game.set_character(10_001, "transcend", 6)
+            .expect("character transcend");
+        assert!(game.set_character(10_001, "transcend", 7).is_err());
+
+        game.set_skill(10_001, 1, active_skill)
+            .expect("active skill");
+        assert!(game.set_skill(10_001, 1, active_skill + 1).is_err());
+        game.set_skill(10_001, 5, 7).expect("basic skill");
+        assert!(game.set_skill(10_001, 5, 8).is_err());
+        game.set_skill(10_001, 801, 1).expect("special skill");
+        assert!(game.set_skill(10_001, 801, 2).is_err());
+
+        assert!(
+            game.set_adventure("grade", grade + 1).is_err(),
+            "the editor cannot raise adventure grade past the save's progress"
+        );
+    }
+
+    let path = fixture("limits-grade-one-other-caps");
     let mut session = SaveSession::open(&path).expect("open");
     let mut game = Game::new(&mut session, Catalog::shared());
-
-    game.set_character(10_001, "level", 20)
-        .expect("grade 1 level");
-    assert!(game.set_character(10_001, "level", 21).is_err());
-    game.set_character(10_001, "exp", 76_900)
-        .expect("grade 1 exp");
-    assert!(game.set_character(10_001, "exp", 76_901).is_err());
-    // This fixture starts above the grade-1 ascend cap, so lower it first to
-    // prove the cap is 0 and not just the current value.
-    game.set_character(10_001, "ascend", 0)
-        .expect("grade 1 ascend");
-    assert!(game.set_character(10_001, "ascend", 1).is_err());
-    game.set_character(10_001, "transcend", 1)
-        .expect("grade 1 transcend");
-    assert!(game.set_character(10_001, "transcend", 2).is_err());
     game.set_character(10_001, "hp", 22_229).expect("max hp");
     assert!(game.set_character(10_001, "hp", 22_230).is_err());
-    assert!(
-        game.set_adventure("grade", 2).is_err(),
-        "the editor cannot raise adventure grade past the save's progress"
-    );
 
     game.set_equipment(BASE, "enchantLevel", 15)
         .expect("max enchant");
@@ -758,61 +796,21 @@ fn grade_limits_match_the_known_progression_points() {
     assert!(game.set_stack("stackable", 1_420_001, 61_526).is_err());
     game.set_stack("cook", BASE, 203).expect("max dish");
     assert!(game.set_stack("cook", BASE, 204).is_err());
-
-    let path = fixture_with_grade("limits-grade-six", 6);
-    let mut session = SaveSession::open(&path).expect("open");
-    let mut game = Game::new(&mut session, Catalog::shared());
-    game.set_character(10_001, "level", 70)
-        .expect("grade 6 level");
-    assert!(game.set_character(10_001, "level", 71).is_err());
-    game.set_character(10_001, "exp", 2_990_400)
-        .expect("grade 6 exp");
-    assert!(game.set_character(10_001, "exp", 2_990_401).is_err());
-    game.set_character(10_001, "ascend", 5)
-        .expect("grade 6 ascend");
-    assert!(game.set_character(10_001, "ascend", 6).is_err());
-    game.set_character(10_001, "transcend", 6)
-        .expect("grade 6 transcend");
-    assert!(game.set_character(10_001, "transcend", 7).is_err());
-    game.set_skill(10_001, 1, 10).expect("grade 6 low skill");
-    assert!(game.set_skill(10_001, 1, 11).is_err());
-    game.set_skill(10_001, 5, 7).expect("grade 6 mid skill");
-    assert!(game.set_skill(10_001, 5, 8).is_err());
-    game.set_skill(10_001, 801, 1)
-        .expect("grade 6 special skill");
-    assert!(game.set_skill(10_001, 801, 2).is_err());
 }
 
 #[test]
-fn unknown_grades_use_the_saves_own_highest_values() {
-    let path = fixture_with_grade("limits-grade-three", 3);
-    let mut session = SaveSession::open(&path).expect("open");
-    let mut game = Game::new(&mut session, Catalog::shared());
-    let limits = game.character_limits().expect("limits");
-    assert_eq!(limits.grade, 3);
-    assert_eq!(limits.level, 5, "highest existing character level");
-    assert_eq!(limits.exp, 0, "highest existing character exp");
-    assert_eq!(limits.ascend, 1, "highest existing ascend");
-    assert_eq!(limits.transcend, 2, "highest existing transcend");
-
-    game.set_character(10_001, "level", 5)
-        .expect("observed level");
-    assert!(game.set_character(10_001, "level", 6).is_err());
-    game.set_character(10_001, "ascend", 1)
-        .expect("observed ascend");
-    assert!(game.set_character(10_001, "ascend", 2).is_err());
-    game.set_character(10_001, "transcend", 2)
-        .expect("observed transcend");
-    assert!(game.set_character(10_001, "transcend", 3).is_err());
-
-    // A grade with no skill rows falls back to the grade-1 grouping.
-    game.set_skill(10_001, 1, 3).expect("grade-1 fallback low");
-    assert!(game.set_skill(10_001, 1, 4).is_err());
-    game.set_skill(10_001, 5, 2).expect("grade-1 fallback mid");
-    assert!(game.set_skill(10_001, 5, 3).is_err());
-    game.set_skill(10_001, 801, 1)
-        .expect("grade-1 fallback special");
-    assert!(game.set_skill(10_001, 801, 2).is_err());
+fn out_of_range_grades_use_the_nearest_known_table() {
+    for (saved_grade, effective_grade, level, exp) in [(0, 1, 20, 88_500), (7, 6, 70, 3_118_500)] {
+        let path = fixture_with_grade(&format!("limits-grade-{saved_grade}"), saved_grade);
+        let mut session = SaveSession::open(&path).expect("open");
+        let game = Game::new(&mut session, Catalog::shared());
+        let limits = game.character_limits().expect("limits");
+        assert_eq!(limits.grade, effective_grade);
+        assert_eq!(limits.level, level);
+        assert_eq!(limits.exp, exp);
+        assert_eq!(limits.ascend, if effective_grade == 1 { 0 } else { 5 });
+        assert_eq!(limits.transcend, 6);
+    }
 }
 
 #[test]

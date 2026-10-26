@@ -1,25 +1,25 @@
 import type { CharacterLimits } from './types.ts';
 
 /**
- * The two adventure grades the editor has evidence for. The Rust core returns
- * these limits for grade 1 and grade 6; the constants are the fallback while
- * the overview is loading and the fixtures used by the frontend tests.
+ * Fallback limits for the first and last adventure grades. The Rust core
+ * returns the exact grade table; these constants are used while the overview
+ * is loading and by the frontend tests.
  */
 export const GRADE_ONE_CHARACTER_LIMITS: CharacterLimits = {
   grade: 1,
   level: 20,
-  exp: 76_900,
+  exp: 88_500,
   ascend: 0,
-  transcend: 1,
+  transcend: 6,
   skillLow: 3,
-  skillMid: 2,
+  skillMid: 7,
   skillSpecial: 1,
 };
 
 export const GRADE_SIX_CHARACTER_LIMITS: CharacterLimits = {
   grade: 6,
   level: 70,
-  exp: 2_990_400,
+  exp: 3_118_500,
   ascend: 5,
   transcend: 6,
   skillLow: 10,
@@ -42,7 +42,10 @@ export const MAX_PLAY_TIME = 2_147_483_647;
 /** Fate's Invitation, the shop currency used to recruit the 11 shop characters. */
 export const FATES_INVITATION_CID = 1_000_500;
 
-/** Skill slots are grouped the same way as the Rust core: 1–4, 5–7, and 801. */
+/**
+ * Active slots 1–4 follow the breakthrough cap; basic slots 5–7 have a hard
+ * cap of 7, and 801 caps at 1. Keep this in step with dsa-core.
+ */
 export function skillLimit(limits: CharacterLimits, typeValue: number): number {
   if (typeValue === 801) return limits.skillSpecial;
   if (typeValue >= 5) return limits.skillMid;

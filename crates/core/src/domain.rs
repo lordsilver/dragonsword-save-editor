@@ -11,24 +11,20 @@ use crate::catalog::{Catalog, EffectText, Item, TitleStat};
 use crate::error::{Error, Result};
 use crate::save::SaveSession;
 
-// Character growth follows adventure grade. Grade 1 and grade 6 are the only
-// points the editor has evidence for: the modder's level-20 save and the 100%
-// save. Other grades use the highest value already present in that save.
-const GRADE_ONE_LEVEL: i64 = 20;
-const GRADE_ONE_EXP: i64 = 76_900;
-const GRADE_ONE_ASCEND: i64 = 0;
-const GRADE_ONE_TRANSCEND: i64 = 1;
-const GRADE_ONE_SKILL_LOW: i64 = 3;
-const GRADE_ONE_SKILL_MID: i64 = 2;
-const GRADE_ONE_SKILL_SPECIAL: i64 = 1;
-
-const GRADE_SIX_LEVEL: i64 = 70;
-const GRADE_SIX_EXP: i64 = 2_990_400;
-const GRADE_SIX_ASCEND: i64 = 5;
-const GRADE_SIX_TRANSCEND: i64 = 6;
-const GRADE_SIX_SKILL_LOW: i64 = 10;
-const GRADE_SIX_SKILL_MID: i64 = 7;
-const GRADE_SIX_SKILL_SPECIAL: i64 = 1;
+// Character growth follows adventure grade. These are the game's breakthrough
+// thresholds: each promotion raises the level cap by 10, the ascension cap by
+// one, and the active-skill cap. Basic skills (slots 5–7) have a separate hard
+// cap of 7, and the special 801 slot caps at 1. Awakening is not grade-gated
+// and tops out at 6.
+const LEVEL_CAPS: [i64; 6] = [20, 30, 40, 50, 60, 70];
+/// EXP is progress within the current level. These are the level-table values
+/// for the grade's level cap.
+const EXP_CAPS: [i64; 6] = [88_500, 273_500, 619_000, 1_175_000, 1_991_500, 3_118_500];
+const ASCEND_CAPS: [i64; 6] = [0, 1, 2, 3, 4, 5];
+const ACTIVE_SKILL_CAPS: [i64; 6] = [3, 5, 7, 9, 10, 10];
+const BASIC_SKILL_CAP: i64 = 7;
+const SPECIAL_SKILL_CAP: i64 = 1;
+const MAX_TRANSCEND: i64 = 6;
 
 const MAX_CHARACTER_HP: i64 = 22_229;
 const MAX_ENCHANT: i64 = 15;
@@ -234,18 +230,15 @@ impl<'a> Game<'a> {
 
     /// Growth ceilings for the save's current adventure grade.
     ///
-    /// Grade 1 and grade 6 are the only points the editor has evidence for.
-    /// For every other grade, the highest value already in this save is the
-    /// ceiling; that keeps a save's own progression from being pushed past
-    /// what the player has actually reached. Existing values above a ceiling
-    /// stay editable because every setter uses `max(limit, current)`.
+    /// The level, EXP, ascension, active-skill, and awakening caps follow the
+    /// game's breakthrough table. Basic skills have a separate hard cap of 7,
+    /// and the special 801 slot caps at 1. Grades outside 1–6 use the nearest
+    /// known grade, so a future save cannot silently remove the caps. Existing
+    /// values above a ceiling stay editable because every setter uses
+    /// `max(limit, current)`.
     pub fn character_limits(&self) -> Result<CharacterLimits> {
-        let grade = self.adventure_grade()?.max(1);
-        match grade {
-            1 => Ok(grade_one_limits()),
-            6 => Ok(grade_six_limits()),
-            _ => self.observed_character_limits(grade),
-        }
+        let grade = self.adventure_grade()?.clamp(1, MAX_ADV_GRADE);
+        Ok(character_limits_for_grade(grade))
     }
 
     fn adventure_grade(&self) -> Result<i64> {
@@ -258,55 +251,6 @@ impl<'a> Game<'a> {
             )
             .optional()?
             .unwrap_or(0))
-    }
-
-    fn observed_character_limits(&self, grade: i64) -> Result<CharacterLimits> {
-        let (level, exp, ascend, transcend, count): (
-            Option<i64>,
-            Option<i64>,
-            Option<i64>,
-            Option<i64>,
-            i64,
-        ) = self.conn().query_row(
-            "SELECT MAX(LEVEL), MAX(EXP), MAX(ASCEND), MAX(TRANSCEND), COUNT(*)
-               FROM tb_character WHERE USER_DBID=?",
-            params![self.user_id],
-            |row| {
-                Ok((
-                    row.get(0)?,
-                    row.get(1)?,
-                    row.get(2)?,
-                    row.get(3)?,
-                    row.get(4)?,
-                ))
-            },
-        )?;
-        if count == 0 {
-            let mut limits = grade_one_limits();
-            limits.grade = grade;
-            return Ok(limits);
-        }
-
-        let skill_max = |types: &str| -> Result<Option<i64>> {
-            Ok(self.conn().query_row(
-                &format!(
-                    "SELECT MAX(SLOT_LEVEL) FROM tb_skill_growth
-                      WHERE USER_DBID=? AND TYPE_VALUE IN ({types})"
-                ),
-                params![self.user_id],
-                |row| row.get(0),
-            )?)
-        };
-        Ok(CharacterLimits {
-            grade,
-            level: level.unwrap_or(0),
-            exp: exp.unwrap_or(0),
-            ascend: ascend.unwrap_or(0),
-            transcend: transcend.unwrap_or(0),
-            skill_low: skill_max("1,2,3,4")?.unwrap_or(GRADE_ONE_SKILL_LOW),
-            skill_mid: skill_max("5,6,7")?.unwrap_or(GRADE_ONE_SKILL_MID),
-            skill_special: skill_max("801")?.unwrap_or(GRADE_ONE_SKILL_SPECIAL),
-        })
     }
 
     pub fn set_adventure(&mut self, field: &str, value: i64) -> Result<()> {
@@ -1763,34 +1707,23 @@ pub struct CharacterLimits {
     pub skill_special: i64,
 }
 
-fn grade_one_limits() -> CharacterLimits {
+fn character_limits_for_grade(grade: i64) -> CharacterLimits {
+    let grade = grade.clamp(1, MAX_ADV_GRADE);
+    let index = (grade - 1) as usize;
     CharacterLimits {
-        grade: 1,
-        level: GRADE_ONE_LEVEL,
-        exp: GRADE_ONE_EXP,
-        ascend: GRADE_ONE_ASCEND,
-        transcend: GRADE_ONE_TRANSCEND,
-        skill_low: GRADE_ONE_SKILL_LOW,
-        skill_mid: GRADE_ONE_SKILL_MID,
-        skill_special: GRADE_ONE_SKILL_SPECIAL,
+        grade,
+        level: LEVEL_CAPS[index],
+        exp: EXP_CAPS[index],
+        ascend: ASCEND_CAPS[index],
+        transcend: MAX_TRANSCEND,
+        skill_low: ACTIVE_SKILL_CAPS[index],
+        skill_mid: BASIC_SKILL_CAP,
+        skill_special: SPECIAL_SKILL_CAP,
     }
 }
 
-fn grade_six_limits() -> CharacterLimits {
-    CharacterLimits {
-        grade: 6,
-        level: GRADE_SIX_LEVEL,
-        exp: GRADE_SIX_EXP,
-        ascend: GRADE_SIX_ASCEND,
-        transcend: GRADE_SIX_TRANSCEND,
-        skill_low: GRADE_SIX_SKILL_LOW,
-        skill_mid: GRADE_SIX_SKILL_MID,
-        skill_special: GRADE_SIX_SKILL_SPECIAL,
-    }
-}
-
-/// Skill slots are grouped because the game raises them together: 1–4, 5–7,
-/// and the special 801 slot.
+/// Active slots 1–4 follow the breakthrough cap; basic slots 5–7 have a hard
+/// cap of 7, and 801 caps at 1.
 fn skill_limit(limits: &CharacterLimits, type_value: i64) -> i64 {
     if type_value == 801 {
         limits.skill_special

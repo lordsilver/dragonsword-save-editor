@@ -132,8 +132,11 @@ export interface CharacterLimits {
   exp: number;
   ascend: number;
   transcend: number;
+  /** Active/trigger skills, slots 1–4. */
   skillLow: number;
+  /** Basic skills, slots 5–7. */
   skillMid: number;
+  /** The special 801 slot. */
   skillSpecial: number;
 }
 

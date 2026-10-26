@@ -18,7 +18,18 @@ The slot cards show the screenshot the game saved with the slot, when one exists
 
 ## Value limits
 
-Character growth follows the save's adventure grade. Grade 1 caps level 20, EXP 76,900, ascension 0, transcendence 1, and skill slots 3/2/1; grade 6 caps level 70, EXP 2,990,400, ascension 5, transcendence 6, and skills 10/7/1. For other grades the editor uses the highest value already present in that save. Existing values above a cap stay editable, and every field uses `max(cap, current)`, so a blur cannot lower them. Karma uses the same grade caps. Equipment is capped at enchant 15 and item EXP 90,000, adventure level at 80, and adventure grade at the save's current grade; material stacks at 61,525 and cooked dishes at 203; gold at 47,451,809. These are conservative editor limits, not values read from the game's tables. The raw database browser can still write any value the column type accepts, except in a save whose schema version is newer than 2.
+Character growth follows the save's adventure grade. The editor uses the game's breakthrough table:
+
+| Grade | Level cap | EXP cap   | Ascension cap | Active skill cap |
+| ----- | --------- | --------- | ------------- | ---------------- |
+| 1     | 20        | 88,500    | 0             | 3                |
+| 2     | 30        | 273,500   | 1             | 5                |
+| 3     | 40        | 619,000   | 2             | 7                |
+| 4     | 50        | 1,175,000 | 3             | 9                |
+| 5     | 60        | 1,991,500 | 4             | 10               |
+| 6     | 70        | 3,118,500 | 5             | 10               |
+
+Basic skills (slots 5–7) have a separate hard cap of 7 at every grade, the special 801 slot caps at 1, and awakening/transcendence caps at 6 regardless of grade. EXP is progress within the current level, so its cap is the level-table value for the grade's level cap. Existing values above a cap stay editable, and every field uses `max(cap, current)`, so a blur cannot lower them. Karma uses the same grade caps. Equipment is capped at enchant 15 and item EXP 90,000, adventure level at 80, and adventure grade at the save's current grade; material stacks at 61,525 and cooked dishes at 203; gold at 47,451,809. These are editor limits based on the game's published breakthrough and level-EXP tables, not a substitute for the game's own validation. The raw database browser can still write any value the column type accepts, except in a save whose schema version is newer than 2.
 
 ## Editing
 
@@ -45,7 +56,7 @@ The character list selects one character at a time. Edit level, EXP, ascension, 
 - Level, EXP, ascension, and transcendence follow the adventure-grade caps above.
 - The editor does not insert character rows. To recruit a shop character, add **Fate's Invitation** (CID 1,000,500) on the Inventory screen, save, then buy the character in the game's shop. The game writes the level-1 character row and purchase record. Story characters still arrive by playing.
 - Removing a character also clears their skills, team slots, loadout links, and costume assignments.
-- Skills are keyed by `TYPE_VALUE`; the game writes 1–7 and 801. Slots 1–4, 5–7, and 801 are capped separately by the adventure grade.
+- Skills are keyed by `TYPE_VALUE`; the game writes 1–7 and 801. Active slots 1–4 follow the adventure-grade cap, basic slots 5–7 cap at 7, and 801 caps at 1.
 
 ### Equipment
 

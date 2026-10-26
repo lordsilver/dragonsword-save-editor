@@ -198,7 +198,12 @@ export function CharactersScreen() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="text-xs font-medium">
-                          {skill.typeValue >= 800 ? 'Special skill' : 'Skill slot'} {skill.typeValue}
+                          {skill.typeValue >= 800
+                            ? 'Special skill'
+                            : skill.typeValue >= 5
+                              ? 'Basic skill'
+                              : 'Active skill'}{' '}
+                          {skill.typeValue}
                         </div>
                         <div className="text-[10px] text-muted-foreground">TYPE_VALUE {skill.typeValue}</div>
                       </div>
@@ -524,7 +529,7 @@ function SkillDialog({
         <DialogHeader>
           <DialogTitle>Add a skill row</DialogTitle>
           <DialogDescription>
-            TYPE_VALUE identifies the skill slot. The game writes regular slots 1–7 and special skill 801.
+            TYPE_VALUE identifies the skill slot: 1–4 active, 5–7 basic, and 801 special.
           </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-3">
