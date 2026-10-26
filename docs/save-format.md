@@ -55,23 +55,25 @@ The result is a normal SQLite database with 80 reserved bytes at the end of ever
 
 The save is a full game database. These are the tables the typed screens use; the raw browser exposes every table in the save.
 
-| Table               | Used for                                                                                 |
-| ------------------- | ---------------------------------------------------------------------------------------- |
-| `tb_user`           | One row per account: `USER_DBID`, region, section, position, stamina, title, timestamps. |
-| `tb_advent_status`  | `ADV_GRADE`, `ADV_LEVEL`, `ADV_EXP`, `NICK_NAME`, `PLAY_TIME`.                           |
-| `tb_currency`       | `ITEM_CID`, `AMOUNT` for gold and aether crystals.                                       |
-| `tb_stackable_item` | `ITEM_CID`, `STACK_CNT` for materials and cooked food.                                   |
-| `tb_character`      | `CHARACTER_CID`, level, EXP, ascension, HP, transcendence, soldier grade.                |
-| `tb_skill_growth`   | `CHARACTER_CID`, `TYPE_VALUE`, `SLOT_LEVEL` for character skills.                        |
-| `tb_team`           | `PAGE_ID` and three character slots per team page.                                       |
-| `tb_equipment`      | `ITEM_DBID`, enchant, EXP, lock, `GEM_DBID`, main/sub stat CIDs and values.              |
-| `tb_gem`            | `ITEM_DBID`, `STAT_INFO_CID`, lock state.                                                |
-| `tb_karma`          | `ITEM_DBID`, EXP, ascension, transcendence, lock state.                                  |
-| `tb_equip_mount`    | Links a character to equipment slots, a karma spirit, and a mount.                       |
-| `tb_costume`        | `COSTUME_DBID`, `COSTUME_CID`, `EQUIP_CHARACTER_CID`, `PARTS_ON`, `IS_NEW`.              |
-| `tb_vehicle`        | `VEHICLE_DBID`, `VEHICLE_CID`, `CREATED_DATE` for mounts.                                |
-| `tb_title`          | Title unlock bits, grouped by `CATEGORY`, with `FAV_BIT_FIELD`.                          |
-| `tb_switch`         | General switch bits; cooking recipes use the `CATEGORY`/bit pairs.                       |
+| Table                                 | Used for                                                                                                                                                                                                                                                           |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `tb_user`                             | One row per account: `USER_DBID`, region, section, position, stamina, title, timestamps.                                                                                                                                                                           |
+| `tb_advent_status`                    | The Mercenary Corps grade, level and EXP (`ADV_GRADE`, `ADV_LEVEL`, `ADV_EXP`), the difficulty columns `CUR_ADV_DIFFICULTY`, `ORIGIN_ADV_DIFFICULTY` and `RESTORE_ADV_DIFFICULTY_UTC_SEC`, plus `NICK_NAME` and `PLAY_TIME`. The grade is read-only in the editor. |
+| `tb_currency`                         | `ITEM_CID`, `AMOUNT` for gold and aether crystals.                                                                                                                                                                                                                 |
+| `tb_stackable_item`                   | `ITEM_CID`, `STACK_CNT` for materials and cooked food.                                                                                                                                                                                                             |
+| `tb_character`                        | `CHARACTER_CID`, level, EXP, ascension, HP, transcendence, soldier grade.                                                                                                                                                                                          |
+| `tb_skill_growth`                     | `CHARACTER_CID`, `TYPE_VALUE`, `SLOT_LEVEL` for character skills.                                                                                                                                                                                                  |
+| `tb_team`                             | `PAGE_ID` and three character slots per team page.                                                                                                                                                                                                                 |
+| `tb_equipment`                        | `ITEM_DBID`, enchant, EXP, lock, `GEM_DBID`, main/sub stat CIDs and values.                                                                                                                                                                                        |
+| `tb_gem`                              | `ITEM_DBID`, `STAT_INFO_CID`, lock state.                                                                                                                                                                                                                          |
+| `tb_karma`                            | `ITEM_DBID`, EXP, ascension, transcendence, lock state.                                                                                                                                                                                                            |
+| `tb_equip_mount`                      | Links a character to equipment slots, a karma spirit, and a mount.                                                                                                                                                                                                 |
+| `tb_costume`                          | `COSTUME_DBID`, `COSTUME_CID`, `EQUIP_CHARACTER_CID`, `PARTS_ON`, `IS_NEW`.                                                                                                                                                                                        |
+| `tb_vehicle`                          | `VEHICLE_DBID`, `VEHICLE_CID`, `CREATED_DATE` for mounts.                                                                                                                                                                                                          |
+| `tb_title`                            | Title unlock bits, grouped by `CATEGORY`, with `FAV_BIT_FIELD`.                                                                                                                                                                                                    |
+| `tb_switch`                           | General switch bits; cooking recipes use the `CATEGORY`/bit pairs.                                                                                                                                                                                                 |
+| `tb_quest_complete`                   | Completed quests. Category 1 is the main story, with quest IDs from 10001. The editor only reads it.                                                                                                                                                               |
+| `tb_completed_quest`, `tb_quest_hold` | Completed-quest records and quests in progress. The overview counts `tb_completed_quest`.                                                                                                                                                                          |
 
 `USER_DBID` scopes almost every gameplay row. The editor reads it once when opening the save and uses it in every query.
 

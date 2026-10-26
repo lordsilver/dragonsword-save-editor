@@ -55,7 +55,7 @@ cargo test --workspace
 
 ## Testing against a real save
 
-The normal test suite is self-contained. `crates/core/tests/phase0.rs` builds a small encrypted save from a synthetic database and covers the stale-file guard, journal and WAL refusal, backups, dense 64-bit ids, the raw editor's rules, the refusal of a newly broken gem link, the adventure-grade caps, the cooked-dish limit, the schema-version write block, and the no-direct-recruit guard. Two tests need a real save because the schema and the interesting data cannot be synthesized safely. They copy the file to a temporary directory, so the source is never modified.
+The normal test suite is self-contained. `crates/core/tests/phase0.rs` builds a small encrypted save from a synthetic database and covers the stale-file guard, journal and WAL refusal, backups, dense 64-bit ids, the raw editor's rules, the refusal of a newly broken gem link, the per-hero breakthrough caps, the read-only Mercenary Corps grade, the cooked-dish limit, the schema-version write block, and the no-direct-recruit guard. Two tests need a real save because the schema and the interesting data cannot be synthesized safely. They copy the file to a temporary directory, so the source is never modified.
 
 ```bash
 DSA_SAVE="$HOME/Games/DragonSword Awakening/DS/Saved/SaveGames/1000/1000_Slot3.db" \

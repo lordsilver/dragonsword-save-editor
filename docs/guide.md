@@ -18,18 +18,26 @@ The slot cards show the screenshot the game saved with the slot, when one exists
 
 ## Value limits
 
-Character growth follows the save's adventure grade. The editor uses the game's breakthrough table:
+The editor's limits fall into three groups. [Game rules](game-rules.md) has the sources, the open questions and the in-game observations.
 
-| Grade | Level cap | EXP cap   | Ascension cap | Active skill cap |
-| ----- | --------- | --------- | ------------- | ---------------- |
-| 1     | 20        | 88,500    | 0             | 3                |
-| 2     | 30        | 273,500   | 1             | 5                |
-| 3     | 40        | 619,000   | 2             | 7                |
-| 4     | 50        | 1,175,000 | 3             | 9                |
-| 5     | 60        | 1,991,500 | 4             | 10               |
-| 6     | 70        | 3,118,500 | 5             | 10               |
+**Game rules.** Each hero's growth caps follow its own breakthrough stage (`ASCEND`), and the Mercenary Corps grade only unlocks stages: grade g allows breakthroughs 0 to g − 1 (official guides 3121, 3158 and 3159). The stage then caps the hero's level, EXP and skills:
 
-Basic skills (slots 5–7) have a separate hard cap of 7 at every grade, the special 801 slot caps at 1, and awakening/transcendence caps at 6 regardless of grade. EXP is progress within the current level, so its cap is the level-table value for the grade's level cap. Existing values above a cap stay editable, and every field uses `max(cap, current)`, so a blur cannot lower them. Karma uses the same grade caps. Equipment is capped at enchant 15 and item EXP 90,000, adventure level at 80, and adventure grade at the save's current grade; material stacks at 61,525 and cooked dishes at 203; gold at 47,451,809. These are editor limits based on the game's published breakthrough and level-EXP tables, not a substitute for the game's own validation. The raw database browser can still write any value the column type accepts, except in a save whose schema version is newer than 2.
+| Stage | Level cap | EXP cap   | Active skill cap (1–4) | Basic skill cap (5–7) |
+| ----- | --------- | --------- | ---------------------- | --------------------- |
+| 0     | 20        | 76,900    | 3                      | 3                     |
+| 1     | 30        | 273,500   | 5                      | 5                     |
+| 2     | 40        | 619,000   | 7                      | 7                     |
+| 3     | 50        | 1,175,000 | 9                      | 7                     |
+| 4     | 60        | 1,991,500 | 10                     | 7                     |
+| 5     | 70        | 3,118,500 | 10                     | 7                     |
+
+This table is interim. The EXP caps for stages 1–5 have no known source, the stage-0 basic skill cap is unverified, and the stage-5 level cap may be 80; the game's own tables will replace it. EXP is most likely a running total, not progress within the current level. The ascension cap is grade − 1, the special 801 slot caps at 1, and awakening/transcendence caps at 6 at every stage (official guides 3160 and 3163). A breakthrough cannot be lowered below what the hero's level needs: a level-35 hero needs stage 2, so lower the level first. Karma follows the same rows with its own `ASCEND`, and its EXP stands in for a level. The grade itself is read-only, because it follows the promotion quests the save records.
+
+**Observed in the modded 100% save.** These bound fields whose real cap is unknown: material stacks at 61,525, cooked dishes at 203, gold at 47,451,809, equipment enchant at 15 and item EXP at 90,000, character HP at 22,229, and Mercenary Corps level 80 with 962,500 EXP.
+
+**Safety caps.** Every other currency, play time and raw stat values get 32-bit bounds; soldier grade and transcend total cap at 99, and soldier grade points at 999,999,999. These are not claims about the game.
+
+Existing values above a cap stay editable, and every field uses `max(cap, current)`, so a blur cannot lower them. None of this replaces the game's own validation. The raw database browser can still write any value the column type accepts, except in a save whose schema version is newer than 2.
 
 ## Editing
 
@@ -37,9 +45,9 @@ Every screen edits only the open temporary copy. The title bar shows **Unsaved**
 
 ### Overview
 
-Shows the account, player name, adventure grade and level, EXP, play time, stamina, location, collection progress, currencies, and the save file itself.
+Shows the account, player name, Mercenary Corps grade, level and EXP, play time, stamina, location, collection progress, currencies, and the save file itself.
 - Click the pencil next to the name to rename the player.
-- **Edit adventure rank** changes grade, level, or EXP. Grade cannot be raised above the save's current grade; lowering it is allowed, but the editor cannot raise it back. Level is capped at 80 and EXP at 962,500.
+- **Edit Mercenary Corps** changes the corps level, EXP or play time. The grade is shown but read-only: it follows the promotion quests, and each promotion unlocks the next hero and karma breakthrough. Level is capped at 80 and EXP at 962,500.
 - **Fill every stack** is the bulk inventory action; it is disabled when every eligible material stack is already full.
 
 ### Currencies
@@ -53,10 +61,10 @@ Lists stackable materials and cooked dishes. Edit a count, add a missing catalog
 ### Characters
 
 The character list selects one character at a time. Edit level, EXP, ascension, HP, transcendence, and soldier grade, manage skills, and fill the three slots of each team page.
-- Level, EXP, ascension, and transcendence follow the adventure-grade caps above.
+- Level, EXP, ascension, and transcendence follow the hero's own breakthrough caps above. The header shows the stage, for example "Breakthrough 1 of 5 · level cap 30 · skill cap 5". Level starts at 1.
 - The editor does not insert character rows. To recruit a shop character, add **Fate's Invitation** (CID 1,000,500) on the Inventory screen, save, then buy the character in the game's shop. The game writes the level-1 character row and purchase record. Story characters still arrive by playing.
 - Removing a character also clears their skills, team slots, loadout links, and costume assignments.
-- Skills are keyed by `TYPE_VALUE`; the game writes 1–7 and 801. Active slots 1–4 follow the adventure-grade cap, basic slots 5–7 cap at 7, and 801 caps at 1.
+- Skills are keyed by `TYPE_VALUE`; the game writes 1–7 and 801. Active slots 1–4 and basic slots 5–7 follow the hero's breakthrough stage, and 801 caps at 1.
 
 ### Equipment
 
@@ -70,7 +78,7 @@ Edit each gem's raw `STAT_INFO_CID` and lock state. The catalog icon follows the
 
 ### Karma
 
-Edit a spirit's EXP, ascension, and transcendence, and equip it to a character. Karma uses the same adventure-grade caps as characters. A spirit belongs to one character at a time: assigning a new owner clears the previous character's slot. Choosing **Not equipped** detaches it.
+Edit a spirit's EXP, ascension, and transcendence, and equip it to a character. Each spirit's caps follow its own breakthrough, from the same stage table as heroes. A spirit belongs to one character at a time: assigning a new owner clears the previous character's slot. Choosing **Not equipped** detaches it.
 
 ### Costumes and mounts
 
