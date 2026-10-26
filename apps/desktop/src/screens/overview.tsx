@@ -40,8 +40,8 @@ import { consistencyIssues } from '@/lib/consistency';
 import {
   FATES_INVITATION_CID,
   MAX_ADV_EXP,
-  MAX_ADV_GRADE,
   MAX_ADV_LEVEL,
+  MAX_BREAKTHROUGH,
   MAX_PLAY_TIME,
   MAX_STACK,
   currencyLimit,
@@ -89,7 +89,7 @@ export function OverviewScreen() {
           <>
             <Button variant="outline" size="sm" onClick={() => setRankOpen(true)}>
               <Sparkles />
-              Edit adventure rank
+              Edit Mercenary Corps
             </Button>
             <Button variant="outline" size="sm" onClick={() => setFillOpen(true)}>
               <Wand2 />
@@ -104,9 +104,9 @@ export function OverviewScreen() {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Metric
           icon={<Trophy />}
-          label="Adventure"
+          label="Mercenary Corps"
           value={`Grade ${overview.adventureGrade} · Lv ${overview.adventureLevel}`}
-          detail={`${formatNumber(overview.adventureExp)} EXP`}
+          detail={`${formatNumber(overview.adventureExp)} EXP · ${overview.maxAscend} of ${MAX_BREAKTHROUGH} breakthroughs unlocked`}
         />
         <Metric
           icon={<Clock3 />}
@@ -463,7 +463,6 @@ function RankDialog({
   busy: boolean;
   onSave: (patch: Record<string, number>) => void;
 }) {
-  const [grade, setGrade] = useState(initial.grade);
   const [level, setLevel] = useState(initial.level);
   const [exp, setExp] = useState(initial.exp);
   const [playTime, setPlayTime] = useState(initial.playTime);
@@ -471,7 +470,6 @@ function RankDialog({
   if (open !== wasOpen) {
     setWasOpen(open);
     if (open) {
-      setGrade(initial.grade);
       setLevel(initial.level);
       setExp(initial.exp);
       setPlayTime(initial.playTime);
@@ -479,7 +477,6 @@ function RankDialog({
   }
 
   const patch: Record<string, number> = {};
-  if (grade !== initial.grade) patch.grade = grade;
   if (level !== initial.level) patch.level = level;
   if (exp !== initial.exp) patch.exp = exp;
   if (playTime !== initial.playTime) patch.playTime = playTime;
@@ -488,25 +485,21 @@ function RankDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Adventure rank</DialogTitle>
-          <DialogDescription>
-            These values live in tb_advent_status. The game recalculates rank on its own.
-          </DialogDescription>
+          <DialogTitle>Mercenary Corps</DialogTitle>
+          <DialogDescription>The corps grade, level and EXP live in tb_advent_status.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field
-            label="Grade"
-            value={grade}
-            onChange={setGrade}
-            max={Math.min(MAX_ADV_GRADE, Math.max(initial.grade, 1))}
-          />
+          <div className="space-y-1.5">
+            <Label>Grade</Label>
+            <p className="numeric text-sm">{initial.grade}</p>
+          </div>
           <Field label="Level" value={level} onChange={setLevel} max={MAX_ADV_LEVEL} />
           <Field label="EXP" value={exp} onChange={setExp} max={MAX_ADV_EXP} />
           <Field label="Play time (seconds)" value={playTime} onChange={setPlayTime} max={MAX_PLAY_TIME} />
         </div>
         <p className="text-[11px] text-muted-foreground">
-          Adventure grade cannot be raised above the save's current grade ({initial.grade}); play the game to advance
-          it. Lowering it is allowed, but the editor cannot raise it back.
+          The grade is read-only. It follows the promotion quests the save records, and each promotion unlocks the next
+          hero and karma breakthrough. Play the game to advance it.
         </p>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>

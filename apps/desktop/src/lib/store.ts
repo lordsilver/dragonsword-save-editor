@@ -581,7 +581,7 @@ export const useApp = create<Store>((set, get) => {
 
     async setAdventure(field, value) {
       await attempt(
-        'Updating adventure rank',
+        'Updating Mercenary Corps',
         () => api.setAdventure(field, value),
         async () => {
           await get().loadOverview();
@@ -591,7 +591,7 @@ export const useApp = create<Store>((set, get) => {
 
     async setAdventureBatch(patch) {
       await attempt(
-        'Updating adventure rank',
+        'Updating Mercenary Corps',
         async () => {
           for (const [field, value] of Object.entries(patch)) {
             await api.setAdventure(field, value);

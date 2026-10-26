@@ -1,37 +1,21 @@
-import type { CharacterLimits } from './types.ts';
+import type { GrowthLimits } from './types.ts';
+
+/** The game has five breakthroughs above stage 0, one per promotion. */
+export const MAX_BREAKTHROUGH = 5;
 
 /**
- * Fallback limits for the first and last adventure grades. The Rust core
- * returns the exact grade table; these constants are used while the overview
- * is loading and by the frontend tests.
+ * One line describing a hero's breakthrough stage and the caps it sets. The
+ * Rust core sends each row's own limits; this only formats them.
  */
-export const GRADE_ONE_CHARACTER_LIMITS: CharacterLimits = {
-  grade: 1,
-  level: 20,
-  exp: 88_500,
-  ascend: 0,
-  transcend: 6,
-  skillLow: 3,
-  skillMid: 7,
-  skillSpecial: 1,
-};
-
-export const GRADE_SIX_CHARACTER_LIMITS: CharacterLimits = {
-  grade: 6,
-  level: 70,
-  exp: 3_118_500,
-  ascend: 5,
-  transcend: 6,
-  skillLow: 10,
-  skillMid: 7,
-  skillSpecial: 1,
-};
+export function breakthroughSummary(limits: GrowthLimits, ascend: number): string {
+  const summary = `Breakthrough ${limits.stage} of ${MAX_BREAKTHROUGH} · level cap ${limits.level} · skill cap ${limits.skillLow}`;
+  return ascend > limits.ascend ? `${summary} · ASCEND ${ascend} is above this grade's limit` : summary;
+}
 
 export const MAX_CHARACTER_HP = 22_229;
 export const MAX_ENCHANT = 15;
 export const MAX_EQUIP_EXP = 90_000;
 export const MAX_ADV_LEVEL = 80;
-export const MAX_ADV_GRADE = 6;
 export const MAX_ADV_EXP = 962_500;
 export const MAX_CURRENCY = 47_451_809;
 export const MAX_STACK = 61_525;
@@ -43,10 +27,10 @@ export const MAX_PLAY_TIME = 2_147_483_647;
 export const FATES_INVITATION_CID = 1_000_500;
 
 /**
- * Active slots 1–4 follow the breakthrough cap; basic slots 5–7 have a hard
- * cap of 7, and 801 caps at 1. Keep this in step with dsa-core.
+ * Active slots 1–4 and basic slots 5–7 follow the row's breakthrough stage;
+ * 801 caps at 1. Keep this in step with dsa-core.
  */
-export function skillLimit(limits: CharacterLimits, typeValue: number): number {
+export function skillLimit(limits: GrowthLimits, typeValue: number): number {
   if (typeValue === 801) return limits.skillSpecial;
   if (typeValue >= 5) return limits.skillMid;
   return limits.skillLow;

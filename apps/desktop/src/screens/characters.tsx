@@ -21,16 +21,16 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import {
   FATES_INVITATION_CID,
-  GRADE_ONE_CHARACTER_LIMITS,
   MAX_CHARACTER_HP,
   MAX_POINTS,
   MAX_SOLDIER_GRADE,
   MAX_TRANSCEND_TOTAL,
   SKILL_TYPES,
+  breakthroughSummary,
   skillLimit,
 } from '@/lib/limits';
 import { formatNumber, itemName, useApp } from '@/lib/store';
-import type { Character, CharacterLimits, Loadout, TeamPage } from '@/lib/types';
+import type { Character, GrowthLimits, Loadout, TeamPage } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 const SLOT_LABELS: Array<[keyof Omit<Loadout, 'characterCid'>, string]> = [
@@ -50,7 +50,6 @@ export function CharactersScreen() {
   const teams = useApp((state) => state.teams);
   const loadout = useApp((state) => state.loadout);
   const save = useApp((state) => state.save);
-  const overview = useApp((state) => state.overview);
   const language = useApp((state) => state.settings.language);
   const pending = useApp((state) => state.pending);
   const selectCharacter = useApp((state) => state.selectCharacter);
@@ -62,7 +61,8 @@ export function CharactersScreen() {
 
   const selected = characters.find((character) => character.cid === selectedCharacter) ?? null;
   const busy = pending !== null;
-  const limits = overview?.characterLimits ?? GRADE_ONE_CHARACTER_LIMITS;
+  // Each hero's caps come from its own breakthrough stage.
+  const limits = selected?.limits ?? null;
 
   const roster = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -84,7 +84,7 @@ export function CharactersScreen() {
       <PageHeader
         eyebrow={`Account ${save.accountId} · Slot ${save.slot}`}
         title="Characters"
-        description="Growth fields follow this save's adventure grade; existing values above a cap stay editable. Recruit shop characters through the game after adding Fate's Invitation."
+        description="Each hero's growth caps follow its own breakthrough; the Mercenary Corps grade only unlocks breakthroughs. Existing values above a cap stay editable. Recruit shop characters through the game after adding Fate's Invitation."
         actions={
           <Button variant="outline" size="sm" onClick={() => setSection('inventory')}>
             <PackagePlus />
@@ -168,7 +168,6 @@ export function CharactersScreen() {
             <CharacterHero
               character={selected}
               language={language}
-              limits={limits}
               busy={busy}
               onRemove={() => void removeCharacter(selected.cid)}
               onChange={(field, value) => void setCharacter(selected.cid, field, value)}
@@ -210,7 +209,7 @@ export function CharactersScreen() {
                       <NumberField
                         value={skill.level}
                         onCommit={(level) => void setSkillLevel(skill.typeValue, level)}
-                        max={skillLimit(limits, skill.typeValue)}
+                        max={skillLimit(selected.limits, skill.typeValue)}
                         disabled={busy}
                         className="w-24"
                         ariaLabel={`Skill ${skill.typeValue} level`}
@@ -310,18 +309,17 @@ export function CharactersScreen() {
 function CharacterHero({
   character,
   language,
-  limits,
   busy,
   onChange,
   onRemove,
 }: {
   character: Character;
   language: string;
-  limits: CharacterLimits;
   busy: boolean;
   onChange: (field: string, value: number) => void;
   onRemove: () => void;
 }) {
+  const limits = character.limits;
   return (
     <section className="overflow-hidden rounded-xl border bg-card/70 shadow-xs">
       <div className="flex flex-wrap items-start gap-4 border-b bg-gradient-to-br from-brand/10 via-transparent to-transparent p-4">
@@ -341,6 +339,9 @@ function CharacterHero({
             <span>{character.item.category}</span>
             <span>·</span>
             <span>Created {formatCreated(character.createdAt)}</span>
+          </div>
+          <div className="mt-1 text-[11px] text-muted-foreground">
+            {breakthroughSummary(character.limits, character.ascend)}
           </div>
         </div>
         <ConfirmButton
@@ -512,7 +513,8 @@ function SkillDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  limits: CharacterLimits;
+  /** Null until a hero is selected; the dialog cannot add anything then. */
+  limits: GrowthLimits | null;
   busy: boolean;
   onAdd: (typeValue: number, level: number) => void;
 }) {
@@ -520,8 +522,8 @@ function SkillDialog({
   const [level, setLevel] = useState('1');
   const parsedType = Number(typeValue) || 0;
   const parsedLevel = Number(level) || 0;
-  const maxLevel = skillLimit(limits, parsedType);
-  const valid = SKILL_TYPES.includes(parsedType) && parsedLevel >= 0 && parsedLevel <= maxLevel;
+  const maxLevel = limits ? skillLimit(limits, parsedType) : 0;
+  const valid = limits !== null && SKILL_TYPES.includes(parsedType) && parsedLevel >= 0 && parsedLevel <= maxLevel;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -553,7 +555,7 @@ function SkillDialog({
               className="numeric"
               onChange={(event) => setLevel(event.target.value)}
             />
-            <p className="text-[10px] text-muted-foreground">0–{maxLevel} for this grade and slot</p>
+            <p className="text-[10px] text-muted-foreground">0–{maxLevel} for this hero's breakthrough and slot</p>
           </div>
         </div>
         <DialogFooter>

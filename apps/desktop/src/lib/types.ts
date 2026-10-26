@@ -122,14 +122,16 @@ export interface Currency {
 }
 
 /**
- * Growth ceilings derived by the Rust core from the save's adventure grade.
- * Existing values above a ceiling remain editable; the UI uses `max(limit,
- * current)` when it builds a field.
+ * Growth ceilings the Rust core derives for one hero or karma from its own
+ * breakthrough stage. Existing values above a ceiling remain editable; the UI
+ * uses `max(limit, current)` when it builds a field.
  */
-export interface CharacterLimits {
-  grade: number;
+export interface GrowthLimits {
+  /** The row's ASCEND, clamped to the stages its grade unlocks. */
+  stage: number;
   level: number;
   exp: number;
+  /** The grade's ascension cap, grade − 1. */
   ascend: number;
   transcend: number;
   /** Active/trigger skills, slots 1–4. */
@@ -158,7 +160,8 @@ export interface Overview {
   position: [number, number, number];
   counts: Counts;
   currencies: Currency[];
-  characterLimits: CharacterLimits;
+  /** Breakthrough stages the Mercenary Corps grade unlocks. */
+  maxAscend: number;
 }
 
 export interface Stack {
@@ -180,6 +183,7 @@ export interface Character {
   soldierGrade: number;
   soldierGradePoint: number;
   createdAt: number;
+  limits: GrowthLimits;
 }
 
 export interface Skill {
@@ -248,6 +252,7 @@ export interface Karma {
   ascend: number;
   transcend: number;
   equippedBy: number | null;
+  limits: GrowthLimits;
 }
 
 export interface Costume {

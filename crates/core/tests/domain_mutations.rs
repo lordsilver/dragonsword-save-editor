@@ -43,6 +43,7 @@ fn every_mutation_survives_a_write() {
     ): (i64, i64, i64, i64, i64, i64, i64);
     let baseline;
     let expected_team_slots;
+    let (expected_level, expected_exp, karma_ascend, karma_transcend);
     {
         let mut session = SaveSession::open(&path).expect("open");
         // A clean game-written save and a save that already has damage both
@@ -55,7 +56,9 @@ fn every_mutation_survives_a_write() {
             // Overview, adventure and currency. Values above the reference
             // maxima are refused before anything is written.
             game.set_player_name("Silver Test").expect("rename");
-            assert!(game.set_adventure("grade", 7).is_err());
+            for grade in [0, 1, 6, 7] {
+                assert!(game.set_adventure("grade", grade).is_err());
+            }
             assert!(game.set_adventure("level", 81).is_err());
             assert!(game.set_adventure("exp", 962_501).is_err());
             game.set_adventure("level", 42).expect("adventure level");
@@ -98,7 +101,7 @@ fn every_mutation_survives_a_write() {
             character_a = characters[0].cid;
             character_b = characters[1].cid;
             let first = character_a;
-            let limits = game.character_limits().expect("character limits");
+            let limits = characters[0].limits.clone();
             assert!(
                 game.set_character(first, "level", limits.level + 1)
                     .is_err()
@@ -108,14 +111,25 @@ fn every_mutation_survives_a_write() {
             assert!(game.set_character(first, "exp", limits.exp + 1).is_err());
             game.set_character(first, "exp", limits.exp)
                 .expect("character exp");
-            game.set_character(first, "ascend", 0)
-                .expect("reset ascend");
-            assert!(
-                game.set_character(first, "ascend", limits.ascend + 1)
-                    .is_err()
-            );
-            game.set_character(first, "ascend", limits.ascend)
+            (expected_level, expected_exp) = (limits.level, limits.exp);
+            if limits.level > 20 {
+                assert!(
+                    game.set_character(first, "ascend", 0).is_err(),
+                    "the level needs a higher breakthrough"
+                );
+            }
+            let ascend = characters[0].ascend.max(limits.ascend);
+            game.set_character(first, "ascend", ascend)
                 .expect("character ascend");
+            assert!(game.set_character(first, "ascend", ascend + 1).is_err());
+            // The breakthrough may have moved, so read the hero's caps again.
+            let limits = game
+                .characters()
+                .expect("characters")
+                .into_iter()
+                .find(|character| character.cid == first)
+                .expect("character")
+                .limits;
             game.set_character(first, "transcend", 0)
                 .expect("reset transcend");
             assert!(
@@ -313,6 +327,7 @@ fn every_mutation_survives_a_write() {
                 .next()
                 .expect("karma");
             karma_dbid = karma.dbid.parse().expect("karma dbid");
+            let limits = karma.limits;
             game.set_karma(karma_dbid, "exp", 0)
                 .expect("reset karma exp");
             assert!(game.set_karma(karma_dbid, "exp", limits.exp + 1).is_err());
@@ -333,6 +348,7 @@ fn every_mutation_survives_a_write() {
             );
             game.set_karma(karma_dbid, "transcend", 1.min(limits.transcend))
                 .expect("karma transcend");
+            (karma_ascend, karma_transcend) = (2.min(limits.ascend), 1.min(limits.transcend));
             game.set_karma(karma_dbid, "isLock", 1).expect("karma lock");
             game.equip_karma(character_a, karma_dbid)
                 .expect("equip karma");
@@ -589,7 +605,6 @@ fn every_mutation_survives_a_write() {
     let mut session = SaveSession::open(&path).expect("reopen");
     {
         let game = session.catalog_game(catalog);
-        let limits = game.character_limits().expect("character limits");
         let overview = game.overview().expect("overview");
         assert_eq!(overview.player_name, "Silver Test");
         assert_eq!(overview.adventure_level, 42);
@@ -617,8 +632,8 @@ fn every_mutation_survives_a_write() {
             .into_iter()
             .find(|character| character.cid == character_a)
             .expect("character");
-        assert_eq!(character.level, limits.level);
-        assert_eq!(character.exp, limits.exp);
+        assert_eq!(character.level, expected_level);
+        assert_eq!(character.exp, expected_exp);
         assert!(
             !game
                 .skills(character_a)
@@ -688,8 +703,8 @@ fn every_mutation_survives_a_write() {
             .find(|karma| karma.dbid == karma_dbid.to_string())
             .expect("karma");
         assert_eq!(karma_entry.exp, 555);
-        assert_eq!(karma_entry.ascend, 2.min(limits.ascend));
-        assert_eq!(karma_entry.transcend, 1.min(limits.transcend));
+        assert_eq!(karma_entry.ascend, karma_ascend);
+        assert_eq!(karma_entry.transcend, karma_transcend);
         assert!(karma_entry.is_lock);
         assert_eq!(karma_entry.equipped_by, Some(character_b));
 

@@ -9,7 +9,7 @@ import { CountPill, InfoNote, StatTile } from '@/components/summary';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { GRADE_ONE_CHARACTER_LIMITS } from '@/lib/limits';
+import { MAX_BREAKTHROUGH } from '@/lib/limits';
 import { compareDbid, formatNumber, itemName, useApp } from '@/lib/store';
 import type { Karma } from '@/lib/types';
 
@@ -19,7 +19,6 @@ export function KarmaScreen() {
   const karma = useApp((state) => state.karma);
   const characters = useApp((state) => state.characters);
   const save = useApp((state) => state.save);
-  const overview = useApp((state) => state.overview);
   const language = useApp((state) => state.settings.language);
   const compactRows = useApp((state) => state.settings.compactRows);
   const showUnknown = useApp((state) => state.settings.showUnknown);
@@ -49,7 +48,6 @@ export function KarmaScreen() {
 
   const equipped = karma.filter((entry) => entry.equippedBy !== null).length;
   const busy = pending !== null;
-  const limits = overview?.characterLimits ?? GRADE_ONE_CHARACTER_LIMITS;
 
   async function changeOwner(entry: Karma, cid: number): Promise<void> {
     if (cid === (entry.equippedBy ?? 0)) return;
@@ -64,7 +62,7 @@ export function KarmaScreen() {
       <PageHeader
         eyebrow={`Account ${save.accountId} · Slot ${save.slot}`}
         title="Karma"
-        description="Karma spirits in tb_karma. Growth fields follow the save's adventure grade; existing values above a cap stay editable. The equipped character lives in tb_equip_mount."
+        description="Karma spirits in tb_karma. Each karma's growth caps follow its own breakthrough, unlocked by the Mercenary Corps grade; existing values above a cap stay editable. The equipped character lives in tb_equip_mount."
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -142,6 +140,9 @@ export function KarmaScreen() {
                       <span>·</span>
                       <span className="font-mono">DBID {entry.dbid}</span>
                     </div>
+                    <div className="text-[10px] text-muted-foreground">
+                      Breakthrough {entry.limits.stage} of {MAX_BREAKTHROUGH} · EXP cap {formatNumber(entry.limits.exp)}
+                    </div>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-[10px] text-muted-foreground">Lock</span>
@@ -160,7 +161,7 @@ export function KarmaScreen() {
                     <NumberField
                       value={entry.exp}
                       onCommit={(value) => void setKarma(entry.dbid, 'exp', value)}
-                      max={limits.exp}
+                      max={entry.limits.exp}
                       disabled={busy}
                       className="w-full text-left"
                       ariaLabel="Karma experience"
@@ -171,7 +172,7 @@ export function KarmaScreen() {
                     <NumberField
                       value={entry.ascend}
                       onCommit={(value) => void setKarma(entry.dbid, 'ascend', value)}
-                      max={limits.ascend}
+                      max={entry.limits.ascend}
                       disabled={busy}
                       className="w-full text-left"
                       ariaLabel="Karma ascend"
@@ -182,7 +183,7 @@ export function KarmaScreen() {
                     <NumberField
                       value={entry.transcend}
                       onCommit={(value) => void setKarma(entry.dbid, 'transcend', value)}
-                      max={limits.transcend}
+                      max={entry.limits.transcend}
                       disabled={busy}
                       className="w-full text-left"
                       ariaLabel="Karma transcend"

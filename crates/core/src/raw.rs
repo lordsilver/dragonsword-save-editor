@@ -340,6 +340,7 @@ fn columns(conn: &Connection, table: &str) -> Result<Vec<RawColumn>> {
 
 /// Keys and link columns. Changing one moves or orphans the rows that point at
 /// it, so the raw editor keeps them read-only unless advanced editing is on.
+/// `ADV_GRADE` is here too: it follows the promotion quests the save records.
 fn column_is_protected(name: &str, primary_key: bool) -> bool {
     primary_key
         || name == "USER_DBID"
@@ -353,6 +354,7 @@ fn column_is_protected(name: &str, primary_key: bool) -> bool {
                 | "VEHICLE"
                 | "CATEGORY"
                 | "USER_DB_VERSION"
+                | "ADV_GRADE"
                 | "SELECTED_TEAM_PAGE_ID"
                 | "SELECTED_PAGE_SLOT_INDEX"
         )

@@ -4,7 +4,7 @@
 //! personal saves.
 
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use dsa_core::SaveSession;
 use dsa_core::catalog::Catalog;
@@ -140,7 +140,20 @@ CREATE TABLE tb_skill_growth (
 CREATE TABLE tb_equip_mount (
   USER_DBID INTEGER NOT NULL DEFAULT 0,
   CHARACTER_CID INTEGER NOT NULL DEFAULT 0,
+  KARMA INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (USER_DBID, CHARACTER_CID)
+);
+CREATE TABLE tb_karma (
+  ITEM_DBID INTEGER NOT NULL,
+  USER_DBID INTEGER NOT NULL DEFAULT 0,
+  ITEM_CID INTEGER NOT NULL DEFAULT 0,
+  IS_LOCK INTEGER NOT NULL DEFAULT 0,
+  EXP INTEGER NOT NULL DEFAULT 0,
+  ASCEND INTEGER NOT NULL DEFAULT 0,
+  TRANSCEND INTEGER NOT NULL DEFAULT 0,
+  CREATED_DATE INTEGER NOT NULL DEFAULT 0,
+  DELETED_DATE INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (ITEM_DBID)
 );
 CREATE TABLE tb_costume (
   USER_DBID INTEGER NOT NULL DEFAULT 0,
@@ -206,24 +219,54 @@ fn reserve_tail(database: &mut [u8]) {
     }
 }
 
+/// The id of the fixture's one karma row.
+const KARMA: i64 = BASE + 100;
+
+/// An encrypted fixture save. It derefs to the `.db` path, and dropping it
+/// removes the fixture's directory.
+struct Fixture {
+    directory: PathBuf,
+    path: PathBuf,
+}
+
+impl std::ops::Deref for Fixture {
+    type Target = Path;
+
+    fn deref(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl AsRef<Path> for Fixture {
+    fn as_ref(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl Drop for Fixture {
+    fn drop(&mut self) {
+        let _ = fs::remove_dir_all(&self.directory);
+    }
+}
+
 /// Write a synthetic plaintext save, encrypt it, and return the `.db` path.
-fn fixture(name: &str) -> PathBuf {
+fn fixture(name: &str) -> Fixture {
     fixture_with(name, 100, 1, 0)
 }
 
-fn fixture_with_gold(name: &str, gold: i64) -> PathBuf {
+fn fixture_with_gold(name: &str, gold: i64) -> Fixture {
     fixture_with(name, gold, 1, 0)
 }
 
-fn fixture_with_grade(name: &str, grade: i64) -> PathBuf {
+fn fixture_with_grade(name: &str, grade: i64) -> Fixture {
     fixture_with(name, 100, grade, 0)
 }
 
-fn fixture_with_version(name: &str, version: i64) -> PathBuf {
+fn fixture_with_version(name: &str, version: i64) -> Fixture {
     fixture_with(name, 100, 1, version)
 }
 
-fn fixture_with(name: &str, gold: i64, grade: i64, version: i64) -> PathBuf {
+fn fixture_with(name: &str, gold: i64, grade: i64, version: i64) -> Fixture {
     let directory = std::env::temp_dir().join(format!("dsa-phase0-{}-{name}", std::process::id()));
     let _ = fs::remove_dir_all(&directory);
     fs::create_dir_all(&directory).expect("mkdir");
@@ -333,6 +376,12 @@ fn fixture_with(name: &str, gold: i64, grade: i64, version: i64) -> PathBuf {
             [USER],
         )
         .expect("gem");
+        conn.execute(
+            "INSERT INTO tb_karma (ITEM_DBID, USER_DBID, ITEM_CID, EXP, ASCEND, TRANSCEND)
+             VALUES (?, ?, 1210001, 0, 0, 0)",
+            rusqlite::params![KARMA, USER],
+        )
+        .expect("karma");
         conn.execute_batch("PRAGMA journal_mode=DELETE;")
             .expect("journal");
     }
@@ -354,7 +403,7 @@ fn fixture_with(name: &str, gold: i64, grade: i64, version: i64) -> PathBuf {
     let encrypted = sqlcipher::encrypt(&plain, sqlcipher::PASSPHRASE, &SALT).expect("encrypt");
     let path = directory.join("1000_Slot1.db");
     fs::write(&path, encrypted).expect("write save");
-    path
+    Fixture { directory, path }
 }
 
 fn integer(value: &RawValue) -> i64 {
@@ -719,30 +768,47 @@ fn the_editor_refuses_to_insert_character_rows() {
     );
 }
 
+fn character(game: &Game<'_>, cid: i64) -> dsa_core::domain::Character {
+    game.characters()
+        .expect("characters")
+        .into_iter()
+        .find(|character| character.cid == cid)
+        .expect("character")
+}
+
+fn karma(game: &Game<'_>) -> dsa_core::domain::Karma {
+    game.karma()
+        .expect("karma")
+        .into_iter()
+        .find(|karma| karma.dbid == KARMA.to_string())
+        .expect("karma row")
+}
+
 #[test]
-fn grade_limits_follow_the_breakthrough_table() {
+fn every_breakthrough_stage_has_its_own_caps() {
     let cases = [
-        (1, 20, 88_500, 0, 3),
-        (2, 30, 273_500, 1, 5),
-        (3, 40, 619_000, 2, 7),
-        (4, 50, 1_175_000, 3, 9),
-        (5, 60, 1_991_500, 4, 10),
-        (6, 70, 3_118_500, 5, 10),
+        (0, 20, 76_900, 3, 3),
+        (1, 30, 273_500, 5, 5),
+        (2, 40, 619_000, 7, 7),
+        (3, 50, 1_175_000, 9, 7),
+        (4, 60, 1_991_500, 10, 7),
+        (5, 70, 3_118_500, 10, 7),
     ];
+    let path = fixture_with_grade("limits-stages", 6);
+    let mut session = SaveSession::open(&path).expect("open");
+    let mut game = Game::new(&mut session, Catalog::shared());
+    assert_eq!(game.max_ascend().expect("max ascend"), 5);
 
-    for (grade, level, exp, ascend, active_skill) in cases {
-        let path = fixture_with_grade(&format!("limits-grade-{grade}"), grade);
-        let mut session = SaveSession::open(&path).expect("open");
-        let mut game = Game::new(&mut session, Catalog::shared());
-
-        let limits = game.character_limits().expect("limits");
-        assert_eq!(limits.grade, grade);
+    for (stage, level, exp, active, basic) in cases {
+        game.set_character(10_001, "ascend", stage).expect("ascend");
+        let limits = character(&game, 10_001).limits;
+        assert_eq!(limits.stage, stage);
         assert_eq!(limits.level, level);
         assert_eq!(limits.exp, exp);
-        assert_eq!(limits.ascend, ascend);
+        assert_eq!(limits.ascend, 5);
         assert_eq!(limits.transcend, 6);
-        assert_eq!(limits.skill_low, active_skill);
-        assert_eq!(limits.skill_mid, 7);
+        assert_eq!(limits.skill_low, active);
+        assert_eq!(limits.skill_mid, basic);
         assert_eq!(limits.skill_special, 1);
 
         game.set_character(10_001, "level", level)
@@ -751,34 +817,92 @@ fn grade_limits_follow_the_breakthrough_table() {
         game.set_character(10_001, "exp", exp)
             .expect("character exp");
         assert!(game.set_character(10_001, "exp", exp + 1).is_err());
-        // The fixture starts at ascend 1, so lower grade 1 first to prove the
-        // cap is 0 and not just the current value.
-        if ascend == 0 {
-            game.set_character(10_001, "ascend", 0)
-                .expect("character ascend 0");
-        }
-        game.set_character(10_001, "ascend", ascend)
-            .expect("character ascend");
-        assert!(game.set_character(10_001, "ascend", ascend + 1).is_err());
-        game.set_character(10_001, "transcend", 6)
-            .expect("character transcend");
-        assert!(game.set_character(10_001, "transcend", 7).is_err());
-
-        game.set_skill(10_001, 1, active_skill)
-            .expect("active skill");
-        assert!(game.set_skill(10_001, 1, active_skill + 1).is_err());
-        game.set_skill(10_001, 5, 7).expect("basic skill");
-        assert!(game.set_skill(10_001, 5, 8).is_err());
+        game.set_skill(10_001, 1, active).expect("active skill");
+        assert!(game.set_skill(10_001, 1, active + 1).is_err());
+        game.set_skill(10_001, 5, basic).expect("basic skill");
+        assert!(game.set_skill(10_001, 5, basic + 1).is_err());
         game.set_skill(10_001, 801, 1).expect("special skill");
         assert!(game.set_skill(10_001, 801, 2).is_err());
 
-        assert!(
-            game.set_adventure("grade", grade + 1).is_err(),
-            "the editor cannot raise adventure grade past the save's progress"
-        );
+        game.set_karma(KARMA, "ascend", stage)
+            .expect("karma ascend");
+        let limits = karma(&game).limits;
+        assert_eq!((limits.stage, limits.exp), (stage, exp));
+        game.set_karma(KARMA, "exp", exp).expect("karma exp");
+        assert!(game.set_karma(KARMA, "exp", exp + 1).is_err());
     }
+    game.set_character(10_001, "transcend", 6)
+        .expect("character transcend");
+    assert!(game.set_character(10_001, "transcend", 7).is_err());
+    assert!(game.set_character(10_001, "ascend", 6).is_err());
+    assert!(game.set_skill(10_099, 1, 1).is_err(), "unowned character");
+}
 
-    let path = fixture("limits-grade-one-other-caps");
+#[test]
+fn growth_caps_follow_each_rows_own_breakthrough() {
+    let path = fixture_with_grade("limits-per-row", 3);
+    let mut session = SaveSession::open(&path).expect("open");
+    let mut game = Game::new(&mut session, Catalog::shared());
+    assert_eq!(game.max_ascend().expect("max ascend"), 2);
+
+    // Two heroes on the same grade-3 save get different caps.
+    game.set_character(10_001, "ascend", 0).expect("ascend 0");
+    game.set_character(10_002, "ascend", 2).expect("ascend 2");
+    let low = character(&game, 10_001).limits;
+    let high = character(&game, 10_002).limits;
+    assert_eq!((low.stage, low.level, low.skill_low), (0, 20, 3));
+    assert_eq!((high.stage, high.level, high.skill_low), (2, 40, 7));
+    assert!(game.set_character(10_001, "level", 21).is_err());
+    assert!(game.set_skill(10_001, 1, 4).is_err());
+
+    // Raising the hero's own breakthrough raises its caps.
+    game.set_character(10_001, "ascend", 2).expect("ascend 2");
+    let raised = character(&game, 10_001).limits;
+    assert_eq!(
+        (raised.level, raised.skill_low, raised.skill_mid),
+        (40, 7, 7)
+    );
+    assert!(
+        game.set_character(10_001, "ascend", 3).is_err(),
+        "grade 3 unlocks breakthroughs 0–2 only"
+    );
+
+    // A breakthrough cannot drop below what the level needs.
+    game.set_character(10_001, "level", 35).expect("level 35");
+    let error = game
+        .set_character(10_001, "ascend", 0)
+        .expect_err("level 35 needs breakthrough 2");
+    assert!(error.to_string().contains("lower the level first"));
+    assert!(game.set_character(10_001, "ascend", 1).is_err());
+    game.set_character(10_001, "level", 20)
+        .expect("lower the level");
+    game.set_character(10_001, "ascend", 0)
+        .expect("then the breakthrough");
+    assert!(
+        game.set_character(10_001, "level", 0).is_err(),
+        "level starts at 1"
+    );
+
+    // Karma follows the same rules, with EXP standing in for the level.
+    let limits = karma(&game).limits;
+    assert_eq!((limits.stage, limits.exp, limits.ascend), (0, 76_900, 2));
+    assert!(game.set_karma(KARMA, "exp", 76_901).is_err());
+    game.set_karma(KARMA, "ascend", 2).expect("karma ascend 2");
+    assert_eq!(karma(&game).limits.exp, 619_000);
+    assert!(game.set_karma(KARMA, "ascend", 3).is_err());
+    game.set_karma(KARMA, "exp", 400_000).expect("karma exp");
+    let error = game
+        .set_karma(KARMA, "ascend", 0)
+        .expect_err("400,000 EXP needs breakthrough 2");
+    assert!(error.to_string().contains("lower the EXP first"));
+    game.set_karma(KARMA, "exp", 0).expect("lower the EXP");
+    game.set_karma(KARMA, "ascend", 0)
+        .expect("then the breakthrough");
+}
+
+#[test]
+fn reference_maxima_bound_the_other_fields() {
+    let path = fixture("limits-other-caps");
     let mut session = SaveSession::open(&path).expect("open");
     let mut game = Game::new(&mut session, Catalog::shared());
     game.set_character(10_001, "hp", 22_229).expect("max hp");
@@ -800,17 +924,67 @@ fn grade_limits_follow_the_breakthrough_table() {
 
 #[test]
 fn out_of_range_grades_use_the_nearest_known_table() {
-    for (saved_grade, effective_grade, level, exp) in [(0, 1, 20, 88_500), (7, 6, 70, 3_118_500)] {
+    for (saved_grade, max_ascend) in [(0, 0), (7, 5)] {
         let path = fixture_with_grade(&format!("limits-grade-{saved_grade}"), saved_grade);
         let mut session = SaveSession::open(&path).expect("open");
         let game = Game::new(&mut session, Catalog::shared());
-        let limits = game.character_limits().expect("limits");
-        assert_eq!(limits.grade, effective_grade);
-        assert_eq!(limits.level, level);
-        assert_eq!(limits.exp, exp);
-        assert_eq!(limits.ascend, if effective_grade == 1 { 0 } else { 5 });
+        assert_eq!(game.max_ascend().expect("max ascend"), max_ascend);
+        // The fixture heroes sit at ascend 1, so grade 0 clamps them to stage
+        // 0 and grade 7 leaves them at stage 1.
+        let limits = character(&game, 10_001).limits;
+        assert_eq!(limits.stage, max_ascend.min(1));
+        assert_eq!(limits.ascend, max_ascend);
         assert_eq!(limits.transcend, 6);
     }
+}
+
+#[test]
+fn the_mercenary_corps_grade_is_read_only() {
+    for grade in [1, 3, 6] {
+        let path = fixture_with_grade(&format!("grade-read-only-{grade}"), grade);
+        let mut session = SaveSession::open(&path).expect("open");
+        let mut game = Game::new(&mut session, Catalog::shared());
+        for value in [0, 1, grade - 1, grade, grade + 1, 6, 7] {
+            let error = game
+                .set_adventure("grade", value)
+                .expect_err("no typed path writes the grade");
+            assert_eq!(error.kind(), "invalid");
+        }
+        game.set_adventure("level", 42).expect("corps level");
+        game.set_adventure("exp", 1_234).expect("corps exp");
+        let page = session
+            .raw_page("tb_advent_status", 0, 10, None)
+            .expect("advent page");
+        let row = &page.rows[0].cells;
+        let value = |name| integer(&row[column_index(&page, name)]);
+        assert_eq!(value("ADV_GRADE"), grade);
+        assert_eq!(value("ADV_LEVEL"), 42);
+        assert_eq!(value("ADV_EXP"), 1_234);
+    }
+
+    let path = fixture("grade-raw");
+    let mut session = SaveSession::open(&path).expect("open");
+    assert!(
+        session
+            .raw_update(
+                "tb_advent_status",
+                USER,
+                "ADV_GRADE",
+                &RawValue::Integer("2".into()),
+                false,
+            )
+            .is_err(),
+        "the raw browser needs advanced editing for the grade"
+    );
+    session
+        .raw_update(
+            "tb_advent_status",
+            USER,
+            "ADV_LEVEL",
+            &RawValue::Integer("2".into()),
+            false,
+        )
+        .expect("the corps level stays an ordinary column");
 }
 
 #[test]

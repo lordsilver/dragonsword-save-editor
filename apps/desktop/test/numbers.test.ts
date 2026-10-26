@@ -1,14 +1,28 @@
 import { describe, expect, it } from 'vitest';
 import {
-  GRADE_ONE_CHARACTER_LIMITS,
-  GRADE_SIX_CHARACTER_LIMITS,
   MAX_CURRENCY,
   MAX_CURRENCY_SAFETY,
+  breakthroughSummary,
   currencyLimit,
   isFillableStackKind,
   skillLimit,
 } from '@/lib/limits';
 import { clampBigNumberDraft, clampNumberDraft, parseBigNumberDraft, parseNumberDraft } from '@/lib/numbers';
+import type { GrowthLimits } from '@/lib/types';
+
+// Two rows from the same grade-3 save, as the Rust core sends them: one hero
+// at breakthrough 0 and one at breakthrough 2.
+const STAGE_ZERO: GrowthLimits = {
+  stage: 0,
+  level: 20,
+  exp: 76_900,
+  ascend: 2,
+  transcend: 6,
+  skillLow: 3,
+  skillMid: 3,
+  skillSpecial: 1,
+};
+const STAGE_TWO: GrowthLimits = { ...STAGE_ZERO, stage: 2, level: 40, exp: 619_000, skillLow: 7, skillMid: 7 };
 
 describe('parseNumberDraft', () => {
   it('treats a blank draft as nothing to commit, not zero', () => {
@@ -82,16 +96,24 @@ describe('currencyLimit', () => {
 });
 
 describe('skillLimit', () => {
-  it('uses the grade-1 grouping', () => {
-    expect(skillLimit(GRADE_ONE_CHARACTER_LIMITS, 1)).toBe(3);
-    expect(skillLimit(GRADE_ONE_CHARACTER_LIMITS, 5)).toBe(7);
-    expect(skillLimit(GRADE_ONE_CHARACTER_LIMITS, 801)).toBe(1);
+  it("uses each row's own breakthrough caps", () => {
+    expect(skillLimit(STAGE_ZERO, 1)).toBe(3);
+    expect(skillLimit(STAGE_ZERO, 5)).toBe(3);
+    expect(skillLimit(STAGE_ZERO, 801)).toBe(1);
+    expect(skillLimit(STAGE_TWO, 4)).toBe(7);
+    expect(skillLimit(STAGE_TWO, 7)).toBe(7);
+    expect(skillLimit(STAGE_TWO, 801)).toBe(1);
+  });
+});
+
+describe('breakthroughSummary', () => {
+  it("describes the row's own stage", () => {
+    expect(breakthroughSummary(STAGE_ZERO, 0)).toBe('Breakthrough 0 of 5 · level cap 20 · skill cap 3');
+    expect(breakthroughSummary(STAGE_TWO, 2)).toBe('Breakthrough 2 of 5 · level cap 40 · skill cap 7');
   });
 
-  it('uses the grade-6 grouping', () => {
-    expect(skillLimit(GRADE_SIX_CHARACTER_LIMITS, 4)).toBe(10);
-    expect(skillLimit(GRADE_SIX_CHARACTER_LIMITS, 7)).toBe(7);
-    expect(skillLimit(GRADE_SIX_CHARACTER_LIMITS, 801)).toBe(1);
+  it('flags an ASCEND above the grade limit', () => {
+    expect(breakthroughSummary(STAGE_TWO, 5)).toContain("ASCEND 5 is above this grade's limit");
   });
 });
 
