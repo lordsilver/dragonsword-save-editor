@@ -45,6 +45,21 @@ fn reads_and_writes_a_real_save() {
             overview.counts.recipes_known,
             overview.counts.recipes_total,
         );
+        println!(
+            "rank {:?} promotions {}/{} story {}/{} current {:?} next {:?}",
+            overview.adventure_rank_en,
+            overview.promotions_completed,
+            overview.promotions_total,
+            overview.story.completed,
+            overview.story.total,
+            overview.story.current.as_ref().map(|quest| quest.number),
+            overview.story.next_promotion.as_ref().map(|next| (
+                &next.rank_en,
+                next.requires.number,
+                next.story_done
+            )),
+        );
+        assert!(overview.story.completed <= overview.story.total);
         assert!(overview.counts.characters > 0);
         assert!(!overview.currencies.is_empty());
         assert!(!game.characters().expect("characters").is_empty());

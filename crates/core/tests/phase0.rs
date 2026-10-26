@@ -795,26 +795,27 @@ fn karma_start(level: i64) -> i64 {
 
 #[test]
 fn every_breakthrough_stage_has_its_own_caps() {
-    // The editor applies the global live limits: breakthrough 4, grade 5, and
-    // active skills up to 7, because levels 8–10 are Korea-only content.
+    // The editor applies the Korean live limits, which the offline release's
+    // level cap of 70 matches: breakthrough 5, grade 6, active skills to 10.
     let cases = [
         (0, 20, 3, 3),
         (1, 30, 5, 5),
         (2, 40, 7, 7),
-        (3, 50, 7, 7),
-        (4, 60, 7, 7),
+        (3, 50, 9, 7),
+        (4, 60, 10, 7),
+        (5, 70, 10, 7),
     ];
     let path = fixture_with_grade("limits-stages", 6);
     let mut session = SaveSession::open(&path).expect("open");
     let mut game = Game::new(&mut session, Catalog::shared());
-    assert_eq!(game.max_ascend().expect("max ascend"), 4);
+    assert_eq!(game.max_ascend().expect("max ascend"), 5);
 
     for (stage, level, active, basic) in cases {
         game.set_character(10_001, "ascend", stage).expect("ascend");
         let limits = character(&game, 10_001).limits;
         assert_eq!(limits.stage, stage);
         assert_eq!(limits.level, level);
-        assert_eq!(limits.ascend, 4);
+        assert_eq!(limits.ascend, 5);
         assert_eq!(limits.transcend, 6);
         assert_eq!(limits.skill_low, active);
         assert_eq!(limits.skill_mid, basic);
@@ -880,8 +881,8 @@ fn every_breakthrough_stage_has_its_own_caps() {
         .expect("character transcend");
     assert!(game.set_character(10_001, "transcend", 7).is_err());
     assert!(
-        game.set_character(10_001, "ascend", 5).is_err(),
-        "the global servers stop at breakthrough 4"
+        game.set_character(10_001, "ascend", 6).is_err(),
+        "the game stops at breakthrough 5"
     );
     assert!(game.set_skill(10_099, 1, 1).is_err(), "unowned character");
 }
@@ -977,7 +978,7 @@ fn reference_maxima_bound_the_other_fields() {
 
 #[test]
 fn out_of_range_grades_use_the_nearest_known_table() {
-    for (saved_grade, max_ascend) in [(0, 0), (7, 4)] {
+    for (saved_grade, max_ascend) in [(0, 0), (7, 5)] {
         let path = fixture_with_grade(&format!("limits-grade-{saved_grade}"), saved_grade);
         let mut session = SaveSession::open(&path).expect("open");
         let game = Game::new(&mut session, Catalog::shared());

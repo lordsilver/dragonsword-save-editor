@@ -22,10 +22,12 @@ pub enum Region {
     Global,
 }
 
-/// Which region a save belongs to is not recorded anywhere the editor can
-/// read, so it applies the global profile, the lower of the two. A save above
-/// it stays editable because every setter keeps `max(limit, current)`.
-pub const REGION: Region = Region::Global;
+/// The game is now an offline single-player release, and its in-game hero
+/// level cap is 70 (observed 2026-10-26), which matches the Korean live
+/// profile: breakthrough 5, grade 6 and active skills up to 10. A save does
+/// not record its region. A save above these limits stays editable because
+/// every setter keeps `max(limit, current)`.
+pub const REGION: Region = Region::Korea;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -40,7 +42,18 @@ pub struct Growth {
     skills: HashMap<String, Vec<SkillLevel>>,
     advent_level_start_exp: Vec<i64>,
     advent_grades: Vec<AdventGrade>,
+    main_quests: Vec<MainQuest>,
     regions: Regions,
+}
+
+/// One main-story quest, numbered the way the game shows it.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MainQuest {
+    pub id: i64,
+    pub number: i64,
+    pub name_en: String,
+    pub name_fr: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -60,6 +73,8 @@ pub struct AdventGrade {
     pub character_ascend: i64,
     pub karma_ascend: i64,
     pub title_item: Option<i64>,
+    /// The main quest the promotion exam waits for.
+    pub requires_main_quest: Option<i64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -144,6 +159,15 @@ impl Growth {
             .filter(|row| row.grade <= max)
             .filter_map(|row| row.promotion_quest)
             .collect()
+    }
+
+    /// The main story in the game's own numbering.
+    pub fn main_quests(&self) -> &[MainQuest] {
+        &self.main_quests
+    }
+
+    pub fn main_quest(&self, id: i64) -> Option<&MainQuest> {
+        self.main_quests.iter().find(|quest| quest.id == id)
     }
 
     /// The level cap at a breakthrough stage. No table holds this; the
@@ -349,6 +373,25 @@ mod tests {
         // An unknown CID gets the RARE table, the tightest one.
         assert_eq!(start_exp(growth.karma_exp(1), 20), Some(50_200));
         assert_eq!(growth.karma_exp(1).len(), 80);
+    }
+
+    #[test]
+    fn promotions_wait_for_the_main_story() {
+        let growth = Growth::shared();
+        assert_eq!(growth.main_quests().len(), 80);
+        let story = |grade| {
+            let id = growth.grade(grade).unwrap().requires_main_quest.unwrap();
+            let quest = growth.main_quest(id).unwrap();
+            (quest.id, quest.number)
+        };
+        // Quest IDs skip between chapters: quest 21 is 10031.
+        assert_eq!(story(2), (10_020, 20));
+        assert_eq!(story(3), (10_050, 40));
+        assert_eq!(story(4), (10_060, 50));
+        assert_eq!(story(5), (10_070, 60));
+        assert_eq!(story(6), (10_090, 80));
+        assert_eq!(growth.main_quest(10_031).unwrap().number, 21);
+        assert_eq!(growth.main_quest(10_013).unwrap().name_en, "The Sixth Hero");
     }
 
     #[test]

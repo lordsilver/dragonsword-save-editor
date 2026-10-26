@@ -16,7 +16,9 @@
       "LocalizingVersionData",
       "PCCharacterTranscendData",
       "KarmaTranscendData",
-      "StringData"
+      "StringData",
+      "QuestMainData",
+      "StringQuestData"
     ],
     "generator": "scripts/gen-growth.mjs",
     "notes": [
@@ -796,7 +798,8 @@
       "promotionQuest": null,
       "characterAscend": 0,
       "karmaAscend": 0,
-      "titleItem": null
+      "titleItem": null,
+      "requiresMainQuest": null
     },
     {
       "grade": 2,
@@ -805,7 +808,8 @@
       "promotionQuest": 40001,
       "characterAscend": 1,
       "karmaAscend": 1,
-      "titleItem": 2104100
+      "titleItem": 2104100,
+      "requiresMainQuest": 10020
     },
     {
       "grade": 3,
@@ -814,7 +818,8 @@
       "promotionQuest": 40011,
       "characterAscend": 2,
       "karmaAscend": 2,
-      "titleItem": 2104101
+      "titleItem": 2104101,
+      "requiresMainQuest": 10050
     },
     {
       "grade": 4,
@@ -823,7 +828,8 @@
       "promotionQuest": 40021,
       "characterAscend": 3,
       "karmaAscend": 3,
-      "titleItem": 2104102
+      "titleItem": 2104102,
+      "requiresMainQuest": 10060
     },
     {
       "grade": 5,
@@ -832,7 +838,8 @@
       "promotionQuest": 40031,
       "characterAscend": 4,
       "karmaAscend": 4,
-      "titleItem": 2104103
+      "titleItem": 2104103,
+      "requiresMainQuest": 10070
     },
     {
       "grade": 6,
@@ -841,7 +848,490 @@
       "promotionQuest": 40041,
       "characterAscend": 5,
       "karmaAscend": 5,
-      "titleItem": 2104104
+      "titleItem": 2104104,
+      "requiresMainQuest": 10090
+    }
+  ],
+  "mainQuests": [
+    {
+      "id": 10001,
+      "number": 1,
+      "nameEn": "To the Orbis Kingdom",
+      "nameFr": "Vers le Royaume d'Orbis"
+    },
+    {
+      "id": 10002,
+      "number": 2,
+      "nameEn": "A Strange First Encounter",
+      "nameFr": "Une première rencontre étrange"
+    },
+    {
+      "id": 10003,
+      "number": 3,
+      "nameEn": "Mercenary Starting Today",
+      "nameFr": "Mercenaire dès aujourd'hui"
+    },
+    {
+      "id": 10004,
+      "number": 4,
+      "nameEn": "A New Companion",
+      "nameFr": "Un nouveau compagnon"
+    },
+    {
+      "id": 10005,
+      "number": 5,
+      "nameEn": "The First Quest",
+      "nameFr": "La première requête"
+    },
+    {
+      "id": 10006,
+      "number": 6,
+      "nameEn": "She's Not a Dark Elf",
+      "nameFr": "Ce n'est pas une elfe noire"
+    },
+    {
+      "id": 10007,
+      "number": 7,
+      "nameEn": "The Shepherdess",
+      "nameFr": "La jeune bergère"
+    },
+    {
+      "id": 10008,
+      "number": 8,
+      "nameEn": "A Mystery from Ancient Times",
+      "nameFr": "Une énigme venue des temps anciens"
+    },
+    {
+      "id": 10009,
+      "number": 9,
+      "nameEn": "The Captain's Scheme",
+      "nameFr": "Plan du capitaine"
+    },
+    {
+      "id": 10010,
+      "number": 10,
+      "nameEn": "A Temporary Alliance",
+      "nameFr": "Une alliance temporaire"
+    },
+    {
+      "id": 10011,
+      "number": 11,
+      "nameEn": "The Legend of the Six Heroes and the Origin Dragon",
+      "nameFr": "La légende des Six Héros et du Dragon originel"
+    },
+    {
+      "id": 10012,
+      "number": 12,
+      "nameEn": "The Order's Secret",
+      "nameFr": "Le secret de l'Ordre"
+    },
+    {
+      "id": 10013,
+      "number": 13,
+      "nameEn": "The Sixth Hero",
+      "nameFr": "Le sixième Héros"
+    },
+    {
+      "id": 10014,
+      "number": 14,
+      "nameEn": "The Day the Sacred Great Star Fell",
+      "nameFr": "Le jour où la grande étoile sacrée est tombée"
+    },
+    {
+      "id": 10015,
+      "number": 15,
+      "nameEn": "Ornette's Request",
+      "nameFr": "La demande d'Ornette"
+    },
+    {
+      "id": 10016,
+      "number": 16,
+      "nameEn": "Preparing for the Funeral",
+      "nameFr": "Préparatifs des funérailles"
+    },
+    {
+      "id": 10017,
+      "number": 17,
+      "nameEn": "Experience as a Special Diplomatic Envoy",
+      "nameFr": "Expérience d'ambassadeur spécial"
+    },
+    {
+      "id": 10018,
+      "number": 18,
+      "nameEn": "Despair and Hope",
+      "nameFr": "Désespoir et espoir"
+    },
+    {
+      "id": 10019,
+      "number": 19,
+      "nameEn": "Help from the Order",
+      "nameFr": "L'aide de l'Ordre"
+    },
+    {
+      "id": 10020,
+      "number": 20,
+      "nameEn": "The Hero's Quest",
+      "nameFr": "La requête du héros"
+    },
+    {
+      "id": 10031,
+      "number": 21,
+      "nameEn": "In Search of Barduk",
+      "nameFr": "À la recherche de Barduk"
+    },
+    {
+      "id": 10032,
+      "number": 22,
+      "nameEn": "Seagull Village",
+      "nameFr": "Le village des mouettes"
+    },
+    {
+      "id": 10033,
+      "number": 23,
+      "nameEn": "Contact",
+      "nameFr": "La rencontre"
+    },
+    {
+      "id": 10034,
+      "number": 24,
+      "nameEn": "The Final Piece",
+      "nameFr": "La dernière pièce"
+    },
+    {
+      "id": 10035,
+      "number": 25,
+      "nameEn": "Barduk, the Sage of the Abyss",
+      "nameFr": "Barduk, le sage des abysses"
+    },
+    {
+      "id": 10036,
+      "number": 26,
+      "nameEn": "The Sage and the Mercenary",
+      "nameFr": "Le sage et le mercenaire"
+    },
+    {
+      "id": 10037,
+      "number": 27,
+      "nameEn": "Waiting",
+      "nameFr": "L'attente"
+    },
+    {
+      "id": 10038,
+      "number": 28,
+      "nameEn": "The Wanderer of the Wilderness",
+      "nameFr": "Celui qui arpente les terres désolées"
+    },
+    {
+      "id": 10039,
+      "number": 29,
+      "nameEn": "Awakening",
+      "nameFr": "L'éveil"
+    },
+    {
+      "id": 10040,
+      "number": 30,
+      "nameEn": "Those Left Behind",
+      "nameFr": "Ceux qui restent"
+    },
+    {
+      "id": 10041,
+      "number": 31,
+      "nameEn": "Back to Normal Life",
+      "nameFr": "Le retour à la vie quotidienne"
+    },
+    {
+      "id": 10042,
+      "number": 32,
+      "nameEn": "The Same Old Routine",
+      "nameFr": "Une vie quotidienne immuable"
+    },
+    {
+      "id": 10043,
+      "number": 33,
+      "nameEn": "Barduk's Legacy",
+      "nameFr": "L'héritage de Barduk"
+    },
+    {
+      "id": 10044,
+      "number": 34,
+      "nameEn": "Northern Barrier Stone",
+      "nameFr": "La Pierre de barrière du Nord"
+    },
+    {
+      "id": 10045,
+      "number": 35,
+      "nameEn": "Steelheart Fortress",
+      "nameFr": "Forteresse Cœur de Fer"
+    },
+    {
+      "id": 10046,
+      "number": 36,
+      "nameEn": "Unusual Signs",
+      "nameFr": "Signes inquiétants"
+    },
+    {
+      "id": 10047,
+      "number": 37,
+      "nameEn": "The Looming Shadow",
+      "nameFr": "L'ombre qui plane"
+    },
+    {
+      "id": 10048,
+      "number": 38,
+      "nameEn": "Forest of Dead Trees",
+      "nameFr": "La forêt des arbres morts"
+    },
+    {
+      "id": 10049,
+      "number": 39,
+      "nameEn": "Where the Giant Sleeps",
+      "nameFr": "Là où dort le géant"
+    },
+    {
+      "id": 10050,
+      "number": 40,
+      "nameEn": "The Coming Crisis",
+      "nameFr": "La crise qui s'annonce"
+    },
+    {
+      "id": 10051,
+      "number": 41,
+      "nameEn": "Assembly",
+      "nameFr": "Convocation"
+    },
+    {
+      "id": 10052,
+      "number": 42,
+      "nameEn": "Strategy Meeting",
+      "nameFr": "Réunion de crise"
+    },
+    {
+      "id": 10053,
+      "number": 43,
+      "nameEn": "Back to the North",
+      "nameFr": "Retour vers le nord"
+    },
+    {
+      "id": 10054,
+      "number": 44,
+      "nameEn": "Preemptive Strike",
+      "nameFr": "Attaque préventive"
+    },
+    {
+      "id": 10055,
+      "number": 45,
+      "nameEn": "Mercenaries and Knights",
+      "nameFr": "Mercenaires et chevaliers"
+    },
+    {
+      "id": 10056,
+      "number": 46,
+      "nameEn": "Preparations",
+      "nameFr": "Préparatifs"
+    },
+    {
+      "id": 10057,
+      "number": 47,
+      "nameEn": "Feint",
+      "nameFr": "Attaque par la gauche, diversion par la droite"
+    },
+    {
+      "id": 10058,
+      "number": 48,
+      "nameEn": "Siege",
+      "nameFr": "Siège"
+    },
+    {
+      "id": 10059,
+      "number": 49,
+      "nameEn": "The 60 Years They Built",
+      "nameFr": "Les 60 ans qu'ils ont bâtis"
+    },
+    {
+      "id": 10060,
+      "number": 50,
+      "nameEn": "Everyone's Preparations",
+      "nameFr": "Les préparatifs de chacun"
+    },
+    {
+      "id": 10061,
+      "number": 51,
+      "nameEn": "The Final Quest",
+      "nameFr": "La dernière requête"
+    },
+    {
+      "id": 10062,
+      "number": 52,
+      "nameEn": "The Old Cabin",
+      "nameFr": "La vieille cabane"
+    },
+    {
+      "id": 10063,
+      "number": 53,
+      "nameEn": "Reunion",
+      "nameFr": "Retrouvailles"
+    },
+    {
+      "id": 10064,
+      "number": 54,
+      "nameEn": "The Order's Resolution",
+      "nameFr": "La décision de l'Ordre"
+    },
+    {
+      "id": 10065,
+      "number": 55,
+      "nameEn": "The Red Fox Mercenaries",
+      "nameFr": "Le Corps de mercenaires du Renard rouge"
+    },
+    {
+      "id": 10066,
+      "number": 56,
+      "nameEn": "The Underground Temple",
+      "nameFr": "Le temple souterrain"
+    },
+    {
+      "id": 10067,
+      "number": 57,
+      "nameEn": "The Abyss of Heresy",
+      "nameFr": "Les abysses de l'hérésie"
+    },
+    {
+      "id": 10068,
+      "number": 58,
+      "nameEn": "Rescue",
+      "nameFr": "Le sauvetage"
+    },
+    {
+      "id": 10069,
+      "number": 59,
+      "nameEn": "Tomb of Greed",
+      "nameFr": "Tombe de l'avidité"
+    },
+    {
+      "id": 10070,
+      "number": 60,
+      "nameEn": "The Life of a Mercenary",
+      "nameFr": "La vie d'un mercenaire"
+    },
+    {
+      "id": 10071,
+      "number": 61,
+      "nameEn": "A Mysterious Quest",
+      "nameFr": "Une requête mystérieuse"
+    },
+    {
+      "id": 10072,
+      "number": 62,
+      "nameEn": "In Search of the Client",
+      "nameFr": "À la recherche du commanditaire"
+    },
+    {
+      "id": 10073,
+      "number": 63,
+      "nameEn": "The Legend of the Ancient Dragon",
+      "nameFr": "La légende du dragon antique"
+    },
+    {
+      "id": 10074,
+      "number": 64,
+      "nameEn": "In Search of Ancient Records",
+      "nameFr": "À la recherche des archives anciennes"
+    },
+    {
+      "id": 10075,
+      "number": 65,
+      "nameEn": "The Underground Assailant",
+      "nameFr": "L'assaillant souterrain"
+    },
+    {
+      "id": 10076,
+      "number": 66,
+      "nameEn": "The Second Stone Tablet Fragment",
+      "nameFr": "Le deuxième fragment de tablette"
+    },
+    {
+      "id": 10077,
+      "number": 67,
+      "nameEn": "The Final Stone Tablet Fragment",
+      "nameFr": "Le dernier fragment de tablette"
+    },
+    {
+      "id": 10078,
+      "number": 68,
+      "nameEn": "Cannibalism",
+      "nameFr": "Cannibalisme"
+    },
+    {
+      "id": 10079,
+      "number": 69,
+      "nameEn": "A Major Quest",
+      "nameFr": "Une requête de grande envergure"
+    },
+    {
+      "id": 10080,
+      "number": 70,
+      "nameEn": "The Second Crisis",
+      "nameFr": "Deuxième crise"
+    },
+    {
+      "id": 10081,
+      "number": 71,
+      "nameEn": "The King's Resolution",
+      "nameFr": "La résolution du roi"
+    },
+    {
+      "id": 10082,
+      "number": 72,
+      "nameEn": "Origin Dragon Countermeasures Meeting",
+      "nameFr": "Réunion de crise sur le Dragon originel"
+    },
+    {
+      "id": 10083,
+      "number": 73,
+      "nameEn": "Electric Core",
+      "nameFr": "Le noyau électrique"
+    },
+    {
+      "id": 10084,
+      "number": 74,
+      "nameEn": "Preliminary Preparations",
+      "nameFr": "Préparatifs"
+    },
+    {
+      "id": 10085,
+      "number": 75,
+      "nameEn": "Dragon Habitat",
+      "nameFr": "L'habitat des dragons"
+    },
+    {
+      "id": 10086,
+      "number": 76,
+      "nameEn": "Egg Chase",
+      "nameFr": "À la poursuite des œufs"
+    },
+    {
+      "id": 10087,
+      "number": 77,
+      "nameEn": "Echoes from the Underground",
+      "nameFr": "L'écho souterrain"
+    },
+    {
+      "id": 10088,
+      "number": 78,
+      "nameEn": "Traps and Ambushes",
+      "nameFr": "Pièges et embuscades"
+    },
+    {
+      "id": 10089,
+      "number": 79,
+      "nameEn": "The Age of Heroes",
+      "nameFr": "L'ère des héros"
+    },
+    {
+      "id": 10090,
+      "number": 80,
+      "nameEn": "If He Becomes a Hero",
+      "nameFr": "S'il devenait un héros"
     }
   ],
   "regions": {

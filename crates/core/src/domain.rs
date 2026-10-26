@@ -177,6 +177,7 @@ impl<'a> Game<'a> {
             adventure_rank_en: rank.map_or_else(String::new, |row| row.name_en.clone()),
             adventure_rank_fr: rank.map_or_else(String::new, |row| row.name_fr.clone()),
             promotions_completed: self.promotions_completed()?,
+            story: self.story(advent.grade)?,
             promotions_total: growth.promotion_quests(REGION).len() as i64,
             adventure_limits: corps_limits(advent.level, advent.exp),
         })
@@ -239,6 +240,59 @@ impl<'a> Game<'a> {
     /// which is also every hero's and karma's ascension cap.
     pub fn max_ascend(&self) -> Result<i64> {
         Ok(Growth::shared().max_character_stage(self.adventure_grade()?, REGION))
+    }
+
+    /// Quest IDs from one quest table, or none when the save lacks it.
+    fn quest_ids(&self, table: &str, extra: &str) -> Result<Vec<i64>> {
+        let exists: i64 = self.conn().query_row(
+            "SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?",
+            [table],
+            |row| row.get(0),
+        )?;
+        if exists == 0 {
+            return Ok(Vec::new());
+        }
+        let mut statement = self.conn().prepare(&format!(
+            "SELECT QUEST_CID FROM {table} WHERE USER_DBID=? {extra}"
+        ))?;
+        let rows = statement.query_map(params![self.user_id], |row| row.get(0))?;
+        Ok(rows.collect::<std::result::Result<Vec<i64>, _>>()?)
+    }
+
+    /// Where the save is in the main story, and what the next promotion
+    /// exam waits for.
+    fn story(&self, grade: i64) -> Result<Story> {
+        let growth = Growth::shared();
+        let complete = self.quest_ids("tb_quest_complete", "")?;
+        let held = self.quest_ids("tb_quest_hold", "")?;
+        let quests = growth.main_quests();
+        let done = |id: i64| complete.contains(&id);
+        let completed = quests.iter().filter(|quest| done(quest.id)).count() as i64;
+        // The quest in progress, or else the first one not done yet.
+        let current = quests
+            .iter()
+            .find(|quest| held.contains(&quest.id))
+            .or_else(|| quests.iter().find(|quest| !done(quest.id)))
+            .cloned();
+        let next_promotion = growth
+            .grade(grade + 1)
+            .filter(|next| next.grade <= growth.region(REGION).max_advent_grade)
+            .and_then(|next| {
+                let quest = growth.main_quest(next.requires_main_quest?)?.clone();
+                Some(NextPromotion {
+                    grade: next.grade,
+                    rank_en: next.name_en.clone(),
+                    rank_fr: next.name_fr.clone(),
+                    story_done: done(quest.id),
+                    requires: quest,
+                })
+            });
+        Ok(Story {
+            completed,
+            total: quests.len() as i64,
+            current,
+            next_promotion,
+        })
     }
 
     /// How many of the region's promotion quests the save records as done.
@@ -1943,6 +1997,29 @@ pub struct Overview {
     pub promotions_completed: i64,
     pub promotions_total: i64,
     pub adventure_limits: GrowthLimits,
+    pub story: Story,
+}
+
+/// Main-story progress, from the quest tables the save records.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Story {
+    pub completed: i64,
+    pub total: i64,
+    /// The quest in progress, or the first one not done.
+    pub current: Option<growth::MainQuest>,
+    pub next_promotion: Option<NextPromotion>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NextPromotion {
+    pub grade: i64,
+    pub rank_en: String,
+    pub rank_fr: String,
+    /// The main quest the exam waits for.
+    pub requires: growth::MainQuest,
+    pub story_done: bool,
 }
 
 struct OverviewUser {

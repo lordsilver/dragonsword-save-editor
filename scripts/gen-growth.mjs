@@ -35,6 +35,8 @@ const TABLES = [
   'PCCharacterTranscendData',
   'KarmaTranscendData',
   'StringData',
+  'QuestMainData',
+  'StringQuestData',
 ];
 
 /** Every row of a table, as attribute maps with the namespace prefix removed. */
@@ -165,6 +167,46 @@ adventGrades.forEach((grade, index) => {
   }
 });
 
+// The main story, in the order the game numbers it ("20. The Hero's Quest"),
+// and the main quest each promotion exam waits for. Quest IDs skip numbers
+// between chapters, so the editor needs the number from the name.
+const questRows = rows('QuestMainData');
+const questNames = Object.fromEntries(rows('StringQuestData').map((row) => [row.ID, row]));
+const mainQuests = questRows
+  .filter((row) => row.Category === 'MAIN')
+  .map((row) => {
+    const name = questNames[row.QuestName];
+    const match = /^(\d+)\.\s*(.*)$/.exec(name?.En ?? '');
+    if (!match) return null;
+    return {
+      id: int(row.ID, 'quest'),
+      number: Number(match[1]),
+      nameEn: match[2],
+      nameFr: (name.Fr ?? '').replace(/^\d+\.\s*/, '') || match[2],
+    };
+  })
+  .filter(Boolean)
+  .sort((left, right) => left.number - right.number);
+mainQuests.forEach((quest, index) => {
+  if (quest.number !== index + 1) fail(`main quest numbers are not 1..n (found ${quest.number} at ${index + 1})`);
+});
+const mainQuestIds = new Set(mainQuests.map((quest) => quest.id));
+for (const grade of adventGrades) {
+  if (grade.promotionQuest === null) {
+    grade.requiresMainQuest = null;
+    continue;
+  }
+  const row = questRows.find((quest) => int(quest.ID, 'quest') === grade.promotionQuest);
+  if (row?.Category !== 'ADVENT_GRADE') {
+    fail(`grade ${grade.grade} promotion quest is not an ADVENT_GRADE quest`);
+  }
+  const story = row.PreQuestID.split('#')
+    .map((id) => int(id, 'prerequisite'))
+    .filter((id) => mainQuestIds.has(id));
+  if (story.length !== 1) fail(`grade ${grade.grade} promotion does not wait for exactly one main quest`);
+  grade.requiresMainQuest = story[0];
+}
+
 // Per-region limits on the live servers. America, Europe and Asia must agree,
 // because the editor treats them as one "global" profile.
 const liveVersion = Object.fromEntries(
@@ -244,6 +286,7 @@ const growth = {
   skills,
   adventLevelStartExp,
   adventGrades,
+  mainQuests,
   regions: { KOR: korea, GLOBAL: global },
 };
 
