@@ -71,6 +71,27 @@ fn reads_and_writes_a_real_save() {
         game.loadout(first).expect("loadout");
         game.set_player_name("Silver-Test").expect("name");
         game.set_currency(1_000_001, 123_456).expect("currency");
+
+        // Grant every completed quest's rewards, so the write below carries
+        // the reward rows too.
+        let quests: Vec<i64> = game
+            .quest_rewards()
+            .expect("quest rewards")
+            .iter()
+            .map(|reward| reward.quest_id)
+            .collect();
+        let grant = game.grant_quest_rewards(&quests).expect("grant");
+        println!(
+            "granted {} rewards from {} quests; not granted {:?}; corps EXP not granted {}",
+            grant.granted.len(),
+            quests.len(),
+            grant
+                .not_granted
+                .iter()
+                .map(|entry| (&entry.item.name_en, entry.count))
+                .collect::<Vec<_>>(),
+            grant.adv_exp_not_granted,
+        );
     }
 
     let page = session

@@ -43,7 +43,21 @@ pub struct Growth {
     advent_level_start_exp: Vec<i64>,
     advent_grades: Vec<AdventGrade>,
     main_quests: Vec<MainQuest>,
+    quest_rewards: HashMap<String, QuestReward>,
     regions: Regions,
+}
+
+/// What one quest hands out on completion, from `QuestMainData`.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct QuestReward {
+    pub category: String,
+    pub name_en: String,
+    pub name_fr: String,
+    pub gold: i64,
+    pub adv_exp: i64,
+    /// `(item CID, count)` pairs.
+    pub items: Vec<(i64, i64)>,
 }
 
 /// One main-story quest, numbered the way the game shows it.
@@ -164,6 +178,10 @@ impl Growth {
     /// The main story in the game's own numbering.
     pub fn main_quests(&self) -> &[MainQuest] {
         &self.main_quests
+    }
+
+    pub fn quest_reward(&self, id: i64) -> Option<&QuestReward> {
+        self.quest_rewards.get(&id.to_string())
     }
 
     pub fn main_quest(&self, id: i64) -> Option<&MainQuest> {
@@ -392,6 +410,27 @@ mod tests {
         assert_eq!(story(6), (10_090, 80));
         assert_eq!(growth.main_quest(10_031).unwrap().number, 21);
         assert_eq!(growth.main_quest(10_013).unwrap().name_en, "The Sixth Hero");
+    }
+
+    #[test]
+    fn quests_list_their_rewards() {
+        let growth = Growth::shared();
+        assert!(
+            growth.quest_reward(10_001).is_none(),
+            "quest 1 gives nothing"
+        );
+        let captain = growth.quest_reward(10_009).unwrap();
+        assert_eq!((captain.gold, captain.adv_exp), (2_500, 400));
+        assert_eq!(
+            captain.items,
+            [
+                (1_410_002, 20),
+                (1_410_202, 10),
+                (1_320_016, 1),
+                (1_110_601, 1),
+                (1_000_500, 1)
+            ]
+        );
     }
 
     #[test]

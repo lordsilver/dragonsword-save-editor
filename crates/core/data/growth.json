@@ -1334,6 +1334,3521 @@
       "nameFr": "S'il devenait un héros"
     }
   ],
+  "questRewards": {
+    "10004": {
+      "category": "MAIN",
+      "nameEn": "4. A New Companion",
+      "nameFr": "4. Un nouveau compagnon",
+      "gold": 2500,
+      "advExp": 400,
+      "items": [
+        [
+          1000500,
+          1
+        ],
+        [
+          1410002,
+          10
+        ]
+      ]
+    },
+    "10005": {
+      "category": "MAIN",
+      "nameEn": "5. The First Quest",
+      "nameFr": "5. La première requête",
+      "gold": 2500,
+      "advExp": 400,
+      "items": [
+        [
+          1410002,
+          20
+        ],
+        [
+          1420323,
+          10
+        ],
+        [
+          1421306,
+          10
+        ]
+      ]
+    },
+    "10006": {
+      "category": "MAIN",
+      "nameEn": "6. She's Not a Dark Elf",
+      "nameFr": "6. Ce n'est pas une elfe noire",
+      "gold": 2500,
+      "advExp": 400,
+      "items": [
+        [
+          1410002,
+          20
+        ]
+      ]
+    },
+    "10007": {
+      "category": "MAIN",
+      "nameEn": "7. The Shepherdess",
+      "nameFr": "7. La jeune bergère",
+      "gold": 2500,
+      "advExp": 400,
+      "items": [
+        [
+          1360021,
+          1
+        ],
+        [
+          1360022,
+          1
+        ],
+        [
+          1360023,
+          1
+        ],
+        [
+          1360024,
+          1
+        ],
+        [
+          1360025,
+          1
+        ]
+      ]
+    },
+    "10008": {
+      "category": "MAIN",
+      "nameEn": "8. A Mystery from Ancient Times",
+      "nameFr": "8. Une énigme venue des temps anciens",
+      "gold": 2500,
+      "advExp": 700,
+      "items": [
+        [
+          1410002,
+          20
+        ],
+        [
+          1410102,
+          10
+        ]
+      ]
+    },
+    "10009": {
+      "category": "MAIN",
+      "nameEn": "9. The Captain's Scheme",
+      "nameFr": "9. Plan du capitaine",
+      "gold": 2500,
+      "advExp": 400,
+      "items": [
+        [
+          1410002,
+          20
+        ],
+        [
+          1410202,
+          10
+        ],
+        [
+          1320016,
+          1
+        ],
+        [
+          1110601,
+          1
+        ],
+        [
+          1000500,
+          1
+        ]
+      ]
+    },
+    "10010": {
+      "category": "MAIN",
+      "nameEn": "10. A Temporary Alliance",
+      "nameFr": "10. Une alliance temporaire",
+      "gold": 2500,
+      "advExp": 400,
+      "items": [
+        [
+          1410003,
+          5
+        ]
+      ]
+    },
+    "10011": {
+      "category": "MAIN",
+      "nameEn": "11. The Legend of the Six Heroes and the Origin Dragon",
+      "nameFr": "11. La légende des Six Héros et du Dragon originel",
+      "gold": 5000,
+      "advExp": 450,
+      "items": [
+        [
+          1410003,
+          5
+        ],
+        [
+          1410202,
+          15
+        ]
+      ]
+    },
+    "10012": {
+      "category": "MAIN",
+      "nameEn": "12. The Order's Secret",
+      "nameFr": "12. Le secret de l'Ordre",
+      "gold": 5000,
+      "advExp": 450,
+      "items": [
+        [
+          1410003,
+          5
+        ],
+        [
+          1410102,
+          15
+        ]
+      ]
+    },
+    "10013": {
+      "category": "MAIN",
+      "nameEn": "13. The Sixth Hero",
+      "nameFr": "13. Le sixième Héros",
+      "gold": 5000,
+      "advExp": 450,
+      "items": [
+        [
+          1410003,
+          5
+        ],
+        [
+          1410202,
+          20
+        ]
+      ]
+    },
+    "10014": {
+      "category": "MAIN",
+      "nameEn": "14. The Day the Sacred Great Star Fell",
+      "nameFr": "14. Le jour où la grande étoile sacrée est tombée",
+      "gold": 5000,
+      "advExp": 450,
+      "items": [
+        [
+          1410003,
+          5
+        ],
+        [
+          1410102,
+          20
+        ]
+      ]
+    },
+    "10015": {
+      "category": "MAIN",
+      "nameEn": "15. Ornette's Request",
+      "nameFr": "15. La demande d'Ornette",
+      "gold": 5000,
+      "advExp": 450,
+      "items": [
+        [
+          1410003,
+          10
+        ],
+        [
+          1410202,
+          20
+        ]
+      ]
+    },
+    "10016": {
+      "category": "MAIN",
+      "nameEn": "16. Preparing for the Funeral",
+      "nameFr": "16. Préparatifs des funérailles",
+      "gold": 5000,
+      "advExp": 450,
+      "items": [
+        [
+          1410003,
+          10
+        ],
+        [
+          1410103,
+          5
+        ]
+      ]
+    },
+    "10017": {
+      "category": "MAIN",
+      "nameEn": "17. Experience as a Special Diplomatic Envoy",
+      "nameFr": "17. Expérience d'ambassadeur spécial",
+      "gold": 5000,
+      "advExp": 450,
+      "items": [
+        [
+          1410003,
+          10
+        ],
+        [
+          1410202,
+          20
+        ]
+      ]
+    },
+    "10018": {
+      "category": "MAIN",
+      "nameEn": "18. Despair and Hope",
+      "nameFr": "18. Désespoir et espoir",
+      "gold": 5000,
+      "advExp": 450,
+      "items": [
+        [
+          1410003,
+          10
+        ],
+        [
+          1410103,
+          5
+        ]
+      ]
+    },
+    "10019": {
+      "category": "MAIN",
+      "nameEn": "19. Help from the Order",
+      "nameFr": "19. L'aide de l'Ordre",
+      "gold": 5000,
+      "advExp": 450,
+      "items": [
+        [
+          1410003,
+          10
+        ],
+        [
+          1410202,
+          25
+        ]
+      ]
+    },
+    "10020": {
+      "category": "MAIN",
+      "nameEn": "20. The Hero's Quest",
+      "nameFr": "20. La requête du héros",
+      "gold": 5000,
+      "advExp": 450,
+      "items": [
+        [
+          1410003,
+          10
+        ],
+        [
+          1410103,
+          10
+        ],
+        [
+          1110701,
+          1
+        ],
+        [
+          1000500,
+          1
+        ]
+      ]
+    },
+    "10031": {
+      "category": "MAIN",
+      "nameEn": "21. In Search of Barduk",
+      "nameFr": "21. À la recherche de Barduk",
+      "gold": 10000,
+      "advExp": 500,
+      "items": [
+        [
+          1410003,
+          10
+        ],
+        [
+          1410203,
+          10
+        ]
+      ]
+    },
+    "10032": {
+      "category": "MAIN",
+      "nameEn": "22. Seagull Village",
+      "nameFr": "22. Le village des mouettes",
+      "gold": 10000,
+      "advExp": 500,
+      "items": [
+        [
+          1410003,
+          10
+        ],
+        [
+          1410103,
+          10
+        ]
+      ]
+    },
+    "10033": {
+      "category": "MAIN",
+      "nameEn": "23. Contact",
+      "nameFr": "23. La rencontre",
+      "gold": 10000,
+      "advExp": 500,
+      "items": [
+        [
+          1410003,
+          10
+        ],
+        [
+          1410203,
+          10
+        ]
+      ]
+    },
+    "10034": {
+      "category": "MAIN",
+      "nameEn": "24. The Final Piece",
+      "nameFr": "24. La dernière pièce",
+      "gold": 10000,
+      "advExp": 500,
+      "items": [
+        [
+          1410003,
+          10
+        ],
+        [
+          1410103,
+          10
+        ]
+      ]
+    },
+    "10035": {
+      "category": "MAIN",
+      "nameEn": "25. Barduk, the Sage of the Abyss",
+      "nameFr": "25. Barduk, le sage des abysses",
+      "gold": 10000,
+      "advExp": 500,
+      "items": [
+        [
+          1410003,
+          10
+        ],
+        [
+          1410203,
+          10
+        ]
+      ]
+    },
+    "10036": {
+      "category": "MAIN",
+      "nameEn": "26. The Sage and the Mercenary",
+      "nameFr": "26. Le sage et le mercenaire",
+      "gold": 10000,
+      "advExp": 500,
+      "items": [
+        [
+          1410003,
+          10
+        ],
+        [
+          1410103,
+          10
+        ]
+      ]
+    },
+    "10037": {
+      "category": "MAIN",
+      "nameEn": "27. Waiting",
+      "nameFr": "27. L'attente",
+      "gold": 10000,
+      "advExp": 500,
+      "items": [
+        [
+          1410003,
+          10
+        ],
+        [
+          1410203,
+          10
+        ]
+      ]
+    },
+    "10039": {
+      "category": "MAIN",
+      "nameEn": "29. Awakening",
+      "nameFr": "29. L'éveil",
+      "gold": 10000,
+      "advExp": 500,
+      "items": [
+        [
+          1410003,
+          20
+        ],
+        [
+          1410103,
+          15
+        ]
+      ]
+    },
+    "10040": {
+      "category": "MAIN",
+      "nameEn": "30. Those Left Behind",
+      "nameFr": "30. Ceux qui restent",
+      "gold": 10000,
+      "advExp": 500,
+      "items": [
+        [
+          1410003,
+          20
+        ],
+        [
+          1410203,
+          15
+        ],
+        [
+          1112701,
+          1
+        ],
+        [
+          1000500,
+          1
+        ]
+      ]
+    },
+    "10041": {
+      "category": "MAIN",
+      "nameEn": "31. Back to Normal Life",
+      "nameFr": "31. Le retour à la vie quotidienne",
+      "gold": 15000,
+      "advExp": 550,
+      "items": [
+        [
+          1410003,
+          20
+        ],
+        [
+          1410103,
+          10
+        ]
+      ]
+    },
+    "10042": {
+      "category": "MAIN",
+      "nameEn": "32. The Same Old Routine",
+      "nameFr": "32. Une vie quotidienne immuable",
+      "gold": 15000,
+      "advExp": 550,
+      "items": [
+        [
+          1410003,
+          20
+        ]
+      ]
+    },
+    "10043": {
+      "category": "MAIN",
+      "nameEn": "33. Barduk's Legacy",
+      "nameFr": "33. L'héritage de Barduk",
+      "gold": 15000,
+      "advExp": 550,
+      "items": [
+        [
+          1410003,
+          20
+        ],
+        [
+          1410103,
+          10
+        ]
+      ]
+    },
+    "10044": {
+      "category": "MAIN",
+      "nameEn": "34. Northern Barrier Stone",
+      "nameFr": "34. La Pierre de barrière du Nord",
+      "gold": 15000,
+      "advExp": 550,
+      "items": [
+        [
+          1410003,
+          20
+        ],
+        [
+          1410203,
+          10
+        ]
+      ]
+    },
+    "10045": {
+      "category": "MAIN",
+      "nameEn": "35. Steelheart Fortress",
+      "nameFr": "35. Forteresse Cœur de Fer",
+      "gold": 15000,
+      "advExp": 550,
+      "items": [
+        [
+          1410003,
+          20
+        ],
+        [
+          1410103,
+          10
+        ]
+      ]
+    },
+    "10046": {
+      "category": "MAIN",
+      "nameEn": "36. Unusual Signs",
+      "nameFr": "36. Signes inquiétants",
+      "gold": 15000,
+      "advExp": 550,
+      "items": [
+        [
+          1410003,
+          20
+        ]
+      ]
+    },
+    "10047": {
+      "category": "MAIN",
+      "nameEn": "37. The Looming Shadow",
+      "nameFr": "37. L'ombre qui plane",
+      "gold": 15000,
+      "advExp": 550,
+      "items": [
+        [
+          1410003,
+          20
+        ],
+        [
+          1410103,
+          10
+        ]
+      ]
+    },
+    "10048": {
+      "category": "MAIN",
+      "nameEn": "38. Forest of Dead Trees",
+      "nameFr": "38. La forêt des arbres morts",
+      "gold": 15000,
+      "advExp": 550,
+      "items": [
+        [
+          1410003,
+          20
+        ],
+        [
+          1410203,
+          10
+        ]
+      ]
+    },
+    "10049": {
+      "category": "MAIN",
+      "nameEn": "39. Where the Giant Sleeps",
+      "nameFr": "39. Là où dort le géant",
+      "gold": 15000,
+      "advExp": 550,
+      "items": [
+        [
+          1410003,
+          20
+        ],
+        [
+          1410103,
+          10
+        ]
+      ]
+    },
+    "10050": {
+      "category": "MAIN",
+      "nameEn": "40. The Coming Crisis",
+      "nameFr": "40. La crise qui s'annonce",
+      "gold": 15000,
+      "advExp": 550,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1111001,
+          1
+        ],
+        [
+          1000500,
+          1
+        ]
+      ]
+    },
+    "10051": {
+      "category": "MAIN",
+      "nameEn": "41. Assembly",
+      "nameFr": "41. Convocation",
+      "gold": 20000,
+      "advExp": 600,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410104,
+          5
+        ]
+      ]
+    },
+    "10052": {
+      "category": "MAIN",
+      "nameEn": "42. Strategy Meeting",
+      "nameFr": "42. Réunion de crise",
+      "gold": 20000,
+      "advExp": 600,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410203,
+          15
+        ]
+      ]
+    },
+    "10053": {
+      "category": "MAIN",
+      "nameEn": "43. Back to the North",
+      "nameFr": "43. Retour vers le nord",
+      "gold": 20000,
+      "advExp": 600,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410104,
+          5
+        ]
+      ]
+    },
+    "10054": {
+      "category": "MAIN",
+      "nameEn": "44. Preemptive Strike",
+      "nameFr": "44. Attaque préventive",
+      "gold": 20000,
+      "advExp": 600,
+      "items": [
+        [
+          1410004,
+          10
+        ]
+      ]
+    },
+    "10055": {
+      "category": "MAIN",
+      "nameEn": "45. Mercenaries and Knights",
+      "nameFr": "45. Mercenaires et chevaliers",
+      "gold": 20000,
+      "advExp": 600,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410104,
+          5
+        ]
+      ]
+    },
+    "10056": {
+      "category": "MAIN",
+      "nameEn": "46. Preparations",
+      "nameFr": "46. Préparatifs",
+      "gold": 20000,
+      "advExp": 600,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410203,
+          15
+        ]
+      ]
+    },
+    "10057": {
+      "category": "MAIN",
+      "nameEn": "47. Feint",
+      "nameFr": "47. Attaque par la gauche, diversion par la droite",
+      "gold": 20000,
+      "advExp": 600,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410104,
+          5
+        ]
+      ]
+    },
+    "10058": {
+      "category": "MAIN",
+      "nameEn": "48. Siege",
+      "nameFr": "48. Siège",
+      "gold": 20000,
+      "advExp": 600,
+      "items": [
+        [
+          1410004,
+          10
+        ]
+      ]
+    },
+    "10059": {
+      "category": "MAIN",
+      "nameEn": "49. The 60 Years They Built",
+      "nameFr": "49. Les 60 ans qu'ils ont bâtis",
+      "gold": 20000,
+      "advExp": 600,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410104,
+          5
+        ]
+      ]
+    },
+    "10060": {
+      "category": "MAIN",
+      "nameEn": "50. Everyone's Preparations",
+      "nameFr": "50. Les préparatifs de chacun",
+      "gold": 20000,
+      "advExp": 600,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410203,
+          15
+        ],
+        [
+          1111201,
+          1
+        ],
+        [
+          1000500,
+          1
+        ]
+      ]
+    },
+    "10061": {
+      "category": "MAIN",
+      "nameEn": "51. The Final Quest",
+      "nameFr": "51. La dernière requête",
+      "gold": 30000,
+      "advExp": 650,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410104,
+          5
+        ]
+      ]
+    },
+    "10062": {
+      "category": "MAIN",
+      "nameEn": "52. The Old Cabin",
+      "nameFr": "52. La vieille cabane",
+      "gold": 30000,
+      "advExp": 650,
+      "items": [
+        [
+          1410004,
+          15
+        ]
+      ]
+    },
+    "10063": {
+      "category": "MAIN",
+      "nameEn": "53. Reunion",
+      "nameFr": "53. Retrouvailles",
+      "gold": 30000,
+      "advExp": 650,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410104,
+          10
+        ],
+        [
+          1111501,
+          1
+        ]
+      ]
+    },
+    "10064": {
+      "category": "MAIN",
+      "nameEn": "54. The Order's Resolution",
+      "nameFr": "54. La décision de l'Ordre",
+      "gold": 30000,
+      "advExp": 650,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410204,
+          10
+        ]
+      ]
+    },
+    "10065": {
+      "category": "MAIN",
+      "nameEn": "55. The Red Fox Mercenaries",
+      "nameFr": "55. Le Corps de mercenaires du Renard rouge",
+      "gold": 30000,
+      "advExp": 650,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410104,
+          10
+        ]
+      ]
+    },
+    "10066": {
+      "category": "MAIN",
+      "nameEn": "56. The Underground Temple",
+      "nameFr": "56. Le temple souterrain",
+      "gold": 30000,
+      "advExp": 650,
+      "items": [
+        [
+          1410004,
+          15
+        ]
+      ]
+    },
+    "10067": {
+      "category": "MAIN",
+      "nameEn": "57. The Abyss of Heresy",
+      "nameFr": "57. Les abysses de l'hérésie",
+      "gold": 30000,
+      "advExp": 650,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410104,
+          10
+        ]
+      ]
+    },
+    "10068": {
+      "category": "MAIN",
+      "nameEn": "58. Rescue",
+      "nameFr": "58. Le sauvetage",
+      "gold": 30000,
+      "advExp": 650,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410204,
+          10
+        ]
+      ]
+    },
+    "10069": {
+      "category": "MAIN",
+      "nameEn": "59. Tomb of Greed",
+      "nameFr": "59. Tombe de l'avidité",
+      "gold": 30000,
+      "advExp": 650,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410104,
+          10
+        ]
+      ]
+    },
+    "10070": {
+      "category": "MAIN",
+      "nameEn": "60. The Life of a Mercenary",
+      "nameFr": "60. La vie d'un mercenaire",
+      "gold": 30000,
+      "advExp": 650,
+      "items": [
+        [
+          1410004,
+          20
+        ]
+      ]
+    },
+    "10071": {
+      "category": "MAIN",
+      "nameEn": "61. A Mysterious Quest",
+      "nameFr": "61. Une requête mystérieuse",
+      "gold": 40000,
+      "advExp": 700,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410104,
+          10
+        ]
+      ]
+    },
+    "10072": {
+      "category": "MAIN",
+      "nameEn": "62. In Search of the Client",
+      "nameFr": "62. À la recherche du commanditaire",
+      "gold": 40000,
+      "advExp": 700,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410204,
+          10
+        ]
+      ]
+    },
+    "10073": {
+      "category": "MAIN",
+      "nameEn": "63. The Legend of the Ancient Dragon",
+      "nameFr": "63. La légende du dragon antique",
+      "gold": 40000,
+      "advExp": 700,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410104,
+          10
+        ]
+      ]
+    },
+    "10074": {
+      "category": "MAIN",
+      "nameEn": "64. In Search of Ancient Records",
+      "nameFr": "64. À la recherche des archives anciennes",
+      "gold": 40000,
+      "advExp": 700,
+      "items": [
+        [
+          1410004,
+          15
+        ]
+      ]
+    },
+    "10075": {
+      "category": "MAIN",
+      "nameEn": "65. The Underground Assailant",
+      "nameFr": "65. L'assaillant souterrain",
+      "gold": 40000,
+      "advExp": 700,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410104,
+          10
+        ]
+      ]
+    },
+    "10076": {
+      "category": "MAIN",
+      "nameEn": "66. The Second Stone Tablet Fragment",
+      "nameFr": "66. Le deuxième fragment de tablette",
+      "gold": 40000,
+      "advExp": 700,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410204,
+          10
+        ]
+      ]
+    },
+    "10077": {
+      "category": "MAIN",
+      "nameEn": "67. The Final Stone Tablet Fragment",
+      "nameFr": "67. Le dernier fragment de tablette",
+      "gold": 40000,
+      "advExp": 700,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410104,
+          10
+        ]
+      ]
+    },
+    "10078": {
+      "category": "MAIN",
+      "nameEn": "68. Cannibalism",
+      "nameFr": "68. Cannibalisme",
+      "gold": 40000,
+      "advExp": 700,
+      "items": [
+        [
+          1410004,
+          15
+        ]
+      ]
+    },
+    "10079": {
+      "category": "MAIN",
+      "nameEn": "69. A Major Quest",
+      "nameFr": "69. Une requête de grande envergure",
+      "gold": 40000,
+      "advExp": 700,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410104,
+          10
+        ]
+      ]
+    },
+    "10080": {
+      "category": "MAIN",
+      "nameEn": "70. The Second Crisis",
+      "nameFr": "70. Deuxième crise",
+      "gold": 40000,
+      "advExp": 700,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410204,
+          10
+        ]
+      ]
+    },
+    "10081": {
+      "category": "MAIN",
+      "nameEn": "71. The King's Resolution",
+      "nameFr": "71. La résolution du roi",
+      "gold": 50000,
+      "advExp": 750,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410104,
+          10
+        ]
+      ]
+    },
+    "10082": {
+      "category": "MAIN",
+      "nameEn": "72. Origin Dragon Countermeasures Meeting",
+      "nameFr": "72. Réunion de crise sur le Dragon originel",
+      "gold": 50000,
+      "advExp": 750,
+      "items": [
+        [
+          1410004,
+          20
+        ]
+      ]
+    },
+    "10083": {
+      "category": "MAIN",
+      "nameEn": "73. Electric Core",
+      "nameFr": "73. Le noyau électrique",
+      "gold": 50000,
+      "advExp": 750,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410104,
+          10
+        ]
+      ]
+    },
+    "10084": {
+      "category": "MAIN",
+      "nameEn": "74. Preliminary Preparations",
+      "nameFr": "74. Préparatifs",
+      "gold": 50000,
+      "advExp": 750,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410204,
+          10
+        ]
+      ]
+    },
+    "10085": {
+      "category": "MAIN",
+      "nameEn": "75. Dragon Habitat",
+      "nameFr": "75. L'habitat des dragons",
+      "gold": 50000,
+      "advExp": 750,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410104,
+          10
+        ]
+      ]
+    },
+    "10086": {
+      "category": "MAIN",
+      "nameEn": "76. Egg Chase",
+      "nameFr": "76. À la poursuite des œufs",
+      "gold": 50000,
+      "advExp": 750,
+      "items": [
+        [
+          1410004,
+          20
+        ]
+      ]
+    },
+    "10087": {
+      "category": "MAIN",
+      "nameEn": "77. Echoes from the Underground",
+      "nameFr": "77. L'écho souterrain",
+      "gold": 50000,
+      "advExp": 750,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410104,
+          10
+        ]
+      ]
+    },
+    "10088": {
+      "category": "MAIN",
+      "nameEn": "78. Traps and Ambushes",
+      "nameFr": "78. Pièges et embuscades",
+      "gold": 50000,
+      "advExp": 750,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410204,
+          10
+        ]
+      ]
+    },
+    "10089": {
+      "category": "MAIN",
+      "nameEn": "79. The Age of Heroes",
+      "nameFr": "79. L'ère des héros",
+      "gold": 50000,
+      "advExp": 750,
+      "items": [
+        [
+          1410004,
+          10
+        ],
+        [
+          1410104,
+          10
+        ]
+      ]
+    },
+    "10090": {
+      "category": "MAIN",
+      "nameEn": "80. If He Becomes a Hero",
+      "nameFr": "80. S'il devenait un héros",
+      "gold": 50000,
+      "advExp": 750,
+      "items": [
+        [
+          1410004,
+          20
+        ]
+      ]
+    },
+    "11001": {
+      "category": "MAIN",
+      "nameEn": "Quest 11001",
+      "nameFr": "Quest 11001",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11002": {
+      "category": "MAIN",
+      "nameEn": "Quest 11002",
+      "nameFr": "Quest 11002",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11003": {
+      "category": "MAIN",
+      "nameEn": "Quest 11003",
+      "nameFr": "Quest 11003",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11004": {
+      "category": "MAIN",
+      "nameEn": "Quest 11004",
+      "nameFr": "Quest 11004",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11005": {
+      "category": "MAIN",
+      "nameEn": "Quest 11005",
+      "nameFr": "Quest 11005",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11006": {
+      "category": "MAIN",
+      "nameEn": "Quest 11006",
+      "nameFr": "Quest 11006",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11007": {
+      "category": "MAIN",
+      "nameEn": "Quest 11007",
+      "nameFr": "Quest 11007",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11008": {
+      "category": "MAIN",
+      "nameEn": "Quest 11008",
+      "nameFr": "Quest 11008",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11009": {
+      "category": "MAIN",
+      "nameEn": "Quest 11009",
+      "nameFr": "Quest 11009",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11010": {
+      "category": "MAIN",
+      "nameEn": "Quest 11010",
+      "nameFr": "Quest 11010",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11011": {
+      "category": "MAIN",
+      "nameEn": "Quest 11011",
+      "nameFr": "Quest 11011",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11012": {
+      "category": "MAIN",
+      "nameEn": "Quest 11012",
+      "nameFr": "Quest 11012",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11013": {
+      "category": "MAIN",
+      "nameEn": "Quest 11013",
+      "nameFr": "Quest 11013",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11014": {
+      "category": "MAIN",
+      "nameEn": "Quest 11014",
+      "nameFr": "Quest 11014",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11015": {
+      "category": "MAIN",
+      "nameEn": "Quest 11015",
+      "nameFr": "Quest 11015",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11016": {
+      "category": "MAIN",
+      "nameEn": "Quest 11016",
+      "nameFr": "Quest 11016",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11017": {
+      "category": "MAIN",
+      "nameEn": "Quest 11017",
+      "nameFr": "Quest 11017",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11018": {
+      "category": "MAIN",
+      "nameEn": "Quest 11018",
+      "nameFr": "Quest 11018",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11019": {
+      "category": "MAIN",
+      "nameEn": "Quest 11019",
+      "nameFr": "Quest 11019",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11020": {
+      "category": "MAIN",
+      "nameEn": "Quest 11020",
+      "nameFr": "Quest 11020",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11021": {
+      "category": "MAIN",
+      "nameEn": "Quest 11021",
+      "nameFr": "Quest 11021",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11022": {
+      "category": "MAIN",
+      "nameEn": "Quest 11022",
+      "nameFr": "Quest 11022",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11023": {
+      "category": "MAIN",
+      "nameEn": "Quest 11023",
+      "nameFr": "Quest 11023",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11024": {
+      "category": "MAIN",
+      "nameEn": "Quest 11024",
+      "nameFr": "Quest 11024",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11025": {
+      "category": "MAIN",
+      "nameEn": "Quest 11025",
+      "nameFr": "Quest 11025",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11026": {
+      "category": "MAIN",
+      "nameEn": "Quest 11026",
+      "nameFr": "Quest 11026",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11027": {
+      "category": "MAIN",
+      "nameEn": "Quest 11027",
+      "nameFr": "Quest 11027",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11028": {
+      "category": "MAIN",
+      "nameEn": "Quest 11028",
+      "nameFr": "Quest 11028",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11029": {
+      "category": "MAIN",
+      "nameEn": "Quest 11029",
+      "nameFr": "Quest 11029",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11030": {
+      "category": "MAIN",
+      "nameEn": "Quest 11030",
+      "nameFr": "Quest 11030",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11031": {
+      "category": "MAIN",
+      "nameEn": "Quest 11031",
+      "nameFr": "Quest 11031",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11032": {
+      "category": "MAIN",
+      "nameEn": "Quest 11032",
+      "nameFr": "Quest 11032",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11033": {
+      "category": "MAIN",
+      "nameEn": "Quest 11033",
+      "nameFr": "Quest 11033",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11034": {
+      "category": "MAIN",
+      "nameEn": "Quest 11034",
+      "nameFr": "Quest 11034",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11035": {
+      "category": "MAIN",
+      "nameEn": "Quest 11035",
+      "nameFr": "Quest 11035",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11036": {
+      "category": "MAIN",
+      "nameEn": "Quest 11036",
+      "nameFr": "Quest 11036",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11037": {
+      "category": "MAIN",
+      "nameEn": "Quest 11037",
+      "nameFr": "Quest 11037",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11038": {
+      "category": "MAIN",
+      "nameEn": "Quest 11038",
+      "nameFr": "Quest 11038",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11039": {
+      "category": "MAIN",
+      "nameEn": "Quest 11039",
+      "nameFr": "Quest 11039",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "11040": {
+      "category": "MAIN",
+      "nameEn": "Quest 11040",
+      "nameFr": "Quest 11040",
+      "gold": 20000,
+      "advExp": 750,
+      "items": []
+    },
+    "20001": {
+      "category": "EPIC",
+      "nameEn": "In Search of the Ascension Mushroom",
+      "nameFr": "À la recherche du Champignon de l'ascension",
+      "gold": 10000,
+      "advExp": 450,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1420315,
+          2
+        ]
+      ]
+    },
+    "20002": {
+      "category": "EPIC",
+      "nameEn": "I Need an Antidote",
+      "nameFr": "Il me faut un antidote",
+      "gold": 10000,
+      "advExp": 450,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1420315,
+          2
+        ]
+      ]
+    },
+    "20003": {
+      "category": "EPIC",
+      "nameEn": "The Cooking Marmot",
+      "nameFr": "La marmotte cuisinière",
+      "gold": 10000,
+      "advExp": 450,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1420306,
+          2
+        ]
+      ]
+    },
+    "20004": {
+      "category": "EPIC",
+      "nameEn": "The Man Who Took Up Cooking",
+      "nameFr": "L'homme qui s'est lancé dans la cuisine",
+      "gold": 10000,
+      "advExp": 450,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1420313,
+          2
+        ]
+      ]
+    },
+    "20005": {
+      "category": "EPIC",
+      "nameEn": "It All Starts with Cleaning",
+      "nameFr": "Tout commence par le ménage",
+      "gold": 10000,
+      "advExp": 450,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1420313,
+          2
+        ]
+      ]
+    },
+    "20006": {
+      "category": "EPIC",
+      "nameEn": "A Journey to Find My Own Answers",
+      "nameFr": "Un voyage à la recherche de ma propre réponse",
+      "gold": 10000,
+      "advExp": 450,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1420310,
+          2
+        ]
+      ]
+    },
+    "20007": {
+      "category": "EPIC",
+      "nameEn": "Mushrooms That Touch the Heart",
+      "nameFr": "Des champignons qui touchent le cœur",
+      "gold": 10000,
+      "advExp": 450,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1420310,
+          2
+        ]
+      ]
+    },
+    "20008": {
+      "category": "EPIC",
+      "nameEn": "A Stolen Dream",
+      "nameFr": "Un rêve volé",
+      "gold": 10000,
+      "advExp": 450,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1421309,
+          2
+        ]
+      ]
+    },
+    "20009": {
+      "category": "EPIC",
+      "nameEn": "The Eve of the Grand Opening",
+      "nameFr": "La veille de l'ouverture",
+      "gold": 10000,
+      "advExp": 450,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1421309,
+          2
+        ]
+      ]
+    },
+    "20010": {
+      "category": "EPIC",
+      "nameEn": "Mushroom Grill Room Orbis Main Store, Now Open!",
+      "nameFr": "Ouverture du restaurant Mushroom Grill Room Orbis, établissement principal !",
+      "gold": 10000,
+      "advExp": 450,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1430920,
+          10
+        ]
+      ]
+    },
+    "20097": {
+      "category": "EPIC",
+      "nameEn": "Final Test",
+      "nameFr": "Dernière épreuve",
+      "gold": 10000,
+      "advExp": 450,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1421316,
+          2
+        ]
+      ]
+    },
+    "20098": {
+      "category": "EPIC",
+      "nameEn": "Second Test",
+      "nameFr": "Deuxième épreuve",
+      "gold": 10000,
+      "advExp": 450,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1421316,
+          2
+        ]
+      ]
+    },
+    "20099": {
+      "category": "EPIC",
+      "nameEn": "The First Test",
+      "nameFr": "Première épreuve",
+      "gold": 10000,
+      "advExp": 450,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1420306,
+          2
+        ]
+      ]
+    },
+    "20100": {
+      "category": "EPIC",
+      "nameEn": "In Search of the Blue Light",
+      "nameFr": "À la recherche de la lumière bleue",
+      "gold": 10000,
+      "advExp": 600,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1410104,
+          3
+        ]
+      ]
+    },
+    "20101": {
+      "category": "EPIC",
+      "nameEn": "Crystal Research",
+      "nameFr": "Étude des cristaux",
+      "gold": 10000,
+      "advExp": 600,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1410104,
+          3
+        ]
+      ]
+    },
+    "20102": {
+      "category": "EPIC",
+      "nameEn": "A Strange Encounter",
+      "nameFr": "Une rencontre étrange",
+      "gold": 10000,
+      "advExp": 600,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1410104,
+          3
+        ]
+      ]
+    },
+    "20103": {
+      "category": "EPIC",
+      "nameEn": "The Child from the Crack",
+      "nameFr": "L'enfant sortie de la faille",
+      "gold": 10000,
+      "advExp": 600,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1410104,
+          3
+        ]
+      ]
+    },
+    "20104": {
+      "category": "EPIC",
+      "nameEn": "Operation: Escape from the Cathedral",
+      "nameFr": "Opération d'évasion de la cathédrale",
+      "gold": 10000,
+      "advExp": 600,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1410104,
+          3
+        ]
+      ]
+    },
+    "20105": {
+      "category": "EPIC",
+      "nameEn": "The Mercenary and the Child",
+      "nameFr": "Le mercenaire et l'enfant",
+      "gold": 10000,
+      "advExp": 600,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1410104,
+          3
+        ]
+      ]
+    },
+    "20106": {
+      "category": "EPIC",
+      "nameEn": "Fragments of Memory",
+      "nameFr": "Fragments de mémoire",
+      "gold": 10000,
+      "advExp": 600,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1410104,
+          3
+        ]
+      ]
+    },
+    "20107": {
+      "category": "EPIC",
+      "nameEn": "Training with Ninian",
+      "nameFr": "L'entraînement avec Ninian",
+      "gold": 10000,
+      "advExp": 600,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1410104,
+          3
+        ]
+      ]
+    },
+    "20108": {
+      "category": "EPIC",
+      "nameEn": "A Turning Point",
+      "nameFr": "Une occasion de faire des efforts",
+      "gold": 10000,
+      "advExp": 600,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1410104,
+          3
+        ]
+      ]
+    },
+    "20109": {
+      "category": "EPIC",
+      "nameEn": "A Picnic in the Flower Garden Under the Fluffy Clouds!",
+      "nameFr": "Pique-nique dans les champs de fleurs sous les nuages cotonneux !",
+      "gold": 10000,
+      "advExp": 600,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1410104,
+          3
+        ]
+      ]
+    },
+    "20110": {
+      "category": "EPIC",
+      "nameEn": "The Child of Purification",
+      "nameFr": "L'enfant de la Purification",
+      "gold": 10000,
+      "advExp": 600,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1410104,
+          3
+        ]
+      ]
+    },
+    "20111": {
+      "category": "EPIC",
+      "nameEn": "Ninian and the Sea",
+      "nameFr": "Ninian et la mer",
+      "gold": 10000,
+      "advExp": 600,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1410104,
+          3
+        ]
+      ]
+    },
+    "20112": {
+      "category": "EPIC",
+      "nameEn": "Blue Lake Festival",
+      "nameFr": "Le festival du lac bleu",
+      "gold": 10000,
+      "advExp": 600,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1410104,
+          3
+        ]
+      ]
+    },
+    "20113": {
+      "category": "EPIC",
+      "nameEn": "Cooking Contest",
+      "nameFr": "Concours de cuisine",
+      "gold": 10000,
+      "advExp": 600,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1410104,
+          3
+        ]
+      ]
+    },
+    "20114": {
+      "category": "EPIC",
+      "nameEn": "Gift",
+      "nameFr": "Cadeau",
+      "gold": 10000,
+      "advExp": 600,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1410104,
+          3
+        ]
+      ]
+    },
+    "20200": {
+      "category": "EPIC",
+      "nameEn": "A Deep Clean of Ancient Devices",
+      "nameFr": "Grand nettoyage des dispositifs anciens",
+      "gold": 10000,
+      "advExp": 300,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1470001,
+          1
+        ],
+        [
+          1410203,
+          10
+        ]
+      ]
+    },
+    "20201": {
+      "category": "EPIC",
+      "nameEn": "The Meaning of the Mysterious Symbols",
+      "nameFr": "Signification des symboles mystérieux",
+      "gold": 10000,
+      "advExp": 300,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1470001,
+          1
+        ],
+        [
+          1410203,
+          10
+        ]
+      ]
+    },
+    "20202": {
+      "category": "EPIC",
+      "nameEn": "The Meaning of Hidden Symbols",
+      "nameFr": "Signification des symboles cachés",
+      "gold": 10000,
+      "advExp": 300,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1470001,
+          1
+        ],
+        [
+          1410203,
+          10
+        ]
+      ]
+    },
+    "20203": {
+      "category": "EPIC",
+      "nameEn": "The Meaning of the Scattered Symbols",
+      "nameFr": "Signification des symboles éparpillés",
+      "gold": 10000,
+      "advExp": 300,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1470001,
+          1
+        ],
+        [
+          1410203,
+          10
+        ]
+      ]
+    },
+    "20204": {
+      "category": "EPIC",
+      "nameEn": "The Path to the Ancient World",
+      "nameFr": "Le chemin qui mène à l'Antiquité",
+      "gold": 10000,
+      "advExp": 300,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1470001,
+          1
+        ],
+        [
+          1410203,
+          10
+        ]
+      ]
+    },
+    "20205": {
+      "category": "EPIC",
+      "nameEn": "The Path Leading to the Wind",
+      "nameFr": "Chemin menant au vent",
+      "gold": 10000,
+      "advExp": 300,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1470001,
+          1
+        ],
+        [
+          1410203,
+          10
+        ]
+      ]
+    },
+    "20206": {
+      "category": "EPIC",
+      "nameEn": "The Meaning of the Forgotten Symbol",
+      "nameFr": "Signification des symboles oubliés",
+      "gold": 10000,
+      "advExp": 300,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1470001,
+          1
+        ],
+        [
+          1410203,
+          10
+        ]
+      ]
+    },
+    "20207": {
+      "category": "EPIC",
+      "nameEn": "Echoes of Antiquity",
+      "nameFr": "L'écho de l'Antiquité",
+      "gold": 10000,
+      "advExp": 300,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1470001,
+          1
+        ],
+        [
+          1410203,
+          10
+        ]
+      ]
+    },
+    "20208": {
+      "category": "EPIC",
+      "nameEn": "The Whims of Time",
+      "nameFr": "Les caprices du temps",
+      "gold": 10000,
+      "advExp": 300,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1470001,
+          1
+        ],
+        [
+          1410203,
+          10
+        ]
+      ]
+    },
+    "20209": {
+      "category": "EPIC",
+      "nameEn": "Various Minerals",
+      "nameFr": "Divers minéraux",
+      "gold": 10000,
+      "advExp": 300,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1470001,
+          1
+        ],
+        [
+          1410203,
+          10
+        ]
+      ]
+    },
+    "20300": {
+      "category": "EPIC",
+      "nameEn": "The Black Widow Keeper",
+      "nameFr": "L'éleveuse de veuves noires",
+      "gold": 2000,
+      "advExp": 400,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "20301": {
+      "category": "EPIC",
+      "nameEn": "When You're Down, Venom Is the Best",
+      "nameFr": "Quand on est déprimé, rien de tel que le venin",
+      "gold": 2000,
+      "advExp": 400,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "20302": {
+      "category": "EPIC",
+      "nameEn": "A Genius Alchemist Is a Novice Farmer",
+      "nameFr": "L'alchimiste de génie est une fermière débutante",
+      "gold": 2000,
+      "advExp": 400,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "20303": {
+      "category": "EPIC",
+      "nameEn": "The Art of Bargaining 1",
+      "nameFr": "Les règles de l'art de la négociation 1",
+      "gold": 2000,
+      "advExp": 400,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "20304": {
+      "category": "EPIC",
+      "nameEn": "The Art of Bargaining 2",
+      "nameFr": "Les règles de l'art de la négociation 2",
+      "gold": 2000,
+      "advExp": 400,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "20305": {
+      "category": "EPIC",
+      "nameEn": "The Alchemist's Calculations 1",
+      "nameFr": "Les calculs de l'alchimiste 1",
+      "gold": 2000,
+      "advExp": 400,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "20306": {
+      "category": "EPIC",
+      "nameEn": "The Alchemist's Calculations 2",
+      "nameFr": "Les calculs de l'alchimiste 2",
+      "gold": 2000,
+      "advExp": 400,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "20307": {
+      "category": "EPIC",
+      "nameEn": "A Situation Where You'd Have to Borrow Even a Spider's Leg",
+      "nameFr": "Une situation où il faudrait même emprunter une patte d'araignée",
+      "gold": 2000,
+      "advExp": 400,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "20308": {
+      "category": "EPIC",
+      "nameEn": "The Black Widow Guide",
+      "nameFr": "Une veuve noire pour guide",
+      "gold": 2000,
+      "advExp": 400,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "20309": {
+      "category": "EPIC",
+      "nameEn": "Not Meaningless",
+      "nameFr": "Ce qui n'est pas sans importance",
+      "gold": 2000,
+      "advExp": 400,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "20401": {
+      "category": "EPIC",
+      "nameEn": "Helping others comes first!",
+      "nameFr": "Il faut d'abord aider !",
+      "gold": 10000,
+      "advExp": 400,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1450701,
+          50
+        ]
+      ]
+    },
+    "20402": {
+      "category": "EPIC",
+      "nameEn": "You can get stronger!",
+      "nameFr": "On peut devenir plus fort !",
+      "gold": 10000,
+      "advExp": 400,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1410003,
+          25
+        ]
+      ]
+    },
+    "20403": {
+      "category": "EPIC",
+      "nameEn": "Time to Hone Your Skills",
+      "nameFr": "C'est le moment de perfectionner vos compétences",
+      "gold": 10000,
+      "advExp": 400,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1450811,
+          10
+        ]
+      ]
+    },
+    "20404": {
+      "category": "EPIC",
+      "nameEn": "Make Your Gear Even Stronger",
+      "nameFr": "Rendez votre équipement encore plus solide",
+      "gold": 10000,
+      "advExp": 400,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1410203,
+          20
+        ]
+      ]
+    },
+    "20405": {
+      "category": "EPIC",
+      "nameEn": "You Need to Find Special Materials",
+      "nameFr": "Il faut trouver des matériaux spéciaux",
+      "gold": 10000,
+      "advExp": 400,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1450814,
+          10
+        ],
+        [
+          1460101,
+          15
+        ]
+      ]
+    },
+    "20406": {
+      "category": "EPIC",
+      "nameEn": "You'll need sturdy gear!",
+      "nameFr": "Il vous faut de l'équipement solide !",
+      "gold": 10000,
+      "advExp": 400,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1470201,
+          1
+        ]
+      ]
+    },
+    "20407": {
+      "category": "EPIC",
+      "nameEn": "To Unleash Your Hidden Power,",
+      "nameFr": "Pour éveiller le pouvoir endormi",
+      "gold": 10000,
+      "advExp": 400,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1410103,
+          20
+        ]
+      ]
+    },
+    "20408": {
+      "category": "EPIC",
+      "nameEn": "Face the Massive Threat",
+      "nameFr": "Pour faire face à une menace gigantesque",
+      "gold": 10000,
+      "advExp": 400,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1450408,
+          1
+        ],
+        [
+          1450409,
+          2
+        ]
+      ]
+    },
+    "20501": {
+      "category": "EPIC",
+      "nameEn": "Seeking a Hero.",
+      "nameFr": "Nous recherchons des héros.",
+      "gold": 10000,
+      "advExp": 450,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1430409,
+          5
+        ]
+      ]
+    },
+    "20502": {
+      "category": "EPIC",
+      "nameEn": "The Trial of the Promise",
+      "nameFr": "L'épreuve de la promesse",
+      "gold": 10000,
+      "advExp": 450,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1430408,
+          5
+        ]
+      ]
+    },
+    "20503": {
+      "category": "EPIC",
+      "nameEn": "Path of the Hero 1",
+      "nameFr": "Le chemin du Héros 1",
+      "gold": 10000,
+      "advExp": 450,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1430409,
+          5
+        ]
+      ]
+    },
+    "20504": {
+      "category": "EPIC",
+      "nameEn": "Path of the Hero 2",
+      "nameFr": "Le chemin du Héros 2",
+      "gold": 10000,
+      "advExp": 450,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1430408,
+          5
+        ]
+      ]
+    },
+    "20505": {
+      "category": "EPIC",
+      "nameEn": "Path of the Hero 3",
+      "nameFr": "Le chemin du Héros 3",
+      "gold": 10000,
+      "advExp": 450,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1430405,
+          5
+        ]
+      ]
+    },
+    "20506": {
+      "category": "EPIC",
+      "nameEn": "Day of Betrayal",
+      "nameFr": "Le jour de la trahison",
+      "gold": 10000,
+      "advExp": 450,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1430412,
+          5
+        ]
+      ]
+    },
+    "20507": {
+      "category": "EPIC",
+      "nameEn": "Preparing for the Final Battle",
+      "nameFr": "Préparation à la bataille décisive",
+      "gold": 10000,
+      "advExp": 450,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1430405,
+          5
+        ]
+      ]
+    },
+    "20508": {
+      "category": "EPIC",
+      "nameEn": "The Brothers' Showdown",
+      "nameFr": "La bataille des frères",
+      "gold": 10000,
+      "advExp": 450,
+      "items": [
+        [
+          1000501,
+          25
+        ],
+        [
+          1430412,
+          5
+        ]
+      ]
+    },
+    "20601": {
+      "category": "EPIC",
+      "nameEn": "50 m/s",
+      "nameFr": "50 m/s",
+      "gold": 30000,
+      "advExp": 1000,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "29001": {
+      "category": "EPIC",
+      "nameEn": "The Secret Left Behind",
+      "nameFr": "Le secret légué",
+      "gold": 10000,
+      "advExp": 500,
+      "items": [
+        [
+          1450403,
+          50
+        ]
+      ]
+    },
+    "29002": {
+      "category": "EPIC",
+      "nameEn": "Barduk's Intentions",
+      "nameFr": "Les intentions de Barduk",
+      "gold": 10000,
+      "advExp": 500,
+      "items": [
+        [
+          1450822,
+          1
+        ]
+      ]
+    },
+    "30001": {
+      "category": "CHARACTER",
+      "nameEn": "The Society's Visit",
+      "nameFr": "La visite de l'Académie",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30002": {
+      "category": "CHARACTER",
+      "nameEn": "Aether Investigation",
+      "nameFr": "Enquêter sur l'Éther",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30003": {
+      "category": "CHARACTER",
+      "nameEn": "Information Obtained from the Fortress",
+      "nameFr": "Informations obtenues à la forteresse",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30004": {
+      "category": "CHARACTER",
+      "nameEn": "Violent Orcs",
+      "nameFr": "Les orques féroces",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30005": {
+      "category": "CHARACTER",
+      "nameEn": "Helmet of Wisdom",
+      "nameFr": "Le Casque de la sagesse",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30006": {
+      "category": "CHARACTER",
+      "nameEn": "The Fugitive Mages",
+      "nameFr": "Les mages en fuite",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30007": {
+      "category": "CHARACTER",
+      "nameEn": "Inherited Magic",
+      "nameFr": "Magie héritée",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30008": {
+      "category": "CHARACTER",
+      "nameEn": "Cressila's Tower",
+      "nameFr": "Tour de Cressila",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30009": {
+      "category": "CHARACTER",
+      "nameEn": "Cressila's Upside-Down Tower",
+      "nameFr": "La tour renversée de Cressila",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30010": {
+      "category": "CHARACTER",
+      "nameEn": "Frost That Melted the Past",
+      "nameFr": "Le givre qui a fait fondre le passé",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30100": {
+      "category": "CHARACTER",
+      "nameEn": "Rumors of the Thief",
+      "nameFr": "La rumeur du voleur",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30101": {
+      "category": "CHARACTER",
+      "nameEn": "The Phantom Thief of Dawn",
+      "nameFr": "Voleuse fantôme de l'aube",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30102": {
+      "category": "CHARACTER",
+      "nameEn": "Traps and Thieves",
+      "nameFr": "Pièges et voleurs",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30103": {
+      "category": "CHARACTER",
+      "nameEn": "The Thief's True Identity",
+      "nameFr": "L'identité de la voleuse",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30104": {
+      "category": "CHARACTER",
+      "nameEn": "The Dragon's Relic and the Phantom Thief of Dawn",
+      "nameFr": "La Relique du dragon et la Voleuse fantôme de l'aube",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30105": {
+      "category": "CHARACTER",
+      "nameEn": "In Search of the Spear of Draconic Malice",
+      "nameFr": "À la recherche de la lance du Dragon Néfaste",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30106": {
+      "category": "CHARACTER",
+      "nameEn": "The Path of the Phantom Thief",
+      "nameFr": "Le chemin de la voleuse",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30107": {
+      "category": "CHARACTER",
+      "nameEn": "Operation: Infiltrate the Steelheart Fortress",
+      "nameFr": "Opération d'infiltration de la Forteresse Cœur de Fer",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30108": {
+      "category": "CHARACTER",
+      "nameEn": "Waiting for the Next Dawn",
+      "nameFr": "En attendant la prochaine aube",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30201": {
+      "category": "CHARACTER",
+      "nameEn": "The Inquisitor in the Mist",
+      "nameFr": "L'Inquisiteur dans la brume",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30202": {
+      "category": "CHARACTER",
+      "nameEn": "The Light-Divider",
+      "nameFr": "Celui qui partage la lumière",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30203": {
+      "category": "CHARACTER",
+      "nameEn": "Clues at the Outpost",
+      "nameFr": "L'indice du poste de garde",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30204": {
+      "category": "CHARACTER",
+      "nameEn": "The Forest of Madness",
+      "nameFr": "La forêt de la folie",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30205": {
+      "category": "CHARACTER",
+      "nameEn": "The Forgotten Tragedy",
+      "nameFr": "Une tragédie oubliée",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30206": {
+      "category": "CHARACTER",
+      "nameEn": "The Truth Left Behind by the Dead",
+      "nameFr": "La vérité laissée par les morts",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30207": {
+      "category": "CHARACTER",
+      "nameEn": "Twisted Salvation 1",
+      "nameFr": "Le salut dévoyé 1",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30208": {
+      "category": "CHARACTER",
+      "nameEn": "Twisted Salvation 2",
+      "nameFr": "Le salut dévoyé 2",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30209": {
+      "category": "CHARACTER",
+      "nameEn": "Flowers of the Afterlife",
+      "nameFr": "La fleur de l'au-delà",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30210": {
+      "category": "CHARACTER",
+      "nameEn": "Mist, Festival, and Shadows",
+      "nameFr": "Brume, fête et ombres",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30301": {
+      "category": "CHARACTER",
+      "nameEn": "Spirits of Mistblossom Village",
+      "nameFr": "L'esprit du Village de la fleur de brume",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30302": {
+      "category": "CHARACTER",
+      "nameEn": "Rare Familiar Collector",
+      "nameFr": "Collectionneur de Familiers rares",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30303": {
+      "category": "CHARACTER",
+      "nameEn": "The Girl Who Gets Along with Spirits",
+      "nameFr": "La jeune fille qui s'entend bien avec les esprits",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30304": {
+      "category": "CHARACTER",
+      "nameEn": "Kalien and Pola's Investigation",
+      "nameFr": "Les enquêtes de Kalien et Pola",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30305": {
+      "category": "CHARACTER",
+      "nameEn": "Mysterious Phenomena in the Village",
+      "nameFr": "Les phénomènes étranges du Village",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30306": {
+      "category": "CHARACTER",
+      "nameEn": "Pola's Only Friend",
+      "nameFr": "La seule amie de Pola",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30307": {
+      "category": "CHARACTER",
+      "nameEn": "Fearful Spirits",
+      "nameFr": "Les esprits effrayés",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30308": {
+      "category": "CHARACTER",
+      "nameEn": "Spirits and Alchemy",
+      "nameFr": "Les esprits et l'alchimie",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30309": {
+      "category": "CHARACTER",
+      "nameEn": "The Corrupted Red Fox",
+      "nameFr": "Le Renard rouge corrompu",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30310": {
+      "category": "CHARACTER",
+      "nameEn": "A Funeral for the Flames",
+      "nameFr": "Le rituel funéraire des flammes",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30701": {
+      "category": "CHARACTER",
+      "nameEn": "A Welcome Quest",
+      "nameFr": "Une requête bienvenue",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30702": {
+      "category": "CHARACTER",
+      "nameEn": "In Search of Food",
+      "nameFr": "À la recherche de nourriture",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30703": {
+      "category": "CHARACTER",
+      "nameEn": "A Visit from a Famous Chef",
+      "nameFr": "La visite d'un chef célèbre",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30704": {
+      "category": "CHARACTER",
+      "nameEn": "Aqua Mist Herb",
+      "nameFr": "L'herbe de brume aquatique",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30705": {
+      "category": "CHARACTER",
+      "nameEn": "Helper at the Mistblossom Festival",
+      "nameFr": "L'assistante du festival des fleurs de brume",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30706": {
+      "category": "CHARACTER",
+      "nameEn": "How to Set Off Fireworks?",
+      "nameFr": "Comment faire éclater des feux d'artifice ?",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30707": {
+      "category": "CHARACTER",
+      "nameEn": "Let's Build a Ride",
+      "nameFr": "Fabriquons des manèges",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30708": {
+      "category": "CHARACTER",
+      "nameEn": "Festival Preparations",
+      "nameFr": "Préparation du festival",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30709": {
+      "category": "CHARACTER",
+      "nameEn": "Mistblossom Festival",
+      "nameFr": "Le festival des fleurs de brume",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30801": {
+      "category": "CHARACTER",
+      "nameEn": "The Wind of Seagull Village",
+      "nameFr": "Le vent du village des mouettes",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30802": {
+      "category": "CHARACTER",
+      "nameEn": "The End of the Man They Sought",
+      "nameFr": "La fin de celui qu'ils cherchaient",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30803": {
+      "category": "CHARACTER",
+      "nameEn": "Those Left Behind",
+      "nameFr": "Ceux qui restent",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30804": {
+      "category": "CHARACTER",
+      "nameEn": "What the Master Left Behind",
+      "nameFr": "Ce que le maître a laissé",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30805": {
+      "category": "CHARACTER",
+      "nameEn": "Those Who Cannot Leave",
+      "nameFr": "Ceux qui ne peuvent pas partir",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30806": {
+      "category": "CHARACTER",
+      "nameEn": "Beneath the Windmill",
+      "nameFr": "Sous le moulin",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30807": {
+      "category": "CHARACTER",
+      "nameEn": "Shedding Light on the Shadows",
+      "nameFr": "Faire la lumière sur les ombres",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30808": {
+      "category": "CHARACTER",
+      "nameEn": "The Growing Embers",
+      "nameFr": "La braise qui grandit",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30809": {
+      "category": "CHARACTER",
+      "nameEn": "Cause and Effect, Repeated",
+      "nameFr": "La répétition des causes",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "30810": {
+      "category": "CHARACTER",
+      "nameEn": "The Name Left Behind",
+      "nameFr": "Le nom qui reste",
+      "gold": 10000,
+      "advExp": 750,
+      "items": [
+        [
+          1000501,
+          25
+        ]
+      ]
+    },
+    "9000011": {
+      "category": "SUB",
+      "nameEn": "Quest 9000011",
+      "nameFr": "Quest 9000011",
+      "gold": 500,
+      "advExp": 500,
+      "items": []
+    }
+  },
   "regions": {
     "KOR": {
       "contentVersion": "M11_3",

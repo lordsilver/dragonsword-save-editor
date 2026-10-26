@@ -5,6 +5,7 @@ import {
   Crown,
   Flame,
   Gem,
+  Gift,
   MapPin,
   PackagePlus,
   Pencil,
@@ -22,6 +23,7 @@ import { ConfirmButton } from '@/components/common';
 import { NumberField } from '@/components/fields';
 import { ItemIcon } from '@/components/item-icon';
 import { KeyValue, PageHeader, Panel } from '@/components/page';
+import { QuestRewardsDialog } from '@/components/quest-rewards-dialog';
 import { InfoNote } from '@/components/summary';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -57,6 +59,7 @@ export function OverviewScreen() {
   const [renameOpen, setRenameOpen] = useState(false);
   const [rankOpen, setRankOpen] = useState(false);
   const [fillOpen, setFillOpen] = useState(false);
+  const [rewardsOpen, setRewardsOpen] = useState(false);
 
   if (!overview || !save) {
     return <div className="h-40 animate-pulse rounded-xl border bg-card/40" />;
@@ -85,6 +88,10 @@ export function OverviewScreen() {
             <Button variant="outline" size="sm" onClick={() => setRankOpen(true)}>
               <Sparkles />
               Edit Mercenary Corps
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setRewardsOpen(true)}>
+              <Gift />
+              Quest rewards
             </Button>
             <Button variant="outline" size="sm" onClick={() => setFillOpen(true)}>
               <Wand2 />
@@ -259,6 +266,7 @@ export function OverviewScreen() {
           setRankOpen(false);
         }}
       />
+      <QuestRewardsDialog open={rewardsOpen} onOpenChange={setRewardsOpen} />
       <FillDialog
         open={fillOpen}
         onOpenChange={setFillOpen}

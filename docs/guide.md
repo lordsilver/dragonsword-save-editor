@@ -48,6 +48,7 @@ Every screen edits only the open temporary copy. The title bar shows **Unsaved**
 Shows the account, player name, Mercenary Corps grade, level and EXP, play time, stamina, location, collection progress, currencies, and the save file itself.
 - Click the pencil next to the name to rename the player.
 - **Edit Mercenary Corps** changes the corps level, EXP or play time. The grade is shown but read-only: it follows the promotion quests, and each promotion unlocks the next hero and karma breakthrough. The level caps at 50, the live servers' maximum. Changing the level writes that level's starting EXP, and the EXP field edits within the current level.
+- **Quest rewards** lists what each completed quest hands out, from the game's own quest table, and grants the quests you tick. Use it when another tool marked quests complete without giving their rewards. It adds gold, stackable items and mounts. Equipment, cooked dishes, heroes and Mercenary Corps EXP are listed but not granted, because they need rows or level changes the editor does not make. The editor cannot tell which rewards the game already gave, so granting a quest twice adds its rewards twice.
 - **Fill every stack** is the bulk inventory action; it is disabled when every eligible material stack is already full.
 
 ### Currencies

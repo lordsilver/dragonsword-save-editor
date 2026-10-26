@@ -301,6 +301,24 @@ export interface Costume {
   isNew: boolean;
 }
 
+/** The rewards one completed quest lists in the game's quest table. */
+export interface QuestRewards {
+  questId: number;
+  category: string;
+  nameEn: string;
+  nameFr: string;
+  gold: number;
+  /** Mercenary Corps EXP; listed but never granted. */
+  advExp: number;
+  items: Array<{ item: Item; count: number; route: 'currency' | 'stack' | 'mount' | 'none' }>;
+}
+
+export interface RewardGrant {
+  granted: Array<{ item: Item; count: number }>;
+  notGranted: Array<{ item: Item; count: number }>;
+  advExpNotGranted: number;
+}
+
 export interface Vehicle {
   dbid: string;
   item: Item;

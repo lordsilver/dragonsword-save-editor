@@ -207,6 +207,31 @@ for (const grade of adventGrades) {
   grade.requiresMainQuest = story[0];
 }
 
+// What each quest hands out on completion: gold, Mercenary Corps EXP and up
+// to five items. No quest uses a reward bundle (RewardID) today; the editor
+// relies on that, so one appearing stops the generator.
+const questRewards = {};
+for (const row of questRows) {
+  if (row.RewardID !== '') fail(`quest ${row.ID} uses reward bundle ${row.RewardID}`);
+  const items = [];
+  for (let slot = 1; slot <= 5; slot += 1) {
+    if (row[`ItemID${slot}`] === '') continue;
+    items.push([int(row[`ItemID${slot}`], 'reward item'), int(row[`ItemCnt${slot}`], 'reward count')]);
+  }
+  const gold = row.Gold === '' ? 0 : int(row.Gold, 'reward gold');
+  const advExp = row.AdvExp === '' ? 0 : int(row.AdvExp, 'reward corps exp');
+  if (gold === 0 && advExp === 0 && items.length === 0) continue;
+  const name = questNames[row.QuestName];
+  questRewards[row.ID] = {
+    category: row.Category,
+    nameEn: name?.En || `Quest ${row.ID}`,
+    nameFr: name?.Fr || name?.En || `Quest ${row.ID}`,
+    gold,
+    advExp,
+    items,
+  };
+}
+
 // Per-region limits on the live servers. America, Europe and Asia must agree,
 // because the editor treats them as one "global" profile.
 const liveVersion = Object.fromEntries(
@@ -287,6 +312,7 @@ const growth = {
   adventLevelStartExp,
   adventGrades,
   mainQuests,
+  questRewards,
   regions: { KOR: korea, GLOBAL: global },
 };
 

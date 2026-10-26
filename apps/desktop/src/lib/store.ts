@@ -15,10 +15,12 @@ import type {
   Karma,
   Loadout,
   Overview,
+  QuestRewards,
   RawPage,
   RawTable,
   RawValue,
   Recipe,
+  RewardGrant,
   SaveHandle,
   ScanResult,
   Section,
@@ -114,6 +116,9 @@ export interface AppActions {
   setStack(kind: string, id: string, count: number): Promise<void>;
   addStack(cid: number, count: number): Promise<void>;
   fillStacks(count: number): Promise<void>;
+  /** The rewards of every completed quest; read-only. */
+  questRewards(): Promise<QuestRewards[]>;
+  grantQuestRewards(questIds: number[]): Promise<RewardGrant | null>;
   setCharacter(cid: number, field: string, value: number): Promise<void>;
   removeCharacter(cid: number): Promise<void>;
   setSkill(cid: number, typeValue: number, level: number): Promise<void>;
@@ -669,6 +674,35 @@ export const useApp = create<Store>((set, get) => {
         },
       );
       if (added !== null) toast.success('Item added to the inventory.');
+    },
+
+    async questRewards() {
+      try {
+        return await api.questRewards();
+      } catch (error) {
+        toast.error(message(error));
+        return [];
+      }
+    },
+
+    async grantQuestRewards(questIds) {
+      const grant = await attempt(
+        'Granting quest rewards',
+        () => api.grantQuestRewards(questIds),
+        async () => {
+          await get().loadInventory();
+          await get().loadCurrencies();
+          await get().loadMounts();
+          await get().loadOverview();
+        },
+      );
+      if (grant) {
+        const count = grant.granted.length;
+        toast.success(
+          `Added ${count} reward${count === 1 ? '' : 's'} from ${questIds.length} quest${questIds.length === 1 ? '' : 's'}.`,
+        );
+      }
+      return grant;
     },
 
     async fillStacks(count) {

@@ -389,6 +389,21 @@ fn stack_add(state: State<'_, AppState>, cid: i64, count: i64) -> CommandResult<
 }
 
 #[tauri::command]
+fn quest_rewards_get(
+    state: State<'_, AppState>,
+) -> CommandResult<Vec<dsa_core::domain::QuestRewards>> {
+    game(&state, |game| game.quest_rewards())
+}
+
+#[tauri::command]
+fn quest_rewards_grant(
+    state: State<'_, AppState>,
+    quest_ids: Vec<i64>,
+) -> CommandResult<dsa_core::domain::RewardGrant> {
+    game(&state, |game| game.grant_quest_rewards(&quest_ids))
+}
+
+#[tauri::command]
 fn stackable_catalog(state: State<'_, AppState>) -> CommandResult<Vec<dsa_core::Item>> {
     game(&state, |game| Ok(game.stackable_catalog()))
 }
@@ -669,6 +684,8 @@ pub fn run() {
             inventory_get,
             stack_set,
             stack_add,
+            quest_rewards_get,
+            quest_rewards_grant,
             stackable_catalog,
             stacks_fill,
             characters_get,

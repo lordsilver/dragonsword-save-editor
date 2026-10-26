@@ -12,10 +12,12 @@ import type {
   Karma,
   Loadout,
   Overview,
+  QuestRewards,
   RawPage,
   RawTable,
   RawValue,
   Recipe,
+  RewardGrant,
   SaveHandle,
   ScanResult,
   Settings,
@@ -272,6 +274,14 @@ export async function mounts(): Promise<Vehicle[]> {
 
 export async function mountCatalog(): Promise<CatalogEntry[]> {
   return invoke<CatalogEntry[]>('mount_catalog');
+}
+
+export async function questRewards(): Promise<QuestRewards[]> {
+  return invoke<QuestRewards[]>('quest_rewards_get');
+}
+
+export async function grantQuestRewards(questIds: number[]): Promise<RewardGrant> {
+  return invoke<RewardGrant>('quest_rewards_grant', { questIds });
 }
 
 export async function unlockMount(cid: number): Promise<boolean> {

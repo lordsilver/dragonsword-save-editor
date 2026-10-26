@@ -142,7 +142,16 @@ CREATE TABLE tb_equip_mount (
   USER_DBID INTEGER NOT NULL DEFAULT 0,
   CHARACTER_CID INTEGER NOT NULL DEFAULT 0,
   KARMA INTEGER NOT NULL DEFAULT 0,
+  VEHICLE INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (USER_DBID, CHARACTER_CID)
+);
+CREATE TABLE tb_quest_complete (
+  USER_DBID INTEGER, QUEST_CID INTEGER, CATEGORY INTEGER,
+  PRIMARY KEY (USER_DBID, QUEST_CID)
+);
+CREATE TABLE tb_vehicle (
+  VEHICLE_DBID INTEGER PRIMARY KEY, USER_DBID INTEGER,
+  VEHICLE_CID INTEGER, CREATED_DATE INTEGER
 );
 CREATE TABLE tb_karma (
   ITEM_DBID INTEGER NOT NULL,
@@ -383,6 +392,13 @@ fn fixture_with(name: &str, gold: i64, grade: i64, version: i64) -> Fixture {
             rusqlite::params![KARMA, USER],
         )
         .expect("karma");
+        // Quests 1, 4 and 9 are complete; 1 gives nothing.
+        conn.execute(
+            "INSERT INTO tb_quest_complete (USER_DBID, QUEST_CID, CATEGORY)
+             VALUES (?, 10001, 1), (?, 10004, 1), (?, 10009, 1)",
+            rusqlite::params![USER, USER, USER],
+        )
+        .expect("quests");
         conn.execute_batch("PRAGMA journal_mode=DELETE;")
             .expect("journal");
     }
@@ -952,6 +968,68 @@ fn growth_caps_follow_each_rows_own_breakthrough() {
     game.set_karma(KARMA, "exp", 0).expect("lower the EXP");
     game.set_karma(KARMA, "ascend", 0)
         .expect("then the breakthrough");
+}
+
+fn stack_count(game: &Game<'_>, cid: i64) -> i64 {
+    game.inventory()
+        .expect("inventory")
+        .into_iter()
+        .find(|stack| stack.kind == "stackable" && stack.item.cid == cid)
+        .map_or(0, |stack| stack.count)
+}
+
+fn gold(game: &Game<'_>) -> i64 {
+    game.currencies()
+        .expect("currencies")
+        .into_iter()
+        .find(|currency| currency.item.cid == 1_000_001)
+        .map_or(0, |currency| currency.amount)
+}
+
+#[test]
+fn completed_quests_hand_out_their_missed_rewards() {
+    let path = fixture("quest-rewards");
+    let mut session = SaveSession::open(&path).expect("open");
+    let mut game = Game::new(&mut session, Catalog::shared());
+
+    let rewards = game.quest_rewards().expect("rewards");
+    let ids: Vec<i64> = rewards.iter().map(|reward| reward.quest_id).collect();
+    assert_eq!(ids, [10_004, 10_009], "quest 1 gives nothing");
+
+    // A quest the save has not completed is refused before anything changes.
+    assert!(game.grant_quest_rewards(&[10_009, 10_010]).is_err());
+    assert_eq!(gold(&game), 100);
+
+    // Quest 9: 2,500 gold, 400 corps EXP, Basic Combat Text ×20, Mana Shard
+    // ×10, a mount, the hero item Johnny and a Fate's Invitation.
+    let before = [1_410_002, 1_410_202, 1_000_500].map(|cid| stack_count(&game, cid));
+    let grant = game.grant_quest_rewards(&[10_009, 10_009]).expect("grant");
+    assert_eq!(gold(&game), 2_600, "a repeated id counts once");
+    assert_eq!(stack_count(&game, 1_410_002), before[0] + 20);
+    assert_eq!(stack_count(&game, 1_410_202), before[1] + 10);
+    assert_eq!(stack_count(&game, 1_000_500), before[2] + 1);
+    let mounts = game.mounts().expect("mounts");
+    assert!(mounts.iter().any(|mount| mount.cid == 1_320_016));
+    assert_eq!(grant.adv_exp_not_granted, 400);
+    let skipped: Vec<i64> = grant
+        .not_granted
+        .iter()
+        .map(|entry| entry.item.cid)
+        .collect();
+    assert_eq!(skipped, [1_110_601], "the hero item is not granted");
+    assert_eq!(game.characters().expect("characters").len(), 3);
+
+    // Granting again adds again; the mount is not duplicated.
+    game.grant_quest_rewards(&[10_004, 10_009])
+        .expect("grant again");
+    assert_eq!(stack_count(&game, 1_000_500), before[2] + 3);
+    let wolves = game
+        .mounts()
+        .expect("mounts")
+        .into_iter()
+        .filter(|mount| mount.cid == 1_320_016)
+        .count();
+    assert_eq!(wolves, 1);
 }
 
 #[test]
