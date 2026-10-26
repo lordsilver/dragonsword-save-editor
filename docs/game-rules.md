@@ -117,7 +117,18 @@ The game does not write `tb_completed_quest` when it completes a quest. Quest-re
 
 ## Item instance IDs
 
-Equipment, gems, karma and dishes use 64-bit instance IDs: the upper 32 bits are `0x01058000` plus a counter for items created in the same second, and the lower 32 bits are the creation time in UTC seconds. `CREATED_DATE` holds the same moment in local time. Mounts and costumes use random 32-bit IDs. A dish is one live `tb_cook_item` row per dish, whose `STACK_CNT` grows.
+Equipment, gems, karma and dishes use 64-bit instance IDs: the upper 32 bits are `0x01058000` plus a counter for items created in the same second, and the lower 32 bits are the creation time in UTC seconds. `CREATED_DATE` holds the same moment in local time. Snapshot 10 confirms it for three equipment drops: IDs `0x01058000…`, `…01…` and `…02…` over the same UTC second, each with a main stat CID and three sub-stat CIDs, enchant 0, EXP 0 and `CREATED_DATE` in local time. Mounts and costumes use random 32-bit IDs. A dish is one live `tb_cook_item` row per dish, whose `STACK_CNT` grows.
+
+## Dungeons
+
+Snapshot 10 clears the Goblin Bandit Cave (dungeon group 11031) at adventure difficulty 1. The game writes:
+- `tb_active_dungeon` gets the group, 11031. Achievement group 100003 counts one; it is probably the activated dungeon gate.
+- `tb_user_instance_region` gets type 11, map 10901, `RECORD_CNT` 1, `FIRST_REWARD_RECORD_UTC` the clear in UTC seconds, and `LAST_RECORD_UTC` the same moment in local time, despite its name.
+- The rewards (`MapDungeonData.First_Reward_ID` 2200700): three equipment rows, corps EXP, gold and stackables.
+
+`MapDungeonData` has one row per difficulty: maps 10901, 10902 and up for group 11031, chosen by the corps difficulty. A harder row opens once the previous one is cleared (`DungeonOpenType` DUNGEON_CLEAR). Each row names its boss in `BossMonsterID`. No quest step points at this dungeon.
+
+What spawns depends on save state. `ActorSpawnConditionData` gates actors on a quest step being held (`QUEST_STEP_HOLD`, 317 conditions), a dungeon difficulty (78), a dynamic quest step (62), a cleared quest (`QUEST_CLEAR`, 12) and a few others. A save whose quests were completed by another tool, skipping steps the game would have held, can therefore lack an actor such as a boss. Comparing a boss's condition with the save's `tb_quest_hold` and `tb_quest_complete` is the way to check.
 
 ## What the editor does
 
@@ -157,6 +168,12 @@ Each entry gives the date, the game version where known, and what was seen.
 | 5     | 2,465 | 1 (Reina, 10004) | 1,600–2,599                |
 
 The corps is at level 3 with 1,800 EXP, inside `AdventLevelData`'s 1,650–2,549.
+
+### 2026-10-27: new-game snapshots 8–10
+
+- 8, warp point unlocked: main quest 10006 completed (category 1) and 10007 started at step 2; tutorial quest 90039 held at step 1; `tb_switch` category 0 gains bit 512; gold and corps EXP from the quest.
+- 9, corps level 3 and more quests: tutorial 90039 completed (category 12) and 10007 moved to step 5. Heroes gained levels in combat, with HP changing as current health. Respawn timers and opened treasure boxes appear.
+- 10, Goblin Bandit Cave cleared: see Dungeons. Tutorial 90038 completed too.
 
 ### In-game checks still to do
 
