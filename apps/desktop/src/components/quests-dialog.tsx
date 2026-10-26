@@ -76,9 +76,9 @@ function InProgress() {
   return (
     <div className="space-y-3">
       <p className="text-[11px] text-muted-foreground">
-        Completing a quest records it as done, hands out its gold, items and Mercenary Corps EXP (with any corps
-        level-up rewards), promotes the corps for a promotion exam, and starts the quests that were waiting for it.
-        Story events the quest plays in game, such as cutscenes, are skipped.
+        Completing a quest records it as done, hands out its gold, items, dishes and heroes, adds its Mercenary Corps
+        EXP, promotes the corps for a promotion exam, and starts the quests that were waiting for it, the way the game
+        does. Corps level rewards stay to be claimed in game. Story events such as cutscenes are skipped.
       </p>
       {quests === null ? (
         <Loading />
@@ -244,9 +244,7 @@ function RewardChips({
           icon={<ItemIcon item={entry.item} size={18} />}
           muted={entry.route === 'none'}
           title={
-            entry.route === 'none'
-              ? 'Not granted: equipment, dishes and heroes need rows the editor does not create.'
-              : undefined
+            entry.route === 'none' ? 'Not granted: equipment needs rows the editor does not create yet.' : undefined
           }
         />
       ))}

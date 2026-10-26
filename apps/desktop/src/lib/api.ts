@@ -9,6 +9,7 @@ import type {
   Currency,
   Equipment,
   Gem,
+  HeroEntry,
   Karma,
   Loadout,
   Overview,
@@ -283,6 +284,14 @@ export async function questRewards(): Promise<QuestRewards[]> {
 
 export async function grantQuestRewards(questIds: number[]): Promise<RewardGrant> {
   return invoke<RewardGrant>('quest_rewards_grant', { questIds });
+}
+
+export async function recruitableHeroes(): Promise<HeroEntry[]> {
+  return invoke<HeroEntry[]>('heroes_recruitable');
+}
+
+export async function recruitHero(cid: number): Promise<boolean> {
+  return invoke<boolean>('hero_recruit', { cid });
 }
 
 export async function questsInProgress(): Promise<QuestRewards[]> {

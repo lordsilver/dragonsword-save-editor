@@ -45,7 +45,21 @@ pub struct Growth {
     main_quests: Vec<MainQuest>,
     quests: HashMap<String, Quest>,
     advent_level_rewards: Vec<Vec<(i64, i64)>>,
+    heroes: Vec<Hero>,
+    hero_items: HashMap<String, i64>,
     regions: Regions,
+}
+
+/// A hero the game hands out somewhere: the shop, a quest reward, or a
+/// quest in which the hero joins the team.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Hero {
+    pub id: i64,
+    /// The hero item that redeems into this hero.
+    pub item: i64,
+    /// `shop`, `quest:<id>` or `joins:<id>`.
+    pub sources: Vec<String>,
 }
 
 /// One quest from `QuestMainData`, with what completing it touches.
@@ -205,6 +219,20 @@ impl Growth {
         self.quests
             .iter()
             .filter_map(|(id, quest)| Some((id.parse().ok()?, quest)))
+    }
+
+    /// The heroes the game hands out, in ID order.
+    pub fn heroes(&self) -> &[Hero] {
+        &self.heroes
+    }
+
+    pub fn hero(&self, id: i64) -> Option<&Hero> {
+        self.heroes.iter().find(|hero| hero.id == id)
+    }
+
+    /// The hero a hero item redeems into.
+    pub fn hero_for_item(&self, item: i64) -> Option<i64> {
+        self.hero_items.get(&item.to_string()).copied()
     }
 
     /// What reaching a corps level hands out.
@@ -484,6 +512,19 @@ mod tests {
         );
         assert_eq!(growth.advent_level_reward(2), [(1_410_002, 10)]);
         assert_eq!(growth.advent_level_reward(81), []);
+    }
+
+    #[test]
+    fn heroes_come_from_the_shop_quests_and_story() {
+        let growth = Growth::shared();
+        let ids: Vec<i64> = growth.heroes().iter().map(|hero| hero.id).collect();
+        assert_eq!(ids.len(), 19);
+        assert!(ids.contains(&10_004), "Reina, from the shop");
+        assert!(!ids.contains(&10_009), "Ropie: nothing hands her out");
+        assert!(!ids.contains(&10_002), "Lute is always in the party");
+        assert_eq!(growth.hero(10_006).unwrap().sources, ["joins:10005"]);
+        assert_eq!(growth.hero_for_item(1_110_601), Some(10_007), "Johnny");
+        assert_eq!(growth.hero_for_item(1_110_301), Some(10_004), "Reina");
     }
 
     #[test]

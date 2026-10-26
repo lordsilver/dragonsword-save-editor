@@ -42,6 +42,17 @@ const SKILL_TYPES: [i64; 8] = [1, 2, 3, 4, 5, 6, 7, 801];
 
 const GOLD_CID: i64 = 1_000_001;
 
+/// A new save carries rows for the heroes who join during the story, with
+/// this HP until they do. Snapshots of a new game show Castella and Aria at
+/// 999999 until their quests, then at 461.
+const UNJOINED_HP: i64 = 999_999;
+/// The HP every hero row gets when the hero joins, in every snapshot.
+const STARTING_HP: i64 = 461;
+/// The upper 32 bits of an item instance ID the game mints: this prefix plus
+/// a counter for items minted in the same second. The lower 32 bits are the
+/// creation time in UTC seconds.
+const ITEM_ID_PREFIX: i64 = 0x0105_8000;
+
 fn currency_limit(cid: i64) -> i64 {
     if cid == GOLD_CID {
         MAX_AMOUNT
@@ -484,11 +495,9 @@ impl<'a> Game<'a> {
             )));
         }
         for (action, value) in &quest.actions {
-            if action == "TEAMSETTING_CHARACTER" && self.require_character(*value).is_err() {
-                let hero = self.catalog.lookup_hint(*value, "character");
+            if action == "TEAMSETTING_CHARACTER" && Growth::shared().hero(*value).is_none() {
                 return Ok(Some(format!(
-                    "{} joins the team in this quest, and the editor does not add heroes; play it in game",
-                    hero.name_en
+                    "hero {value} joins the team in this quest, and the game data does not list them; play it in game"
                 )));
             }
         }
@@ -559,6 +568,14 @@ impl<'a> Game<'a> {
                         self.record_complete(*value, tutorial)?;
                     }
                 }
+                "TEAMSETTING_CHARACTER" => {
+                    if self.join_hero(*value)? {
+                        completion
+                            .joined
+                            .push(self.catalog.lookup_hint(*value, "character"));
+                    }
+                    self.place_in_first_team(*value)?;
+                }
                 "DELETE_ITEM" => {
                     self.conn().execute(
                         "DELETE FROM tb_stackable_item WHERE USER_DBID=? AND ITEM_CID=?",
@@ -569,7 +586,7 @@ impl<'a> Game<'a> {
             }
         }
         self.add_reward(quest.gold, &quest.items, &mut completion.grant)?;
-        completion.levels_gained = self.add_corps_exp(quest.adv_exp, &mut completion.grant)?;
+        completion.levels_gained = self.add_corps_exp(quest.adv_exp)?;
         if quest.category == "ADVENT_GRADE" {
             completion.new_grade = self.promote(id, &mut completion.grant)?;
         }
@@ -579,9 +596,9 @@ impl<'a> Game<'a> {
         Ok(completion)
     }
 
-    /// Writes the complete record, drops the quest from the ones in progress,
-    /// and adds it to the game's short list of recent completions, which
-    /// game-written saves keep at 8 per category.
+    /// Writes the complete record and drops the quest from the ones in
+    /// progress. The game leaves `tb_completed_quest` alone when it completes
+    /// a quest, so the editor does too.
     fn record_complete(&self, id: i64, category: i64) -> Result<()> {
         self.conn().execute(
             "INSERT OR IGNORE INTO tb_quest_complete (USER_DBID, QUEST_CID, CATEGORY) VALUES (?,?,?)",
@@ -593,25 +610,14 @@ impl<'a> Game<'a> {
                 params![self.user_id, id],
             )?;
         }
-        if self.table_exists("tb_completed_quest")? {
-            self.conn().execute(
-                "INSERT OR IGNORE INTO tb_completed_quest (USER_DBID, QUEST_CID, CATEGORY) VALUES (?,?,?)",
-                params![self.user_id, id, category],
-            )?;
-            self.conn().execute(
-                "DELETE FROM tb_completed_quest
-                  WHERE USER_DBID=?1 AND CATEGORY=?2 AND rowid NOT IN (
-                    SELECT rowid FROM tb_completed_quest WHERE USER_DBID=?1 AND CATEGORY=?2
-                     ORDER BY rowid DESC LIMIT 8)",
-                params![self.user_id, category],
-            )?;
-        }
         Ok(())
     }
 
     /// Adds corps EXP and levels the corps up through every threshold it
-    /// crosses, handing out each level's reward. Returns the levels gained.
-    fn add_corps_exp(&self, exp: i64, grant: &mut RewardGrant) -> Result<i64> {
+    /// crosses. Level rewards are not handed out: the player claims them on
+    /// the Mercenary Corps screen, and `tb_reward_step` records the last level
+    /// claimed. Returns the levels gained.
+    fn add_corps_exp(&self, exp: i64) -> Result<i64> {
         if exp == 0 {
             return Ok(0);
         }
@@ -624,7 +630,6 @@ impl<'a> Game<'a> {
             && growth::start_exp(growth.advent_exp(), level + 1).is_some_and(|next| total >= next)
         {
             level += 1;
-            self.add_reward(0, growth.advent_level_reward(level), grant)?;
         }
         // At the cap the game refunds EXP past the level's start.
         let stored = if level >= cap {
@@ -777,10 +782,87 @@ impl<'a> Game<'a> {
                     )?;
                     note(&mut grant.granted, item, 1);
                 }
+                RewardRoute::Hero => {
+                    let hero = Growth::shared()
+                        .hero_for_item(*cid)
+                        .expect("routed by hero_for_item");
+                    if self.join_hero(hero)? {
+                        note(&mut grant.granted, item, 1);
+                    } else {
+                        // What the game does with a duplicate hero item is not
+                        // known yet, so the editor gives nothing for it.
+                        note(&mut grant.not_granted, item, *count);
+                    }
+                }
+                RewardRoute::Dish => {
+                    self.add_dish(*cid, *count)?;
+                    note(&mut grant.granted, item, *count);
+                }
                 RewardRoute::None => note(&mut grant.not_granted, item, *count),
             }
         }
         Ok(())
+    }
+
+    /// Adds to a dish's stack, or starts one with a game-style instance ID.
+    /// The game keeps one live row per dish.
+    fn add_dish(&self, cid: i64, count: i64) -> Result<()> {
+        let existing: Option<(i64, i64)> = self
+            .conn()
+            .query_row(
+                "SELECT ITEM_DBID, STACK_CNT FROM tb_cook_item
+                  WHERE USER_DBID=? AND ITEM_CID=? AND COALESCE(DELETED_DATE, 0)=0
+                  ORDER BY ITEM_DBID LIMIT 1",
+                params![self.user_id, cid],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )
+            .optional()?;
+        if let Some((dbid, current)) = existing {
+            let total = current + count;
+            let max = MAX_DISH.max(current);
+            if total > max {
+                return Err(Error::invalid(format!(
+                    "dish {cid} would reach {total}, above its limit of {max}"
+                )));
+            }
+            self.conn().execute(
+                "UPDATE tb_cook_item SET STACK_CNT=? WHERE USER_DBID=? AND ITEM_DBID=?",
+                params![total, self.user_id, dbid],
+            )?;
+            return Ok(());
+        }
+        let dbid = self.mint_item_id("tb_cook_item")?;
+        self.conn().execute(
+            "INSERT INTO tb_cook_item
+                (USER_DBID, ITEM_DBID, ITEM_CID, SPECIAL_BUFF_CID1, SPECIAL_BUFF_CID2, STACK_CNT,
+                 CREATED_DATE, DELETED_DATE)
+             VALUES (?,?,?,0,0,?,CAST(strftime('%s','now','localtime') AS INTEGER),0)",
+            params![self.user_id, dbid, cid, count.min(MAX_DISH)],
+        )?;
+        Ok(())
+    }
+
+    /// Mints an item instance ID the way the game does: the prefix and a
+    /// same-second counter above the creation time in UTC seconds.
+    fn mint_item_id(&self, table: &str) -> Result<i64> {
+        let now: i64 =
+            self.conn()
+                .query_row("SELECT CAST(strftime('%s','now') AS INTEGER)", [], |row| {
+                    row.get(0)
+                })?;
+        let low = now & 0xFFFF_FFFF;
+        for counter in 0..0x1000 {
+            let candidate = ((ITEM_ID_PREFIX + counter) << 32) | low;
+            let taken: i64 = self.conn().query_row(
+                &format!("SELECT count(*) FROM {table} WHERE ITEM_DBID=?"),
+                params![candidate],
+                |row| row.get(0),
+            )?;
+            if taken == 0 {
+                return Ok(candidate);
+            }
+        }
+        Err(Error::invalid("could not allocate a free item id"))
     }
 
     fn add_currency(&self, cid: i64, add: i64, grant: &mut RewardGrant) -> Result<()> {
@@ -1068,6 +1150,7 @@ impl<'a> Game<'a> {
                 soldier_grade: row.get(7)?,
                 soldier_grade_point: row.get(8)?,
                 created_at: row.get(9)?,
+                joined: row.get::<_, i64>(4)? != UNJOINED_HP,
                 limits: hero_limits(row.get(1)?, row.get(2)?, row.get(3)?, grade),
             })
         })?;
@@ -1143,11 +1226,106 @@ impl<'a> Game<'a> {
         Ok(())
     }
 
-    pub fn add_character(&mut self, _cid: i64) -> Result<bool> {
-        Err(Error::invalid(
-            "the editor does not insert character rows; set Fate's Invitation in the \
-             inventory and recruit the character in the game's shop",
-        ))
+    /// Recruits a hero the way redeeming the hero's item does in game: a new
+    /// level-1 row, or a seeded story hero's row brought to its starting HP.
+    /// Only heroes the game hands out somewhere can be recruited.
+    pub fn add_character(&mut self, cid: i64) -> Result<bool> {
+        if Growth::shared().hero(cid).is_none() {
+            return Err(Error::invalid(format!(
+                "{cid} is not a hero the game hands out; the editor only recruits shop, quest and story heroes"
+            )));
+        }
+        let joined = self.join_hero(cid)?;
+        if !joined {
+            return Err(Error::invalid("that hero is already on the roster"));
+        }
+        self.touch();
+        Ok(true)
+    }
+
+    /// The heroes the game hands out, each with whether this save has them.
+    pub fn recruitable_heroes(&self) -> Result<Vec<HeroEntry>> {
+        let owned: HashMap<i64, i64> = self
+            .characters()?
+            .into_iter()
+            .map(|character| (character.cid, character.hp))
+            .collect();
+        Ok(Growth::shared()
+            .heroes()
+            .iter()
+            .map(|hero| HeroEntry {
+                cid: hero.id,
+                item: self.catalog.lookup_hint(hero.item, "character"),
+                sources: hero.sources.clone(),
+                owned: owned.get(&hero.id).is_some_and(|hp| *hp != UNJOINED_HP),
+            })
+            .collect())
+    }
+
+    /// Brings a hero onto the roster. Returns false when the hero was already
+    /// on it.
+    fn join_hero(&self, cid: i64) -> Result<bool> {
+        let hp = self.current_i64(
+            "SELECT HP FROM tb_character WHERE USER_DBID=? AND CHARACTER_CID=?",
+            params![self.user_id, cid],
+        )?;
+        match hp {
+            Some(UNJOINED_HP) => {
+                self.conn().execute(
+                    "UPDATE tb_character SET HP=? WHERE USER_DBID=? AND CHARACTER_CID=?",
+                    params![STARTING_HP, self.user_id, cid],
+                )?;
+                Ok(true)
+            }
+            Some(_) => Ok(false),
+            None => {
+                self.conn().execute(
+                    "INSERT INTO tb_character
+                        (USER_DBID, CHARACTER_CID, LEVEL, EXP, ASCEND, HP, TRANSCEND,
+                         TRANSCEND_TOTAL, SOLDIER_GRADE, SOLDIER_GRADE_POINT, CREATED_DATE)
+                     VALUES (?,?,1,0,0,?,0,0,0,0,CAST(strftime('%s','now','localtime') AS INTEGER))",
+                    params![self.user_id, cid, STARTING_HP],
+                )?;
+                Ok(true)
+            }
+        }
+    }
+
+    /// Puts a hero who just joined in the first empty slot of team page 0,
+    /// as the game does for a story hero.
+    fn place_in_first_team(&self, cid: i64) -> Result<()> {
+        let Some((first, second, third)) = self
+            .conn()
+            .query_row(
+                "SELECT SLOT1_CHARACTER_CID, SLOT2_CHARACTER_CID, SLOT3_CHARACTER_CID
+                   FROM tb_team WHERE USER_DBID=? AND PAGE_ID=0",
+                params![self.user_id],
+                |row| {
+                    Ok((
+                        row.get::<_, i64>(0)?,
+                        row.get::<_, i64>(1)?,
+                        row.get::<_, i64>(2)?,
+                    ))
+                },
+            )
+            .optional()?
+        else {
+            return Ok(());
+        };
+        let slots = [first, second, third];
+        if slots.contains(&cid) {
+            return Ok(());
+        }
+        if let Some(index) = slots.iter().position(|slot| *slot == 0) {
+            self.conn().execute(
+                &format!(
+                    "UPDATE tb_team SET SLOT{}_CHARACTER_CID=? WHERE USER_DBID=? AND PAGE_ID=0",
+                    index + 1
+                ),
+                params![cid, self.user_id],
+            )?;
+        }
+        Ok(())
     }
 
     pub fn unlock_all_characters(&mut self) -> Result<i64> {
@@ -2324,7 +2502,11 @@ pub enum RewardRoute {
     Mount,
     /// A title bit in `tb_title`; a title's item CID is its title ID.
     Title,
-    /// Equipment, dishes and heroes: instance rows the editor does not mint.
+    /// A hero item: the hero joins the roster.
+    Hero,
+    /// A cooked dish: a `tb_cook_item` stack.
+    Dish,
+    /// Equipment, and hero items the game data does not map to a hero.
     None,
 }
 
@@ -2335,6 +2517,10 @@ fn reward_route(item: &Item) -> RewardRoute {
         RewardRoute::Mount
     } else if item.kind == "ACCOUNT_TITLE" {
         RewardRoute::Title
+    } else if Growth::shared().hero_for_item(item.cid).is_some() {
+        RewardRoute::Hero
+    } else if item.category == "food" {
+        RewardRoute::Dish
     } else if item.is_stackable() {
         RewardRoute::Stack
     } else {
@@ -2373,11 +2559,24 @@ pub struct QuestRef {
     pub name_fr: String,
 }
 
+/// A hero the game hands out, for the recruit list.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HeroEntry {
+    pub cid: i64,
+    /// The hero's item, for its name and icon.
+    pub item: Item,
+    pub sources: Vec<String>,
+    pub owned: bool,
+}
+
 /// What completing a quest did.
 #[derive(Debug, Default, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct QuestCompletion {
     pub grant: RewardGrant,
+    /// Heroes the quest brought onto the roster.
+    pub joined: Vec<Item>,
     pub levels_gained: i64,
     pub new_grade: Option<i64>,
     /// The quests the completion started.
@@ -2603,6 +2802,9 @@ pub struct Character {
     pub soldier_grade: i64,
     pub soldier_grade_point: i64,
     pub created_at: i64,
+    /// False for a story hero whose row the game seeded but who has not
+    /// joined the team yet.
+    pub joined: bool,
     pub limits: GrowthLimits,
 }
 

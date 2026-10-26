@@ -218,7 +218,18 @@ export interface Character {
   soldierGrade: number;
   soldierGradePoint: number;
   createdAt: number;
+  /** False for a story hero the game seeded who has not joined yet. */
+  joined: boolean;
   limits: GrowthLimits;
+}
+
+/** A hero the game hands out, for the recruit list. */
+export interface HeroEntry {
+  cid: number;
+  item: Item;
+  /** `shop`, `quest:<id>` or `joins:<id>`. */
+  sources: string[];
+  owned: boolean;
 }
 
 export interface Skill {
@@ -310,13 +321,18 @@ export interface QuestRewards {
   gold: number;
   /** Mercenary Corps EXP; listed but never granted. */
   advExp: number;
-  items: Array<{ item: Item; count: number; route: 'currency' | 'stack' | 'mount' | 'title' | 'none' }>;
+  items: Array<{
+    item: Item;
+    count: number;
+    route: 'currency' | 'stack' | 'mount' | 'title' | 'hero' | 'dish' | 'none';
+  }>;
   /** Why the editor cannot complete this quest, for a quest in progress. */
   blocked: string | null;
 }
 
 export interface QuestCompletion {
   grant: RewardGrant;
+  joined: Item[];
   levelsGained: number;
   newGrade: number | null;
   started: Array<{ questId: number; nameEn: string; nameFr: string }>;

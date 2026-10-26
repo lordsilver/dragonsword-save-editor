@@ -41,6 +41,12 @@ const TABLES = [
   'QuestActionData',
   'RewardData',
   'RewardRandomData',
+  'GameItemData',
+  'PCCharacterData',
+  'BMGoodsData_KOR',
+  'BMGoodsData_AMERICA',
+  'BMGoodsData_EUROPE',
+  'BMGoodsData_ASIA',
 ];
 
 /** Every row of a table, as attribute maps with the namespace prefix removed. */
@@ -285,6 +291,60 @@ function staticReward(id, what) {
 }
 const adventLevelRewards = advent.map((row) => staticReward(row.RewardId, `corps level ${row.AdvReferenceKey}`));
 
+// Heroes. A hero item (ItemType CHARACTER) names its hero in Value1; the
+// shop sells hero items, quests hand them out, and redeeming one is how a
+// hero joins. The roster is every hero a hero item reaches that the game
+// marks as a playable, shipped character.
+const characterRows = Object.fromEntries(rows('PCCharacterData').map((row) => [row.ID, row]));
+const heroItems = {};
+const heroes = {};
+for (const row of rows('GameItemData')) {
+  if (row.ItemType !== 'CHARACTER') continue;
+  const hero = characterRows[row.Value1];
+  // A few CHARACTER items name something that is not a hero row.
+  if (!hero || hero.IsUserCharacter !== 'true' || hero.IsIncludePak !== 'true') continue;
+  heroItems[row.ID] = int(row.Value1, 'hero');
+  if (!heroes[row.Value1]) {
+    heroes[row.Value1] = { id: int(row.Value1, 'hero'), item: int(row.ID, 'hero item') };
+  }
+}
+
+// Where each hero comes from: the shop (goods paid with Fate's Invitation,
+// item 1000500), a quest reward, or a quest in which the hero joins the team.
+// A hero with none of these is not offered: nothing in the game hands it out.
+const FATES_INVITATION = '1000500';
+const sources = {};
+const addSource = (hero, source) => {
+  if (!heroes[hero]) return;
+  sources[hero] ??= new Set();
+  sources[hero].add(source);
+};
+// The hero goods live in the per-region shop tables, not the base one.
+const regionGoods = ['KOR', 'AMERICA', 'EUROPE', 'ASIA'].flatMap((region) => rows(`BMGoodsData_${region}`));
+for (const goods of regionGoods) {
+  if (goods.PaymentItemId !== FATES_INVITATION || goods.GoodsRewardId === '') continue;
+  // Random bundles (summons) do not name one hero.
+  if (rewardBundles[goods.GoodsRewardId]?.ContentsType !== 'STATIC_REWARD') continue;
+  for (const [item] of staticReward(goods.GoodsRewardId, `goods ${goods.ID}`)) {
+    if (heroItems[item]) addSource(heroItems[item], 'shop');
+  }
+}
+for (const [id, quest] of Object.entries(quests)) {
+  for (const [item] of quest.items) {
+    if (heroItems[item]) addSource(heroItems[item], `quest:${id}`);
+  }
+  for (const [action, value] of quest.actions) {
+    if (action === 'TEAMSETTING_CHARACTER') addSource(value, `joins:${id}`);
+  }
+}
+for (const id of Object.keys(heroes)) {
+  if (!sources[id]) delete heroes[id];
+  else heroes[id].sources = [...sources[id]].sort();
+}
+for (const [item, hero] of Object.entries(heroItems)) {
+  if (!heroes[hero]) delete heroItems[item];
+}
+
 // Per-region limits on the live servers. America, Europe and Asia must agree,
 // because the editor treats them as one "global" profile.
 const liveVersion = Object.fromEntries(
@@ -367,6 +427,8 @@ const growth = {
   mainQuests,
   quests,
   adventLevelRewards,
+  heroes: Object.values(heroes).sort((left, right) => left.id - right.id),
+  heroItems,
   regions: { KOR: korea, GLOBAL: global },
 };
 

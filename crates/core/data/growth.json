@@ -22,7 +22,13 @@
       "QuestStepData",
       "QuestActionData",
       "RewardData",
-      "RewardRandomData"
+      "RewardRandomData",
+      "GameItemData",
+      "PCCharacterData",
+      "BMGoodsData_KOR",
+      "BMGoodsData_AMERICA",
+      "BMGoodsData_EUROPE",
+      "BMGoodsData_ASIA"
     ],
     "generator": "scripts/gen-growth.mjs",
     "notes": [
@@ -8632,6 +8638,162 @@
     ],
     []
   ],
+  "heroes": [
+    {
+      "id": 10001,
+      "item": 1110001,
+      "sources": [
+        "shop"
+      ]
+    },
+    {
+      "id": 10003,
+      "item": 1110201,
+      "sources": [
+        "joins:10002"
+      ]
+    },
+    {
+      "id": 10004,
+      "item": 1110301,
+      "sources": [
+        "shop"
+      ]
+    },
+    {
+      "id": 10005,
+      "item": 1110401,
+      "sources": [
+        "shop"
+      ]
+    },
+    {
+      "id": 10006,
+      "item": 1110501,
+      "sources": [
+        "joins:10005"
+      ]
+    },
+    {
+      "id": 10007,
+      "item": 1110601,
+      "sources": [
+        "quest:10009"
+      ]
+    },
+    {
+      "id": 10008,
+      "item": 1110701,
+      "sources": [
+        "quest:10020"
+      ]
+    },
+    {
+      "id": 10011,
+      "item": 1111001,
+      "sources": [
+        "quest:10050"
+      ]
+    },
+    {
+      "id": 10014,
+      "item": 1111201,
+      "sources": [
+        "quest:10060"
+      ]
+    },
+    {
+      "id": 10016,
+      "item": 1111401,
+      "sources": [
+        "shop"
+      ]
+    },
+    {
+      "id": 10017,
+      "item": 1111501,
+      "sources": [
+        "quest:10063"
+      ]
+    },
+    {
+      "id": 10020,
+      "item": 1111801,
+      "sources": [
+        "shop"
+      ]
+    },
+    {
+      "id": 10022,
+      "item": 1112001,
+      "sources": [
+        "shop"
+      ]
+    },
+    {
+      "id": 10028,
+      "item": 1112601,
+      "sources": [
+        "shop"
+      ]
+    },
+    {
+      "id": 10029,
+      "item": 1112701,
+      "sources": [
+        "quest:10040"
+      ]
+    },
+    {
+      "id": 10030,
+      "item": 1112801,
+      "sources": [
+        "shop"
+      ]
+    },
+    {
+      "id": 10032,
+      "item": 1113001,
+      "sources": [
+        "shop"
+      ]
+    },
+    {
+      "id": 10036,
+      "item": 1113401,
+      "sources": [
+        "shop"
+      ]
+    },
+    {
+      "id": 10037,
+      "item": 1113501,
+      "sources": [
+        "shop"
+      ]
+    }
+  ],
+  "heroItems": {
+    "1110001": 10001,
+    "1110201": 10003,
+    "1110301": 10004,
+    "1110401": 10005,
+    "1110501": 10006,
+    "1110601": 10007,
+    "1110701": 10008,
+    "1111001": 10011,
+    "1111201": 10014,
+    "1111401": 10016,
+    "1111501": 10017,
+    "1111801": 10020,
+    "1112001": 10022,
+    "1112601": 10028,
+    "1112701": 10029,
+    "1112801": 10030,
+    "1113001": 10032,
+    "1113401": 10036,
+    "1113501": 10037
+  },
   "regions": {
     "KOR": {
       "contentVersion": "M11_3",

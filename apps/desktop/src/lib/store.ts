@@ -11,6 +11,7 @@ import type {
   Currency,
   Equipment,
   Gem,
+  HeroEntry,
   Item,
   Karma,
   Loadout,
@@ -120,6 +121,9 @@ export interface AppActions {
   /** The rewards of every completed quest; read-only. */
   questRewards(): Promise<QuestRewards[]>;
   grantQuestRewards(questIds: number[]): Promise<RewardGrant | null>;
+  /** The heroes the game hands out, with whether this save has them. */
+  recruitableHeroes(): Promise<HeroEntry[]>;
+  recruitHero(cid: number): Promise<void>;
   /** The quests in progress, with what completing each would hand out. */
   questsInProgress(): Promise<QuestRewards[]>;
   completeQuest(questId: number): Promise<QuestCompletion | null>;
@@ -687,6 +691,27 @@ export const useApp = create<Store>((set, get) => {
         toast.error(message(error));
         return [];
       }
+    },
+
+    async recruitableHeroes() {
+      try {
+        return await api.recruitableHeroes();
+      } catch (error) {
+        toast.error(message(error));
+        return [];
+      }
+    },
+
+    async recruitHero(cid) {
+      const recruited = await attempt(
+        'Recruiting hero',
+        () => api.recruitHero(cid),
+        async () => {
+          await get().loadCharacters();
+          await get().loadOverview();
+        },
+      );
+      if (recruited) toast.success('Hero recruited at level 1.');
     },
 
     async questsInProgress() {

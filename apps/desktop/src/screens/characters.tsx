@@ -1,4 +1,4 @@
-import { BadgeCheck, Heart, PackagePlus, Plus, Search, Sparkles, Swords, Trash2, Users } from 'lucide-react';
+import { BadgeCheck, Heart, PackagePlus, Plus, Search, Sparkles, Swords, Trash2, UserPlus, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ConfirmButton, EmptyPanel } from '@/components/common';
 import { NumberField } from '@/components/fields';
@@ -30,7 +30,7 @@ import {
   skillLimit,
 } from '@/lib/limits';
 import { formatNumber, itemName, useApp } from '@/lib/store';
-import type { Character, GrowthLimits, Loadout, TeamPage } from '@/lib/types';
+import type { Character, GrowthLimits, HeroEntry, Loadout, TeamPage } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 const SLOT_LABELS: Array<[keyof Omit<Loadout, 'characterCid'>, string]> = [
@@ -58,6 +58,7 @@ export function CharactersScreen() {
   const setSection = useApp((state) => state.setSection);
   const [query, setQuery] = useState('');
   const [skillOpen, setSkillOpen] = useState(false);
+  const [recruitOpen, setRecruitOpen] = useState(false);
 
   const selected = characters.find((character) => character.cid === selectedCharacter) ?? null;
   const busy = pending !== null;
@@ -84,20 +85,26 @@ export function CharactersScreen() {
       <PageHeader
         eyebrow={`Account ${save.accountId} · Slot ${save.slot}`}
         title="Characters"
-        description="Each hero's growth caps follow its own breakthrough; the Mercenary Corps grade only unlocks breakthroughs. Existing values above a cap stay editable. Recruit shop characters through the game after adding Fate's Invitation."
+        description="Each hero's growth caps follow its own breakthrough; the Mercenary Corps grade only unlocks breakthroughs. Existing values above a cap stay editable."
         actions={
-          <Button variant="outline" size="sm" onClick={() => setSection('inventory')}>
-            <PackagePlus />
-            Open inventory
-          </Button>
+          <>
+            <Button variant="outline" size="sm" onClick={() => setRecruitOpen(true)}>
+              <UserPlus />
+              Recruit hero
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setSection('inventory')}>
+              <PackagePlus />
+              Open inventory
+            </Button>
+          </>
         }
       />
 
       <InfoNote>
-        <span className="font-medium text-foreground">Recruit through the game's shop.</span> Add Fate's Invitation (CID{' '}
-        {formatNumber(FATES_INVITATION_CID)}) on the Inventory screen, then buy the character in game. The game writes
-        the level-1 character row and purchase record itself. This covers the 11 shop characters; story characters still
-        arrive by playing.
+        <span className="font-medium text-foreground">Recruit hero</span> adds a hero the way the game does when one
+        joins: a level-1 row, or a story hero the save already holds brought onto the team. It lists the 19 heroes the
+        game hands out through the shop, quest rewards and the story. Buying in the shop with Fate's Invitation (CID{' '}
+        {formatNumber(FATES_INVITATION_CID)}) still works too.
       </InfoNote>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -150,7 +157,7 @@ export function CharactersScreen() {
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-xs font-medium">{itemName(character.item, language)}</div>
                     <div className="text-[10px] text-muted-foreground">
-                      Lv {character.level} · CID {character.cid}
+                      {character.joined ? `Lv ${character.level}` : 'Not joined yet'} · CID {character.cid}
                     </div>
                   </div>
                   {character.transcend > 0 && <CountPill tone="brand">T{character.transcend}</CountPill>}
@@ -282,6 +289,7 @@ export function CharactersScreen() {
         )}
       </div>
 
+      <RecruitDialog open={recruitOpen} onOpenChange={setRecruitOpen} language={language} />
       <SkillDialog
         open={skillOpen}
         onOpenChange={setSkillOpen}
@@ -579,6 +587,83 @@ function SkillDialog({
             Add skill
           </Button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function heroSource(source: string): string {
+  if (source === 'shop') return 'Shop';
+  const [kind, quest] = source.split(':');
+  return kind === 'joins' ? `Joins in quest ${quest}` : `Quest ${quest} reward`;
+}
+
+function RecruitDialog({
+  open,
+  onOpenChange,
+  language,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  language: string;
+}) {
+  const pending = useApp((state) => state.pending);
+  const loadHeroes = useApp((state) => state.recruitableHeroes);
+  const recruitHero = useApp((state) => state.recruitHero);
+  const [heroes, setHeroes] = useState<HeroEntry[] | null>(null);
+  const [wasOpen, setWasOpen] = useState(false);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setHeroes(null);
+      void loadHeroes().then(setHeroes);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Recruit hero</DialogTitle>
+          <DialogDescription>
+            The heroes the game hands out. A recruit joins at level 1, as when the game redeems the hero's item.
+          </DialogDescription>
+        </DialogHeader>
+        {heroes === null ? (
+          <div className="flex h-32 items-center justify-center">
+            <Spinner />
+          </div>
+        ) : (
+          <div className="scroll-thin max-h-[56vh] divide-y overflow-y-auto rounded-lg border">
+            {heroes.map((hero) => (
+              <div key={hero.cid} className="flex items-center gap-3 px-3 py-2">
+                <ItemIcon item={hero.item} size={34} />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-medium">{itemName(hero.item, language)}</div>
+                  <div className="text-[10px] text-muted-foreground">{hero.sources.map(heroSource).join(' · ')}</div>
+                </div>
+                {hero.owned ? (
+                  <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                    On the roster
+                  </Badge>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={pending !== null}
+                    onClick={async () => {
+                      await recruitHero(hero.cid);
+                      setHeroes(await loadHeroes());
+                    }}
+                  >
+                    <UserPlus />
+                    Recruit
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -404,6 +404,18 @@ fn quest_rewards_grant(
 }
 
 #[tauri::command]
+fn heroes_recruitable(
+    state: State<'_, AppState>,
+) -> CommandResult<Vec<dsa_core::domain::HeroEntry>> {
+    game(&state, |game| game.recruitable_heroes())
+}
+
+#[tauri::command]
+fn hero_recruit(state: State<'_, AppState>, cid: i64) -> CommandResult<bool> {
+    game(&state, |game| game.add_character(cid))
+}
+
+#[tauri::command]
 fn quests_in_progress_get(
     state: State<'_, AppState>,
 ) -> CommandResult<Vec<dsa_core::domain::QuestRewards>> {
@@ -702,6 +714,8 @@ pub fn run() {
             quest_rewards_get,
             quest_rewards_grant,
             quests_in_progress_get,
+            heroes_recruitable,
+            hero_recruit,
             quest_complete,
             stackable_catalog,
             stacks_fill,

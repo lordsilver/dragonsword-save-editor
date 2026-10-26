@@ -775,30 +775,35 @@ fn raw_editor_keeps_keys_and_types_locked() {
 }
 
 #[test]
-fn the_editor_refuses_to_insert_character_rows() {
+fn only_heroes_the_game_hands_out_can_be_recruited() {
     let path = fixture("recruit");
     let mut session = SaveSession::open(&path).expect("open");
     let mut game = Game::new(&mut session, Catalog::shared());
     let before = game.characters().expect("characters").len();
 
-    // NORMAL starters, MASTER developer rows, character items, skins, and an
-    // unknown 10xxx id all fail: tb_init_character is a new-account seed, not
-    // the list of characters a save owns. The supported route is the game's
-    // shop after adding Fate's Invitation.
-    for cid in [
-        10_001, 10_002, 10_015, 10_019, 10_033, 10_099, 1_110_001, 9_990_002,
-    ] {
-        let error = game
-            .add_character(cid)
-            .expect_err("direct recruiting is off");
+    // Lute is always in the party; Ropie, Jerome and Logan are not handed out
+    // anywhere; hero items, skins and unknown IDs are not heroes.
+    for cid in [10_002, 10_009, 10_015, 10_033, 10_099, 1_110_001, 9_990_002] {
+        let error = game.add_character(cid).expect_err("not recruitable");
         assert_eq!(error.kind(), "invalid");
     }
     assert!(game.unlock_all_characters().is_err());
+    assert_eq!(game.characters().expect("characters").len(), before);
+
+    // Reina, from the shop: a level-1 row at the starting HP, as the game
+    // writes when her item is redeemed.
+    game.add_character(10_004).expect("recruit Reina");
+    let reina = character(&game, 10_004);
     assert_eq!(
-        game.characters().expect("characters").len(),
-        before,
-        "direct recruiting added nothing"
+        (reina.level, reina.exp, reina.ascend, reina.hp),
+        (1, 0, 0, 461)
     );
+    assert!(reina.joined);
+    assert!(game.add_character(10_004).is_err(), "already on the roster");
+    let heroes = game.recruitable_heroes().expect("heroes");
+    assert_eq!(heroes.len(), 19);
+    assert!(heroes.iter().any(|hero| hero.cid == 10_004 && hero.owned));
+    assert!(heroes.iter().any(|hero| hero.cid == 10_003 && hero.owned));
 }
 
 fn character(game: &Game<'_>, cid: i64) -> dsa_core::domain::Character {
@@ -1027,17 +1032,24 @@ fn completed_quests_hand_out_their_missed_rewards() {
     let mounts = game.mounts().expect("mounts");
     assert!(mounts.iter().any(|mount| mount.cid == 1_320_016));
     assert_eq!(grant.adv_exp_not_granted, 400);
-    let skipped: Vec<i64> = grant
+    assert!(grant.not_granted.is_empty(), "Johnny joins");
+    assert_eq!(character(&game, 10_007).hp, 461);
+    assert_eq!(game.characters().expect("characters").len(), 4);
+
+    // Granting again adds again; the mount is not duplicated.
+    let again = game
+        .grant_quest_rewards(&[10_004, 10_009])
+        .expect("grant again");
+    let skipped: Vec<i64> = again
         .not_granted
         .iter()
         .map(|entry| entry.item.cid)
         .collect();
-    assert_eq!(skipped, [1_110_601], "the hero item is not granted");
-    assert_eq!(game.characters().expect("characters").len(), 3);
-
-    // Granting again adds again; the mount is not duplicated.
-    game.grant_quest_rewards(&[10_004, 10_009])
-        .expect("grant again");
+    assert_eq!(
+        skipped,
+        [1_110_601],
+        "a hero already on the roster is not granted twice"
+    );
     assert_eq!(stack_count(&game, 1_000_500), before[2] + 3);
     let wolves = game
         .mounts()
@@ -1060,6 +1072,22 @@ fn quest_rows(session: &SaveSession, table: &str) -> Vec<i64> {
     ids
 }
 
+fn team_page_zero(session: &SaveSession) -> Vec<i64> {
+    let page = session.raw_page("tb_team", 0, 10, None).expect("team page");
+    let row = page
+        .rows
+        .iter()
+        .find(|row| integer(&row.cells[column_index(&page, "PAGE_ID")]) == 0)
+        .expect("page 0");
+    [
+        "SLOT1_CHARACTER_CID",
+        "SLOT2_CHARACTER_CID",
+        "SLOT3_CHARACTER_CID",
+    ]
+    .map(|column| integer(&row.cells[column_index(&page, column)]))
+    .to_vec()
+}
+
 #[test]
 fn completing_a_quest_records_it_and_hands_out_its_rewards() {
     let path = fixture("quest-complete");
@@ -1067,30 +1095,24 @@ fn completing_a_quest_records_it_and_hands_out_its_rewards() {
     {
         let mut game = Game::new(&mut session, Catalog::shared());
         let in_progress = game.quests_in_progress().expect("in progress");
-        let blocked: Vec<(i64, bool)> = in_progress
-            .iter()
-            .map(|quest| (quest.quest_id, quest.blocked.is_some()))
-            .collect();
-        assert_eq!(blocked, [(10_005, true), (10_010, false), (40_001, false)]);
-        let error = game
-            .complete_quest(10_005)
-            .expect_err("a hero joins in quest 5");
-        assert!(error.to_string().contains("joins the team"));
+        let ids: Vec<i64> = in_progress.iter().map(|quest| quest.quest_id).collect();
+        assert_eq!(ids, [10_005, 10_010, 40_001]);
+        assert!(in_progress.iter().all(|quest| quest.blocked.is_none()));
         assert!(
             game.complete_quest(10_011).is_err(),
             "quest 11 is not in progress"
         );
 
         // Quest 10 gives 2,500 gold, 400 corps EXP and Advanced Combat Text
-        // ×5. At corps EXP 700 that crosses level 2 (800), whose reward is
-        // Basic Combat Text ×10.
+        // ×5. At corps EXP 700 that crosses level 2 (800); the level's own
+        // reward is claimed in game, so nothing else arrives.
         game.set_adventure("exp", 700).expect("corps exp");
         let advanced = stack_count(&game, 1_410_003);
         let basic = stack_count(&game, 1_410_002);
         let completion = game.complete_quest(10_010).expect("complete");
         assert_eq!(gold(&game), 2_600);
         assert_eq!(stack_count(&game, 1_410_003), advanced + 5);
-        assert_eq!(stack_count(&game, 1_410_002), basic + 10);
+        assert_eq!(stack_count(&game, 1_410_002), basic);
         assert_eq!(completion.levels_gained, 1);
         assert_eq!(completion.new_grade, None);
         let started: Vec<i64> = completion
@@ -1103,22 +1125,45 @@ fn completing_a_quest_records_it_and_hands_out_its_rewards() {
             game.complete_quest(10_010).is_err(),
             "a completed quest is no longer in progress"
         );
+
+        // Quest 5: Aria joins and takes the free slot of team page 0, and the
+        // two dishes arrive as cooked-item stacks.
+        let completion = game.complete_quest(10_005).expect("quest 5");
+        let joined: Vec<i64> = completion.joined.iter().map(|item| item.cid).collect();
+        assert_eq!(joined, [10_006]);
+        let aria = character(&game, 10_006);
+        assert_eq!((aria.level, aria.hp), (1, 461));
+        let dishes: Vec<(i64, i64)> = game
+            .inventory()
+            .expect("inventory")
+            .into_iter()
+            .filter(|stack| {
+                stack.kind == "cook" && [1_420_323, 1_421_306].contains(&stack.item.cid)
+            })
+            .map(|stack| (stack.item.cid, stack.count))
+            .collect();
+        assert_eq!(dishes, [(1_420_323, 10), (1_421_306, 10)]);
     }
+    assert_eq!(team_page_zero(&session), [10_001, 10_002, 10_006]);
     assert_eq!(
         quest_rows(&session, "tb_quest_complete"),
-        [10_001, 10_004, 10_009, 10_010]
+        [10_001, 10_004, 10_005, 10_009, 10_010]
     );
     assert_eq!(
         quest_rows(&session, "tb_quest_hold"),
-        [10_005, 10_011, 40_001]
+        [10_006, 10_011, 40_001]
     );
-    assert_eq!(quest_rows(&session, "tb_completed_quest"), [10_010]);
+    assert!(
+        quest_rows(&session, "tb_completed_quest").is_empty(),
+        "the game leaves tb_completed_quest alone"
+    );
     let page = session
         .raw_page("tb_advent_status", 0, 10, None)
         .expect("advent page");
     let row = &page.rows[0].cells;
     assert_eq!(integer(&row[column_index(&page, "ADV_LEVEL")]), 2);
-    assert_eq!(integer(&row[column_index(&page, "ADV_EXP")]), 1_100);
+    // 700 + 400 from quest 10 + 400 from quest 5.
+    assert_eq!(integer(&row[column_index(&page, "ADV_EXP")]), 1_500);
 }
 
 #[test]
