@@ -3,69 +3,101 @@
 This page records what the editor knows about DragonSword Awakening's growth rules, where each rule comes from, and what is still open. A rule belongs here only when the game's own data or a screen in the game supports it. A guide, a wiki or a modded save is a lead, not a source.
 
 The editor's limits fall into three groups:
-- **Rules**: the game's own mechanics, with the source next to each.
+- **Rules**: the game's own tables, generated into `crates/core/data/growth.json`.
 - **Observed**: the largest value seen in the modded 100% save. These bound fields whose real cap is unknown.
 - **Safety caps**: 32-bit bounds for fields with no observed range.
 
 [The user guide](guide.md#value-limits) lists every limit the editor applies.
 
-## Where the saves come from
+## Where the rules come from
 
-A modder produced every save in the test set. Only `1000_Slot3.db` (the same file as the user's played `123456789_Slot3.db`) is game-written on top. The values in Slot4, Slot5 and the 100% save are the modder's choices, not game rules.
+The game ships its rule tables as XML, one file per table, under `DS/Content/__GeneratedGameData__/Server/XML/GameData/` in its paks. They were extracted on 2026-10-26 from an install whose only version marker is a `v1.1.1.xxh128` checksum file, so the game version is unconfirmed.
 
-## Breakthrough and the Mercenary Corps grade
+`scripts/gen-growth.mjs` reads the tables and writes only the numbers the editor needs to `growth.json`. The extracted XML is never committed. To regenerate after a game update:
 
-| Rule                                                                                                                             | Source                                                                                                                                                                                                     |
-| -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tb_advent_status` is the Mercenary Corps: `ADV_GRADE` is its grade, `ADV_LEVEL` and `ADV_EXP` its level and EXP.                | Catalog item 1000201 is "Mercenary Corps Rank EXP" (`PAY_ADV_EXP`).                                                                                                                                        |
-| There are five promotions, and each unlocks the next hero and karma breakthrough. Grade g allows breakthrough stages 0 to g − 1. | Official guides [3121](https://dragonsword.webzen.co.kr/gameinfo/guide/detail/3121) and [3158](https://dragonsword.webzen.co.kr/gameinfo/guide/detail/3158)                                                |
-| A hero's own breakthrough (`ASCEND`) raises that hero's level cap. The grade only unlocks the next stage.                        | Official guide [3158](https://dragonsword.webzen.co.kr/gameinfo/guide/detail/3158)                                                                                                                         |
-| A hero's breakthrough stage caps every skill's level.                                                                            | Official guide [3159](https://dragonsword.webzen.co.kr/gameinfo/guide/detail/3159)                                                                                                                         |
-| Active and signal skills go up to 10 since the 19 Feb 2026 patch (7 before).                                                     | [Patch notes](https://dragonsword.webzen.co.kr/board/1076/detail/392159)                                                                                                                                   |
-| Heroes and karma awaken (transcend) up to 6, whatever their stage.                                                               | Official guides [3160](https://dragonsword.webzen.co.kr/gameinfo/guide/detail/3160) and [3163](https://dragonsword.webzen.co.kr/gameinfo/guide/detail/3163)                                                |
-| EXP gained past the level cap is refunded.                                                                                       | Official guides [3156](https://dragonsword.webzen.co.kr/gameinfo/guide/detail/3156) and [3163](https://dragonsword.webzen.co.kr/gameinfo/guide/detail/3163)                                                |
-| Quest progress is stored: `tb_quest_complete` (category 1 is the main story, quest IDs from 10001) and `tb_quest_hold`.          | The saves. The played save has 10001–10012 complete and 10013 held. The 100% save has 10020, 10040, 10050, 10060 and 10080, which fits the five promotion quests if a quest's ID is 10000 plus its number. |
+```bash
+node scripts/gen-growth.mjs <extract-dir> "<game version>"
+cargo test -p dsa-core --lib growth
+```
 
-The fan [Mercenary Rank table](https://dragonswordawakening.net/records/mercenary-rank) lists five ranks, each reached by a main quest: Novice 20, Intermediate 40, Advanced 50, Elite 60 and Veteran 80. Grade 1 is most likely the stage before the first promotion, which makes grade 2 Novice and grade 6 Veteran: the played save is at grade 1 with quest 13 in progress, holds no corps title, and has `tb_mercenary_trainee_mission` rows. Titles 2104100–2104104 are Novice through Veteran Mercenary Corps. The editor shows no rank names until the game's screen confirms them (Q5).
+The generator stops on any table that breaks an assumption below, and the `growth` unit tests pin key rows, so a changed rule fails loudly instead of slipping in.
 
-## What the editor does with these rules
+| Table                                              | Gives                                                                                          |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `PCCharacterLevelData`                             | Hero EXP per level (100 levels; EPIC and LEGENDARY heroes share one table)                     |
+| `KarmaLevelData`, `KarmaData`                      | Karma EXP per level for each rarity (RARE, EPIC, LEGENDARY), and each karma's rarity           |
+| `PCSkillGrowthData`                                | The breakthrough each skill level needs, per skill type, and the content version that added it |
+| `AdventLevelData`                                  | Mercenary Corps EXP per level                                                                  |
+| `AdventGradeData`, `StringData`                    | Each grade's promotion quest, the breakthroughs it unlocks, its title and its rank name        |
+| `LocalizingControlData_*`, `LocalizingVersionData` | Each region's live limits and content version                                                  |
+| `PCCharacterTranscendData`, `KarmaTranscendData`   | Awakening steps (1–6)                                                                          |
 
-- **The grade is read-only.** It follows the promotion quests. Lowering it would contradict them, the difficulty columns and any hero ascended past the new limit, and nothing shows that the game would promote again. The raw browser needs advanced editing to change `ADV_GRADE`.
-- **Growth caps are per row.** A hero's or karma's stage is its `ASCEND`, clamped to 0 to grade − 1. That stage's row gives the level, EXP and skill caps. The ascension cap is grade − 1, and awakening caps at 6.
-- **A breakthrough cannot drop below what the row needs.** A hero at level 35 needs stage 2, so the editor refuses to lower its `ASCEND` below 2 until the level comes down. Karma has no level column, so its EXP stands in.
-- **Existing values above a cap stay editable**, because every setter uses `max(limit, current)`.
+## The rules
 
-The interim stage table, until the game's own tables replace it:
+**EXP is a running total.** `CharacterExp` at level N is the EXP that ends level N, so a hero at level N holds between the entries for N − 1 and N. The game-written save fits exactly: level 2 heroes at 170 (150–399), level 3 at 595 (400–899), level 5 at 1,700 and 2,465 (1,600–2,599). Karma and the corps work the same way. The game refunds EXP past the level cap, so a hero at its cap sits at that level's start: 76,900 at level 20, 2,990,400 at level 70.
 
-| Stage | Level cap | EXP cap   | Active skills (1–4) | Basic skills (5–7) | Status                                                                                          |
-| ----- | --------- | --------- | ------------------- | ------------------ | ----------------------------------------------------------------------------------------------- |
-| 0     | 20        | 76,900    | 3                   | 3                  | Level and active cap fit guides and NamuWiki. Basic cap unverified. EXP is the lower candidate. |
-| 1     | 30        | 273,500   | 5                   | 5                  | EXP unverified                                                                                  |
-| 2     | 40        | 619,000   | 7                   | 7                  | EXP unverified                                                                                  |
-| 3     | 50        | 1,175,000 | 9                   | 7                  | EXP unverified                                                                                  |
-| 4     | 60        | 1,991,500 | 10                  | 7                  | EXP unverified                                                                                  |
-| 5     | 70        | 3,118,500 | 10                  | 7                  | Level 70 or 80 disputed (Q1). EXP unverified.                                                   |
+**The grade unlocks breakthroughs; each row's breakthrough sets its caps.** Each grade's `CharacterAscendExpand` and `KarmaAscendExpand` are grade − 1. A hero's or karma's stage is its own `ASCEND`, clamped to what the grade unlocks.
 
-The special skill slot 801 caps at 1. Karma uses the hero rows until its own table is known (Q4).
+| Grade | Rank         | Promotion quest | Unlocks breakthrough | Title   |
+| ----- | ------------ | --------------- | -------------------- | ------- |
+| 1     | Apprentice   | —               | 0                    | —       |
+| 2     | Novice       | 40001           | 1                    | 2104100 |
+| 3     | Intermediate | 40011           | 2                    | 2104101 |
+| 4     | Advanced     | 40021           | 3                    | 2104102 |
+| 5     | Elite        | 40031           | 4                    | 2104103 |
+| 6     | Veteran      | 40041           | 5                    | 2104104 |
 
-### Where the EXP numbers came from
+The promotion quests are category `ADVENT_GRADE` in `QuestMainData`. A save records them in `tb_quest_complete` with category 7: the 100% save has all five, the played save none.
 
-The stage 1–5 EXP values (273,500 to 3,118,500) and the old stage-0 value of 88,500 came into the code as a pasted table with no stated source. They are not in the bundled catalog data. Read as running totals, 88,500 and 3,118,500 come out one level past the cap: the modder's saves give every level-20 hero 76,900 EXP and every level-70 hero 2,990,400. If the table lists the EXP needed for the next level, the running-total cap for level N is the entry listed for N − 1. Stage 0 now uses 76,900, the lower candidate.
+**Level cap per breakthrough: 20 + 10 × stage.** No table holds it directly. The generator checks it against every region's live maximum (level 60 at breakthrough 4, level 70 at breakthrough 5), and it matches the official guides and NamuWiki for stages 0–4. Karma uses the same caps; its live maxima are the same as the heroes'.
+
+**Skill caps per breakthrough**, from `PCSkillGrowthData`. Every hero follows the same rows:
+
+| Breakthrough | Active (1–4), Korea | Active (1–4), global | Basic (5–7) | 8 and 801 |
+| ------------ | ------------------- | -------------------- | ----------- | --------- |
+| 0            | 3                   | 3                    | 3           | 1         |
+| 1            | 5                   | 5                    | 5           | 1         |
+| 2            | 7                   | 7                    | 7           | 1         |
+| 3            | 9                   | 7                    | 7           | 1         |
+| 4            | 10                  | 7                    | 7           | 1         |
+| 5            | 10                  | —                    | 7           | 1         |
+
+Active levels 8–10 belong to content version `M11_3`, which only Korea runs. That matches the 19 Feb 2026 Korean patch notes that raised active skills from 7 to 10. Skill type 8 exists in the game data for every hero, but no save in the test set has a type-8 row, so the editor still accepts only 1–7 and 801.
+
+**Region limits** on the live servers (`LIVE` column):
+
+| Limit                       | Korea | Global (America, Europe, Asia) | DEV                     |
+| --------------------------- | ----- | ------------------------------ | ----------------------- |
+| Content version             | M11_3 | M11_2                          | —                       |
+| Hero and karma level        | 70    | 60                             | 70 (Korea), 80 (global) |
+| Hero and karma breakthrough | 5     | 4                              | 5 (Korea), 6 (global)   |
+| Mercenary Corps grade       | 6     | 5                              | 6                       |
+| Mercenary Corps level       | 50    | 50                             | 80                      |
+
+The guides' "level 80 after five breakthroughs" matches the global DEV setting, not a live server. The 100% save's corps level 80 and grade 6 are DEV or Korean values.
+
+**Awakening** caps at 6 for heroes and karma (`PCCharacterTranscendData`, `KarmaTranscendData`).
+
+## What the editor does
+
+- **It applies the global limits.** A save does not record its region, so the editor uses the lower profile. A Korean save above it, or a modded one, stays editable at its current values, because every setter uses `max(limit, current)`. Switching is one constant, `growth::REGION`.
+- **The grade is read-only.** It follows the promotion quests. Lowering it would contradict them, the difficulty columns and any hero ascended past the new limit. The raw browser needs advanced editing to change `ADV_GRADE`. The Overview shows the rank name and how many promotion quests the save records.
+- **EXP follows the level.** Setting a hero's or the corps' level writes the EXP that starts it, and EXP edits stay inside the current level. Karma has no level column, so its EXP is capped at the start of its level cap, from its rarity's table. An unknown karma gets the RARE table, the tightest one.
+- **A breakthrough cannot drop below what the row needs.** A hero at level 35 needs breakthrough 2, so the editor refuses a lower `ASCEND` until the level comes down. Karma uses the level its EXP reaches.
 
 ## Open questions
 
-| #   | Question                                                                                 | Decisive check                                                              | Until then                                                                                   |
-| --- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Q1  | What is the hero level cap at each breakthrough stage, and is stage 5 at 70 or 80?       | The game's breakthrough table, or the breakthrough screen of a stage-4 hero | Keep 70. July 2026 guides (games.gg, allthings.how, Destructoid) say 80; the modder used 70. |
-| Q2  | Is EXP a running total or progress within the level, and what is the level-to-EXP table? | The game's level table, or Reina's EXP bar                                  | Running total is likely (see the observations below). Stage 0 caps at 76,900.                |
-| Q3  | What are the per-stage caps for active skills (1–4) and basic skills (5–7)?              | The game's skill table, or the skill screen at stage 0                      | Active 3/5/7/9/10/10; basic is the smaller of the active cap and 7.                          |
-| Q4  | What are karma's level caps and EXP at each karma breakthrough?                          | The game's karma tables                                                     | The hero rows, unverified.                                                                   |
-| Q5  | Which rank name goes with each `ADV_GRADE`?                                              | The Mercenary Corps screen                                                  | No rank names shown.                                                                         |
-| Q6  | Does the game promote again after the grade is lowered?                                  | Not worth testing                                                           | The grade is read-only.                                                                      |
-| Q7  | Will the game load a save the editor wrote at all?                                       | The in-game test gates                                                      | Don't edit the real save.                                                                    |
-| Q8  | What do `HP`, `TRANSCEND_TOTAL`, `SOLDIER_GRADE` and `SOLDIER_GRADE_POINT` mean?         | `dsgamedb_sqlite.sql` and the XML tables in the paks                        | Leave them as they are.                                                                      |
-
-The game's own rule tables are in its pak files, one XML file per table under `DS/Content/__GeneratedGameData__/Server/XML/GameData/`, next to `dsgamedb_sqlite.sql`, a dump of the server database. Extracting them answers Q1–Q4 and Q8.
+| #   | Question                                                                         | Status                                                                                             |
+| --- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Q1  | Hero level cap at each breakthrough                                              | Answered: 20 + 10 × stage, up to 60 (global) or 70 (Korea).                                        |
+| Q2  | Is EXP a running total, and what is the table?                                   | Answered: running total, `PCCharacterLevelData`.                                                   |
+| Q3  | Skill caps per stage                                                             | Answered: `PCSkillGrowthData`, above.                                                              |
+| Q4  | Karma level and EXP caps                                                         | Answered: hero level caps, with `KarmaLevelData` EXP per rarity.                                   |
+| Q5  | Rank name per grade                                                              | Answered: `AdventGradeData` and `StringData`, above.                                               |
+| Q6  | Does the game promote again after the grade is lowered?                          | Not worth testing. The grade is read-only.                                                         |
+| Q7  | Will the game load a save the editor wrote at all?                               | Open. The in-game test gates decide it; don't edit the real save before they pass.                 |
+| Q8  | What do `HP`, `TRANSCEND_TOTAL`, `SOLDIER_GRADE` and `SOLDIER_GRADE_POINT` mean? | Open. `dsgamedb_sqlite.sql` is the schema only, and `SoldierGradeData` has no grades.              |
+| Q9  | Which region does the user's game run?                                           | Open. It only matters from breakthrough 3 up, where active skills and the top breakthrough differ. |
 
 ## Observations
 
@@ -75,21 +107,19 @@ Each entry gives the date, the game version where known, and what was seen.
 
 `1000_Slot3.db`, game version not recorded. Heroes by level and EXP:
 
-| Level | EXP   | Heroes           |
-| ----- | ----- | ---------------- |
-| 1     | 0     | 7                |
-| 2     | 170   | 2                |
-| 3     | 595   | 2                |
-| 5     | 1,700 | 2                |
-| 5     | 2,465 | 1 (Reina, 10004) |
+| Level | EXP   | Heroes           | Level range from the table |
+| ----- | ----- | ---------------- | -------------------------- |
+| 1     | 0     | 7                | 0–149                      |
+| 2     | 170   | 2                | 150–399                    |
+| 3     | 595   | 2                | 400–899                    |
+| 5     | 1,700 | 2                | 1,600–2,599                |
+| 5     | 2,465 | 1 (Reina, 10004) | 1,600–2,599                |
 
-Pairs of heroes sit on exactly the same EXP at the same level, which looks like level thresholds: 170 to reach level 2, 595 for level 3, 1,700 for level 5. That supports the running-total reading of Q2, but it is not decisive. The in-game check: if Reina's bar shows 2,465 as her current EXP, EXP is per level; if it shows 765 (2,465 − 1,700), EXP is a running total.
+The corps is at level 3 with 1,800 EXP, inside `AdventLevelData`'s 1,650–2,549.
 
 ### In-game checks still to do
 
 On a copy of the played save, without editing:
-1. The rank name the Mercenary Corps screen shows at grade 1 (Q5).
-2. Reina's and Charlotte's level-5 EXP bars as numbers (Q2).
-3. One hero's breakthrough screen: the next cap and what it requires (Q1).
-4. The max level of an active and a basic skill at breakthrough 0 (Q3).
-5. The game version.
+1. The rank name on the Mercenary Corps screen; the tables say Apprentice.
+2. Reina's level-5 EXP bar; the table predicts 865 of 1,000 into the level (2,465 − 1,600), if the bar shows progress within the level.
+3. The game version and region (Q9).
