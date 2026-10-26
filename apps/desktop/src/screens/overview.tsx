@@ -177,7 +177,7 @@ export function OverviewScreen() {
             <SmallCount icon={<Flame />} label="Karma" value={counts.karma} />
             <SmallCount icon={<Coins />} label="Stackables" value={counts.stackables} />
             <SmallCount icon={<Shield />} label="Costumes" value={counts.costumes} />
-            <SmallCount icon={<Zap />} label="Mounts" value={counts.mounts} />
+            <SmallCount icon={<Zap />} label="Familiars" value={counts.mounts} />
           </div>
         </Panel>
 

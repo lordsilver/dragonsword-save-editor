@@ -917,19 +917,19 @@ export const useApp = create<Store>((set, get) => {
 
     async unlockMount(cid) {
       const added = await attempt(
-        'Unlocking mount',
+        'Unlocking familiar',
         () => api.unlockMount(cid),
         async () => {
           await get().loadMounts();
           await get().loadOverview();
         },
       );
-      if (added !== null) toast.success(added ? 'Mount unlocked.' : 'That mount is already owned.');
+      if (added !== null) toast.success(added ? 'Familiar unlocked.' : 'That familiar is already owned.');
     },
 
     async equipMount(characterCid, dbid) {
       await attempt(
-        'Equipping mount',
+        'Equipping familiar',
         () => api.equipMount(characterCid, dbid),
         async () => {
           await get().loadMounts();

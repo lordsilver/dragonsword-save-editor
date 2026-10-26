@@ -40,7 +40,7 @@ const SLOT_LABELS: Array<[keyof Omit<Loadout, 'characterCid'>, string]> = [
   ['hand', 'Hands'],
   ['foot', 'Feet'],
   ['karma', 'Karma'],
-  ['vehicle', 'Mount'],
+  ['vehicle', 'Familiar'],
 ];
 
 export function CharactersScreen() {

@@ -32,7 +32,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: 'gems', label: 'Gems', icon: Gem, group: 'Save' },
   { id: 'karma', label: 'Karma', icon: Flame, group: 'Save' },
   { id: 'costumes', label: 'Costumes', icon: Shirt, group: 'Collection' },
-  { id: 'mounts', label: 'Mounts', icon: PawPrint, group: 'Collection' },
+  { id: 'mounts', label: 'Familiars', icon: PawPrint, group: 'Collection' },
   { id: 'titles', label: 'Titles', icon: Crown, group: 'Collection' },
   { id: 'cooking', label: 'Cooking', icon: CookingPot, group: 'Collection' },
   { id: 'raw', label: 'Raw database', icon: Database, group: 'Advanced' },

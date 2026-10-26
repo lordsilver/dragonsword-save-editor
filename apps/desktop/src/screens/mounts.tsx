@@ -81,8 +81,8 @@ export function MountsScreen() {
     <div className="space-y-5">
       <PageHeader
         eyebrow={`Account ${save.accountId} · Slot ${save.slot}`}
-        title="Mounts"
-        description="Vehicles in tb_vehicle and the character each one is currently assigned to. Unlocking adds a row with a random uint32 instance id."
+        title="Familiars"
+        description="Familiars (the game stores them in tb_vehicle) and the hero each one is assigned to. Unlocking adds a row with a random 32-bit instance ID, as the game does when you claim one."
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -90,7 +90,7 @@ export function MountsScreen() {
           icon={<PawPrint />}
           label="Owned"
           value={formatNumber(mounts.length)}
-          detail={`of ${catalog.length} catalog mounts`}
+          detail={`of ${catalog.length} catalog familiars`}
         />
         <StatTile
           icon={<Lock />}
@@ -128,7 +128,7 @@ export function MountsScreen() {
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search mounts"
+            placeholder="Search familiars"
             className="h-8 w-full rounded-md border border-input bg-background pr-2 pl-8 text-xs shadow-xs focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none dark:bg-input/30"
           />
         </div>
@@ -138,7 +138,7 @@ export function MountsScreen() {
               checked={lockedOnly}
               onCheckedChange={setLockedOnly}
               size="sm"
-              aria-label="Show only missing mounts"
+              aria-label="Show only missing familiars"
             />
             Missing only
           </span>
@@ -152,10 +152,10 @@ export function MountsScreen() {
         owned.length === 0 ? (
           <EmptyPanel
             icon={<PawPrint />}
-            title={mounts.length === 0 ? 'No mounts owned' : 'No mount matches that search'}
+            title={mounts.length === 0 ? 'No familiars owned' : 'No familiar matches that search'}
             description={
               mounts.length === 0
-                ? 'Open the catalog tab to unlock a mount for this save.'
+                ? 'Open the catalog tab to unlock a familiar for this save.'
                 : 'Try a different name or CID, or switch to the catalog tab.'
             }
             action={
@@ -199,7 +199,7 @@ export function MountsScreen() {
                   <NativeSelect
                     value={mount.equippedBy ?? 0}
                     disabled={busy}
-                    aria-label="Mount owner"
+                    aria-label="Familiar owner"
                     onChange={(event) => void changeOwner(mount, Number(event.target.value))}
                   >
                     <option value={0}>Not equipped</option>
@@ -217,7 +217,7 @@ export function MountsScreen() {
       ) : missing.length === 0 ? (
         <EmptyPanel
           icon={<Check />}
-          title="Every catalog mount is owned"
+          title="Every catalog familiar is owned"
           description="Turn off “Missing only” to browse the full catalog."
         />
       ) : (
@@ -234,10 +234,10 @@ export function MountsScreen() {
         </div>
       )}
 
-      <Panel title="Mount assignment" description="One character per mount.">
+      <Panel title="Familiar assignment" description="One character per familiar.">
         <InfoNote>
-          Mounts are linked through <span className="font-mono">tb_equip_mount.VEHICLE</span>. Changing the rider clears
-          the previous character's slot first, so a mount cannot appear on two characters at once.
+          Familiars are linked through <span className="font-mono">tb_equip_mount.VEHICLE</span>. Changing the rider
+          clears the previous character's slot first, so a mount cannot appear on two characters at once.
         </InfoNote>
       </Panel>
     </div>

@@ -48,7 +48,7 @@ Every screen edits only the open temporary copy. The title bar shows **Unsaved**
 Shows the account, player name, Mercenary Corps grade, level and EXP, play time, stamina, location, collection progress, currencies, and the save file itself.
 - Click the pencil next to the name to rename the player.
 - **Edit Mercenary Corps** changes the corps level, EXP or play time. The grade is shown but read-only: it follows the promotion quests, and each promotion unlocks the next hero and karma breakthrough. The level caps at 50, the live servers' maximum. Changing the level writes that level's starting EXP, and the EXP field edits within the current level.
-- **Quests** has two tabs. **In progress** completes a quest the way the game does: it records the quest as done, hands out its gold, items, dishes, mounts, titles and heroes, adds its Mercenary Corps EXP, promotes the corps for a promotion exam (with its title and mount), and starts the quests that were waiting for it. Corps level rewards stay to be claimed on the game's Mercenary Corps screen, as in the game. Story events such as cutscenes are skipped. **Missed rewards** is for saves another tool edited forward: it lists what each completed quest hands out and grants the quests you tick. Equipment is listed but not granted yet. The editor cannot tell which rewards the game already gave, so granting a quest twice adds its rewards twice.
+- **Quests** has two tabs. **In progress** completes a quest the way the game does: it records the quest as done, hands out its gold, items, dishes, familiars, titles and heroes, adds its Mercenary Corps EXP, promotes the corps for a promotion exam (with its title and familiar), and starts the quests that were waiting for it. Corps level rewards stay to be claimed on the game's Mercenary Corps screen, as in the game. Story events such as cutscenes are skipped. **Missed rewards** is for saves another tool edited forward: it lists what each completed quest hands out and grants the quests you tick. Equipment is listed but not granted yet. The editor cannot tell which rewards the game already gave, so granting a quest twice adds its rewards twice.
 - **Fill every stack** is the bulk inventory action; it is disabled when every eligible material stack is already full.
 
 ### Currencies
@@ -82,9 +82,9 @@ Edit each gem's raw `STAT_INFO_CID` and lock state. The catalog icon follows the
 
 Edit a spirit's EXP, ascension, and transcendence, and equip it to a character. Each spirit's caps follow its own breakthrough: the same level caps as heroes, with the EXP from its rarity's level table. The card shows the level its EXP reaches. A spirit belongs to one character at a time: assigning a new owner clears the previous character's slot. Choosing **Not equipped** detaches it.
 
-### Costumes and mounts
+### Costumes and familiars
 
-Unlock entries from the catalog and assign them to a character. Costumes are non-exclusive per character; a mount is one per character. Unlocking writes the instance row with the current date, and costume rows also get `PARTS_ON = 1` and `IS_NEW = 1`.
+Unlock entries from the catalog and assign them to a character. Familiars are what the game calls the mounts it stores in `tb_vehicle`. Costumes are non-exclusive per character; a familiar is one per character. Unlocking writes the instance row with the current date, and costume rows also get `PARTS_ON = 1` and `IS_NEW = 1`.
 
 ### Titles
 

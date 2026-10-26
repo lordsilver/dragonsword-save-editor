@@ -765,7 +765,7 @@ impl<'a> Game<'a> {
                         let next = self.mint_id("tb_vehicle", "VEHICLE_DBID")?;
                         self.conn().execute(
                             "INSERT INTO tb_vehicle (VEHICLE_DBID, USER_DBID, VEHICLE_CID, CREATED_DATE)
-                             VALUES (?,?,?,strftime('%s','now'))",
+                             VALUES (?,?,?,CAST(strftime('%s','now','localtime') AS INTEGER))",
                             params![next, self.user_id, cid],
                         )?;
                         note(&mut grant.granted, item, 1);
@@ -2129,7 +2129,7 @@ impl<'a> Game<'a> {
         let next = self.mint_id("tb_vehicle", "VEHICLE_DBID")?;
         self.conn().execute(
             "INSERT INTO tb_vehicle (VEHICLE_DBID, USER_DBID, VEHICLE_CID, CREATED_DATE)
-             VALUES (?,?,?,strftime('%s','now'))",
+             VALUES (?,?,?,CAST(strftime('%s','now','localtime') AS INTEGER))",
             params![next, self.user_id, cid],
         )?;
         self.touch();
