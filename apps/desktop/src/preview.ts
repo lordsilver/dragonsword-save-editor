@@ -3,10 +3,10 @@
 // nothing. Served only by `pnpm preview:ui`, never built into the app.
 //
 // Query parameters set the starting view: `fixture` (a recording's name when
-// several are served), `section`, `hero` (a CID), `theme`, and `trace` to list
+// several are served), `section`, `hero` (a CID), `tab` (the hero tab), `theme`, and `trace` to list
 // commands the recording does not answer.
 import { mockIPC, mockWindows } from '@tauri-apps/api/mocks';
-import type { Section, Settings } from '@/lib/types';
+import type { HeroTab, Section, Settings } from '@/lib/types';
 
 type Fixture = Record<string, unknown>;
 
@@ -54,9 +54,11 @@ await import('./main.tsx');
 const { useApp } = await import('@/lib/store');
 const section = params.get('section') as Section | null;
 const hero = params.get('hero');
+const tab = params.get('tab') as HeroTab | null;
 const unsubscribe = useApp.subscribe((state) => {
   if (!state.booted || !state.save) return;
   unsubscribe();
   if (section) useApp.getState().setSection(section);
+  if (tab) useApp.getState().setHeroTab(tab);
   if (hero) void useApp.getState().selectCharacter(Number(hero));
 });

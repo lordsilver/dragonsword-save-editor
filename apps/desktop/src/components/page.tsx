@@ -2,24 +2,21 @@ import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 export function PageHeader({
-  eyebrow,
   title,
   description,
   actions,
   className,
 }: {
-  eyebrow?: string;
   title: ReactNode;
   description?: ReactNode;
   actions?: ReactNode;
   className?: string;
 }) {
   return (
-    <div className={cn('flex flex-wrap items-start justify-between gap-4', className)}>
+    <div className={cn('flex flex-wrap items-start justify-between gap-x-6 gap-y-3', className)}>
       <div className="min-w-0 space-y-1">
-        {eyebrow && <div className="text-[11px] font-medium tracking-[0.16em] text-brand uppercase">{eyebrow}</div>}
-        <h1 className="font-heading text-2xl font-semibold tracking-tight text-balance">{title}</h1>
-        {description && <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">{description}</p>}
+        <h1 className="text-2xl font-semibold tracking-tight text-balance">{title}</h1>
+        {description && <p className="max-w-3xl text-sm text-muted-foreground">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>

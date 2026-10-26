@@ -78,7 +78,6 @@ export function InventoryScreen() {
   return (
     <div className="space-y-5">
       <PageHeader
-        eyebrow={`Account ${save.accountId} · Slot ${save.slot}`}
         title="Inventory"
         description="Stackable materials and cooked dishes. Counts are per row, so a full stack is a single value the game reads back directly."
         actions={

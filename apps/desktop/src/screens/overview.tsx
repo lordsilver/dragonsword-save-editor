@@ -72,7 +72,6 @@ export function OverviewScreen() {
   return (
     <div className="space-y-5">
       <PageHeader
-        eyebrow={`Account ${overview.accountId} · Slot ${save.slot}`}
         title={
           <span className="flex flex-wrap items-center gap-2">
             Welcome back, {overview.playerName || 'adventurer'}

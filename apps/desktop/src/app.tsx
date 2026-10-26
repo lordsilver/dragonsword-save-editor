@@ -3,7 +3,7 @@ import { AppWindow, FolderOpen, ShieldCheck, Terminal } from 'lucide-react';
 import { type ReactElement, type ReactNode, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Sidebar } from '@/components/sidebar';
-import { TopBar } from '@/components/top-bar';
+import { StatusBar } from '@/components/status-bar';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -157,13 +157,12 @@ export function App() {
   const Screen = SCREENS[section];
 
   return (
-    <div className="flex h-svh overflow-hidden">
-      <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar />
-        <div className="relative min-h-0 flex-1 overflow-hidden">
+    <div className="flex h-svh flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-1">
+        <Sidebar />
+        <div className="relative min-w-0 flex-1 overflow-hidden">
           <main className="scroll-thin h-full overflow-y-auto">
-            <div key={section} className="mx-auto w-full max-w-[1440px] px-5 py-5">
+            <div key={section} className="mx-auto w-full max-w-[1440px] px-8 pt-6 pb-8">
               <Screen />
             </div>
           </main>
@@ -174,6 +173,7 @@ export function App() {
           )}
         </div>
       </div>
+      <StatusBar />
 
       <Dialog
         open={closeRequestOpen}

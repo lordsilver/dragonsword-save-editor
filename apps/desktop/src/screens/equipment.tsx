@@ -68,7 +68,6 @@ export function EquipmentScreen() {
   return (
     <div className="space-y-5">
       <PageHeader
-        eyebrow={`Account ${save.accountId} · Slot ${save.slot}`}
         title="Equipment"
         description="Weapons and armor in tb_equipment. Enchantment and experience are ordinary columns; stat rolls are exposed as raw CIDs because their type table is not published."
       />

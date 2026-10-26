@@ -12,6 +12,7 @@ import type {
   Equipment,
   Gem,
   HeroEntry,
+  HeroTab,
   Item,
   Karma,
   Loadout,
@@ -64,6 +65,8 @@ export interface AppState {
   stackables: Item[];
   characters: Character[];
   selectedCharacter: number | null;
+  /** The hero screen's tab, kept while switching heroes as the game does. */
+  heroTab: HeroTab;
   skills: Skill[];
   teams: TeamPage[];
   loadout: Loadout | null;
@@ -100,6 +103,7 @@ export interface AppActions {
   loadCharacters(): Promise<void>;
   ensureCharacters(): Promise<void>;
   selectCharacter(cid: number | null): Promise<void>;
+  setHeroTab(tab: HeroTab): void;
   loadEquipment(): Promise<void>;
   loadGems(): Promise<void>;
   loadKarma(): Promise<void>;
@@ -184,6 +188,7 @@ function initialState(): AppState {
     stackables: [],
     characters: [],
     selectedCharacter: null,
+    heroTab: 'info',
     skills: [],
     teams: [],
     loadout: null,
@@ -518,6 +523,10 @@ export const useApp = create<Store>((set, get) => {
     async ensureCharacters() {
       if (get().characters.length > 0) return;
       await read(api.characters, (characters) => set({ characters }));
+    },
+
+    setHeroTab(heroTab) {
+      set({ heroTab });
     },
 
     async selectCharacter(cid) {

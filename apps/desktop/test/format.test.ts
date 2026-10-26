@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NAV_ITEMS, SECTION_LABELS } from '@/lib/nav';
+import { NAV_GROUPS, NAV_ITEMS, SECTION_LABELS } from '@/lib/nav';
 import { compareDbid, formatBytes, formatDate, formatNumber, itemName } from '@/lib/store';
 import type { Item } from '@/lib/types';
 
@@ -58,6 +58,6 @@ describe('navigation', () => {
   });
 
   it('keeps every section in a known group', () => {
-    for (const item of NAV_ITEMS) expect(['Save', 'Collection', 'Advanced']).toContain(item.group);
+    for (const item of NAV_ITEMS) expect(NAV_GROUPS).toContain(item.group);
   });
 });

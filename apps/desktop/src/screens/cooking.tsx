@@ -75,7 +75,6 @@ export function CookingScreen() {
   return (
     <div className="space-y-5">
       <PageHeader
-        eyebrow={`Account ${save.accountId} · Slot ${save.slot}`}
         title="Cooking"
         description="The cookbook, its ingredients and the effects each dish grants. Recipe knowledge is a bit in tb_switch, not an inventory row."
         actions={

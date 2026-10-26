@@ -75,7 +75,6 @@ export function CostumesScreen() {
   return (
     <div className="space-y-5">
       <PageHeader
-        eyebrow={`Account ${save.accountId} · Slot ${save.slot}`}
         title="Costumes"
         description="Owned outfits and the full costume catalog. Unlocking adds a new instance with a random uint32 id, matching how the game mints costume rows."
       />

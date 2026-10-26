@@ -454,3 +454,5 @@ export type Section =
   | 'cooking'
   | 'raw'
   | 'settings';
+
+export type HeroTab = 'info' | 'skills' | 'equipment';

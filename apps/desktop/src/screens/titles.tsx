@@ -57,7 +57,6 @@ export function TitlesScreen() {
   return (
     <div className="space-y-5">
       <PageHeader
-        eyebrow={`Account ${save.accountId} · Slot ${save.slot}`}
         title="Titles"
         description="Every title in the catalog, with the bit that stores it in tb_title. Favorites are shown but not changed here, so the game's favorite mask stays intact."
         actions={

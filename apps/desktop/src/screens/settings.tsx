@@ -77,7 +77,6 @@ export function SettingsScreen() {
   return (
     <div className="space-y-5">
       <PageHeader
-        eyebrow="Preferences"
         title="Settings"
         description="Appearance, language, save discovery and the details of the open file. Preferences are stored outside the game save."
         actions={

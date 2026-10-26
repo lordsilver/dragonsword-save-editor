@@ -46,7 +46,6 @@ export function GemsScreen() {
   return (
     <div className="space-y-5">
       <PageHeader
-        eyebrow={`Account ${save.accountId} · Slot ${save.slot}`}
         title="Gems"
         description="Gem instances and the stat information each one carries. Gems are created by the game; this screen edits their existing rows."
       />

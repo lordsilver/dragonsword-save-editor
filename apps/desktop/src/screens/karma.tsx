@@ -59,7 +59,6 @@ export function KarmaScreen() {
   return (
     <div className="space-y-5">
       <PageHeader
-        eyebrow={`Account ${save.accountId} · Slot ${save.slot}`}
         title="Karma"
         description="Karma spirits in tb_karma. Each karma's growth caps follow its own breakthrough, unlocked by the Mercenary Corps grade; existing values above a cap stay editable. The equipped character lives in tb_equip_mount."
       />

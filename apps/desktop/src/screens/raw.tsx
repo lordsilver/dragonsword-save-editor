@@ -85,7 +85,6 @@ export function RawScreen() {
   return (
     <div className="space-y-5">
       <PageHeader
-        eyebrow={`Account ${save.accountId} · Slot ${save.slot}`}
         title="Raw database"
         description="The escape hatch: browse every table in the decrypted save and edit one cell at a time. Values are validated before they are written."
         actions={

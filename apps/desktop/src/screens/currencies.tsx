@@ -30,7 +30,6 @@ export function CurrenciesScreen() {
   return (
     <div className="space-y-5">
       <PageHeader
-        eyebrow={`Account ${save.accountId} · Slot ${save.slot}`}
         title="Currencies"
         description="Every balance the save stores in tb_currency. Amounts are written immediately to the working copy; the encrypted file changes only when you save."
         actions={

@@ -14,27 +14,31 @@ import {
   Sword,
   Users,
 } from 'lucide-react';
-import type { Section } from './types';
+import type { Counts, Section } from './types';
+
+export const NAV_GROUPS = ['Save', 'Heroes', 'Collection', 'Advanced'] as const;
 
 export interface NavItem {
   id: Section;
   label: string;
   icon: LucideIcon;
-  group: 'Save' | 'Collection' | 'Advanced';
+  group: (typeof NAV_GROUPS)[number];
+  /** The overview count shown beside the label. */
+  count?: (counts: Counts) => number;
 }
 
 export const NAV_ITEMS: NavItem[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, group: 'Save' },
-  { id: 'currencies', label: 'Currencies', icon: Coins, group: 'Save' },
-  { id: 'inventory', label: 'Inventory', icon: Backpack, group: 'Save' },
-  { id: 'characters', label: 'Characters', icon: Users, group: 'Save' },
-  { id: 'equipment', label: 'Equipment', icon: Sword, group: 'Save' },
-  { id: 'gems', label: 'Gems', icon: Gem, group: 'Save' },
-  { id: 'karma', label: 'Karma', icon: Flame, group: 'Save' },
-  { id: 'costumes', label: 'Costumes', icon: Shirt, group: 'Collection' },
-  { id: 'mounts', label: 'Familiars', icon: PawPrint, group: 'Collection' },
-  { id: 'titles', label: 'Titles', icon: Crown, group: 'Collection' },
-  { id: 'cooking', label: 'Cooking', icon: CookingPot, group: 'Collection' },
+  { id: 'currencies', label: 'Currencies', icon: Coins, group: 'Save', count: (c) => c.currencies },
+  { id: 'inventory', label: 'Inventory', icon: Backpack, group: 'Save', count: (c) => c.stackables },
+  { id: 'characters', label: 'Heroes', icon: Users, group: 'Heroes', count: (c) => c.characters },
+  { id: 'equipment', label: 'Equipment', icon: Sword, group: 'Heroes', count: (c) => c.equipment },
+  { id: 'gems', label: 'Gems', icon: Gem, group: 'Heroes', count: (c) => c.gems },
+  { id: 'karma', label: 'Karma', icon: Flame, group: 'Heroes', count: (c) => c.karma },
+  { id: 'costumes', label: 'Costumes', icon: Shirt, group: 'Collection', count: (c) => c.costumes },
+  { id: 'mounts', label: 'Familiars', icon: PawPrint, group: 'Collection', count: (c) => c.mounts },
+  { id: 'titles', label: 'Titles', icon: Crown, group: 'Collection', count: (c) => c.titlesUnlocked },
+  { id: 'cooking', label: 'Cooking', icon: CookingPot, group: 'Collection', count: (c) => c.recipesKnown },
   { id: 'raw', label: 'Raw database', icon: Database, group: 'Advanced' },
   { id: 'settings', label: 'Settings', icon: Settings, group: 'Advanced' },
 ];

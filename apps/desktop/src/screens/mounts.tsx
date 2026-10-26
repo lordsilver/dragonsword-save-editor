@@ -80,7 +80,6 @@ export function MountsScreen() {
   return (
     <div className="space-y-5">
       <PageHeader
-        eyebrow={`Account ${save.accountId} · Slot ${save.slot}`}
         title="Familiars"
         description="Familiars (the game stores them in tb_vehicle) and the hero each one is assigned to. Unlocking adds a row with a random 32-bit instance ID, as the game does when you claim one."
       />
