@@ -12,6 +12,7 @@ import type {
   Karma,
   Loadout,
   Overview,
+  QuestCompletion,
   QuestRewards,
   RawPage,
   RawTable,
@@ -282,6 +283,14 @@ export async function questRewards(): Promise<QuestRewards[]> {
 
 export async function grantQuestRewards(questIds: number[]): Promise<RewardGrant> {
   return invoke<RewardGrant>('quest_rewards_grant', { questIds });
+}
+
+export async function questsInProgress(): Promise<QuestRewards[]> {
+  return invoke<QuestRewards[]>('quests_in_progress_get');
+}
+
+export async function completeQuest(questId: number): Promise<QuestCompletion> {
+  return invoke<QuestCompletion>('quest_complete', { questId });
 }
 
 export async function unlockMount(cid: number): Promise<boolean> {

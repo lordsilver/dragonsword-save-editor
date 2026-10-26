@@ -92,6 +92,22 @@ DragonSword began as an online free-to-play game in Korea, and the Steam release
 
 **Awakening** caps at 6 for heroes and karma (`PCCharacterTranscendData`, `KarmaTranscendData`).
 
+## Completing a quest
+
+Completing a quest in the editor mirrors what the game writes, as far as the tables and saves show it. Each part is marked with where it comes from.
+
+| Write                                                                                                                                                                                                      | Source                                                                                                            |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `tb_quest_complete` row with the category code: main 1, epic 3, promotion 7, tutorial 12, character 14                                                                                                     | The 100% save's 241 completed quests, matched against `QuestMainData`                                             |
+| The quest leaves `tb_quest_hold`                                                                                                                                                                           | The played save: quests 1–12 complete, 13 held                                                                    |
+| `tb_completed_quest`, kept at the newest 8 per category                                                                                                                                                    | Inferred: the played save holds exactly 8 per category. The 100% save has none and still loads                    |
+| Gold and items from `QuestMainData`, corps EXP as a running total, and each corps level crossed hands out its `AdventLevelData` reward (a fixed `STATIC_REWARD` bundle)                                    | `QuestMainData`, `AdventLevelData`, `RewardData`, `RewardRandomData`                                              |
+| A promotion exam sets `ADV_GRADE`, unlocks the grade's title and mount (`AdventGradeData` items), and moves `CUR_ADV_DIFFICULTY` and `ORIGIN_ADV_DIFFICULTY` with the grade when they sat at the old grade | Grade and items from `AdventGradeData`. The difficulty is inferred: every save seen has difficulty equal to grade |
+| Lasting quest actions: a tutorial it completes (`TUTORIAL_DLG_COMPLITE`) and a quest item it removes (`DELETE_ITEM`)                                                                                       | `QuestActionData`                                                                                                 |
+| Auto-accepted quests whose prerequisites are now complete start at their first step                                                                                                                        | `PreQuestID`, `AcceptType`, `AcceptCondition`, `AdvLevel` and `QuestStepData`                                     |
+
+What the editor does not do: play the quest's steps, so cutscenes, scenario dungeons and world events are skipped. The game picks the world's quest layers from the quests in progress, so a consistent quest state should load the right world, but this is untested in game. A quest whose `TEAMSETTING_CHARACTER` action adds a hero the save does not own (quests 2 and 5) is refused, because the editor never inserts heroes. Quest-record card rewards (`QuestRecordData`, `tb_quest_record_reward`) are left for the player to claim in game. Equipment, cooked dishes and hero items from rewards are listed but not granted.
+
 ## What the editor does
 
 - **It applies the Korean limits**: breakthrough 5, hero level 70, grade 6, and active skills up to 10. They match the offline game's level cap of 70. A modded save above them stays editable at its current values, because every setter uses `max(limit, current)`. The profile is one constant, `growth::REGION`.

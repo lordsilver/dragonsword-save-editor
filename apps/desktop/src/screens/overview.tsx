@@ -23,7 +23,7 @@ import { ConfirmButton } from '@/components/common';
 import { NumberField } from '@/components/fields';
 import { ItemIcon } from '@/components/item-icon';
 import { KeyValue, PageHeader, Panel } from '@/components/page';
-import { QuestRewardsDialog } from '@/components/quest-rewards-dialog';
+import { QuestsDialog } from '@/components/quests-dialog';
 import { InfoNote } from '@/components/summary';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -91,7 +91,7 @@ export function OverviewScreen() {
             </Button>
             <Button variant="outline" size="sm" onClick={() => setRewardsOpen(true)}>
               <Gift />
-              Quest rewards
+              Quests
             </Button>
             <Button variant="outline" size="sm" onClick={() => setFillOpen(true)}>
               <Wand2 />
@@ -266,7 +266,7 @@ export function OverviewScreen() {
           setRankOpen(false);
         }}
       />
-      <QuestRewardsDialog open={rewardsOpen} onOpenChange={setRewardsOpen} />
+      <QuestsDialog open={rewardsOpen} onOpenChange={setRewardsOpen} />
       <FillDialog
         open={fillOpen}
         onOpenChange={setFillOpen}

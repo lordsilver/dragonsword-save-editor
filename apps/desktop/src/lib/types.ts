@@ -310,7 +310,16 @@ export interface QuestRewards {
   gold: number;
   /** Mercenary Corps EXP; listed but never granted. */
   advExp: number;
-  items: Array<{ item: Item; count: number; route: 'currency' | 'stack' | 'mount' | 'none' }>;
+  items: Array<{ item: Item; count: number; route: 'currency' | 'stack' | 'mount' | 'title' | 'none' }>;
+  /** Why the editor cannot complete this quest, for a quest in progress. */
+  blocked: string | null;
+}
+
+export interface QuestCompletion {
+  grant: RewardGrant;
+  levelsGained: number;
+  newGrade: number | null;
+  started: Array<{ questId: number; nameEn: string; nameFr: string }>;
 }
 
 export interface RewardGrant {

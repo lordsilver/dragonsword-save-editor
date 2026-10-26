@@ -37,6 +37,10 @@ const TABLES = [
   'StringData',
   'QuestMainData',
   'StringQuestData',
+  'QuestStepData',
+  'QuestActionData',
+  'RewardData',
+  'RewardRandomData',
 ];
 
 /** Every row of a table, as attribute maps with the namespace prefix removed. */
@@ -158,6 +162,9 @@ const adventGrades = gradeRows
     characterAscend: int(row.CharacterAscendExpand, 'character ascend'),
     karmaAscend: int(row.KarmaAscendExpand, 'karma ascend'),
     titleItem: row.ItemID01 === '' ? null : int(row.ItemID01, 'title'),
+    items: [1, 2, 3, 4, 5]
+      .filter((slot) => row[`ItemID0${slot}`] !== '')
+      .map((slot) => [int(row[`ItemID0${slot}`], 'grade item'), int(row[`ItemCnt0${slot}`], 'grade item count')]),
   }))
   .sort((left, right) => left.grade - right.grade);
 adventGrades.forEach((grade, index) => {
@@ -207,10 +214,28 @@ for (const grade of adventGrades) {
   grade.requiresMainQuest = story[0];
 }
 
-// What each quest hands out on completion: gold, Mercenary Corps EXP and up
-// to five items. No quest uses a reward bundle (RewardID) today; the editor
-// relies on that, so one appearing stops the generator.
-const questRewards = {};
+// Everything completing a quest touches. The save's CATEGORY codes come
+// from saves the game wrote: main 1, epic 3, promotion 7, tutorial 12,
+// character 14. A quest of any other category gets no code, and the editor
+// will not complete it.
+const SAVE_CATEGORY = { MAIN: 1, EPIC: 3, ADVENT_GRADE: 7, TUTORIAL: 12, CHARACTER: 14 };
+// Quest actions with a lasting effect. The rest (scenario teams, retry
+// steps, tutorial pop-ups) only matter while the quest is played.
+const LASTING_ACTIONS = new Set(['TEAMSETTING_CHARACTER', 'TUTORIAL_DLG_COMPLITE', 'DELETE_ITEM']);
+const firstStep = {};
+for (const row of rows('QuestStepData')) {
+  const step = int(row.StepID, 'step');
+  firstStep[row.ID] = Math.min(firstStep[row.ID] ?? step, step);
+}
+const actions = {};
+for (const row of rows('QuestActionData')) {
+  if (row.TimingType === 'FAILED' || !LASTING_ACTIONS.has(row.ActionType)) continue;
+  actions[row.ID] ??= [];
+  actions[row.ID].push([row.ActionType, int(row.ActionValue1, 'action value')]);
+}
+// No quest uses a reward bundle (RewardID) today; the editor relies on that,
+// so one appearing stops the generator.
+const quests = {};
 for (const row of questRows) {
   if (row.RewardID !== '') fail(`quest ${row.ID} uses reward bundle ${row.RewardID}`);
   const items = [];
@@ -218,19 +243,47 @@ for (const row of questRows) {
     if (row[`ItemID${slot}`] === '') continue;
     items.push([int(row[`ItemID${slot}`], 'reward item'), int(row[`ItemCnt${slot}`], 'reward count')]);
   }
-  const gold = row.Gold === '' ? 0 : int(row.Gold, 'reward gold');
-  const advExp = row.AdvExp === '' ? 0 : int(row.AdvExp, 'reward corps exp');
-  if (gold === 0 && advExp === 0 && items.length === 0) continue;
   const name = questNames[row.QuestName];
-  questRewards[row.ID] = {
+  quests[row.ID] = {
     category: row.Category,
+    saveCategory: SAVE_CATEGORY[row.Category] ?? null,
     nameEn: name?.En || `Quest ${row.ID}`,
     nameFr: name?.Fr || name?.En || `Quest ${row.ID}`,
-    gold,
-    advExp,
+    requires: row.PreQuestID === '' ? [] : row.PreQuestID.split('#').map((id) => int(id, 'prerequisite')),
+    autoAccept: row.AcceptType === 'AUTO_ACCEPT' && row.AcceptCondition === 'TYPE_NONE',
+    advLevel: row.AdvLevel === '' ? null : int(row.AdvLevel, 'corps level'),
+    firstStep: firstStep[row.ID] ?? null,
+    actions: actions[row.ID] ?? [],
+    gold: row.Gold === '' ? 0 : int(row.Gold, 'reward gold'),
+    advExp: row.AdvExp === '' ? 0 : int(row.AdvExp, 'reward corps exp'),
     items,
   };
 }
+
+// What reaching each corps level hands out. Every level reward is a static
+// bundle with fixed counts; anything random stops the generator.
+const rewardBundles = Object.fromEntries(rows('RewardData').map((row) => [row.ID, row]));
+const randomItems = {};
+for (const row of rows('RewardRandomData')) {
+  randomItems[row.ID] ??= [];
+  randomItems[row.ID].push(row);
+}
+function staticReward(id, what) {
+  if (id === '') return [];
+  const bundle = rewardBundles[id];
+  if (!bundle || bundle.ContentsType !== 'STATIC_REWARD') fail(`${what} reward ${id} is not a static bundle`);
+  const items = [];
+  for (let slot = 1; slot <= 10; slot += 1) {
+    const random = bundle[`RandomID${slot}`];
+    if (!random) continue;
+    for (const entry of randomItems[random] ?? fail(`${what} reward ${id} names missing ${random}`)) {
+      if (entry.Min_ItemCount !== entry.Max_ItemCount) fail(`${what} reward ${id} has a random count`);
+      items.push([int(entry.ItemID, 'reward item'), int(entry.Min_ItemCount, 'reward count')]);
+    }
+  }
+  return items;
+}
+const adventLevelRewards = advent.map((row) => staticReward(row.RewardId, `corps level ${row.AdvReferenceKey}`));
 
 // Per-region limits on the live servers. America, Europe and Asia must agree,
 // because the editor treats them as one "global" profile.
@@ -312,7 +365,8 @@ const growth = {
   adventLevelStartExp,
   adventGrades,
   mainQuests,
-  questRewards,
+  quests,
+  adventLevelRewards,
   regions: { KOR: korea, GLOBAL: global },
 };
 

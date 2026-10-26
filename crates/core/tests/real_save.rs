@@ -72,6 +72,30 @@ fn reads_and_writes_a_real_save() {
         game.set_player_name("Silver-Test").expect("name");
         game.set_currency(1_000_001, 123_456).expect("currency");
 
+        // Complete the first quest in progress the editor can complete, so
+        // the write below carries a quest completion too.
+        let ready = game
+            .quests_in_progress()
+            .expect("quests in progress")
+            .into_iter()
+            .find(|quest| quest.blocked.is_none());
+        if let Some(quest) = ready {
+            let completion = game.complete_quest(quest.quest_id).expect("complete");
+            println!(
+                "completed {} ({}): {} rewards, {} corps levels, grade {:?}, started {:?}",
+                quest.quest_id,
+                quest.name_en,
+                completion.grant.granted.len(),
+                completion.levels_gained,
+                completion.new_grade,
+                completion
+                    .started
+                    .iter()
+                    .map(|started| started.quest_id)
+                    .collect::<Vec<_>>(),
+            );
+        }
+
         // Grant every completed quest's rewards, so the write below carries
         // the reward rows too.
         let quests: Vec<i64> = game

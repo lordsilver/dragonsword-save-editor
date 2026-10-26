@@ -15,6 +15,7 @@ import type {
   Karma,
   Loadout,
   Overview,
+  QuestCompletion,
   QuestRewards,
   RawPage,
   RawTable,
@@ -119,6 +120,9 @@ export interface AppActions {
   /** The rewards of every completed quest; read-only. */
   questRewards(): Promise<QuestRewards[]>;
   grantQuestRewards(questIds: number[]): Promise<RewardGrant | null>;
+  /** The quests in progress, with what completing each would hand out. */
+  questsInProgress(): Promise<QuestRewards[]>;
+  completeQuest(questId: number): Promise<QuestCompletion | null>;
   setCharacter(cid: number, field: string, value: number): Promise<void>;
   removeCharacter(cid: number): Promise<void>;
   setSkill(cid: number, typeValue: number, level: number): Promise<void>;
@@ -683,6 +687,36 @@ export const useApp = create<Store>((set, get) => {
         toast.error(message(error));
         return [];
       }
+    },
+
+    async questsInProgress() {
+      try {
+        return await api.questsInProgress();
+      } catch (error) {
+        toast.error(message(error));
+        return [];
+      }
+    },
+
+    async completeQuest(questId) {
+      const completion = await attempt(
+        'Completing quest',
+        () => api.completeQuest(questId),
+        async () => {
+          await get().loadInventory();
+          await get().loadCurrencies();
+          await get().loadMounts();
+          await get().loadOverview();
+        },
+      );
+      if (completion) {
+        const parts = [`${completion.grant.granted.length} reward${completion.grant.granted.length === 1 ? '' : 's'}`];
+        if (completion.levelsGained > 0)
+          parts.push(`corps +${completion.levelsGained} level${completion.levelsGained === 1 ? '' : 's'}`);
+        if (completion.newGrade !== null) parts.push(`promoted to grade ${completion.newGrade}`);
+        toast.success(`Quest complete: ${parts.join(', ')}.`);
+      }
+      return completion;
     },
 
     async grantQuestRewards(questIds) {

@@ -18,7 +18,11 @@
       "KarmaTranscendData",
       "StringData",
       "QuestMainData",
-      "StringQuestData"
+      "StringQuestData",
+      "QuestStepData",
+      "QuestActionData",
+      "RewardData",
+      "RewardRandomData"
     ],
     "generator": "scripts/gen-growth.mjs",
     "notes": [
@@ -799,6 +803,7 @@
       "characterAscend": 0,
       "karmaAscend": 0,
       "titleItem": null,
+      "items": [],
       "requiresMainQuest": null
     },
     {
@@ -809,6 +814,16 @@
       "characterAscend": 1,
       "karmaAscend": 1,
       "titleItem": 2104100,
+      "items": [
+        [
+          2104100,
+          1
+        ],
+        [
+          1320012,
+          1
+        ]
+      ],
       "requiresMainQuest": 10020
     },
     {
@@ -819,6 +834,16 @@
       "characterAscend": 2,
       "karmaAscend": 2,
       "titleItem": 2104101,
+      "items": [
+        [
+          2104101,
+          1
+        ],
+        [
+          1320004,
+          1
+        ]
+      ],
       "requiresMainQuest": 10050
     },
     {
@@ -829,6 +854,16 @@
       "characterAscend": 3,
       "karmaAscend": 3,
       "titleItem": 2104102,
+      "items": [
+        [
+          2104102,
+          1
+        ],
+        [
+          1320008,
+          1
+        ]
+      ],
       "requiresMainQuest": 10060
     },
     {
@@ -839,6 +874,16 @@
       "characterAscend": 4,
       "karmaAscend": 4,
       "titleItem": 2104103,
+      "items": [
+        [
+          2104103,
+          1
+        ],
+        [
+          1320028,
+          1
+        ]
+      ],
       "requiresMainQuest": 10070
     },
     {
@@ -849,6 +894,16 @@
       "characterAscend": 5,
       "karmaAscend": 5,
       "titleItem": 2104104,
+      "items": [
+        [
+          2104104,
+          1
+        ],
+        [
+          1320023,
+          1
+        ]
+      ],
       "requiresMainQuest": 10090
     }
   ],
@@ -1334,11 +1389,79 @@
       "nameFr": "S'il devenait un héros"
     }
   ],
-  "questRewards": {
+  "quests": {
+    "10001": {
+      "category": "MAIN",
+      "saveCategory": 1,
+      "nameEn": "1. To the Orbis Kingdom",
+      "nameFr": "1. Vers le Royaume d'Orbis",
+      "requires": [],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [
+        [
+          "TUTORIAL_DLG_COMPLITE",
+          90003
+        ]
+      ],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "10002": {
+      "category": "MAIN",
+      "saveCategory": 1,
+      "nameEn": "2. A Strange First Encounter",
+      "nameFr": "2. Une première rencontre étrange",
+      "requires": [
+        10001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [
+        [
+          "TEAMSETTING_CHARACTER",
+          10003
+        ],
+        [
+          "TUTORIAL_DLG_COMPLITE",
+          90027
+        ]
+      ],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "10003": {
+      "category": "MAIN",
+      "saveCategory": 1,
+      "nameEn": "3. Mercenary Starting Today",
+      "nameFr": "3. Mercenaire dès aujourd'hui",
+      "requires": [
+        10002
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
     "10004": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "4. A New Companion",
       "nameFr": "4. Un nouveau compagnon",
+      "requires": [
+        10003
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 2500,
       "advExp": 400,
       "items": [
@@ -1354,8 +1477,21 @@
     },
     "10005": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "5. The First Quest",
       "nameFr": "5. La première requête",
+      "requires": [
+        10004
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [
+        [
+          "TEAMSETTING_CHARACTER",
+          10006
+        ]
+      ],
       "gold": 2500,
       "advExp": 400,
       "items": [
@@ -1375,8 +1511,16 @@
     },
     "10006": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "6. She's Not a Dark Elf",
       "nameFr": "6. Ce n'est pas une elfe noire",
+      "requires": [
+        10005
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 2500,
       "advExp": 400,
       "items": [
@@ -1388,8 +1532,16 @@
     },
     "10007": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "7. The Shepherdess",
       "nameFr": "7. La jeune bergère",
+      "requires": [
+        10006
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 2500,
       "advExp": 400,
       "items": [
@@ -1417,8 +1569,16 @@
     },
     "10008": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "8. A Mystery from Ancient Times",
       "nameFr": "8. Une énigme venue des temps anciens",
+      "requires": [
+        10007
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 2500,
       "advExp": 700,
       "items": [
@@ -1434,8 +1594,16 @@
     },
     "10009": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "9. The Captain's Scheme",
       "nameFr": "9. Plan du capitaine",
+      "requires": [
+        10008
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 2500,
       "advExp": 400,
       "items": [
@@ -1463,8 +1631,16 @@
     },
     "10010": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "10. A Temporary Alliance",
       "nameFr": "10. Une alliance temporaire",
+      "requires": [
+        10009
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 2500,
       "advExp": 400,
       "items": [
@@ -1476,8 +1652,16 @@
     },
     "10011": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "11. The Legend of the Six Heroes and the Origin Dragon",
       "nameFr": "11. La légende des Six Héros et du Dragon originel",
+      "requires": [
+        10010
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 5000,
       "advExp": 450,
       "items": [
@@ -1493,8 +1677,16 @@
     },
     "10012": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "12. The Order's Secret",
       "nameFr": "12. Le secret de l'Ordre",
+      "requires": [
+        10011
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 5000,
       "advExp": 450,
       "items": [
@@ -1510,8 +1702,16 @@
     },
     "10013": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "13. The Sixth Hero",
       "nameFr": "13. Le sixième Héros",
+      "requires": [
+        10012
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 5000,
       "advExp": 450,
       "items": [
@@ -1527,8 +1727,16 @@
     },
     "10014": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "14. The Day the Sacred Great Star Fell",
       "nameFr": "14. Le jour où la grande étoile sacrée est tombée",
+      "requires": [
+        10013
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 5000,
       "advExp": 450,
       "items": [
@@ -1544,8 +1752,16 @@
     },
     "10015": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "15. Ornette's Request",
       "nameFr": "15. La demande d'Ornette",
+      "requires": [
+        10014
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 5000,
       "advExp": 450,
       "items": [
@@ -1561,8 +1777,16 @@
     },
     "10016": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "16. Preparing for the Funeral",
       "nameFr": "16. Préparatifs des funérailles",
+      "requires": [
+        10015
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 5000,
       "advExp": 450,
       "items": [
@@ -1578,8 +1802,16 @@
     },
     "10017": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "17. Experience as a Special Diplomatic Envoy",
       "nameFr": "17. Expérience d'ambassadeur spécial",
+      "requires": [
+        10016
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 5000,
       "advExp": 450,
       "items": [
@@ -1595,8 +1827,16 @@
     },
     "10018": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "18. Despair and Hope",
       "nameFr": "18. Désespoir et espoir",
+      "requires": [
+        10017
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 5000,
       "advExp": 450,
       "items": [
@@ -1612,8 +1852,16 @@
     },
     "10019": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "19. Help from the Order",
       "nameFr": "19. L'aide de l'Ordre",
+      "requires": [
+        10018
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 5000,
       "advExp": 450,
       "items": [
@@ -1629,8 +1877,16 @@
     },
     "10020": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "20. The Hero's Quest",
       "nameFr": "20. La requête du héros",
+      "requires": [
+        10019
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 5000,
       "advExp": 450,
       "items": [
@@ -1654,8 +1910,16 @@
     },
     "10031": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "21. In Search of Barduk",
       "nameFr": "21. À la recherche de Barduk",
+      "requires": [
+        10020
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 500,
       "items": [
@@ -1671,8 +1935,16 @@
     },
     "10032": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "22. Seagull Village",
       "nameFr": "22. Le village des mouettes",
+      "requires": [
+        10031
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 500,
       "items": [
@@ -1688,8 +1960,16 @@
     },
     "10033": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "23. Contact",
       "nameFr": "23. La rencontre",
+      "requires": [
+        10032
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 500,
       "items": [
@@ -1705,8 +1985,16 @@
     },
     "10034": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "24. The Final Piece",
       "nameFr": "24. La dernière pièce",
+      "requires": [
+        10033
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 500,
       "items": [
@@ -1722,8 +2010,16 @@
     },
     "10035": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "25. Barduk, the Sage of the Abyss",
       "nameFr": "25. Barduk, le sage des abysses",
+      "requires": [
+        10034
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 500,
       "items": [
@@ -1739,8 +2035,16 @@
     },
     "10036": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "26. The Sage and the Mercenary",
       "nameFr": "26. Le sage et le mercenaire",
+      "requires": [
+        10035
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 500,
       "items": [
@@ -1756,8 +2060,16 @@
     },
     "10037": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "27. Waiting",
       "nameFr": "27. L'attente",
+      "requires": [
+        10036
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 500,
       "items": [
@@ -1771,10 +2083,34 @@
         ]
       ]
     },
+    "10038": {
+      "category": "MAIN",
+      "saveCategory": 1,
+      "nameEn": "28. The Wanderer of the Wilderness",
+      "nameFr": "28. Celui qui arpente les terres désolées",
+      "requires": [
+        10037
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
     "10039": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "29. Awakening",
       "nameFr": "29. L'éveil",
+      "requires": [
+        10038
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 500,
       "items": [
@@ -1790,8 +2126,16 @@
     },
     "10040": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "30. Those Left Behind",
       "nameFr": "30. Ceux qui restent",
+      "requires": [
+        10039
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 500,
       "items": [
@@ -1815,8 +2159,16 @@
     },
     "10041": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "31. Back to Normal Life",
       "nameFr": "31. Le retour à la vie quotidienne",
+      "requires": [
+        10040
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 15000,
       "advExp": 550,
       "items": [
@@ -1832,8 +2184,16 @@
     },
     "10042": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "32. The Same Old Routine",
       "nameFr": "32. Une vie quotidienne immuable",
+      "requires": [
+        10041
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 15000,
       "advExp": 550,
       "items": [
@@ -1845,8 +2205,16 @@
     },
     "10043": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "33. Barduk's Legacy",
       "nameFr": "33. L'héritage de Barduk",
+      "requires": [
+        10042
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 15000,
       "advExp": 550,
       "items": [
@@ -1862,8 +2230,16 @@
     },
     "10044": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "34. Northern Barrier Stone",
       "nameFr": "34. La Pierre de barrière du Nord",
+      "requires": [
+        10043
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 15000,
       "advExp": 550,
       "items": [
@@ -1879,8 +2255,16 @@
     },
     "10045": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "35. Steelheart Fortress",
       "nameFr": "35. Forteresse Cœur de Fer",
+      "requires": [
+        10044
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 15000,
       "advExp": 550,
       "items": [
@@ -1896,8 +2280,16 @@
     },
     "10046": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "36. Unusual Signs",
       "nameFr": "36. Signes inquiétants",
+      "requires": [
+        10045
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 15000,
       "advExp": 550,
       "items": [
@@ -1909,8 +2301,16 @@
     },
     "10047": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "37. The Looming Shadow",
       "nameFr": "37. L'ombre qui plane",
+      "requires": [
+        10046
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 15000,
       "advExp": 550,
       "items": [
@@ -1926,8 +2326,16 @@
     },
     "10048": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "38. Forest of Dead Trees",
       "nameFr": "38. La forêt des arbres morts",
+      "requires": [
+        10047
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 15000,
       "advExp": 550,
       "items": [
@@ -1943,8 +2351,16 @@
     },
     "10049": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "39. Where the Giant Sleeps",
       "nameFr": "39. Là où dort le géant",
+      "requires": [
+        10048
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 15000,
       "advExp": 550,
       "items": [
@@ -1960,8 +2376,16 @@
     },
     "10050": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "40. The Coming Crisis",
       "nameFr": "40. La crise qui s'annonce",
+      "requires": [
+        10049
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 15000,
       "advExp": 550,
       "items": [
@@ -1981,8 +2405,16 @@
     },
     "10051": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "41. Assembly",
       "nameFr": "41. Convocation",
+      "requires": [
+        10050
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 20000,
       "advExp": 600,
       "items": [
@@ -1998,8 +2430,16 @@
     },
     "10052": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "42. Strategy Meeting",
       "nameFr": "42. Réunion de crise",
+      "requires": [
+        10051
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 20000,
       "advExp": 600,
       "items": [
@@ -2015,8 +2455,16 @@
     },
     "10053": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "43. Back to the North",
       "nameFr": "43. Retour vers le nord",
+      "requires": [
+        10052
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 20000,
       "advExp": 600,
       "items": [
@@ -2032,8 +2480,16 @@
     },
     "10054": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "44. Preemptive Strike",
       "nameFr": "44. Attaque préventive",
+      "requires": [
+        10053
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 20000,
       "advExp": 600,
       "items": [
@@ -2045,8 +2501,16 @@
     },
     "10055": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "45. Mercenaries and Knights",
       "nameFr": "45. Mercenaires et chevaliers",
+      "requires": [
+        10054
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 20000,
       "advExp": 600,
       "items": [
@@ -2062,8 +2526,16 @@
     },
     "10056": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "46. Preparations",
       "nameFr": "46. Préparatifs",
+      "requires": [
+        10055
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 20000,
       "advExp": 600,
       "items": [
@@ -2079,8 +2551,16 @@
     },
     "10057": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "47. Feint",
       "nameFr": "47. Attaque par la gauche, diversion par la droite",
+      "requires": [
+        10056
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 20000,
       "advExp": 600,
       "items": [
@@ -2096,8 +2576,16 @@
     },
     "10058": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "48. Siege",
       "nameFr": "48. Siège",
+      "requires": [
+        10057
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 20000,
       "advExp": 600,
       "items": [
@@ -2109,8 +2597,16 @@
     },
     "10059": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "49. The 60 Years They Built",
       "nameFr": "49. Les 60 ans qu'ils ont bâtis",
+      "requires": [
+        10058
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 20000,
       "advExp": 600,
       "items": [
@@ -2126,8 +2622,16 @@
     },
     "10060": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "50. Everyone's Preparations",
       "nameFr": "50. Les préparatifs de chacun",
+      "requires": [
+        10059
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 20000,
       "advExp": 600,
       "items": [
@@ -2151,8 +2655,16 @@
     },
     "10061": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "51. The Final Quest",
       "nameFr": "51. La dernière requête",
+      "requires": [
+        10060
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 30000,
       "advExp": 650,
       "items": [
@@ -2168,8 +2680,16 @@
     },
     "10062": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "52. The Old Cabin",
       "nameFr": "52. La vieille cabane",
+      "requires": [
+        10061
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 30000,
       "advExp": 650,
       "items": [
@@ -2181,8 +2701,16 @@
     },
     "10063": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "53. Reunion",
       "nameFr": "53. Retrouvailles",
+      "requires": [
+        10062
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 30000,
       "advExp": 650,
       "items": [
@@ -2202,8 +2730,16 @@
     },
     "10064": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "54. The Order's Resolution",
       "nameFr": "54. La décision de l'Ordre",
+      "requires": [
+        10063
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 30000,
       "advExp": 650,
       "items": [
@@ -2219,8 +2755,16 @@
     },
     "10065": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "55. The Red Fox Mercenaries",
       "nameFr": "55. Le Corps de mercenaires du Renard rouge",
+      "requires": [
+        10064
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 30000,
       "advExp": 650,
       "items": [
@@ -2236,8 +2780,16 @@
     },
     "10066": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "56. The Underground Temple",
       "nameFr": "56. Le temple souterrain",
+      "requires": [
+        10065
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 30000,
       "advExp": 650,
       "items": [
@@ -2249,8 +2801,16 @@
     },
     "10067": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "57. The Abyss of Heresy",
       "nameFr": "57. Les abysses de l'hérésie",
+      "requires": [
+        10066
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 30000,
       "advExp": 650,
       "items": [
@@ -2266,8 +2826,16 @@
     },
     "10068": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "58. Rescue",
       "nameFr": "58. Le sauvetage",
+      "requires": [
+        10067
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 30000,
       "advExp": 650,
       "items": [
@@ -2283,8 +2851,16 @@
     },
     "10069": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "59. Tomb of Greed",
       "nameFr": "59. Tombe de l'avidité",
+      "requires": [
+        10068
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 30000,
       "advExp": 650,
       "items": [
@@ -2300,8 +2876,16 @@
     },
     "10070": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "60. The Life of a Mercenary",
       "nameFr": "60. La vie d'un mercenaire",
+      "requires": [
+        10069
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 30000,
       "advExp": 650,
       "items": [
@@ -2313,8 +2897,16 @@
     },
     "10071": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "61. A Mysterious Quest",
       "nameFr": "61. Une requête mystérieuse",
+      "requires": [
+        10070
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 40000,
       "advExp": 700,
       "items": [
@@ -2330,8 +2922,16 @@
     },
     "10072": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "62. In Search of the Client",
       "nameFr": "62. À la recherche du commanditaire",
+      "requires": [
+        10071
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 40000,
       "advExp": 700,
       "items": [
@@ -2347,8 +2947,16 @@
     },
     "10073": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "63. The Legend of the Ancient Dragon",
       "nameFr": "63. La légende du dragon antique",
+      "requires": [
+        10072
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 40000,
       "advExp": 700,
       "items": [
@@ -2364,8 +2972,16 @@
     },
     "10074": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "64. In Search of Ancient Records",
       "nameFr": "64. À la recherche des archives anciennes",
+      "requires": [
+        10073
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 40000,
       "advExp": 700,
       "items": [
@@ -2377,8 +2993,16 @@
     },
     "10075": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "65. The Underground Assailant",
       "nameFr": "65. L'assaillant souterrain",
+      "requires": [
+        10074
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 40000,
       "advExp": 700,
       "items": [
@@ -2394,8 +3018,16 @@
     },
     "10076": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "66. The Second Stone Tablet Fragment",
       "nameFr": "66. Le deuxième fragment de tablette",
+      "requires": [
+        10075
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 40000,
       "advExp": 700,
       "items": [
@@ -2411,8 +3043,16 @@
     },
     "10077": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "67. The Final Stone Tablet Fragment",
       "nameFr": "67. Le dernier fragment de tablette",
+      "requires": [
+        10076
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 40000,
       "advExp": 700,
       "items": [
@@ -2428,8 +3068,16 @@
     },
     "10078": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "68. Cannibalism",
       "nameFr": "68. Cannibalisme",
+      "requires": [
+        10077
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 40000,
       "advExp": 700,
       "items": [
@@ -2441,8 +3089,16 @@
     },
     "10079": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "69. A Major Quest",
       "nameFr": "69. Une requête de grande envergure",
+      "requires": [
+        10078
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 40000,
       "advExp": 700,
       "items": [
@@ -2458,8 +3114,16 @@
     },
     "10080": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "70. The Second Crisis",
       "nameFr": "70. Deuxième crise",
+      "requires": [
+        10079
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 40000,
       "advExp": 700,
       "items": [
@@ -2475,8 +3139,16 @@
     },
     "10081": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "71. The King's Resolution",
       "nameFr": "71. La résolution du roi",
+      "requires": [
+        10080
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 50000,
       "advExp": 750,
       "items": [
@@ -2492,8 +3164,16 @@
     },
     "10082": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "72. Origin Dragon Countermeasures Meeting",
       "nameFr": "72. Réunion de crise sur le Dragon originel",
+      "requires": [
+        10081
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 50000,
       "advExp": 750,
       "items": [
@@ -2505,8 +3185,16 @@
     },
     "10083": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "73. Electric Core",
       "nameFr": "73. Le noyau électrique",
+      "requires": [
+        10082
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 50000,
       "advExp": 750,
       "items": [
@@ -2522,8 +3210,16 @@
     },
     "10084": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "74. Preliminary Preparations",
       "nameFr": "74. Préparatifs",
+      "requires": [
+        10083
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 50000,
       "advExp": 750,
       "items": [
@@ -2539,8 +3235,16 @@
     },
     "10085": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "75. Dragon Habitat",
       "nameFr": "75. L'habitat des dragons",
+      "requires": [
+        10084
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 50000,
       "advExp": 750,
       "items": [
@@ -2556,8 +3260,16 @@
     },
     "10086": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "76. Egg Chase",
       "nameFr": "76. À la poursuite des œufs",
+      "requires": [
+        10085
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 50000,
       "advExp": 750,
       "items": [
@@ -2569,8 +3281,16 @@
     },
     "10087": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "77. Echoes from the Underground",
       "nameFr": "77. L'écho souterrain",
+      "requires": [
+        10086
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 50000,
       "advExp": 750,
       "items": [
@@ -2586,8 +3306,16 @@
     },
     "10088": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "78. Traps and Ambushes",
       "nameFr": "78. Pièges et embuscades",
+      "requires": [
+        10087
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 50000,
       "advExp": 750,
       "items": [
@@ -2603,8 +3331,16 @@
     },
     "10089": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "79. The Age of Heroes",
       "nameFr": "79. L'ère des héros",
+      "requires": [
+        10088
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 50000,
       "advExp": 750,
       "items": [
@@ -2620,8 +3356,16 @@
     },
     "10090": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "80. If He Becomes a Hero",
       "nameFr": "80. S'il devenait un héros",
+      "requires": [
+        10089
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 50000,
       "advExp": 750,
       "items": [
@@ -2633,328 +3377,656 @@
     },
     "11001": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11001",
       "nameFr": "Quest 11001",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11002": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11002",
       "nameFr": "Quest 11002",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11003": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11003",
       "nameFr": "Quest 11003",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11004": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11004",
       "nameFr": "Quest 11004",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11005": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11005",
       "nameFr": "Quest 11005",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11006": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11006",
       "nameFr": "Quest 11006",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11007": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11007",
       "nameFr": "Quest 11007",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11008": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11008",
       "nameFr": "Quest 11008",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11009": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11009",
       "nameFr": "Quest 11009",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11010": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11010",
       "nameFr": "Quest 11010",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11011": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11011",
       "nameFr": "Quest 11011",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11012": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11012",
       "nameFr": "Quest 11012",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11013": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11013",
       "nameFr": "Quest 11013",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11014": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11014",
       "nameFr": "Quest 11014",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11015": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11015",
       "nameFr": "Quest 11015",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11016": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11016",
       "nameFr": "Quest 11016",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11017": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11017",
       "nameFr": "Quest 11017",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11018": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11018",
       "nameFr": "Quest 11018",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11019": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11019",
       "nameFr": "Quest 11019",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11020": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11020",
       "nameFr": "Quest 11020",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11021": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11021",
       "nameFr": "Quest 11021",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11022": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11022",
       "nameFr": "Quest 11022",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11023": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11023",
       "nameFr": "Quest 11023",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11024": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11024",
       "nameFr": "Quest 11024",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11025": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11025",
       "nameFr": "Quest 11025",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11026": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11026",
       "nameFr": "Quest 11026",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11027": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11027",
       "nameFr": "Quest 11027",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11028": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11028",
       "nameFr": "Quest 11028",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11029": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11029",
       "nameFr": "Quest 11029",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11030": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11030",
       "nameFr": "Quest 11030",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11031": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11031",
       "nameFr": "Quest 11031",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11032": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11032",
       "nameFr": "Quest 11032",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11033": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11033",
       "nameFr": "Quest 11033",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11034": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11034",
       "nameFr": "Quest 11034",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11035": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11035",
       "nameFr": "Quest 11035",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11036": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11036",
       "nameFr": "Quest 11036",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11037": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11037",
       "nameFr": "Quest 11037",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11038": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11038",
       "nameFr": "Quest 11038",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11039": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11039",
       "nameFr": "Quest 11039",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "11040": {
       "category": "MAIN",
+      "saveCategory": 1,
       "nameEn": "Quest 11040",
       "nameFr": "Quest 11040",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 20000,
       "advExp": 750,
       "items": []
     },
     "20001": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "In Search of the Ascension Mushroom",
       "nameFr": "À la recherche du Champignon de l'ascension",
+      "requires": [
+        10010
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 450,
       "items": [
@@ -2970,8 +4042,16 @@
     },
     "20002": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "I Need an Antidote",
       "nameFr": "Il me faut un antidote",
+      "requires": [
+        20001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 450,
       "items": [
@@ -2987,8 +4067,16 @@
     },
     "20003": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The Cooking Marmot",
       "nameFr": "La marmotte cuisinière",
+      "requires": [
+        20002
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 450,
       "items": [
@@ -3004,8 +4092,16 @@
     },
     "20004": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The Man Who Took Up Cooking",
       "nameFr": "L'homme qui s'est lancé dans la cuisine",
+      "requires": [
+        20097
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 450,
       "items": [
@@ -3021,8 +4117,16 @@
     },
     "20005": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "It All Starts with Cleaning",
       "nameFr": "Tout commence par le ménage",
+      "requires": [
+        20004
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 450,
       "items": [
@@ -3038,8 +4142,16 @@
     },
     "20006": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "A Journey to Find My Own Answers",
       "nameFr": "Un voyage à la recherche de ma propre réponse",
+      "requires": [
+        20005
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 450,
       "items": [
@@ -3055,8 +4167,16 @@
     },
     "20007": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Mushrooms That Touch the Heart",
       "nameFr": "Des champignons qui touchent le cœur",
+      "requires": [
+        20006
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 450,
       "items": [
@@ -3072,8 +4192,16 @@
     },
     "20008": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "A Stolen Dream",
       "nameFr": "Un rêve volé",
+      "requires": [
+        20007
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 450,
       "items": [
@@ -3089,8 +4217,16 @@
     },
     "20009": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The Eve of the Grand Opening",
       "nameFr": "La veille de l'ouverture",
+      "requires": [
+        20008
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 450,
       "items": [
@@ -3106,8 +4242,16 @@
     },
     "20010": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Mushroom Grill Room Orbis Main Store, Now Open!",
       "nameFr": "Ouverture du restaurant Mushroom Grill Room Orbis, établissement principal !",
+      "requires": [
+        20009
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 450,
       "items": [
@@ -3123,8 +4267,16 @@
     },
     "20097": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Final Test",
       "nameFr": "Dernière épreuve",
+      "requires": [
+        20098
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 450,
       "items": [
@@ -3140,8 +4292,16 @@
     },
     "20098": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Second Test",
       "nameFr": "Deuxième épreuve",
+      "requires": [
+        20099
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 450,
       "items": [
@@ -3157,8 +4317,16 @@
     },
     "20099": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The First Test",
       "nameFr": "Première épreuve",
+      "requires": [
+        20003
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 450,
       "items": [
@@ -3174,8 +4342,16 @@
     },
     "20100": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "In Search of the Blue Light",
       "nameFr": "À la recherche de la lumière bleue",
+      "requires": [
+        10050
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 600,
       "items": [
@@ -3191,8 +4367,16 @@
     },
     "20101": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Crystal Research",
       "nameFr": "Étude des cristaux",
+      "requires": [
+        20100
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 600,
       "items": [
@@ -3208,8 +4392,16 @@
     },
     "20102": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "A Strange Encounter",
       "nameFr": "Une rencontre étrange",
+      "requires": [
+        20101
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 600,
       "items": [
@@ -3225,8 +4417,16 @@
     },
     "20103": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The Child from the Crack",
       "nameFr": "L'enfant sortie de la faille",
+      "requires": [
+        20102
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 600,
       "items": [
@@ -3242,8 +4442,16 @@
     },
     "20104": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Operation: Escape from the Cathedral",
       "nameFr": "Opération d'évasion de la cathédrale",
+      "requires": [
+        20115
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 600,
       "items": [
@@ -3259,8 +4467,16 @@
     },
     "20105": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The Mercenary and the Child",
       "nameFr": "Le mercenaire et l'enfant",
+      "requires": [
+        20104
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 600,
       "items": [
@@ -3276,8 +4492,16 @@
     },
     "20106": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Fragments of Memory",
       "nameFr": "Fragments de mémoire",
+      "requires": [
+        20116
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 600,
       "items": [
@@ -3293,8 +4517,16 @@
     },
     "20107": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Training with Ninian",
       "nameFr": "L'entraînement avec Ninian",
+      "requires": [
+        20106
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 600,
       "items": [
@@ -3310,8 +4542,16 @@
     },
     "20108": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "A Turning Point",
       "nameFr": "Une occasion de faire des efforts",
+      "requires": [
+        20107
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 600,
       "items": [
@@ -3327,8 +4567,16 @@
     },
     "20109": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "A Picnic in the Flower Garden Under the Fluffy Clouds!",
       "nameFr": "Pique-nique dans les champs de fleurs sous les nuages cotonneux !",
+      "requires": [
+        20108
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 600,
       "items": [
@@ -3344,8 +4592,16 @@
     },
     "20110": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The Child of Purification",
       "nameFr": "L'enfant de la Purification",
+      "requires": [
+        20109
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 600,
       "items": [
@@ -3361,8 +4617,16 @@
     },
     "20111": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Ninian and the Sea",
       "nameFr": "Ninian et la mer",
+      "requires": [
+        20110
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 600,
       "items": [
@@ -3378,8 +4642,16 @@
     },
     "20112": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Blue Lake Festival",
       "nameFr": "Le festival du lac bleu",
+      "requires": [
+        20111
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 600,
       "items": [
@@ -3395,8 +4667,16 @@
     },
     "20113": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Cooking Contest",
       "nameFr": "Concours de cuisine",
+      "requires": [
+        20112
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 600,
       "items": [
@@ -3412,8 +4692,16 @@
     },
     "20114": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Gift",
       "nameFr": "Cadeau",
+      "requires": [
+        20113
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 600,
       "items": [
@@ -3427,10 +4715,50 @@
         ]
       ]
     },
+    "20115": {
+      "category": "EPIC",
+      "saveCategory": 3,
+      "nameEn": "Quest to Investigate the Rift -1-",
+      "nameFr": "Requête pour l'enquête sur les failles -1-",
+      "requires": [
+        20103
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "20116": {
+      "category": "EPIC",
+      "saveCategory": 3,
+      "nameEn": "Quest to Investigate the Rift -2-",
+      "nameFr": "Requête pour l'enquête sur les failles -2-",
+      "requires": [
+        20105
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
     "20200": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "A Deep Clean of Ancient Devices",
       "nameFr": "Grand nettoyage des dispositifs anciens",
+      "requires": [
+        10008
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 300,
       "items": [
@@ -3450,8 +4778,16 @@
     },
     "20201": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The Meaning of the Mysterious Symbols",
       "nameFr": "Signification des symboles mystérieux",
+      "requires": [
+        10008
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 300,
       "items": [
@@ -3471,8 +4807,16 @@
     },
     "20202": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The Meaning of Hidden Symbols",
       "nameFr": "Signification des symboles cachés",
+      "requires": [
+        10008
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 300,
       "items": [
@@ -3492,8 +4836,16 @@
     },
     "20203": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The Meaning of the Scattered Symbols",
       "nameFr": "Signification des symboles éparpillés",
+      "requires": [
+        10008
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 300,
       "items": [
@@ -3513,8 +4865,16 @@
     },
     "20204": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The Path to the Ancient World",
       "nameFr": "Le chemin qui mène à l'Antiquité",
+      "requires": [
+        10008
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 300,
       "items": [
@@ -3534,8 +4894,16 @@
     },
     "20205": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The Path Leading to the Wind",
       "nameFr": "Chemin menant au vent",
+      "requires": [
+        10008
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 300,
       "items": [
@@ -3555,8 +4923,16 @@
     },
     "20206": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The Meaning of the Forgotten Symbol",
       "nameFr": "Signification des symboles oubliés",
+      "requires": [
+        10008
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 300,
       "items": [
@@ -3576,8 +4952,16 @@
     },
     "20207": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Echoes of Antiquity",
       "nameFr": "L'écho de l'Antiquité",
+      "requires": [
+        10008
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 300,
       "items": [
@@ -3597,8 +4981,16 @@
     },
     "20208": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The Whims of Time",
       "nameFr": "Les caprices du temps",
+      "requires": [
+        10008
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 300,
       "items": [
@@ -3618,8 +5010,16 @@
     },
     "20209": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Various Minerals",
       "nameFr": "Divers minéraux",
+      "requires": [
+        10008
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 300,
       "items": [
@@ -3639,8 +5039,16 @@
     },
     "20300": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The Black Widow Keeper",
       "nameFr": "L'éleveuse de veuves noires",
+      "requires": [
+        9000001
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 2000,
       "advExp": 400,
       "items": [
@@ -3652,8 +5060,16 @@
     },
     "20301": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "When You're Down, Venom Is the Best",
       "nameFr": "Quand on est déprimé, rien de tel que le venin",
+      "requires": [
+        20300
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 2000,
       "advExp": 400,
       "items": [
@@ -3665,8 +5081,16 @@
     },
     "20302": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "A Genius Alchemist Is a Novice Farmer",
       "nameFr": "L'alchimiste de génie est une fermière débutante",
+      "requires": [
+        20301
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 2000,
       "advExp": 400,
       "items": [
@@ -3678,8 +5102,17 @@
     },
     "20303": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The Art of Bargaining 1",
       "nameFr": "Les règles de l'art de la négociation 1",
+      "requires": [
+        20302,
+        10040
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 2000,
       "advExp": 400,
       "items": [
@@ -3691,8 +5124,16 @@
     },
     "20304": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The Art of Bargaining 2",
       "nameFr": "Les règles de l'art de la négociation 2",
+      "requires": [
+        20303
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 2000,
       "advExp": 400,
       "items": [
@@ -3704,8 +5145,16 @@
     },
     "20305": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The Alchemist's Calculations 1",
       "nameFr": "Les calculs de l'alchimiste 1",
+      "requires": [
+        20304
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 2000,
       "advExp": 400,
       "items": [
@@ -3717,8 +5166,16 @@
     },
     "20306": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The Alchemist's Calculations 2",
       "nameFr": "Les calculs de l'alchimiste 2",
+      "requires": [
+        20305
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 2000,
       "advExp": 400,
       "items": [
@@ -3730,8 +5187,16 @@
     },
     "20307": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "A Situation Where You'd Have to Borrow Even a Spider's Leg",
       "nameFr": "Une situation où il faudrait même emprunter une patte d'araignée",
+      "requires": [
+        20306
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 2000,
       "advExp": 400,
       "items": [
@@ -3743,8 +5208,16 @@
     },
     "20308": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The Black Widow Guide",
       "nameFr": "Une veuve noire pour guide",
+      "requires": [
+        20307
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 2000,
       "advExp": 400,
       "items": [
@@ -3756,8 +5229,16 @@
     },
     "20309": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Not Meaningless",
       "nameFr": "Ce qui n'est pas sans importance",
+      "requires": [
+        20308
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 2000,
       "advExp": 400,
       "items": [
@@ -3769,8 +5250,16 @@
     },
     "20401": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Helping others comes first!",
       "nameFr": "Il faut d'abord aider !",
+      "requires": [
+        10010
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 400,
       "items": [
@@ -3786,8 +5275,17 @@
     },
     "20402": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "You can get stronger!",
       "nameFr": "On peut devenir plus fort !",
+      "requires": [
+        20401,
+        10010
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 400,
       "items": [
@@ -3803,8 +5301,17 @@
     },
     "20403": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Time to Hone Your Skills",
       "nameFr": "C'est le moment de perfectionner vos compétences",
+      "requires": [
+        20402,
+        10014
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 400,
       "items": [
@@ -3820,8 +5327,17 @@
     },
     "20404": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Make Your Gear Even Stronger",
       "nameFr": "Rendez votre équipement encore plus solide",
+      "requires": [
+        20406,
+        10019
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 400,
       "items": [
@@ -3837,8 +5353,17 @@
     },
     "20405": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "You Need to Find Special Materials",
       "nameFr": "Il faut trouver des matériaux spéciaux",
+      "requires": [
+        20403,
+        10019
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 400,
       "items": [
@@ -3858,8 +5383,17 @@
     },
     "20406": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "You'll need sturdy gear!",
       "nameFr": "Il vous faut de l'équipement solide !",
+      "requires": [
+        20405,
+        10019
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 400,
       "items": [
@@ -3875,8 +5409,17 @@
     },
     "20407": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "To Unleash Your Hidden Power,",
       "nameFr": "Pour éveiller le pouvoir endormi",
+      "requires": [
+        20404,
+        10049
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 400,
       "items": [
@@ -3892,8 +5435,17 @@
     },
     "20408": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Face the Massive Threat",
       "nameFr": "Pour faire face à une menace gigantesque",
+      "requires": [
+        20407,
+        10058
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 10000,
       "advExp": 400,
       "items": [
@@ -3913,8 +5465,16 @@
     },
     "20501": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Seeking a Hero.",
       "nameFr": "Nous recherchons des héros.",
+      "requires": [
+        10020
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 450,
       "items": [
@@ -3930,8 +5490,16 @@
     },
     "20502": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The Trial of the Promise",
       "nameFr": "L'épreuve de la promesse",
+      "requires": [
+        20501
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 450,
       "items": [
@@ -3947,8 +5515,16 @@
     },
     "20503": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Path of the Hero 1",
       "nameFr": "Le chemin du Héros 1",
+      "requires": [
+        20502
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 450,
       "items": [
@@ -3964,8 +5540,16 @@
     },
     "20504": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Path of the Hero 2",
       "nameFr": "Le chemin du Héros 2",
+      "requires": [
+        20503
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 450,
       "items": [
@@ -3981,8 +5565,16 @@
     },
     "20505": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Path of the Hero 3",
       "nameFr": "Le chemin du Héros 3",
+      "requires": [
+        20504
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 450,
       "items": [
@@ -3998,8 +5590,16 @@
     },
     "20506": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Day of Betrayal",
       "nameFr": "Le jour de la trahison",
+      "requires": [
+        20505
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 450,
       "items": [
@@ -4015,8 +5615,16 @@
     },
     "20507": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Preparing for the Final Battle",
       "nameFr": "Préparation à la bataille décisive",
+      "requires": [
+        20506
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 450,
       "items": [
@@ -4032,8 +5640,16 @@
     },
     "20508": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The Brothers' Showdown",
       "nameFr": "La bataille des frères",
+      "requires": [
+        20507
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 450,
       "items": [
@@ -4049,8 +5665,16 @@
     },
     "20601": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "50 m/s",
       "nameFr": "50 m/s",
+      "requires": [
+        10060
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 30000,
       "advExp": 1000,
       "items": [
@@ -4062,8 +5686,16 @@
     },
     "29001": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "The Secret Left Behind",
       "nameFr": "Le secret légué",
+      "requires": [
+        10043
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 500,
       "items": [
@@ -4075,8 +5707,16 @@
     },
     "29002": {
       "category": "EPIC",
+      "saveCategory": 3,
       "nameEn": "Barduk's Intentions",
       "nameFr": "Les intentions de Barduk",
+      "requires": [
+        29001
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 500,
       "items": [
@@ -4088,8 +5728,16 @@
     },
     "30001": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "The Society's Visit",
       "nameFr": "La visite de l'Académie",
+      "requires": [
+        10060
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4101,8 +5749,16 @@
     },
     "30002": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Aether Investigation",
       "nameFr": "Enquêter sur l'Éther",
+      "requires": [
+        30001
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4114,8 +5770,16 @@
     },
     "30003": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Information Obtained from the Fortress",
       "nameFr": "Informations obtenues à la forteresse",
+      "requires": [
+        30002
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4127,8 +5791,16 @@
     },
     "30004": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Violent Orcs",
       "nameFr": "Les orques féroces",
+      "requires": [
+        30003
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4140,8 +5812,16 @@
     },
     "30005": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Helmet of Wisdom",
       "nameFr": "Le Casque de la sagesse",
+      "requires": [
+        30004
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4153,8 +5833,16 @@
     },
     "30006": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "The Fugitive Mages",
       "nameFr": "Les mages en fuite",
+      "requires": [
+        30005
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4166,8 +5854,16 @@
     },
     "30007": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Inherited Magic",
       "nameFr": "Magie héritée",
+      "requires": [
+        30006
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4179,8 +5875,16 @@
     },
     "30008": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Cressila's Tower",
       "nameFr": "Tour de Cressila",
+      "requires": [
+        30007
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4192,8 +5896,16 @@
     },
     "30009": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Cressila's Upside-Down Tower",
       "nameFr": "La tour renversée de Cressila",
+      "requires": [
+        30008
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4205,8 +5917,16 @@
     },
     "30010": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Frost That Melted the Past",
       "nameFr": "Le givre qui a fait fondre le passé",
+      "requires": [
+        30009
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4218,8 +5938,16 @@
     },
     "30100": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Rumors of the Thief",
       "nameFr": "La rumeur du voleur",
+      "requires": [
+        10070
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4231,8 +5959,16 @@
     },
     "30101": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "The Phantom Thief of Dawn",
       "nameFr": "Voleuse fantôme de l'aube",
+      "requires": [
+        30100
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4244,8 +5980,16 @@
     },
     "30102": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Traps and Thieves",
       "nameFr": "Pièges et voleurs",
+      "requires": [
+        30101
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4257,8 +6001,16 @@
     },
     "30103": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "The Thief's True Identity",
       "nameFr": "L'identité de la voleuse",
+      "requires": [
+        30102
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4270,8 +6022,16 @@
     },
     "30104": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "The Dragon's Relic and the Phantom Thief of Dawn",
       "nameFr": "La Relique du dragon et la Voleuse fantôme de l'aube",
+      "requires": [
+        30103
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4283,8 +6043,16 @@
     },
     "30105": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "In Search of the Spear of Draconic Malice",
       "nameFr": "À la recherche de la lance du Dragon Néfaste",
+      "requires": [
+        30104
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4296,8 +6064,16 @@
     },
     "30106": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "The Path of the Phantom Thief",
       "nameFr": "Le chemin de la voleuse",
+      "requires": [
+        30105
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4309,8 +6085,16 @@
     },
     "30107": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Operation: Infiltrate the Steelheart Fortress",
       "nameFr": "Opération d'infiltration de la Forteresse Cœur de Fer",
+      "requires": [
+        30106
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4322,8 +6106,21 @@
     },
     "30108": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Waiting for the Next Dawn",
       "nameFr": "En attendant la prochaine aube",
+      "requires": [
+        30107
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [
+        [
+          "DELETE_ITEM",
+          1430707
+        ]
+      ],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4335,8 +6132,16 @@
     },
     "30201": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "The Inquisitor in the Mist",
       "nameFr": "L'Inquisiteur dans la brume",
+      "requires": [
+        10090
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4348,8 +6153,16 @@
     },
     "30202": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "The Light-Divider",
       "nameFr": "Celui qui partage la lumière",
+      "requires": [
+        30201
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4361,8 +6174,16 @@
     },
     "30203": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Clues at the Outpost",
       "nameFr": "L'indice du poste de garde",
+      "requires": [
+        30202
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4374,8 +6195,16 @@
     },
     "30204": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "The Forest of Madness",
       "nameFr": "La forêt de la folie",
+      "requires": [
+        30203
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4387,8 +6216,16 @@
     },
     "30205": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "The Forgotten Tragedy",
       "nameFr": "Une tragédie oubliée",
+      "requires": [
+        30204
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4400,8 +6237,16 @@
     },
     "30206": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "The Truth Left Behind by the Dead",
       "nameFr": "La vérité laissée par les morts",
+      "requires": [
+        30205
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4413,8 +6258,16 @@
     },
     "30207": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Twisted Salvation 1",
       "nameFr": "Le salut dévoyé 1",
+      "requires": [
+        30206
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4426,8 +6279,16 @@
     },
     "30208": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Twisted Salvation 2",
       "nameFr": "Le salut dévoyé 2",
+      "requires": [
+        30207
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4439,8 +6300,16 @@
     },
     "30209": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Flowers of the Afterlife",
       "nameFr": "La fleur de l'au-delà",
+      "requires": [
+        30208
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4452,8 +6321,16 @@
     },
     "30210": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Mist, Festival, and Shadows",
       "nameFr": "Brume, fête et ombres",
+      "requires": [
+        30209
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4465,8 +6342,16 @@
     },
     "30301": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Spirits of Mistblossom Village",
       "nameFr": "L'esprit du Village de la fleur de brume",
+      "requires": [
+        10070
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4478,8 +6363,16 @@
     },
     "30302": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Rare Familiar Collector",
       "nameFr": "Collectionneur de Familiers rares",
+      "requires": [
+        30301
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4491,8 +6384,16 @@
     },
     "30303": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "The Girl Who Gets Along with Spirits",
       "nameFr": "La jeune fille qui s'entend bien avec les esprits",
+      "requires": [
+        30302
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4504,8 +6405,16 @@
     },
     "30304": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Kalien and Pola's Investigation",
       "nameFr": "Les enquêtes de Kalien et Pola",
+      "requires": [
+        30303
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4517,8 +6426,16 @@
     },
     "30305": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Mysterious Phenomena in the Village",
       "nameFr": "Les phénomènes étranges du Village",
+      "requires": [
+        30304
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4530,8 +6447,16 @@
     },
     "30306": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Pola's Only Friend",
       "nameFr": "La seule amie de Pola",
+      "requires": [
+        30305
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4543,8 +6468,16 @@
     },
     "30307": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Fearful Spirits",
       "nameFr": "Les esprits effrayés",
+      "requires": [
+        30306
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4556,8 +6489,16 @@
     },
     "30308": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Spirits and Alchemy",
       "nameFr": "Les esprits et l'alchimie",
+      "requires": [
+        30307
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4569,8 +6510,16 @@
     },
     "30309": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "The Corrupted Red Fox",
       "nameFr": "Le Renard rouge corrompu",
+      "requires": [
+        30308
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4582,8 +6531,16 @@
     },
     "30310": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "A Funeral for the Flames",
       "nameFr": "Le rituel funéraire des flammes",
+      "requires": [
+        30309
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4595,8 +6552,16 @@
     },
     "30701": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "A Welcome Quest",
       "nameFr": "Une requête bienvenue",
+      "requires": [
+        10080
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4608,8 +6573,16 @@
     },
     "30702": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "In Search of Food",
       "nameFr": "À la recherche de nourriture",
+      "requires": [
+        30701
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4621,8 +6594,16 @@
     },
     "30703": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "A Visit from a Famous Chef",
       "nameFr": "La visite d'un chef célèbre",
+      "requires": [
+        30702
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4634,8 +6615,16 @@
     },
     "30704": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Aqua Mist Herb",
       "nameFr": "L'herbe de brume aquatique",
+      "requires": [
+        30703
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4647,8 +6636,16 @@
     },
     "30705": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Helper at the Mistblossom Festival",
       "nameFr": "L'assistante du festival des fleurs de brume",
+      "requires": [
+        30704
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4660,8 +6657,16 @@
     },
     "30706": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "How to Set Off Fireworks?",
       "nameFr": "Comment faire éclater des feux d'artifice ?",
+      "requires": [
+        30705
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4673,8 +6678,16 @@
     },
     "30707": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Let's Build a Ride",
       "nameFr": "Fabriquons des manèges",
+      "requires": [
+        30706
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4686,8 +6699,16 @@
     },
     "30708": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Festival Preparations",
       "nameFr": "Préparation du festival",
+      "requires": [
+        30707
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4699,8 +6720,16 @@
     },
     "30709": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Mistblossom Festival",
       "nameFr": "Le festival des fleurs de brume",
+      "requires": [
+        30708
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4712,8 +6741,16 @@
     },
     "30801": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "The Wind of Seagull Village",
       "nameFr": "Le vent du village des mouettes",
+      "requires": [
+        10060
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4725,8 +6762,16 @@
     },
     "30802": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "The End of the Man They Sought",
       "nameFr": "La fin de celui qu'ils cherchaient",
+      "requires": [
+        30801
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4738,8 +6783,16 @@
     },
     "30803": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Those Left Behind",
       "nameFr": "Ceux qui restent",
+      "requires": [
+        30802
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4751,8 +6804,16 @@
     },
     "30804": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "What the Master Left Behind",
       "nameFr": "Ce que le maître a laissé",
+      "requires": [
+        30803
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4764,8 +6825,16 @@
     },
     "30805": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Those Who Cannot Leave",
       "nameFr": "Ceux qui ne peuvent pas partir",
+      "requires": [
+        30804
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4777,8 +6846,16 @@
     },
     "30806": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Beneath the Windmill",
       "nameFr": "Sous le moulin",
+      "requires": [
+        30805
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4790,8 +6867,16 @@
     },
     "30807": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Shedding Light on the Shadows",
       "nameFr": "Faire la lumière sur les ombres",
+      "requires": [
+        30806
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4803,8 +6888,16 @@
     },
     "30808": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "The Growing Embers",
       "nameFr": "La braise qui grandit",
+      "requires": [
+        30807
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4816,8 +6909,16 @@
     },
     "30809": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "Cause and Effect, Repeated",
       "nameFr": "La répétition des causes",
+      "requires": [
+        30808
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4829,8 +6930,16 @@
     },
     "30810": {
       "category": "CHARACTER",
+      "saveCategory": 14,
       "nameEn": "The Name Left Behind",
       "nameFr": "Le nom qui reste",
+      "requires": [
+        30809
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
       "gold": 10000,
       "advExp": 750,
       "items": [
@@ -4840,15 +6949,1689 @@
         ]
       ]
     },
+    "40001": {
+      "category": "ADVENT_GRADE",
+      "saveCategory": 7,
+      "nameEn": "Mercenary Crew Promotion Exam [Novice]",
+      "nameFr": "Examen de promotion du Corps de mercenaires [niveau inférieur]",
+      "requires": [
+        10020
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "40011": {
+      "category": "ADVENT_GRADE",
+      "saveCategory": 7,
+      "nameEn": "Mercenary Crew Promotion Exam [Intermediate]",
+      "nameFr": "Examen de promotion du Corps de mercenaires [niveau intermédiaire]",
+      "requires": [
+        40001,
+        10050
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "40021": {
+      "category": "ADVENT_GRADE",
+      "saveCategory": 7,
+      "nameEn": "Mercenary Crew Promotion Test [Advanced]",
+      "nameFr": "Épreuve de promotion du Corps de mercenaires [niveau supérieur]",
+      "requires": [
+        40011,
+        10060
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "40031": {
+      "category": "ADVENT_GRADE",
+      "saveCategory": 7,
+      "nameEn": "Mercenary Crew Promotion Test [Elite]",
+      "nameFr": "Épreuve de promotion du Corps de mercenaires [élite]",
+      "requires": [
+        40021,
+        10070
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "40041": {
+      "category": "ADVENT_GRADE",
+      "saveCategory": 7,
+      "nameEn": "Mercenary Crew Promotion Trial [Veteran]",
+      "nameFr": "Épreuve de promotion du Corps de mercenaires [vétéran]",
+      "requires": [
+        40031,
+        10090
+      ],
+      "autoAccept": true,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "50801": {
+      "category": "CHARACTER",
+      "saveCategory": 14,
+      "nameEn": "Bitter Medicine Is Good for You",
+      "nameFr": "Les remèdes amers sont bons pour la santé",
+      "requires": [
+        10040
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "50901": {
+      "category": "CHARACTER",
+      "saveCategory": 14,
+      "nameEn": "Cost-effective Food for the Knight Commander",
+      "nameFr": "Nourriture bon marché pour la Commandante de l'Ordre des Chevaliers",
+      "requires": [
+        10040
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "51001": {
+      "category": "CHARACTER",
+      "saveCategory": 14,
+      "nameEn": "Knights' Tour",
+      "nameFr": "Visite de l'Ordre des Chevaliers",
+      "requires": [
+        10040
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "51101": {
+      "category": "CHARACTER",
+      "saveCategory": 14,
+      "nameEn": "Astria's Special Fertilizer",
+      "nameFr": "Engrais spécial d'Astria",
+      "requires": [
+        10040
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90001": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Basic Controls Tutorial",
+      "nameFr": "Tutoriel sur les contrôles de base",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90002": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Basic Controls: Rolling &amp; Jumping",
+      "nameFr": "Contrôles de base : explication des roulades et des sauts",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90003": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Basic Controls: Skill Introduction",
+      "nameFr": "Contrôles de base : présentation des compétences",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90004": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Basic Controls: Signal Skills",
+      "nameFr": "Contrôles de base : présentation des compétences signal",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90005": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Basic Controls_Tag Signal Skill Introduction (Castella)",
+      "nameFr": "Contrôles de base : présentation des compétences signal de tag (Castella)",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90006": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Basic Controls: Tag Signal Skill Introduction (Lute)",
+      "nameFr": "Contrôles de base : présentation des compétences signal de tag (Lute)",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90007": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Mercenary Contract Tutorial",
+      "nameFr": "Tutoriel sur les contrats de mercenaires",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90008": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Team Setup Tutorial",
+      "nameFr": "Tutoriel sur les paramètres d'équipe",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90009": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Familiar Tutorial",
+      "nameFr": "Tutoriel sur les Familiers",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [
+        [
+          "TUTORIAL_DLG_COMPLITE",
+          90009
+        ]
+      ],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90010": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Familiar Movement Tutorial",
+      "nameFr": "Tutoriel sur le déplacement des Familiers",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90011": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Hero_Level Up_Tutorial",
+      "nameFr": "Tutoriel sur la montée de niveau des héros",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90012": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Awakening Tutorial",
+      "nameFr": "Tutoriel sur l'éveil",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90013": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Hero_Breakthrough_Tutorial",
+      "nameFr": "Tutoriel sur la percée des héros",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90014": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Parkour Tutorial",
+      "nameFr": "Tutoriel Parkour",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90015": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Rolling &amp; Dash Tutorial",
+      "nameFr": "Tutoriel sur les roulades et les dashs",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90016": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Equipment Tutorial",
+      "nameFr": "Tutoriel sur l'équipement",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90017": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Weapons (Karma) Tutorial",
+      "nameFr": "Tutoriel sur les armes (Karma)",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90018": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Summoning Tutorial Closing Tutorial",
+      "nameFr": "Tutoriel sur l'invocation Tutoriel sur la fermeture",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90019": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Hunt Tutorial",
+      "nameFr": "Tutoriel de la chasse",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90020": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Raid Tutorial",
+      "nameFr": "Tutoriel Raid",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90021": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Trait Dungeon Tutorial",
+      "nameFr": "Tutoriel des donjons de caractéristiques",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90022": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Ancient Windmill Tutorial",
+      "nameFr": "Tutoriel du Moulin antique",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90023": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Cooking Tutorial",
+      "nameFr": "Tutoriel de cuisine",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90024": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Promotion Quest Tutorial",
+      "nameFr": "Tutoriel de la requête de promotion",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90025": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Rune Socket Tutorial",
+      "nameFr": "Tutoriel sur les emplacements de runes",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90027": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Castella Joins Tutorial",
+      "nameFr": "Tutoriel sur l'arrivée de Castella",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90028": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Aria Joins Tutorial",
+      "nameFr": "Tutoriel sur l'arrivée d'Aria",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90029": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Broken Prop Tutorial",
+      "nameFr": "Tutoriel sur Broken Prop",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90030": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Interaction Tutorial",
+      "nameFr": "Tutoriel sur les interactions",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90031": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Tree-Pushing Tutorial",
+      "nameFr": "Tutoriel : Pousser un arbre",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90032": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Bookcase Pushing Tutorial",
+      "nameFr": "Tutoriel : Pousser une bibliothèque",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90033": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Tutorial for Checking Prop Destruction",
+      "nameFr": "Tutoriel pour vérifier la destruction d'un accessoire",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90034": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Scenario Dungeon: Steelheart Fortress Defense Tutorial",
+      "nameFr": "Tutoriel sur le scénario « Donjon : Défense de la Forteresse Cœur de Fer »",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90035": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Tutorial on Knockdown Status Effects",
+      "nameFr": "Tutoriel sur l'altération « À terre »",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90036": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Treasure Chest Tutorial",
+      "nameFr": "Tutoriel sur les coffres au trésor",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90037": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Menu Access Tutorial",
+      "nameFr": "Tutoriel d'accès au menu",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90038": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Cooking Quick Slot Tutorial",
+      "nameFr": "Tutoriel sur les emplacements rapides de cuisine",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90039": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Warp Point Tutorial",
+      "nameFr": "Tutoriel sur les points de téléportation",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90040": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Ancient Device Tutorial",
+      "nameFr": "Tutoriel sur l'utilisation des dispositifs anciens",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90041": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Scenario Dungeon: Dragon Worshipper Hideout Tutorial",
+      "nameFr": "Tutoriel sur le scénario « Donjon : Repaire des adorateurs du dragon »",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90042": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Crafting Tutorial",
+      "nameFr": "Tutoriel de fabrication",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90043": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Transmutation Tutorial",
+      "nameFr": "Tutoriel de transmutation",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90044": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Chat Tutorial",
+      "nameFr": "Tutoriel sur le Chat",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90045": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Team Setup Tutorial",
+      "nameFr": "Tutoriel sur les paramètres d'équipe",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90046": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Key of Light Tutorial",
+      "nameFr": "Tutoriel sur la Clé de lumière",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90047": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "World Boss Tutorial",
+      "nameFr": "Tutoriel sur les Boss mondiaux",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90048": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Familiar Tutorial",
+      "nameFr": "Tutoriel sur les Familiers",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90049": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Puzzle Tutorial",
+      "nameFr": "Tutoriel sur les casse-têtes",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90050": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Statue of Organa Tutorial",
+      "nameFr": "Tutoriel sur la statue d'Organa",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90051": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Local Quest Tutorial",
+      "nameFr": "Tutoriel des quêtes de zone",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90052": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Mini-Game: Whack-a-Mole Tutorial",
+      "nameFr": "Tutoriel du Mini-jeu « Taupe »",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90053": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Mini-Game: Flying Tutorial",
+      "nameFr": "Tutoriel du Mini-jeu « Vol »",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90054": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Mini-Game: Wave Tutorial",
+      "nameFr": "Tutoriel du Mini-jeu « Vagues »",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90055": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Mercenary Crew Management Tutorial",
+      "nameFr": "Tutoriel sur la gestion du Corps de mercenaires",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90056": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Mercenary Guide Tutorial",
+      "nameFr": "Tutoriel sur le guide du mercenaire",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90057": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Exploration Progress Tutorial",
+      "nameFr": "Tutoriel sur le taux d'exploration",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90058": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Achievement Tutorial",
+      "nameFr": "Tutoriel des succès",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90059": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Tower of Trials Tutorial",
+      "nameFr": "Tutoriel de la Tour des épreuves",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90060": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Lock-On Tutorial",
+      "nameFr": "Tutoriel sur le verrouillage",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90061": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Dash Tutorial",
+      "nameFr": "Tutoriel sur le dash",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90062": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Throw Tutorial",
+      "nameFr": "Tutoriel sur le lancer",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90063": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Training Ground Tutorial",
+      "nameFr": "Tutoriel sur le terrain d'entraînement",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "90064": {
+      "category": "TUTORIAL",
+      "saveCategory": 12,
+      "nameEn": "Exchange Tutorial",
+      "nameFr": "Tutoriel sur l'Échange",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 1,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "9000001": {
+      "category": "SUB",
+      "saveCategory": null,
+      "nameEn": "Quest 9000001",
+      "nameFr": "Quest 9000001",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": null,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
     "9000011": {
       "category": "SUB",
+      "saveCategory": null,
       "nameEn": "Quest 9000011",
       "nameFr": "Quest 9000011",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
       "gold": 500,
       "advExp": 500,
       "items": []
+    },
+    "9000013": {
+      "category": "EPIC",
+      "saveCategory": 3,
+      "nameEn": "Quest 9000013",
+      "nameFr": "Quest 9000013",
+      "requires": [
+        10001
+      ],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "9000014": {
+      "category": "SUB",
+      "saveCategory": null,
+      "nameEn": "Quest 9000014",
+      "nameFr": "Quest 9000014",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "9000015": {
+      "category": "SUB",
+      "saveCategory": null,
+      "nameEn": "Quest 9000015",
+      "nameFr": "Quest 9000015",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "9000016": {
+      "category": "SUB",
+      "saveCategory": null,
+      "nameEn": "Quest 9000016",
+      "nameFr": "Quest 9000016",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
+    },
+    "9000017": {
+      "category": "SUB",
+      "saveCategory": null,
+      "nameEn": "Quest 9000017",
+      "nameFr": "Quest 9000017",
+      "requires": [],
+      "autoAccept": false,
+      "advLevel": null,
+      "firstStep": 0,
+      "actions": [],
+      "gold": 0,
+      "advExp": 0,
+      "items": []
     }
   },
+  "adventLevelRewards": [
+    [
+      [
+        1410002,
+        10
+      ]
+    ],
+    [
+      [
+        1410002,
+        10
+      ]
+    ],
+    [
+      [
+        1410002,
+        10
+      ]
+    ],
+    [
+      [
+        1410002,
+        10
+      ]
+    ],
+    [
+      [
+        1410002,
+        10
+      ],
+      [
+        1000501,
+        100
+      ]
+    ],
+    [
+      [
+        1410003,
+        10
+      ]
+    ],
+    [
+      [
+        1410003,
+        10
+      ]
+    ],
+    [
+      [
+        1410003,
+        10
+      ]
+    ],
+    [
+      [
+        1410003,
+        10
+      ]
+    ],
+    [
+      [
+        1410003,
+        10
+      ],
+      [
+        1000501,
+        100
+      ]
+    ],
+    [
+      [
+        1410203,
+        10
+      ]
+    ],
+    [
+      [
+        1410203,
+        10
+      ]
+    ],
+    [
+      [
+        1410203,
+        10
+      ]
+    ],
+    [
+      [
+        1410203,
+        10
+      ]
+    ],
+    [
+      [
+        1410203,
+        10
+      ],
+      [
+        1000501,
+        100
+      ]
+    ],
+    [
+      [
+        1410204,
+        10
+      ]
+    ],
+    [
+      [
+        1410204,
+        10
+      ]
+    ],
+    [
+      [
+        1410204,
+        10
+      ]
+    ],
+    [
+      [
+        1410204,
+        10
+      ]
+    ],
+    [
+      [
+        1410204,
+        10
+      ],
+      [
+        1000501,
+        100
+      ]
+    ],
+    [
+      [
+        1410103,
+        10
+      ]
+    ],
+    [
+      [
+        1410103,
+        10
+      ]
+    ],
+    [
+      [
+        1410103,
+        10
+      ]
+    ],
+    [
+      [
+        1410103,
+        10
+      ]
+    ],
+    [
+      [
+        1410103,
+        10
+      ],
+      [
+        1000501,
+        100
+      ]
+    ],
+    [
+      [
+        1410104,
+        5
+      ]
+    ],
+    [
+      [
+        1410104,
+        5
+      ]
+    ],
+    [
+      [
+        1410104,
+        5
+      ]
+    ],
+    [
+      [
+        1410104,
+        5
+      ]
+    ],
+    [
+      [
+        1410104,
+        5
+      ],
+      [
+        1450403,
+        50
+      ]
+    ],
+    [
+      [
+        1410004,
+        5
+      ]
+    ],
+    [
+      [
+        1410204,
+        5
+      ]
+    ],
+    [
+      [
+        1410104,
+        5
+      ]
+    ],
+    [
+      [
+        1410004,
+        6
+      ]
+    ],
+    [
+      [
+        1410204,
+        6
+      ],
+      [
+        1000501,
+        100
+      ]
+    ],
+    [
+      [
+        1410104,
+        6
+      ]
+    ],
+    [
+      [
+        1410004,
+        7
+      ]
+    ],
+    [
+      [
+        1410204,
+        7
+      ]
+    ],
+    [
+      [
+        1410104,
+        7
+      ]
+    ],
+    [
+      [
+        1410004,
+        8
+      ],
+      [
+        1450403,
+        50
+      ]
+    ],
+    [
+      [
+        1410204,
+        8
+      ]
+    ],
+    [
+      [
+        1410104,
+        8
+      ]
+    ],
+    [
+      [
+        1410004,
+        9
+      ]
+    ],
+    [
+      [
+        1410204,
+        9
+      ]
+    ],
+    [
+      [
+        1410104,
+        9
+      ],
+      [
+        1000501,
+        100
+      ]
+    ],
+    [
+      [
+        1410004,
+        10
+      ]
+    ],
+    [
+      [
+        1410204,
+        10
+      ]
+    ],
+    [
+      [
+        1410104,
+        10
+      ]
+    ],
+    [
+      [
+        1410004,
+        11
+      ]
+    ],
+    [
+      [
+        1410204,
+        11
+      ],
+      [
+        1450403,
+        50
+      ]
+    ],
+    [
+      [
+        1410104,
+        11
+      ]
+    ],
+    [
+      [
+        1410004,
+        12
+      ]
+    ],
+    [
+      [
+        1410204,
+        12
+      ]
+    ],
+    [
+      [
+        1410104,
+        12
+      ]
+    ],
+    [
+      [
+        1410004,
+        13
+      ],
+      [
+        1000501,
+        100
+      ]
+    ],
+    [
+      [
+        1410204,
+        13
+      ]
+    ],
+    [
+      [
+        1410104,
+        13
+      ]
+    ],
+    [
+      [
+        1410004,
+        14
+      ]
+    ],
+    [
+      [
+        1410204,
+        14
+      ]
+    ],
+    [
+      [
+        1410104,
+        14
+      ],
+      [
+        1450403,
+        50
+      ]
+    ],
+    [
+      [
+        1410004,
+        15
+      ]
+    ],
+    [
+      [
+        1410204,
+        15
+      ]
+    ],
+    [
+      [
+        1410104,
+        15
+      ]
+    ],
+    [
+      [
+        1410004,
+        16
+      ]
+    ],
+    [
+      [
+        1410204,
+        16
+      ],
+      [
+        1000501,
+        100
+      ]
+    ],
+    [
+      [
+        1410104,
+        16
+      ]
+    ],
+    [
+      [
+        1410004,
+        17
+      ]
+    ],
+    [
+      [
+        1410204,
+        17
+      ]
+    ],
+    [
+      [
+        1410104,
+        17
+      ]
+    ],
+    [
+      [
+        1410004,
+        18
+      ],
+      [
+        1450403,
+        50
+      ]
+    ],
+    [
+      [
+        1410204,
+        18
+      ]
+    ],
+    [
+      [
+        1410104,
+        18
+      ]
+    ],
+    [
+      [
+        1410004,
+        19
+      ]
+    ],
+    [
+      [
+        1410204,
+        19
+      ]
+    ],
+    [
+      [
+        1410104,
+        19
+      ],
+      [
+        1000501,
+        100
+      ]
+    ],
+    [
+      [
+        1410004,
+        20
+      ]
+    ],
+    [
+      [
+        1410204,
+        20
+      ]
+    ],
+    [
+      [
+        1410104,
+        20
+      ]
+    ],
+    [
+      [
+        1410004,
+        20
+      ]
+    ],
+    [
+      [
+        1410204,
+        20
+      ],
+      [
+        1450403,
+        50
+      ]
+    ],
+    []
+  ],
   "regions": {
     "KOR": {
       "contentVersion": "M11_3",

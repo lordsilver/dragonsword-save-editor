@@ -415,11 +415,11 @@ impl<'a> Game<'a> {
         Ok(())
     }
 
-    // ---------------------------------------------------------- quest rewards
+    // ------------------------------------------------------------------ quests
 
     /// The rewards of every quest the save records as complete. A save edited
-    /// forward marks earlier quests complete without handing out what they
-    /// give, so the user can grant the ones they missed.
+    /// forward by another tool marks earlier quests complete without handing
+    /// out what they give, so the user can grant the ones they missed.
     pub fn quest_rewards(&self) -> Result<Vec<QuestRewards>> {
         let growth = Growth::shared();
         let mut done = self.quest_ids("tb_quest_complete", "")?;
@@ -427,171 +427,405 @@ impl<'a> Game<'a> {
         Ok(done
             .into_iter()
             .filter_map(|id| {
-                let reward = growth.quest_reward(id)?;
-                Some(QuestRewards {
-                    quest_id: id,
-                    category: reward.category.clone(),
-                    name_en: reward.name_en.clone(),
-                    name_fr: reward.name_fr.clone(),
-                    gold: reward.gold,
-                    adv_exp: reward.adv_exp,
-                    items: reward
-                        .items
-                        .iter()
-                        .map(|(cid, count)| {
-                            let item = self.catalog.lookup(*cid);
-                            RewardItem {
-                                route: reward_route(&item),
-                                item,
-                                count: *count,
-                            }
-                        })
-                        .collect(),
-                })
+                let quest = growth.quest(id)?;
+                (quest.gold > 0 || quest.adv_exp > 0 || !quest.items.is_empty())
+                    .then(|| self.quest_view(id, quest, None))
             })
             .collect())
     }
 
-    /// Adds the gold, stackable items and mounts of the chosen completed
-    /// quests. Equipment, dishes, heroes and corps EXP need writes the editor
-    /// does not make, so they are reported back instead of granted.
+    /// The quests the save has in progress, with what completing each one
+    /// would hand out and anything that stops the editor completing it.
+    pub fn quests_in_progress(&self) -> Result<Vec<QuestRewards>> {
+        let growth = Growth::shared();
+        let mut held = self.quest_ids("tb_quest_hold", "")?;
+        held.sort_unstable();
+        let mut out = Vec::new();
+        for id in held {
+            let Some(quest) = growth.quest(id) else {
+                continue;
+            };
+            let blocked = self.completion_blocker(quest)?;
+            out.push(self.quest_view(id, quest, blocked));
+        }
+        Ok(out)
+    }
+
+    fn quest_view(&self, id: i64, quest: &growth::Quest, blocked: Option<String>) -> QuestRewards {
+        QuestRewards {
+            quest_id: id,
+            category: quest.category.clone(),
+            name_en: quest.name_en.clone(),
+            name_fr: quest.name_fr.clone(),
+            gold: quest.gold,
+            adv_exp: quest.adv_exp,
+            items: quest
+                .items
+                .iter()
+                .map(|(cid, count)| {
+                    let item = self.catalog.lookup(*cid);
+                    RewardItem {
+                        route: reward_route(&item),
+                        item,
+                        count: *count,
+                    }
+                })
+                .collect(),
+            blocked,
+        }
+    }
+
+    /// Why the editor cannot complete a quest, if it cannot.
+    fn completion_blocker(&self, quest: &growth::Quest) -> Result<Option<String>> {
+        if quest.save_category.is_none() {
+            return Ok(Some(format!(
+                "the editor does not know how saves record {} quests",
+                quest.category.to_lowercase()
+            )));
+        }
+        for (action, value) in &quest.actions {
+            if action == "TEAMSETTING_CHARACTER" && self.require_character(*value).is_err() {
+                let hero = self.catalog.lookup_hint(*value, "character");
+                return Ok(Some(format!(
+                    "{} joins the team in this quest, and the editor does not add heroes; play it in game",
+                    hero.name_en
+                )));
+            }
+        }
+        Ok(None)
+    }
+
+    /// Adds the gold, stackable items, mounts and titles of the chosen
+    /// completed quests. Equipment, dishes, heroes and corps EXP need writes
+    /// the editor does not make, so they are reported back instead.
     pub fn grant_quest_rewards(&mut self, quest_ids: &[i64]) -> Result<RewardGrant> {
         let available = self.quest_rewards()?;
-        let mut chosen = Vec::new();
+        let mut chosen: Vec<i64> = Vec::new();
         for id in quest_ids {
-            let reward = available
-                .iter()
-                .find(|reward| reward.quest_id == *id)
-                .ok_or_else(|| {
-                    Error::invalid(format!(
-                        "quest {id} is not complete in this save or gives no reward"
-                    ))
-                })?;
-            if !chosen
-                .iter()
-                .any(|picked: &&QuestRewards| picked.quest_id == *id)
-            {
-                chosen.push(reward);
+            if !available.iter().any(|reward| reward.quest_id == *id) {
+                return Err(Error::invalid(format!(
+                    "quest {id} is not complete in this save or gives no reward"
+                )));
+            }
+            if !chosen.contains(id) {
+                chosen.push(*id);
             }
         }
-
-        let mut currency: HashMap<i64, i64> = HashMap::new();
-        let mut stacks: HashMap<i64, i64> = HashMap::new();
-        let mut mounts: Vec<i64> = Vec::new();
+        let growth = Growth::shared();
         let mut grant = RewardGrant::default();
-        for reward in &chosen {
-            *currency.entry(GOLD_CID).or_default() += reward.gold;
-            grant.adv_exp_not_granted += reward.adv_exp;
-            for entry in &reward.items {
-                match entry.route {
-                    RewardRoute::Currency => {
-                        *currency.entry(entry.item.cid).or_default() += entry.count;
-                    }
-                    RewardRoute::Stack => *stacks.entry(entry.item.cid).or_default() += entry.count,
-                    RewardRoute::Mount => {
-                        if !mounts.contains(&entry.item.cid) {
-                            mounts.push(entry.item.cid);
-                        }
-                    }
-                    RewardRoute::None => {
-                        match grant
-                            .not_granted
-                            .iter_mut()
-                            .find(|seen| seen.item.cid == entry.item.cid)
-                        {
-                            Some(seen) => seen.count += entry.count,
-                            None => grant.not_granted.push(RewardCount {
-                                item: entry.item.clone(),
-                                count: entry.count,
-                            }),
-                        }
-                    }
-                }
-            }
-        }
-
         let transaction = self.conn().unchecked_transaction()?;
-        let mut currency: Vec<(i64, i64)> = currency.into_iter().filter(|(_, n)| *n > 0).collect();
-        currency.sort_unstable();
-        for (cid, add) in currency {
-            let current: i64 = transaction
-                .query_row(
-                    "SELECT AMOUNT FROM tb_currency WHERE USER_DBID=? AND ITEM_CID=?",
-                    params![self.user_id, cid],
-                    |row| row.get(0),
-                )
-                .optional()?
-                .unwrap_or(0);
-            let total = current + add;
-            let max = currency_limit(cid).max(current);
-            if total > max {
-                return Err(Error::invalid(format!(
-                    "currency {cid} would reach {total}, above its limit of {max}"
-                )));
-            }
-            transaction.execute(
-                "INSERT INTO tb_currency (USER_DBID, ITEM_CID, AMOUNT) VALUES (?,?,?)
-                 ON CONFLICT(USER_DBID, ITEM_CID) DO UPDATE SET AMOUNT=excluded.AMOUNT",
-                params![self.user_id, cid, total],
-            )?;
-            grant.granted.push(RewardCount {
-                item: self.catalog.lookup_hint(cid, "currency"),
-                count: add,
-            });
-        }
-        let mut stacks: Vec<(i64, i64)> = stacks.into_iter().collect();
-        stacks.sort_unstable();
-        for (cid, add) in stacks {
-            let current: i64 = transaction
-                .query_row(
-                    "SELECT STACK_CNT FROM tb_stackable_item WHERE USER_DBID=? AND ITEM_CID=?",
-                    params![self.user_id, cid],
-                    |row| row.get(0),
-                )
-                .optional()?
-                .unwrap_or(0);
-            let total = current + add;
-            let max = MAX_STACK.max(current);
-            if total > max {
-                return Err(Error::invalid(format!(
-                    "item {cid} would reach {total}, above the stack limit of {max}"
-                )));
-            }
-            transaction.execute(
-                "INSERT INTO tb_stackable_item (USER_DBID, ITEM_CID, STACK_CNT) VALUES (?,?,?)
-                 ON CONFLICT(USER_DBID, ITEM_CID) DO UPDATE SET STACK_CNT=excluded.STACK_CNT",
-                params![self.user_id, cid, total],
-            )?;
-            grant.granted.push(RewardCount {
-                item: self.catalog.lookup(cid),
-                count: add,
-            });
-        }
-        for cid in mounts {
-            let owned: i64 = transaction.query_row(
-                "SELECT count(*) FROM tb_vehicle WHERE USER_DBID=? AND VEHICLE_CID=?",
-                params![self.user_id, cid],
-                |row| row.get(0),
-            )?;
-            if owned > 0 {
-                continue;
-            }
-            let next = self.mint_id("tb_vehicle", "VEHICLE_DBID")?;
-            transaction.execute(
-                "INSERT INTO tb_vehicle (VEHICLE_DBID, USER_DBID, VEHICLE_CID, CREATED_DATE)
-                 VALUES (?,?,?,strftime('%s','now'))",
-                params![next, self.user_id, cid],
-            )?;
-            grant.granted.push(RewardCount {
-                item: self.catalog.lookup(cid),
-                count: 1,
-            });
+        for id in chosen {
+            let quest = growth.quest(id).expect("listed quests exist");
+            self.add_reward(quest.gold, &quest.items, &mut grant)?;
+            grant.adv_exp_not_granted += quest.adv_exp;
         }
         transaction.commit()?;
         if !grant.granted.is_empty() {
             self.touch();
         }
         Ok(grant)
+    }
+
+    /// Completes a quest in progress the way the game does: records it as
+    /// complete, applies its lasting side effects, hands out its rewards
+    /// (corps EXP and level-up rewards included), promotes the corps for a
+    /// promotion exam, and starts the quests that were waiting for it.
+    pub fn complete_quest(&mut self, id: i64) -> Result<QuestCompletion> {
+        let growth = Growth::shared();
+        let quest = growth
+            .quest(id)
+            .ok_or_else(|| Error::invalid(format!("quest {id} is not in the game data")))?;
+        if !self.quest_ids("tb_quest_hold", "")?.contains(&id) {
+            return Err(Error::invalid(
+                "only a quest in progress can be completed; play up to it first",
+            ));
+        }
+        if let Some(reason) = self.completion_blocker(quest)? {
+            return Err(Error::invalid(reason));
+        }
+        let category = quest.save_category.expect("checked by completion_blocker");
+        let mut completion = QuestCompletion::default();
+
+        let transaction = self.conn().unchecked_transaction()?;
+        self.record_complete(id, category)?;
+        for (action, value) in &quest.actions {
+            match action.as_str() {
+                "TUTORIAL_DLG_COMPLITE" => {
+                    let tutorial = growth
+                        .quest(*value)
+                        .and_then(|tutorial| tutorial.save_category)
+                        .unwrap_or(12);
+                    if !self.quest_ids("tb_quest_complete", "")?.contains(value) {
+                        self.record_complete(*value, tutorial)?;
+                    }
+                }
+                "DELETE_ITEM" => {
+                    self.conn().execute(
+                        "DELETE FROM tb_stackable_item WHERE USER_DBID=? AND ITEM_CID=?",
+                        params![self.user_id, value],
+                    )?;
+                }
+                _ => {}
+            }
+        }
+        self.add_reward(quest.gold, &quest.items, &mut completion.grant)?;
+        completion.levels_gained = self.add_corps_exp(quest.adv_exp, &mut completion.grant)?;
+        if quest.category == "ADVENT_GRADE" {
+            completion.new_grade = self.promote(id, &mut completion.grant)?;
+        }
+        completion.started = self.start_waiting_quests(id)?;
+        transaction.commit()?;
+        self.touch();
+        Ok(completion)
+    }
+
+    /// Writes the complete record, drops the quest from the ones in progress,
+    /// and adds it to the game's short list of recent completions, which
+    /// game-written saves keep at 8 per category.
+    fn record_complete(&self, id: i64, category: i64) -> Result<()> {
+        self.conn().execute(
+            "INSERT OR IGNORE INTO tb_quest_complete (USER_DBID, QUEST_CID, CATEGORY) VALUES (?,?,?)",
+            params![self.user_id, id, category],
+        )?;
+        if self.table_exists("tb_quest_hold")? {
+            self.conn().execute(
+                "DELETE FROM tb_quest_hold WHERE USER_DBID=? AND QUEST_CID=?",
+                params![self.user_id, id],
+            )?;
+        }
+        if self.table_exists("tb_completed_quest")? {
+            self.conn().execute(
+                "INSERT OR IGNORE INTO tb_completed_quest (USER_DBID, QUEST_CID, CATEGORY) VALUES (?,?,?)",
+                params![self.user_id, id, category],
+            )?;
+            self.conn().execute(
+                "DELETE FROM tb_completed_quest
+                  WHERE USER_DBID=?1 AND CATEGORY=?2 AND rowid NOT IN (
+                    SELECT rowid FROM tb_completed_quest WHERE USER_DBID=?1 AND CATEGORY=?2
+                     ORDER BY rowid DESC LIMIT 8)",
+                params![self.user_id, category],
+            )?;
+        }
+        Ok(())
+    }
+
+    /// Adds corps EXP and levels the corps up through every threshold it
+    /// crosses, handing out each level's reward. Returns the levels gained.
+    fn add_corps_exp(&self, exp: i64, grant: &mut RewardGrant) -> Result<i64> {
+        if exp == 0 {
+            return Ok(0);
+        }
+        let growth = Growth::shared();
+        let (start_level, current) = self.corps_status()?;
+        let total = current + exp;
+        let cap = growth.region(REGION).max_advent_level;
+        let mut level = start_level;
+        while level < cap
+            && growth::start_exp(growth.advent_exp(), level + 1).is_some_and(|next| total >= next)
+        {
+            level += 1;
+            self.add_reward(0, growth.advent_level_reward(level), grant)?;
+        }
+        // At the cap the game refunds EXP past the level's start.
+        let stored = if level >= cap {
+            growth::start_exp(growth.advent_exp(), level).map_or(total, |start| total.min(start))
+        } else {
+            total
+        };
+        self.conn().execute(
+            "UPDATE tb_advent_status SET ADV_LEVEL=?, ADV_EXP=? WHERE USER_DBID=?",
+            params![level, stored, self.user_id],
+        )?;
+        Ok(level - start_level)
+    }
+
+    /// Raises the grade for a completed promotion exam and hands out its title
+    /// and items. The adventure difficulty follows the grade when it was at
+    /// the old grade, as it is in every save seen so far.
+    fn promote(&self, quest_id: i64, grant: &mut RewardGrant) -> Result<Option<i64>> {
+        let growth = Growth::shared();
+        let Some(grade) = (1..=growth.region(REGION).max_advent_grade)
+            .filter_map(|grade| growth.grade(grade))
+            .find(|row| row.promotion_quest == Some(quest_id))
+        else {
+            return Ok(None);
+        };
+        let current = self.adventure_grade()?;
+        if grade.grade <= current {
+            return Ok(None);
+        }
+        self.conn().execute(
+            "UPDATE tb_advent_status SET ADV_GRADE=? WHERE USER_DBID=?",
+            params![grade.grade, self.user_id],
+        )?;
+        for column in ["CUR_ADV_DIFFICULTY", "ORIGIN_ADV_DIFFICULTY"] {
+            if self.column_exists("tb_advent_status", column)? {
+                self.conn().execute(
+                    &format!(
+                        "UPDATE tb_advent_status SET {column}=? WHERE USER_DBID=? AND {column}=?"
+                    ),
+                    params![grade.grade, self.user_id, current],
+                )?;
+            }
+        }
+        self.add_reward(0, &grade.items, grant)?;
+        Ok(Some(grade.grade))
+    }
+
+    /// Starts every quest the game would start by itself now that `done` is
+    /// complete: auto-accepted quests whose prerequisites are all complete and
+    /// whose corps level is reached.
+    fn start_waiting_quests(&self, done: i64) -> Result<Vec<QuestRef>> {
+        if !self.table_exists("tb_quest_hold")? {
+            return Ok(Vec::new());
+        }
+        let growth = Growth::shared();
+        let complete = self.quest_ids("tb_quest_complete", "")?;
+        let held = self.quest_ids("tb_quest_hold", "")?;
+        let (level, _) = self.corps_status()?;
+        let mut started = Vec::new();
+        let mut waiting: Vec<(i64, &growth::Quest)> = growth
+            .quests()
+            .filter(|(id, quest)| {
+                quest.auto_accept
+                    && quest.save_category.is_some()
+                    && quest.requires.contains(&done)
+                    && quest
+                        .requires
+                        .iter()
+                        .all(|required| complete.contains(required))
+                    && quest.adv_level.is_none_or(|needed| level >= needed)
+                    && !complete.contains(id)
+                    && !held.contains(id)
+            })
+            .collect();
+        waiting.sort_unstable_by_key(|(id, _)| *id);
+        for (id, quest) in waiting {
+            let Some(step) = quest.first_step else {
+                continue;
+            };
+            self.conn().execute(
+                "INSERT INTO tb_quest_hold (USER_DBID, QUEST_CID, USE_TRACKING, STEP_ID, CNT, FAILED_CNT)
+                 VALUES (?,?,0,?,0,0)",
+                params![self.user_id, id, step],
+            )?;
+            started.push(QuestRef {
+                quest_id: id,
+                name_en: quest.name_en.clone(),
+                name_fr: quest.name_fr.clone(),
+            });
+        }
+        Ok(started)
+    }
+
+    /// Hands out gold and reward items. Currency, stackable items, mounts and
+    /// titles are written; anything else is listed in `grant.not_granted`.
+    fn add_reward(&self, gold: i64, items: &[(i64, i64)], grant: &mut RewardGrant) -> Result<()> {
+        if gold > 0 {
+            self.add_currency(GOLD_CID, gold, grant)?;
+        }
+        for (cid, count) in items {
+            let item = self.catalog.lookup(*cid);
+            match reward_route(&item) {
+                RewardRoute::Currency => self.add_currency(*cid, *count, grant)?,
+                RewardRoute::Stack => {
+                    let current: i64 = self
+                        .current_i64(
+                            "SELECT STACK_CNT FROM tb_stackable_item WHERE USER_DBID=? AND ITEM_CID=?",
+                            params![self.user_id, cid],
+                        )?
+                        .unwrap_or(0);
+                    let total = current + count;
+                    let max = MAX_STACK.max(current);
+                    if total > max {
+                        return Err(Error::invalid(format!(
+                            "{} would reach {total}, above the stack limit of {max}",
+                            item.name_en
+                        )));
+                    }
+                    self.conn().execute(
+                        "INSERT INTO tb_stackable_item (USER_DBID, ITEM_CID, STACK_CNT) VALUES (?,?,?)
+                         ON CONFLICT(USER_DBID, ITEM_CID) DO UPDATE SET STACK_CNT=excluded.STACK_CNT",
+                        params![self.user_id, cid, total],
+                    )?;
+                    note(&mut grant.granted, item, *count);
+                }
+                RewardRoute::Mount => {
+                    let owned: i64 = self.conn().query_row(
+                        "SELECT count(*) FROM tb_vehicle WHERE USER_DBID=? AND VEHICLE_CID=?",
+                        params![self.user_id, cid],
+                        |row| row.get(0),
+                    )?;
+                    if owned == 0 {
+                        let next = self.mint_id("tb_vehicle", "VEHICLE_DBID")?;
+                        self.conn().execute(
+                            "INSERT INTO tb_vehicle (VEHICLE_DBID, USER_DBID, VEHICLE_CID, CREATED_DATE)
+                             VALUES (?,?,?,strftime('%s','now'))",
+                            params![next, self.user_id, cid],
+                        )?;
+                        note(&mut grant.granted, item, 1);
+                    }
+                }
+                RewardRoute::Title => {
+                    let category = cid / 64;
+                    let bit = 1i64 << (cid % 64);
+                    self.conn().execute(
+                        "INSERT INTO tb_title (USER_DBID, CATEGORY, BIT_FIELD, FAV_BIT_FIELD)
+                         VALUES (?,?,?,0)
+                         ON CONFLICT(USER_DBID, CATEGORY) DO UPDATE SET BIT_FIELD=BIT_FIELD | excluded.BIT_FIELD",
+                        params![self.user_id, category, bit],
+                    )?;
+                    note(&mut grant.granted, item, 1);
+                }
+                RewardRoute::None => note(&mut grant.not_granted, item, *count),
+            }
+        }
+        Ok(())
+    }
+
+    fn add_currency(&self, cid: i64, add: i64, grant: &mut RewardGrant) -> Result<()> {
+        let current = self
+            .current_i64(
+                "SELECT AMOUNT FROM tb_currency WHERE USER_DBID=? AND ITEM_CID=?",
+                params![self.user_id, cid],
+            )?
+            .unwrap_or(0);
+        let total = current + add;
+        let max = currency_limit(cid).max(current);
+        if total > max {
+            return Err(Error::invalid(format!(
+                "currency {cid} would reach {total}, above its limit of {max}"
+            )));
+        }
+        self.conn().execute(
+            "INSERT INTO tb_currency (USER_DBID, ITEM_CID, AMOUNT) VALUES (?,?,?)
+             ON CONFLICT(USER_DBID, ITEM_CID) DO UPDATE SET AMOUNT=excluded.AMOUNT",
+            params![self.user_id, cid, total],
+        )?;
+        note(
+            &mut grant.granted,
+            self.catalog.lookup_hint(cid, "currency"),
+            add,
+        );
+        Ok(())
+    }
+
+    fn table_exists(&self, table: &str) -> Result<bool> {
+        let count: i64 = self.conn().query_row(
+            "SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?",
+            [table],
+            |row| row.get(0),
+        )?;
+        Ok(count > 0)
+    }
+
+    fn column_exists(&self, table: &str, column: &str) -> Result<bool> {
+        let count: i64 = self.conn().query_row(
+            "SELECT count(*) FROM pragma_table_info(?) WHERE name=?",
+            [table, column],
+            |row| row.get(0),
+        )?;
+        Ok(count > 0)
     }
 
     // --------------------------------------------------------------- currency
@@ -2067,6 +2301,8 @@ pub struct QuestRewards {
     /// without the level's own rewards.
     pub adv_exp: i64,
     pub items: Vec<RewardItem>,
+    /// Why the editor cannot complete this quest, for a quest in progress.
+    pub blocked: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -2086,6 +2322,8 @@ pub enum RewardRoute {
     Stack,
     /// A `tb_vehicle` row, through the same path as unlocking a mount.
     Mount,
+    /// A title bit in `tb_title`; a title's item CID is its title ID.
+    Title,
     /// Equipment, dishes and heroes: instance rows the editor does not mint.
     None,
 }
@@ -2095,6 +2333,8 @@ fn reward_route(item: &Item) -> RewardRoute {
         RewardRoute::Currency
     } else if item.category == "mount" {
         RewardRoute::Mount
+    } else if item.kind == "ACCOUNT_TITLE" {
+        RewardRoute::Title
     } else if item.is_stackable() {
         RewardRoute::Stack
     } else {
@@ -2115,6 +2355,33 @@ pub struct RewardGrant {
     pub granted: Vec<RewardCount>,
     pub not_granted: Vec<RewardCount>,
     pub adv_exp_not_granted: i64,
+}
+
+/// Adds `count` of an item to a reward list, merging repeats.
+fn note(list: &mut Vec<RewardCount>, item: Item, count: i64) {
+    match list.iter_mut().find(|seen| seen.item.cid == item.cid) {
+        Some(seen) => seen.count += count,
+        None => list.push(RewardCount { item, count }),
+    }
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct QuestRef {
+    pub quest_id: i64,
+    pub name_en: String,
+    pub name_fr: String,
+}
+
+/// What completing a quest did.
+#[derive(Debug, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct QuestCompletion {
+    pub grant: RewardGrant,
+    pub levels_gained: i64,
+    pub new_grade: Option<i64>,
+    /// The quests the completion started.
+    pub started: Vec<QuestRef>,
 }
 
 /// Growth ceilings for one hero, karma or the Mercenary Corps. Existing values

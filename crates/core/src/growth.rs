@@ -43,17 +43,31 @@ pub struct Growth {
     advent_level_start_exp: Vec<i64>,
     advent_grades: Vec<AdventGrade>,
     main_quests: Vec<MainQuest>,
-    quest_rewards: HashMap<String, QuestReward>,
+    quests: HashMap<String, Quest>,
+    advent_level_rewards: Vec<Vec<(i64, i64)>>,
     regions: Regions,
 }
 
-/// What one quest hands out on completion, from `QuestMainData`.
+/// One quest from `QuestMainData`, with what completing it touches.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct QuestReward {
+pub struct Quest {
     pub category: String,
+    /// The `CATEGORY` code saves use for this quest's category; none for a
+    /// category no save shows, which the editor will not complete.
+    pub save_category: Option<i64>,
     pub name_en: String,
     pub name_fr: String,
+    /// Quests that must be complete before this one starts.
+    pub requires: Vec<i64>,
+    /// The game starts the quest by itself once `requires` is complete.
+    pub auto_accept: bool,
+    /// The corps level the quest needs, if any.
+    pub adv_level: Option<i64>,
+    pub first_step: Option<i64>,
+    /// Lasting side effects: `TEAMSETTING_CHARACTER` (a hero joins),
+    /// `TUTORIAL_DLG_COMPLITE` (a tutorial completes) and `DELETE_ITEM`.
+    pub actions: Vec<(String, i64)>,
     pub gold: i64,
     pub adv_exp: i64,
     /// `(item CID, count)` pairs.
@@ -87,6 +101,8 @@ pub struct AdventGrade {
     pub character_ascend: i64,
     pub karma_ascend: i64,
     pub title_item: Option<i64>,
+    /// What the promotion hands out: its title and, from Novice up, a mount.
+    pub items: Vec<(i64, i64)>,
     /// The main quest the promotion exam waits for.
     pub requires_main_quest: Option<i64>,
 }
@@ -180,8 +196,23 @@ impl Growth {
         &self.main_quests
     }
 
-    pub fn quest_reward(&self, id: i64) -> Option<&QuestReward> {
-        self.quest_rewards.get(&id.to_string())
+    pub fn quest(&self, id: i64) -> Option<&Quest> {
+        self.quests.get(&id.to_string())
+    }
+
+    /// Every quest, keyed by ID.
+    pub fn quests(&self) -> impl Iterator<Item = (i64, &Quest)> {
+        self.quests
+            .iter()
+            .filter_map(|(id, quest)| Some((id.parse().ok()?, quest)))
+    }
+
+    /// What reaching a corps level hands out.
+    pub fn advent_level_reward(&self, level: i64) -> &[(i64, i64)] {
+        usize::try_from(level - 1)
+            .ok()
+            .and_then(|index| self.advent_level_rewards.get(index))
+            .map_or(&[], Vec::as_slice)
     }
 
     pub fn main_quest(&self, id: i64) -> Option<&MainQuest> {
@@ -415,11 +446,9 @@ mod tests {
     #[test]
     fn quests_list_their_rewards() {
         let growth = Growth::shared();
-        assert!(
-            growth.quest_reward(10_001).is_none(),
-            "quest 1 gives nothing"
-        );
-        let captain = growth.quest_reward(10_009).unwrap();
+        let first = growth.quest(10_001).unwrap();
+        assert_eq!((first.gold, first.adv_exp, first.items.len()), (0, 0, 0));
+        let captain = growth.quest(10_009).unwrap();
         assert_eq!((captain.gold, captain.adv_exp), (2_500, 400));
         assert_eq!(
             captain.items,
@@ -431,6 +460,30 @@ mod tests {
                 (1_000_500, 1)
             ]
         );
+    }
+
+    #[test]
+    fn quests_know_what_completing_them_touches() {
+        let growth = Growth::shared();
+        let second = growth.quest(10_002).unwrap();
+        assert_eq!(second.save_category, Some(1));
+        assert_eq!(second.requires, [10_001]);
+        assert!(second.auto_accept);
+        assert_eq!(second.first_step, Some(1));
+        assert!(
+            second
+                .actions
+                .contains(&("TEAMSETTING_CHARACTER".to_string(), 10_003))
+        );
+        let exam = growth.quest(40_011).unwrap();
+        assert_eq!(exam.save_category, Some(7));
+        assert_eq!(exam.requires, [40_001, 10_050]);
+        assert_eq!(
+            growth.grade(2).unwrap().items,
+            [(2_104_100, 1), (1_320_012, 1)]
+        );
+        assert_eq!(growth.advent_level_reward(2), [(1_410_002, 10)]);
+        assert_eq!(growth.advent_level_reward(81), []);
     }
 
     #[test]

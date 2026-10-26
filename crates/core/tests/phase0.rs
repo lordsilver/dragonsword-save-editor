@@ -149,6 +149,15 @@ CREATE TABLE tb_quest_complete (
   USER_DBID INTEGER, QUEST_CID INTEGER, CATEGORY INTEGER,
   PRIMARY KEY (USER_DBID, QUEST_CID)
 );
+CREATE TABLE tb_quest_hold (
+  USER_DBID INTEGER, QUEST_CID INTEGER, USE_TRACKING INTEGER,
+  STEP_ID INTEGER, CNT INTEGER, FAILED_CNT INTEGER,
+  PRIMARY KEY (USER_DBID, QUEST_CID)
+);
+CREATE TABLE tb_completed_quest (
+  USER_DBID INTEGER, QUEST_CID INTEGER, CATEGORY INTEGER,
+  PRIMARY KEY (USER_DBID, QUEST_CID)
+);
 CREATE TABLE tb_vehicle (
   VEHICLE_DBID INTEGER PRIMARY KEY, USER_DBID INTEGER,
   VEHICLE_CID INTEGER, CREATED_DATE INTEGER
@@ -399,6 +408,13 @@ fn fixture_with(name: &str, gold: i64, grade: i64, version: i64) -> Fixture {
             rusqlite::params![USER, USER, USER],
         )
         .expect("quests");
+        // In progress: quest 5 (a hero joins), quest 10 and the Novice exam.
+        conn.execute(
+            "INSERT INTO tb_quest_hold (USER_DBID, QUEST_CID, USE_TRACKING, STEP_ID, CNT, FAILED_CNT)
+             VALUES (?1, 10005, 0, 1, 0, 0), (?1, 10010, 0, 1, 0, 0), (?1, 40001, 0, 1, 0, 0)",
+            [USER],
+        )
+        .expect("quests in progress");
         conn.execute_batch("PRAGMA journal_mode=DELETE;")
             .expect("journal");
     }
@@ -1030,6 +1046,107 @@ fn completed_quests_hand_out_their_missed_rewards() {
         .filter(|mount| mount.cid == 1_320_016)
         .count();
     assert_eq!(wolves, 1);
+}
+
+fn quest_rows(session: &SaveSession, table: &str) -> Vec<i64> {
+    let page = session.raw_page(table, 0, 500, None).expect("quest page");
+    let column = column_index(&page, "QUEST_CID");
+    let mut ids: Vec<i64> = page
+        .rows
+        .iter()
+        .map(|row| integer(&row.cells[column]))
+        .collect();
+    ids.sort_unstable();
+    ids
+}
+
+#[test]
+fn completing_a_quest_records_it_and_hands_out_its_rewards() {
+    let path = fixture("quest-complete");
+    let mut session = SaveSession::open(&path).expect("open");
+    {
+        let mut game = Game::new(&mut session, Catalog::shared());
+        let in_progress = game.quests_in_progress().expect("in progress");
+        let blocked: Vec<(i64, bool)> = in_progress
+            .iter()
+            .map(|quest| (quest.quest_id, quest.blocked.is_some()))
+            .collect();
+        assert_eq!(blocked, [(10_005, true), (10_010, false), (40_001, false)]);
+        let error = game
+            .complete_quest(10_005)
+            .expect_err("a hero joins in quest 5");
+        assert!(error.to_string().contains("joins the team"));
+        assert!(
+            game.complete_quest(10_011).is_err(),
+            "quest 11 is not in progress"
+        );
+
+        // Quest 10 gives 2,500 gold, 400 corps EXP and Advanced Combat Text
+        // ×5. At corps EXP 700 that crosses level 2 (800), whose reward is
+        // Basic Combat Text ×10.
+        game.set_adventure("exp", 700).expect("corps exp");
+        let advanced = stack_count(&game, 1_410_003);
+        let basic = stack_count(&game, 1_410_002);
+        let completion = game.complete_quest(10_010).expect("complete");
+        assert_eq!(gold(&game), 2_600);
+        assert_eq!(stack_count(&game, 1_410_003), advanced + 5);
+        assert_eq!(stack_count(&game, 1_410_002), basic + 10);
+        assert_eq!(completion.levels_gained, 1);
+        assert_eq!(completion.new_grade, None);
+        let started: Vec<i64> = completion
+            .started
+            .iter()
+            .map(|quest| quest.quest_id)
+            .collect();
+        assert_eq!(started, [10_011], "the next main quest starts");
+        assert!(
+            game.complete_quest(10_010).is_err(),
+            "a completed quest is no longer in progress"
+        );
+    }
+    assert_eq!(
+        quest_rows(&session, "tb_quest_complete"),
+        [10_001, 10_004, 10_009, 10_010]
+    );
+    assert_eq!(
+        quest_rows(&session, "tb_quest_hold"),
+        [10_005, 10_011, 40_001]
+    );
+    assert_eq!(quest_rows(&session, "tb_completed_quest"), [10_010]);
+    let page = session
+        .raw_page("tb_advent_status", 0, 10, None)
+        .expect("advent page");
+    let row = &page.rows[0].cells;
+    assert_eq!(integer(&row[column_index(&page, "ADV_LEVEL")]), 2);
+    assert_eq!(integer(&row[column_index(&page, "ADV_EXP")]), 1_100);
+}
+
+#[test]
+fn completing_a_promotion_exam_raises_the_grade() {
+    let path = fixture("quest-promotion");
+    let mut session = SaveSession::open(&path).expect("open");
+    let mut game = Game::new(&mut session, Catalog::shared());
+    let completion = game.complete_quest(40_001).expect("promotion");
+    assert_eq!(completion.new_grade, Some(2));
+    assert_eq!(game.max_ascend().expect("max ascend"), 1);
+    let title = game
+        .titles()
+        .expect("titles")
+        .into_iter()
+        .find(|title| title.id == 2_104_100)
+        .expect("novice title");
+    assert!(title.unlocked, "the Novice Mercenary Corps title");
+    assert!(
+        game.mounts()
+            .expect("mounts")
+            .iter()
+            .any(|mount| mount.cid == 1_320_012),
+        "the Novice promotion mount"
+    );
+    assert!(
+        completion.started.is_empty(),
+        "the Intermediate exam also waits for main quest 40"
+    );
 }
 
 #[test]
