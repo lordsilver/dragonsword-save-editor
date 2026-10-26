@@ -121,6 +121,22 @@ export interface Currency {
   amount: number;
 }
 
+/**
+ * Growth ceilings derived by the Rust core from the save's adventure grade.
+ * Existing values above a ceiling remain editable; the UI uses `max(limit,
+ * current)` when it builds a field.
+ */
+export interface CharacterLimits {
+  grade: number;
+  level: number;
+  exp: number;
+  ascend: number;
+  transcend: number;
+  skillLow: number;
+  skillMid: number;
+  skillSpecial: number;
+}
+
 export interface Overview {
   accountId: number;
   playerName: string;
@@ -139,6 +155,7 @@ export interface Overview {
   position: [number, number, number];
   counts: Counts;
   currencies: Currency[];
+  characterLimits: CharacterLimits;
 }
 
 export interface Stack {

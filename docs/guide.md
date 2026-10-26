@@ -18,7 +18,7 @@ The slot cards show the screenshot the game saved with the slot, when one exists
 
 ## Value limits
 
-The typed screens cap values at the highest number seen in the 100% reference save: level 70, ascend 5, transcend 6, skill level 10, enchant 15, adventure level 80 and grade 6, gold 47,451,809, and a stack of 61,525, among others. These are conservative editor limits, not values read from the game's tables. The raw database browser can still write any value the column type accepts.
+Character growth follows the save's adventure grade. Grade 1 caps level 20, EXP 76,900, ascension 0, transcendence 1, and skill slots 3/2/1; grade 6 caps level 70, EXP 2,990,400, ascension 5, transcendence 6, and skills 10/7/1. For other grades the editor uses the highest value already present in that save. Existing values above a cap stay editable, and every field uses `max(cap, current)`, so a blur cannot lower them. Karma uses the same grade caps. Equipment is capped at enchant 15 and item EXP 90,000, adventure level at 80, and adventure grade at the save's current grade; material stacks at 61,525 and cooked dishes at 203; gold at 47,451,809. These are conservative editor limits, not values read from the game's tables. The raw database browser can still write any value the column type accepts, except in a save whose schema version is newer than 2.
 
 ## Editing
 
@@ -28,8 +28,8 @@ Every screen edits only the open temporary copy. The title bar shows **Unsaved**
 
 Shows the account, player name, adventure grade and level, EXP, play time, stamina, location, collection progress, currencies, and the save file itself.
 - Click the pencil next to the name to rename the player.
-- **Edit adventure rank** changes grade, level, or EXP. Grade is capped at 6, level at 80, and EXP at 962,500.
-- **Fill every stack** is the bulk inventory action; it is disabled when every stack is already full.
+- **Edit adventure rank** changes grade, level, or EXP. Grade cannot be raised above the save's current grade; lowering it is allowed, but the editor cannot raise it back. Level is capped at 80 and EXP at 962,500.
+- **Fill every stack** is the bulk inventory action; it is disabled when every eligible material stack is already full.
 
 ### Currencies
 
@@ -37,14 +37,15 @@ Edit gold or aether crystals directly. **Set highest seen** fills the field with
 
 ### Inventory
 
-Lists stackable materials and cooked dishes. Edit a count, add a missing catalog item with **Add stackable**, or use **Fill stacks** to set every row to a chosen count. Counts are capped at 61,525, the highest count seen in the reference save.
+Lists stackable materials and cooked dishes. Edit a count, add a missing catalog item with **Add stackable**, or use **Fill stacks** to set every safe row to a chosen count. Material stacks are capped at 61,525; cooked dishes at 203. The **Max** button appears only for stack kinds Fill can safely raise and for cooked dishes.
 
 ### Characters
 
 The character list selects one character at a time. Edit level, EXP, ascension, HP, transcendence, and soldier grade, manage skills, and fill the three slots of each team page.
-- Recruiting is switched off in this build. There is no verified character roster yet: the catalog mixes playable characters with character items and skins, and the game's new-account seed is not a roster. Editing and removing existing characters still works.
+- Level, EXP, ascension, and transcendence follow the adventure-grade caps above.
+- The editor does not insert character rows. To recruit a shop character, add **Fate's Invitation** (CID 1,000,500) on the Inventory screen, save, then buy the character in the game's shop. The game writes the level-1 character row and purchase record. Story characters still arrive by playing.
 - Removing a character also clears their skills, team slots, loadout links, and costume assignments.
-- Skills are keyed by `TYPE_VALUE`; the game writes 1–7 and 801, and the editor caps the level at 10.
+- Skills are keyed by `TYPE_VALUE`; the game writes 1–7 and 801. Slots 1–4, 5–7, and 801 are capped separately by the adventure grade.
 
 ### Equipment
 
@@ -58,7 +59,7 @@ Edit each gem's raw `STAT_INFO_CID` and lock state. The catalog icon follows the
 
 ### Karma
 
-Edit a spirit's EXP, ascension, and transcendence, and equip it to a character. Ascend is capped at 5, transcend at 6, and EXP at 2,990,400. A spirit belongs to one character at a time: assigning a new owner clears the previous character's slot. Choosing **Not equipped** detaches it.
+Edit a spirit's EXP, ascension, and transcendence, and equip it to a character. Karma uses the same adventure-grade caps as characters. A spirit belongs to one character at a time: assigning a new owner clears the previous character's slot. Choosing **Not equipped** detaches it.
 
 ### Costumes and mounts
 
@@ -92,6 +93,8 @@ The escape hatch. Pick a table, search every column, page through rows, and clic
 
 If the game wrote the slot after you opened it, saving is refused with a **Reopen** action. Reopening loads the game's newer progress and drops the edits in the editor; that is deliberate, because writing would overwrite the game's save.
 
+Opening a save whose `USER_DB_VERSION` is newer than 2 shows a warning. It can still be inspected, but **Save changes** is refused and the file is left untouched.
+
 Opening a save runs SQLite's `integrity_check` and records any gem links that already point at a missing or deleted gem, or link one gem to more than one piece. The overview lists them. A save with existing damage can still be edited and written; only a link the edit introduces blocks the save. A new broken link is refused with an `inconsistent` error and the file is left untouched.
 
 If the game stopped partway through a save, it leaves a `-journal` beside the slot. The editor warns on open and refuses to write while a non-empty `-journal` or any `-wal` is there. Start the game, load the slot, quit normally so the game finishes the save, then reopen the slot here.
@@ -116,6 +119,7 @@ Backups look like `1000_Slot5.db.20261025-015501.bak`. To recover, close the edi
 | "Page N failed its integrity check"                 | The file is corrupt or from a build that no longer uses the shared key. Restore a backup.                                                                 |
 | The game ignores the edit                           | Make sure the game was closed while saving and that you loaded the same slot.                                                                             |
 | "The save file changed on disk"                     | The game saved after you opened the slot. Choose **Reopen**, then reapply the edit.                                                                       |
+| "This save uses schema version N"                   | The save is newer than this editor supports. Update the editor; writing is blocked so the game's new schema is not damaged.                               |
 | "The game stopped partway through saving this slot" | The editor will not write while a journal is present. Start the game, load the slot, quit normally, then reopen it here.                                  |
 | "The save would introduce broken gem links"         | The edit points equipment at a missing gem or reuses a gem already linked to another piece. Fix the gem field or undo the edit; the file was not written. |
 | "failed SQLite integrity_check"                     | The edited database is structurally corrupt. The file was not written. Reopen the slot and reapply the edit, or restore a backup.                         |

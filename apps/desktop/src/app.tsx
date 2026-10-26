@@ -91,6 +91,10 @@ export function App() {
     let disposed = false;
     let unlisten: (() => void) | undefined;
     void listen<boolean>('window-close-requested', (event) => {
+      // Acknowledge receipt before doing any work. The Rust fallback only
+      // fires when a second close request arrives before this clears, so a
+      // responsive UI must never leave the first request pending.
+      void closeRequestCancelled().catch(() => undefined);
       const state = useApp.getState();
       // The backend says whether the session is dirty. A field draft or an
       // action that has not finished yet also counts as unsaved work.

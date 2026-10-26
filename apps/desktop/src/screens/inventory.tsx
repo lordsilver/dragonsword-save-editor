@@ -18,16 +18,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { MAX_STACK, isFillableStackKind } from '@/lib/limits';
+import { MAX_DISH, MAX_STACK, isFillableStackKind } from '@/lib/limits';
 import { formatNumber, itemName, useApp } from '@/lib/store';
 import type { Item } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 type Kind = 'all' | 'stackable' | 'cook';
 type Sort = 'name' | 'count' | 'cid';
-
-/** Progress counters that Fill and the one-click Max must not touch. */
-const UNSAFE_MAX_KINDS = new Set(['QUEST', 'MAP', 'ACHIEVEMENT_POINT', 'CHARACTER_MASTER_SOUL']);
 
 export function InventoryScreen() {
   const inventory = useApp((state) => state.inventory);
@@ -198,7 +195,10 @@ export function InventoryScreen() {
               <span className="text-right">Row</span>
             </div>
             {visible.map((stack) => {
-              const showMax = stack.kind === 'cook' || !UNSAFE_MAX_KINDS.has(stack.item.kind);
+              const limit = stack.kind === 'cook' ? MAX_DISH : MAX_STACK;
+              // Fill is the authority on what is safe to raise. A cooked dish
+              // has its own limit and is always safe to Max.
+              const showMax = stack.kind === 'cook' || isFillableStackKind(stack.item.kind);
               return (
                 <div
                   key={`${stack.kind}:${stack.id}`}
@@ -231,7 +231,7 @@ export function InventoryScreen() {
                     <NumberField
                       value={stack.count}
                       onCommit={(count) => void setStack(stack.kind, stack.id, count)}
-                      max={MAX_STACK}
+                      max={limit}
                       disabled={busy}
                       className="w-28"
                       ariaLabel={`${itemName(stack.item, language)} count`}
@@ -240,8 +240,8 @@ export function InventoryScreen() {
                       <button
                         type="button"
                         className="text-[10px] text-brand hover:underline disabled:opacity-50"
-                        disabled={busy || stack.count >= MAX_STACK}
-                        onClick={() => void setStack(stack.kind, stack.id, MAX_STACK)}
+                        disabled={busy || stack.count >= limit}
+                        onClick={() => void setStack(stack.kind, stack.id, limit)}
                       >
                         Max
                       </button>
@@ -272,7 +272,8 @@ export function InventoryScreen() {
           </InfoNote>
           <InfoNote>
             Cooked dishes live in <span className="font-mono">tb_cook_item</span> and keep their own instance ids. Their
-            counts are edited here but the rows are created by cooking in game.
+            counts are edited here but the rows are created by cooking in game. Dishes use a {formatNumber(MAX_DISH)}
+            ceiling, not the material-stack ceiling.
           </InfoNote>
           <InfoNote>
             Fill only raises normal material and EXP counts. Quest, map, achievement and master-soul rows are progress

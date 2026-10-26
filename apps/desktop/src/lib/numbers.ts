@@ -1,4 +1,22 @@
 /**
+ * Parse a typed number. A blank draft means "nothing to commit", not zero;
+ * committing zero on blur would silently wipe a saved value.
+ */
+export function parseNumberDraft(draft: string): number | null {
+  const trimmed = draft.replaceAll(',', '').trim();
+  if (trimmed === '') return null;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+/** The 64-bit-id equivalent of {@link parseNumberDraft}. */
+export function parseBigNumberDraft(draft: string): bigint | null {
+  const trimmed = draft.replaceAll(',', '').trim();
+  if (!/^\d+$/.test(trimmed)) return null;
+  return BigInt(trimmed);
+}
+
+/**
  * Clamp a number draft for commit. A reference limit is an observation, not a
  * game rule: when the saved value is already above it, the value itself is the
  * effective ceiling so a blur cannot pull it down. `null` means "nothing to

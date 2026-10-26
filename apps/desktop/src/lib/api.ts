@@ -190,20 +190,8 @@ export async function setCharacter(cid: number, field: string, value: number): P
   await invoke('character_set', { cid, field, value });
 }
 
-export async function addCharacter(cid: number): Promise<boolean> {
-  return invoke<boolean>('character_add', { cid });
-}
-
 export async function removeCharacter(cid: number): Promise<void> {
   await invoke('character_remove', { cid });
-}
-
-export async function unlockAllCharacters(): Promise<number> {
-  return invoke<number>('characters_unlock_all');
-}
-
-export async function characterCatalog(): Promise<CatalogEntry[]> {
-  return invoke<CatalogEntry[]>('character_catalog');
 }
 
 export async function skills(cid: number): Promise<Skill[]> {

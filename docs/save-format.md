@@ -120,5 +120,5 @@ The original encrypted file is never partially overwritten: a failed write leave
 
 - The editor leaves the sibling `.sav` and screenshot alone. The game reads the `.db` for the data shown in the editor.
 - Unknown tables and columns are preserved because edits are ordinary SQL statements against a full copy of the database.
-- A future game build can change the schema. The raw browser and the schema dialog are the escape hatch; the typed screens fail loudly rather than guessing.
+- A future game build can change the schema. A save with `USER_DB_VERSION` above 2 opens for inspection, but saving is refused. For supported versions, the raw browser and the schema dialog are the escape hatch, and the typed screens fail loudly rather than guessing.
 - Close the game before saving. The editor refuses while a non-empty `-journal` or any `-wal` is beside the save, and the stale check catches a save the game made before the editor writes. A running game can still write over the file after the editor replaces it.

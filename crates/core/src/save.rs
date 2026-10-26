@@ -71,9 +71,31 @@ impl DiskState {
     }
 }
 
+/// Newest `USER_DB_VERSION` this build understands. A newer save is opened
+/// read-only for inspection but never written: the game may have changed
+/// column meanings, and the editor cannot know how to keep them intact.
+const SUPPORTED_SCHEMA_VERSION: i64 = 2;
+
 /// SQLite's own structural check. Returns `"ok"` or the first problem.
 fn integrity_check(conn: &Connection) -> Result<String> {
     Ok(conn.query_row("PRAGMA integrity_check", [], |row| row.get(0))?)
+}
+
+fn schema_version(conn: &Connection) -> Result<i64> {
+    let has_version: i64 = conn.query_row(
+        "SELECT count(*) FROM pragma_table_info('tb_user') WHERE name='USER_DB_VERSION'",
+        [],
+        |row| row.get(0),
+    )?;
+    if has_version == 0 {
+        return Ok(0);
+    }
+    Ok(conn
+        .query_row("SELECT USER_DB_VERSION FROM tb_user LIMIT 1", [], |row| {
+            row.get(0)
+        })
+        .optional()?
+        .unwrap_or(0))
 }
 
 /// An open save. The encrypted file stays untouched until [`SaveSession::write`];
@@ -105,7 +127,7 @@ impl SaveSession {
         }
         let encrypted = fs::read(&path)?;
         let opened = DiskState::of(&path, &encrypted);
-        let warnings = sidecar_warnings(&path);
+        let mut warnings = sidecar_warnings(&path);
         let salt = sqlcipher::salt(&encrypted)?;
         let plain = sqlcipher::decrypt(&encrypted, sqlcipher::PASSPHRASE)?;
         if !plain.starts_with(b"SQLite format 3\0") {
@@ -116,7 +138,7 @@ impl SaveSession {
 
         let temp = temp_path();
         write_private(&temp, &plain)?;
-        let result = (|| -> Result<(Connection, i64, ConsistencyReport)> {
+        let result = (|| -> Result<(Connection, i64, ConsistencyReport, i64)> {
             let conn = Connection::open_with_flags(
                 &temp,
                 OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_NO_MUTEX,
@@ -147,22 +169,32 @@ impl SaveSession {
                     row.get(0)
                 })?;
             let consistency = consistency::check(&conn, user_id)?;
-            Ok((conn, user_id, consistency))
+            let version = schema_version(&conn)?;
+            Ok((conn, user_id, consistency, version))
         })();
         match result {
-            Ok((conn, user_id, consistency)) => Ok(Self {
-                path,
-                salt,
-                temp,
-                conn: Some(conn),
-                user_id,
-                dirty: false,
-                opened,
-                written: None,
-                warnings,
-                last_backup: None,
-                consistency,
-            }),
+            Ok((conn, user_id, consistency, version)) => {
+                if version > SUPPORTED_SCHEMA_VERSION {
+                    warnings.push(format!(
+                        "This save uses schema version {version}, but this editor supports up to \
+                         {SUPPORTED_SCHEMA_VERSION}. It will open for inspection and refuse to write; \
+                         update the editor before editing this slot."
+                    ));
+                }
+                Ok(Self {
+                    path,
+                    salt,
+                    temp,
+                    conn: Some(conn),
+                    user_id,
+                    dirty: false,
+                    opened,
+                    written: None,
+                    warnings,
+                    last_backup: None,
+                    consistency,
+                })
+            }
             Err(error) => {
                 let _ = fs::remove_file(&temp);
                 Err(error)
@@ -232,6 +264,13 @@ impl SaveSession {
         // now would let SQLite replay the old journal onto the new database.
         if let Some(error) = blocking_sidecar(&self.path) {
             return Err(error);
+        }
+        let version = schema_version(self.conn())?;
+        if version > SUPPORTED_SCHEMA_VERSION {
+            return Err(Error::Schema(format!(
+                "this save uses schema version {version}, but this editor supports up to \
+                 {SUPPORTED_SCHEMA_VERSION}; the save was not written. Update the editor first."
+            )));
         }
 
         let current = fs::read(&self.path)?;
@@ -455,7 +494,18 @@ pub fn sweep_stale_temp_files() {
         let Some(pid) = temp_owner_pid(name) else {
             continue;
         };
-        if pid == current || process_alive(pid) {
+        if pid == current {
+            continue;
+        }
+        #[cfg(unix)]
+        let alive = process_alive(pid);
+        // Windows has no dependency-free liveness probe. SQLite keeps its
+        // database file open without FILE_SHARE_DELETE, so attempting the
+        // delete is the probe: it fails for a live process and succeeds for a
+        // stale file. Ignore the result either way.
+        #[cfg(not(unix))]
+        let alive = false;
+        if alive {
             continue;
         }
         let _ = fs::remove_file(entry.path());
@@ -480,13 +530,6 @@ fn process_alive(pid: u32) -> bool {
         .map(|status| status.success())
         // If the check itself fails, keeping the file is safer than deleting it.
         .unwrap_or(true)
-}
-
-#[cfg(not(unix))]
-fn process_alive(_pid: u32) -> bool {
-    // There is no portable, dependency-free liveness check here. Keep the
-    // file rather than risk deleting a live editor's plaintext database.
-    true
 }
 
 fn write_private(path: &Path, bytes: &[u8]) -> Result<()> {

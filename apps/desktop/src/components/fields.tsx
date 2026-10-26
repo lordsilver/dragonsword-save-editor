@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
-import { clampBigNumberDraft, clampNumberDraft } from '@/lib/numbers';
+import { clampBigNumberDraft, clampNumberDraft, parseBigNumberDraft, parseNumberDraft } from '@/lib/numbers';
 import { useApp } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
@@ -51,8 +51,8 @@ export function NumberField({
 
   const commit = (): void => {
     markDraft(false);
-    const parsed = Number(draft.replaceAll(',', '').trim());
-    if (!Number.isFinite(parsed)) {
+    const parsed = parseNumberDraft(draft);
+    if (parsed === null) {
       setDraft(String(value));
       return;
     }
@@ -141,12 +141,12 @@ export function BigNumberField({
 
   const commit = (): void => {
     markDraft(false);
-    const trimmed = draft.replaceAll(',', '').trim();
-    if (!/^\d+$/.test(trimmed)) {
+    const parsed = parseBigNumberDraft(draft);
+    if (parsed === null) {
       setDraft(value);
       return;
     }
-    const next = clampBigNumberDraft(BigInt(trimmed), BigInt(value), min, max);
+    const next = clampBigNumberDraft(parsed, BigInt(value), min, max);
     if (next === null) {
       setDraft(value);
       return;

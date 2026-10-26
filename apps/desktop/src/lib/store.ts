@@ -59,7 +59,6 @@ export interface AppState {
   inventory: Stack[];
   stackables: Item[];
   characters: Character[];
-  characterCatalog: CatalogEntry[];
   selectedCharacter: number | null;
   skills: Skill[];
   teams: TeamPage[];
@@ -116,9 +115,7 @@ export interface AppActions {
   addStack(cid: number, count: number): Promise<void>;
   fillStacks(count: number): Promise<void>;
   setCharacter(cid: number, field: string, value: number): Promise<void>;
-  addCharacter(cid: number): Promise<void>;
   removeCharacter(cid: number): Promise<void>;
-  unlockAllCharacters(): Promise<void>;
   setSkill(cid: number, typeValue: number, level: number): Promise<void>;
   removeSkill(cid: number, typeValue: number): Promise<void>;
   setTeamSlot(pageId: number, slot: number, cid: number): Promise<void>;
@@ -173,7 +170,6 @@ function initialState(): AppState {
     inventory: [],
     stackables: [],
     characters: [],
-    characterCatalog: [],
     selectedCharacter: null,
     skills: [],
     teams: [],
@@ -502,7 +498,6 @@ export const useApp = create<Store>((set, get) => {
             : (characters[0]?.cid ?? null);
         set({ characters, selectedCharacter: next });
       });
-      await read(api.characterCatalog, (characterCatalog) => set({ characterCatalog }));
       const selected = get().selectedCharacter;
       if (selected) await get().selectCharacter(selected);
     },
@@ -706,18 +701,6 @@ export const useApp = create<Store>((set, get) => {
       );
     },
 
-    async addCharacter(cid) {
-      const added = await attempt(
-        'Recruiting character',
-        () => api.addCharacter(cid),
-        async () => {
-          await get().loadCharacters();
-          await get().loadOverview();
-        },
-      );
-      if (added !== null) toast.success(added ? 'Character recruited.' : 'That character is already owned.');
-    },
-
     async removeCharacter(cid) {
       const removed = await attempt(
         'Removing character',
@@ -728,19 +711,6 @@ export const useApp = create<Store>((set, get) => {
         },
       );
       if (removed !== null) toast.success('Character removed.');
-    },
-
-    async unlockAllCharacters() {
-      const added = await attempt(
-        'Recruiting every character',
-        () => api.unlockAllCharacters(),
-        async () => {
-          await get().loadCharacters();
-          await get().loadOverview();
-        },
-      );
-      if (added !== null)
-        toast.success(added === 0 ? 'Every character was already owned.' : `${added} characters recruited.`);
     },
 
     async setSkill(cid, typeValue, level) {

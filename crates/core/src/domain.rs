@@ -11,14 +11,26 @@ use crate::catalog::{Catalog, EffectText, Item, TitleStat};
 use crate::error::{Error, Result};
 use crate::save::SaveSession;
 
-// Ceilings observed in the 100% reference save (93265845_Slot2.db). The
-// game's own tables are not readable yet, so these stay conservative.
-const MAX_LEVEL: i64 = 70;
-const MAX_ASCEND: i64 = 5;
-const MAX_TRANSCEND: i64 = 6;
-const MAX_CHARACTER_EXP: i64 = 2_990_400;
+// Character growth follows adventure grade. Grade 1 and grade 6 are the only
+// points the editor has evidence for: the modder's level-20 save and the 100%
+// save. Other grades use the highest value already present in that save.
+const GRADE_ONE_LEVEL: i64 = 20;
+const GRADE_ONE_EXP: i64 = 76_900;
+const GRADE_ONE_ASCEND: i64 = 0;
+const GRADE_ONE_TRANSCEND: i64 = 1;
+const GRADE_ONE_SKILL_LOW: i64 = 3;
+const GRADE_ONE_SKILL_MID: i64 = 2;
+const GRADE_ONE_SKILL_SPECIAL: i64 = 1;
+
+const GRADE_SIX_LEVEL: i64 = 70;
+const GRADE_SIX_EXP: i64 = 2_990_400;
+const GRADE_SIX_ASCEND: i64 = 5;
+const GRADE_SIX_TRANSCEND: i64 = 6;
+const GRADE_SIX_SKILL_LOW: i64 = 10;
+const GRADE_SIX_SKILL_MID: i64 = 7;
+const GRADE_SIX_SKILL_SPECIAL: i64 = 1;
+
 const MAX_CHARACTER_HP: i64 = 22_229;
-const MAX_SKILL_LEVEL: i64 = 10;
 const MAX_ENCHANT: i64 = 15;
 const MAX_EQUIP_EXP: i64 = 90_000;
 const MAX_ADV_LEVEL: i64 = 80;
@@ -28,7 +40,9 @@ const MAX_ADV_EXP: i64 = 962_500;
 /// cap instead; Aether Crystals is premium currency and was zero everywhere.
 const MAX_AMOUNT: i64 = 47_451_809;
 const MAX_STACK: i64 = 61_525;
-const MAX_KARMA_EXP: i64 = 2_990_400;
+/// The highest cooked-dish count in the 100% save. A dish is not a material
+/// stack, so it gets its own ceiling.
+const MAX_DISH: i64 = 203;
 
 // Safety caps, not claims about the game's limits. The reference save cannot
 // bound the fields that are zero in every row, play time has no observed
@@ -161,6 +175,7 @@ impl<'a> Game<'a> {
             position: user.position,
             counts: self.counts()?,
             currencies: self.currencies()?,
+            character_limits: self.character_limits()?,
         })
     }
 
@@ -217,8 +232,85 @@ impl<'a> Game<'a> {
         Ok(())
     }
 
+    /// Growth ceilings for the save's current adventure grade.
+    ///
+    /// Grade 1 and grade 6 are the only points the editor has evidence for.
+    /// For every other grade, the highest value already in this save is the
+    /// ceiling; that keeps a save's own progression from being pushed past
+    /// what the player has actually reached. Existing values above a ceiling
+    /// stay editable because every setter uses `max(limit, current)`.
+    pub fn character_limits(&self) -> Result<CharacterLimits> {
+        let grade = self.adventure_grade()?.max(1);
+        match grade {
+            1 => Ok(grade_one_limits()),
+            6 => Ok(grade_six_limits()),
+            _ => self.observed_character_limits(grade),
+        }
+    }
+
+    fn adventure_grade(&self) -> Result<i64> {
+        Ok(self
+            .conn()
+            .query_row(
+                "SELECT ADV_GRADE FROM tb_advent_status WHERE USER_DBID=?",
+                params![self.user_id],
+                |row| row.get(0),
+            )
+            .optional()?
+            .unwrap_or(0))
+    }
+
+    fn observed_character_limits(&self, grade: i64) -> Result<CharacterLimits> {
+        let (level, exp, ascend, transcend, count): (
+            Option<i64>,
+            Option<i64>,
+            Option<i64>,
+            Option<i64>,
+            i64,
+        ) = self.conn().query_row(
+            "SELECT MAX(LEVEL), MAX(EXP), MAX(ASCEND), MAX(TRANSCEND), COUNT(*)
+               FROM tb_character WHERE USER_DBID=?",
+            params![self.user_id],
+            |row| {
+                Ok((
+                    row.get(0)?,
+                    row.get(1)?,
+                    row.get(2)?,
+                    row.get(3)?,
+                    row.get(4)?,
+                ))
+            },
+        )?;
+        if count == 0 {
+            let mut limits = grade_one_limits();
+            limits.grade = grade;
+            return Ok(limits);
+        }
+
+        let skill_max = |types: &str| -> Result<Option<i64>> {
+            Ok(self.conn().query_row(
+                &format!(
+                    "SELECT MAX(SLOT_LEVEL) FROM tb_skill_growth
+                      WHERE USER_DBID=? AND TYPE_VALUE IN ({types})"
+                ),
+                params![self.user_id],
+                |row| row.get(0),
+            )?)
+        };
+        Ok(CharacterLimits {
+            grade,
+            level: level.unwrap_or(0),
+            exp: exp.unwrap_or(0),
+            ascend: ascend.unwrap_or(0),
+            transcend: transcend.unwrap_or(0),
+            skill_low: skill_max("1,2,3,4")?.unwrap_or(GRADE_ONE_SKILL_LOW),
+            skill_mid: skill_max("5,6,7")?.unwrap_or(GRADE_ONE_SKILL_MID),
+            skill_special: skill_max("801")?.unwrap_or(GRADE_ONE_SKILL_SPECIAL),
+        })
+    }
+
     pub fn set_adventure(&mut self, field: &str, value: i64) -> Result<()> {
-        let (column, max) = match field {
+        let (column, configured_max) = match field {
             "grade" => ("ADV_GRADE", MAX_ADV_GRADE),
             "level" => ("ADV_LEVEL", MAX_ADV_LEVEL),
             "exp" => ("ADV_EXP", MAX_ADV_EXP),
@@ -231,11 +323,25 @@ impl<'a> Game<'a> {
                 params![self.user_id],
             )?
             .unwrap_or(0);
-        let max = max.max(current);
+        // The current grade is the save's own record of quest progress. The
+        // game's per-grade quest thresholds are not available to the editor,
+        // so raising the grade here could outrun content the player has not
+        // reached. Lowering is allowed; the game will raise it again through
+        // normal play.
+        let max = if field == "grade" {
+            current.max(1).min(configured_max)
+        } else {
+            configured_max.max(current)
+        };
         if !(0..=max).contains(&value) {
-            return Err(Error::invalid(format!(
-                "{field} must be between 0 and {max}"
-            )));
+            let message = if field == "grade" {
+                format!(
+                    "adventure grade cannot be raised above the save's current grade ({max}); play the game to advance it"
+                )
+            } else {
+                format!("{field} must be between 0 and {max}")
+            };
+            return Err(Error::invalid(message));
         }
         self.conn().execute(
             &format!("UPDATE tb_advent_status SET {column}=? WHERE USER_DBID=?"),
@@ -352,7 +458,8 @@ impl<'a> Game<'a> {
             _ => return Err(Error::invalid(format!("unknown stack kind {kind:?}"))),
         }
         .ok_or_else(|| Error::invalid("that stack is not present in this save"))?;
-        let max = MAX_STACK.max(current);
+        let limit = if kind == "cook" { MAX_DISH } else { MAX_STACK };
+        let max = limit.max(current);
         if !(0..=max).contains(&count) {
             return Err(Error::invalid(format!(
                 "stack count must be between 0 and {max}"
@@ -458,23 +565,6 @@ impl<'a> Game<'a> {
             .collect()
     }
 
-    pub fn character_catalog(&self) -> Result<Vec<CatalogEntry>> {
-        let owned: std::collections::HashSet<i64> = self
-            .characters()?
-            .into_iter()
-            .map(|character| character.cid)
-            .collect();
-        Ok(self
-            .catalog
-            .entries_in("character")
-            .into_iter()
-            .map(|item| CatalogEntry {
-                owned: owned.contains(&item.cid),
-                item,
-            })
-            .collect())
-    }
-
     pub fn categories(&self) -> Vec<crate::catalog::Category> {
         self.catalog.categories().to_vec()
     }
@@ -512,11 +602,12 @@ impl<'a> Game<'a> {
     }
 
     pub fn set_character(&mut self, cid: i64, field: &str, value: i64) -> Result<()> {
+        let limits = self.character_limits()?;
         let (column, max) = match field {
-            "level" => ("LEVEL", MAX_LEVEL),
-            "exp" => ("EXP", MAX_CHARACTER_EXP),
-            "ascend" => ("ASCEND", MAX_ASCEND),
-            "transcend" => ("TRANSCEND", MAX_TRANSCEND),
+            "level" => ("LEVEL", limits.level),
+            "exp" => ("EXP", limits.exp),
+            "ascend" => ("ASCEND", limits.ascend),
+            "transcend" => ("TRANSCEND", limits.transcend),
             "transcendTotal" => ("TRANSCEND_TOTAL", MAX_TRANSCEND_TOTAL),
             "hp" => ("HP", MAX_CHARACTER_HP),
             "soldierGrade" => ("SOLDIER_GRADE", MAX_SOLDIER_GRADE),
@@ -545,14 +636,14 @@ impl<'a> Game<'a> {
 
     pub fn add_character(&mut self, _cid: i64) -> Result<bool> {
         Err(Error::invalid(
-            "recruiting is disabled until the editor has a verified character roster; \
-             edit or remove existing characters instead",
+            "the editor does not insert character rows; set Fate's Invitation in the \
+             inventory and recruit the character in the game's shop",
         ))
     }
 
     pub fn unlock_all_characters(&mut self) -> Result<i64> {
         Err(Error::invalid(
-            "recruiting is disabled until the editor has a verified character roster",
+            "the editor does not insert character rows; recruit through the game's shop",
         ))
     }
 
@@ -636,7 +727,7 @@ impl<'a> Game<'a> {
                 params![self.user_id, cid, type_value],
             )?
             .unwrap_or(0);
-        let max = MAX_SKILL_LEVEL.max(current);
+        let max = skill_limit(&self.character_limits()?, type_value).max(current);
         if !(0..=max).contains(&level) {
             return Err(Error::invalid(format!(
                 "skill level must be between 0 and {max}"
@@ -1113,10 +1204,11 @@ impl<'a> Game<'a> {
     }
 
     pub fn set_karma(&mut self, dbid: i64, field: &str, value: i64) -> Result<()> {
+        let limits = self.character_limits()?;
         let (column, max) = match field {
-            "exp" => ("EXP", MAX_KARMA_EXP),
-            "ascend" => ("ASCEND", MAX_ASCEND),
-            "transcend" => ("TRANSCEND", MAX_TRANSCEND),
+            "exp" => ("EXP", limits.exp),
+            "ascend" => ("ASCEND", limits.ascend),
+            "transcend" => ("TRANSCEND", limits.transcend),
             "isLock" => ("IS_LOCK", 1),
             _ => return Err(Error::invalid(format!("unknown karma field {field:?}"))),
         };
@@ -1660,6 +1752,57 @@ impl<'a> Game<'a> {
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct CharacterLimits {
+    pub grade: i64,
+    pub level: i64,
+    pub exp: i64,
+    pub ascend: i64,
+    pub transcend: i64,
+    pub skill_low: i64,
+    pub skill_mid: i64,
+    pub skill_special: i64,
+}
+
+fn grade_one_limits() -> CharacterLimits {
+    CharacterLimits {
+        grade: 1,
+        level: GRADE_ONE_LEVEL,
+        exp: GRADE_ONE_EXP,
+        ascend: GRADE_ONE_ASCEND,
+        transcend: GRADE_ONE_TRANSCEND,
+        skill_low: GRADE_ONE_SKILL_LOW,
+        skill_mid: GRADE_ONE_SKILL_MID,
+        skill_special: GRADE_ONE_SKILL_SPECIAL,
+    }
+}
+
+fn grade_six_limits() -> CharacterLimits {
+    CharacterLimits {
+        grade: 6,
+        level: GRADE_SIX_LEVEL,
+        exp: GRADE_SIX_EXP,
+        ascend: GRADE_SIX_ASCEND,
+        transcend: GRADE_SIX_TRANSCEND,
+        skill_low: GRADE_SIX_SKILL_LOW,
+        skill_mid: GRADE_SIX_SKILL_MID,
+        skill_special: GRADE_SIX_SKILL_SPECIAL,
+    }
+}
+
+/// Skill slots are grouped because the game raises them together: 1–4, 5–7,
+/// and the special 801 slot.
+fn skill_limit(limits: &CharacterLimits, type_value: i64) -> i64 {
+    if type_value == 801 {
+        limits.skill_special
+    } else if type_value >= 5 {
+        limits.skill_mid
+    } else {
+        limits.skill_low
+    }
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Overview {
     pub account_id: i64,
     pub player_name: String,
@@ -1678,6 +1821,7 @@ pub struct Overview {
     pub position: [i64; 3],
     pub counts: Counts,
     pub currencies: Vec<Currency>,
+    pub character_limits: CharacterLimits,
 }
 
 struct OverviewUser {

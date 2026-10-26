@@ -414,23 +414,8 @@ fn character_set(
 }
 
 #[tauri::command]
-fn character_add(state: State<'_, AppState>, cid: i64) -> CommandResult<bool> {
-    game(&state, |game| game.add_character(cid))
-}
-
-#[tauri::command]
 fn character_remove(state: State<'_, AppState>, cid: i64) -> CommandResult<()> {
     game(&state, |game| game.remove_character(cid))
-}
-
-#[tauri::command]
-fn characters_unlock_all(state: State<'_, AppState>) -> CommandResult<i64> {
-    game(&state, |game| game.unlock_all_characters())
-}
-
-#[tauri::command]
-fn character_catalog(state: State<'_, AppState>) -> CommandResult<Vec<CatalogEntry>> {
-    game(&state, |game| game.character_catalog())
 }
 
 #[tauri::command]
@@ -688,10 +673,7 @@ pub fn run() {
             stacks_fill,
             characters_get,
             character_set,
-            character_add,
             character_remove,
-            characters_unlock_all,
-            character_catalog,
             skills_get,
             skill_set,
             skill_remove,

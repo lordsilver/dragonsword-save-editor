@@ -1,6 +1,41 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_CURRENCY, MAX_CURRENCY_SAFETY, currencyLimit, isFillableStackKind } from '@/lib/limits';
-import { clampBigNumberDraft, clampNumberDraft } from '@/lib/numbers';
+import {
+  GRADE_ONE_CHARACTER_LIMITS,
+  GRADE_SIX_CHARACTER_LIMITS,
+  MAX_CURRENCY,
+  MAX_CURRENCY_SAFETY,
+  currencyLimit,
+  isFillableStackKind,
+  skillLimit,
+} from '@/lib/limits';
+import { clampBigNumberDraft, clampNumberDraft, parseBigNumberDraft, parseNumberDraft } from '@/lib/numbers';
+
+describe('parseNumberDraft', () => {
+  it('treats a blank draft as nothing to commit, not zero', () => {
+    expect(parseNumberDraft('')).toBeNull();
+    expect(parseNumberDraft('   ')).toBeNull();
+    expect(parseNumberDraft('0')).toBe(0);
+  });
+
+  it('accepts grouped digits and rejects non-numeric text', () => {
+    expect(parseNumberDraft('1,234')).toBe(1_234);
+    expect(parseNumberDraft('abc')).toBeNull();
+  });
+});
+
+describe('parseBigNumberDraft', () => {
+  it('treats a blank draft as nothing to commit', () => {
+    expect(parseBigNumberDraft('')).toBeNull();
+    expect(parseBigNumberDraft('   ')).toBeNull();
+    expect(parseBigNumberDraft('0')).toBe(0n);
+  });
+
+  it('accepts grouped digits and rejects signs or letters', () => {
+    expect(parseBigNumberDraft('72,057,594,037,927,936')).toBe(72_057_594_037_927_936n);
+    expect(parseBigNumberDraft('-1')).toBeNull();
+    expect(parseBigNumberDraft('1e3')).toBeNull();
+  });
+});
 
 describe('clampNumberDraft', () => {
   it('does not lower a saved value that is already above the reference', () => {
@@ -43,6 +78,20 @@ describe('currencyLimit', () => {
   it('gives aether and unknown currencies the safety cap', () => {
     expect(currencyLimit(1_000_002)).toEqual({ max: MAX_CURRENCY_SAFETY, observed: false });
     expect(currencyLimit(9_999_999)).toEqual({ max: MAX_CURRENCY_SAFETY, observed: false });
+  });
+});
+
+describe('skillLimit', () => {
+  it('uses the grade-1 grouping', () => {
+    expect(skillLimit(GRADE_ONE_CHARACTER_LIMITS, 1)).toBe(3);
+    expect(skillLimit(GRADE_ONE_CHARACTER_LIMITS, 5)).toBe(2);
+    expect(skillLimit(GRADE_ONE_CHARACTER_LIMITS, 801)).toBe(1);
+  });
+
+  it('uses the grade-6 grouping', () => {
+    expect(skillLimit(GRADE_SIX_CHARACTER_LIMITS, 4)).toBe(10);
+    expect(skillLimit(GRADE_SIX_CHARACTER_LIMITS, 7)).toBe(7);
+    expect(skillLimit(GRADE_SIX_CHARACTER_LIMITS, 801)).toBe(1);
   });
 });
 

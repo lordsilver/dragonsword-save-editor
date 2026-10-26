@@ -1,4 +1,4 @@
-import { BadgeCheck, Heart, Plus, Search, Sparkles, Swords, Trash2, UserPlus, Users } from 'lucide-react';
+import { BadgeCheck, Heart, PackagePlus, Plus, Search, Sparkles, Swords, Trash2, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ConfirmButton, EmptyPanel } from '@/components/common';
 import { NumberField } from '@/components/fields';
@@ -20,19 +20,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import {
-  MAX_ASCEND,
-  MAX_CHARACTER_EXP,
+  FATES_INVITATION_CID,
+  GRADE_ONE_CHARACTER_LIMITS,
   MAX_CHARACTER_HP,
-  MAX_LEVEL,
   MAX_POINTS,
-  MAX_SKILL_LEVEL,
   MAX_SOLDIER_GRADE,
-  MAX_TRANSCEND,
   MAX_TRANSCEND_TOTAL,
   SKILL_TYPES,
+  skillLimit,
 } from '@/lib/limits';
 import { formatNumber, itemName, useApp } from '@/lib/store';
-import type { Character, Loadout, TeamPage } from '@/lib/types';
+import type { Character, CharacterLimits, Loadout, TeamPage } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 const SLOT_LABELS: Array<[keyof Omit<Loadout, 'characterCid'>, string]> = [
@@ -52,16 +50,19 @@ export function CharactersScreen() {
   const teams = useApp((state) => state.teams);
   const loadout = useApp((state) => state.loadout);
   const save = useApp((state) => state.save);
+  const overview = useApp((state) => state.overview);
   const language = useApp((state) => state.settings.language);
   const pending = useApp((state) => state.pending);
   const selectCharacter = useApp((state) => state.selectCharacter);
   const setCharacter = useApp((state) => state.setCharacter);
   const removeCharacter = useApp((state) => state.removeCharacter);
+  const setSection = useApp((state) => state.setSection);
   const [query, setQuery] = useState('');
   const [skillOpen, setSkillOpen] = useState(false);
 
   const selected = characters.find((character) => character.cid === selectedCharacter) ?? null;
   const busy = pending !== null;
+  const limits = overview?.characterLimits ?? GRADE_ONE_CHARACTER_LIMITS;
 
   const roster = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -83,35 +84,20 @@ export function CharactersScreen() {
       <PageHeader
         eyebrow={`Account ${save.accountId} · Slot ${save.slot}`}
         title="Characters"
-        description="The roster, each character's growth values, their skills, saved teams, and the gear they currently wear."
+        description="Growth fields follow this save's adventure grade; existing values above a cap stay editable. Recruit shop characters through the game after adding Fate's Invitation."
         actions={
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled
-              title="Recruiting is turned off in this build: the catalog's character list includes items and skins that the game cannot load. It comes back once the roster is verified against the game's own data."
-            >
-              <UserPlus />
-              Recruit character
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled
-              title="Recruiting is turned off in this build: the catalog's character list includes items and skins that the game cannot load."
-            >
-              <Users />
-              Recruit all
-            </Button>
-          </>
+          <Button variant="outline" size="sm" onClick={() => setSection('inventory')}>
+            <PackagePlus />
+            Open inventory
+          </Button>
         }
       />
 
-      <InfoNote tone="warning">
-        <span className="font-medium text-amber-200">Recruiting is disabled in this build.</span> There is no verified
-        character roster yet: the catalog mixes playable characters with character items and skins, and the game's
-        new-account seed is not a roster. Editing and removing existing characters still works.
+      <InfoNote>
+        <span className="font-medium text-foreground">Recruit through the game's shop.</span> Add Fate's Invitation (CID{' '}
+        {formatNumber(FATES_INVITATION_CID)}) on the Inventory screen, then buy the character in game. The game writes
+        the level-1 character row and purchase record itself. This covers the 11 shop characters; story characters still
+        arrive by playing.
       </InfoNote>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -182,6 +168,7 @@ export function CharactersScreen() {
             <CharacterHero
               character={selected}
               language={language}
+              limits={limits}
               busy={busy}
               onRemove={() => void removeCharacter(selected.cid)}
               onChange={(field, value) => void setCharacter(selected.cid, field, value)}
@@ -218,7 +205,7 @@ export function CharactersScreen() {
                       <NumberField
                         value={skill.level}
                         onCommit={(level) => void setSkillLevel(skill.typeValue, level)}
-                        max={MAX_SKILL_LEVEL}
+                        max={skillLimit(limits, skill.typeValue)}
                         disabled={busy}
                         className="w-24"
                         ariaLabel={`Skill ${skill.typeValue} level`}
@@ -294,6 +281,7 @@ export function CharactersScreen() {
       <SkillDialog
         open={skillOpen}
         onOpenChange={setSkillOpen}
+        limits={limits}
         busy={busy}
         onAdd={(typeValue, level) => {
           if (selected) void setSkillLevel(typeValue, level);
@@ -317,12 +305,14 @@ export function CharactersScreen() {
 function CharacterHero({
   character,
   language,
+  limits,
   busy,
   onChange,
   onRemove,
 }: {
   character: Character;
   language: string;
+  limits: CharacterLimits;
   busy: boolean;
   onChange: (field: string, value: number) => void;
   onRemove: () => void;
@@ -366,28 +356,28 @@ function CharacterHero({
         <EditField
           label="Level"
           value={character.level}
-          max={MAX_LEVEL}
+          max={limits.level}
           disabled={busy}
           onChange={(value) => onChange('level', value)}
         />
         <EditField
           label="EXP"
           value={character.exp}
-          max={MAX_CHARACTER_EXP}
+          max={limits.exp}
           disabled={busy}
           onChange={(value) => onChange('exp', value)}
         />
         <EditField
           label="Ascend"
           value={character.ascend}
-          max={MAX_ASCEND}
+          max={limits.ascend}
           disabled={busy}
           onChange={(value) => onChange('ascend', value)}
         />
         <EditField
           label="Transcend"
           value={character.transcend}
-          max={MAX_TRANSCEND}
+          max={limits.transcend}
           disabled={busy}
           onChange={(value) => onChange('transcend', value)}
         />
@@ -442,7 +432,7 @@ function EditField({
   onChange: (value: number) => void;
 }) {
   return (
-    <FieldRow label={label} hint={`max ${formatNumber(max)}`}>
+    <FieldRow label={label} hint={`max ${formatNumber(Math.max(max, value))}`}>
       <NumberField value={value} onCommit={onChange} max={max} disabled={disabled} className="w-full text-left" />
     </FieldRow>
   );
@@ -511,11 +501,13 @@ function TeamCard({
 function SkillDialog({
   open,
   onOpenChange,
+  limits,
   busy,
   onAdd,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  limits: CharacterLimits;
   busy: boolean;
   onAdd: (typeValue: number, level: number) => void;
 }) {
@@ -523,7 +515,8 @@ function SkillDialog({
   const [level, setLevel] = useState('1');
   const parsedType = Number(typeValue) || 0;
   const parsedLevel = Number(level) || 0;
-  const valid = SKILL_TYPES.includes(parsedType) && parsedLevel >= 0 && parsedLevel <= MAX_SKILL_LEVEL;
+  const maxLevel = skillLimit(limits, parsedType);
+  const valid = SKILL_TYPES.includes(parsedType) && parsedLevel >= 0 && parsedLevel <= maxLevel;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -555,7 +548,7 @@ function SkillDialog({
               className="numeric"
               onChange={(event) => setLevel(event.target.value)}
             />
-            <p className="text-[10px] text-muted-foreground">0–10</p>
+            <p className="text-[10px] text-muted-foreground">0–{maxLevel} for this grade and slot</p>
           </div>
         </div>
         <DialogFooter>

@@ -6,6 +6,7 @@ import {
   Flame,
   Gem,
   MapPin,
+  PackagePlus,
   Pencil,
   Shield,
   Sparkles,
@@ -36,7 +37,15 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Spinner } from '@/components/ui/spinner';
 import { consistencyIssues } from '@/lib/consistency';
-import { MAX_ADV_EXP, MAX_ADV_GRADE, MAX_ADV_LEVEL, MAX_PLAY_TIME, MAX_STACK, currencyLimit } from '@/lib/limits';
+import {
+  FATES_INVITATION_CID,
+  MAX_ADV_EXP,
+  MAX_ADV_GRADE,
+  MAX_ADV_LEVEL,
+  MAX_PLAY_TIME,
+  MAX_STACK,
+  currencyLimit,
+} from '@/lib/limits';
 import { formatNumber, itemName, useApp } from '@/lib/store';
 import type { ConsistencyReport } from '@/lib/types';
 
@@ -51,6 +60,7 @@ export function OverviewScreen() {
   const unlockAllTitles = useApp((state) => state.unlockAllTitles);
   const unlockAllRecipes = useApp((state) => state.unlockAllRecipes);
   const fillStacks = useApp((state) => state.fillStacks);
+  const setSection = useApp((state) => state.setSection);
   const [renameOpen, setRenameOpen] = useState(false);
   const [rankOpen, setRankOpen] = useState(false);
   const [fillOpen, setFillOpen] = useState(false);
@@ -175,11 +185,11 @@ export function OverviewScreen() {
             <Button
               variant="outline"
               className="w-full justify-start"
-              disabled
-              title="Recruiting is turned off in this build: the catalog's character list includes items and skins that the game cannot load."
+              title={`Set Fate's Invitation (CID ${formatNumber(FATES_INVITATION_CID)}) on the Inventory screen, then buy the character in the game's shop.`}
+              onClick={() => setSection('inventory')}
             >
-              <Users />
-              Recruit every character
+              <PackagePlus />
+              Fate's Invitation route
             </Button>
             <ConfirmButton
               title="Unlock every title?"
@@ -484,11 +494,20 @@ function RankDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Grade" value={grade} onChange={setGrade} max={MAX_ADV_GRADE} />
+          <Field
+            label="Grade"
+            value={grade}
+            onChange={setGrade}
+            max={Math.min(MAX_ADV_GRADE, Math.max(initial.grade, 1))}
+          />
           <Field label="Level" value={level} onChange={setLevel} max={MAX_ADV_LEVEL} />
           <Field label="EXP" value={exp} onChange={setExp} max={MAX_ADV_EXP} />
           <Field label="Play time (seconds)" value={playTime} onChange={setPlayTime} max={MAX_PLAY_TIME} />
         </div>
+        <p className="text-[11px] text-muted-foreground">
+          Adventure grade cannot be raised above the save's current grade ({initial.grade}); play the game to advance
+          it. Lowering it is allowed, but the editor cannot raise it back.
+        </p>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel

@@ -1,6 +1,7 @@
 //! Phase 0 safety net: the stale-file guard, 64-bit ids, the raw editor's
-//! rules, and the recruit gate. Every test builds its own encrypted save from a
-//! synthetic plaintext database, so nothing here depends on personal saves.
+//! rules, and the no-direct-recruit guard. Every test builds its own encrypted
+//! save from a synthetic plaintext database, so nothing here depends on
+//! personal saves.
 
 use std::fs;
 use std::path::PathBuf;
@@ -26,6 +27,15 @@ CREATE TABLE tb_user (
   TITLE_CID INTEGER NOT NULL DEFAULT 0,
   SELECTED_TEAM_PAGE_ID INTEGER NOT NULL DEFAULT 0,
   SELECTED_PAGE_SLOT_INDEX INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (USER_DBID)
+);
+CREATE TABLE tb_advent_status (
+  USER_DBID INTEGER NOT NULL DEFAULT 0,
+  ADV_GRADE INTEGER NOT NULL DEFAULT 0,
+  ADV_LEVEL INTEGER NOT NULL DEFAULT 0,
+  ADV_EXP INTEGER NOT NULL DEFAULT 0,
+  NICK_NAME TEXT NOT NULL DEFAULT '',
+  PLAY_TIME INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (USER_DBID)
 );
 CREATE TABLE tb_init_character (
@@ -198,10 +208,22 @@ fn reserve_tail(database: &mut [u8]) {
 
 /// Write a synthetic plaintext save, encrypt it, and return the `.db` path.
 fn fixture(name: &str) -> PathBuf {
-    fixture_with_gold(name, 100)
+    fixture_with(name, 100, 1, 0)
 }
 
 fn fixture_with_gold(name: &str, gold: i64) -> PathBuf {
+    fixture_with(name, gold, 1, 0)
+}
+
+fn fixture_with_grade(name: &str, grade: i64) -> PathBuf {
+    fixture_with(name, 100, grade, 0)
+}
+
+fn fixture_with_version(name: &str, version: i64) -> PathBuf {
+    fixture_with(name, 100, 1, version)
+}
+
+fn fixture_with(name: &str, gold: i64, grade: i64, version: i64) -> PathBuf {
     let directory = std::env::temp_dir().join(format!("dsa-phase0-{}-{name}", std::process::id()));
     let _ = fs::remove_dir_all(&directory);
     fs::create_dir_all(&directory).expect("mkdir");
@@ -213,10 +235,18 @@ fn fixture_with_gold(name: &str, gold: i64) -> PathBuf {
             .expect("page size");
         conn.execute_batch(SCHEMA).expect("schema");
         conn.execute(
-            "INSERT INTO tb_user (USER_DBID, SKIP_CACHE, TITLE_CID) VALUES (?, NULL, 2100000)",
-            [USER],
+            "INSERT INTO tb_user (USER_DBID, SKIP_CACHE, USER_DB_VERSION, TITLE_CID)
+             VALUES (?, NULL, ?, 2100000)",
+            rusqlite::params![USER, version],
         )
         .expect("user");
+        conn.execute(
+            "INSERT INTO tb_advent_status
+                (USER_DBID, ADV_GRADE, ADV_LEVEL, ADV_EXP, NICK_NAME, PLAY_TIME)
+             VALUES (?, ?, 1, 0, '', 0)",
+            rusqlite::params![USER, grade],
+        )
+        .expect("adventure status");
         conn.execute(
             "INSERT INTO tb_init_character (ACCOUNT_TYPE, CHARACTER_CID, LEVEL)
              VALUES ('NORMAL', 10001, 1)",
@@ -663,7 +693,7 @@ fn raw_editor_keeps_keys_and_types_locked() {
 }
 
 #[test]
-fn recruiting_is_disabled_until_a_verified_roster_exists() {
+fn the_editor_refuses_to_insert_character_rows() {
     let path = fixture("recruit");
     let mut session = SaveSession::open(&path).expect("open");
     let mut game = Game::new(&mut session, Catalog::shared());
@@ -671,39 +701,50 @@ fn recruiting_is_disabled_until_a_verified_roster_exists() {
 
     // NORMAL starters, MASTER developer rows, character items, skins, and an
     // unknown 10xxx id all fail: tb_init_character is a new-account seed, not
-    // the list of characters a save owns.
+    // the list of characters a save owns. The supported route is the game's
+    // shop after adding Fate's Invitation.
     for cid in [
         10_001, 10_002, 10_015, 10_019, 10_033, 10_099, 1_110_001, 9_990_002,
     ] {
-        let error = game.add_character(cid).expect_err("recruiting is off");
+        let error = game
+            .add_character(cid)
+            .expect_err("direct recruiting is off");
         assert_eq!(error.kind(), "invalid");
     }
     assert!(game.unlock_all_characters().is_err());
     assert_eq!(
         game.characters().expect("characters").len(),
         before,
-        "recruiting added nothing"
+        "direct recruiting added nothing"
     );
 }
 
 #[test]
-fn typed_limits_match_the_reference_save() {
-    let path = fixture("limits");
+fn grade_limits_match_the_known_progression_points() {
+    let path = fixture("limits-grade-one");
     let mut session = SaveSession::open(&path).expect("open");
     let mut game = Game::new(&mut session, Catalog::shared());
 
-    game.set_character(10_001, "level", 70).expect("max level");
-    assert!(game.set_character(10_001, "level", 71).is_err());
-    game.set_character(10_001, "exp", 2_990_400)
-        .expect("max exp");
-    assert!(game.set_character(10_001, "exp", 2_990_401).is_err());
-    game.set_character(10_001, "ascend", 5).expect("max ascend");
-    assert!(game.set_character(10_001, "ascend", 6).is_err());
-    game.set_character(10_001, "transcend", 6)
-        .expect("max transcend");
-    assert!(game.set_character(10_001, "transcend", 7).is_err());
+    game.set_character(10_001, "level", 20)
+        .expect("grade 1 level");
+    assert!(game.set_character(10_001, "level", 21).is_err());
+    game.set_character(10_001, "exp", 76_900)
+        .expect("grade 1 exp");
+    assert!(game.set_character(10_001, "exp", 76_901).is_err());
+    // This fixture starts above the grade-1 ascend cap, so lower it first to
+    // prove the cap is 0 and not just the current value.
+    game.set_character(10_001, "ascend", 0)
+        .expect("grade 1 ascend");
+    assert!(game.set_character(10_001, "ascend", 1).is_err());
+    game.set_character(10_001, "transcend", 1)
+        .expect("grade 1 transcend");
+    assert!(game.set_character(10_001, "transcend", 2).is_err());
     game.set_character(10_001, "hp", 22_229).expect("max hp");
     assert!(game.set_character(10_001, "hp", 22_230).is_err());
+    assert!(
+        game.set_adventure("grade", 2).is_err(),
+        "the editor cannot raise adventure grade past the save's progress"
+    );
 
     game.set_equipment(BASE, "enchantLevel", 15)
         .expect("max enchant");
@@ -713,9 +754,101 @@ fn typed_limits_match_the_reference_save() {
     assert!(game.set_equipment(BASE, "exp", 90_001).is_err());
 
     game.set_stack("stackable", 1_420_001, 61_525)
-        .expect("max stack");
+        .expect("max material stack");
     assert!(game.set_stack("stackable", 1_420_001, 61_526).is_err());
-    assert!(game.set_stack("cook", BASE, 61_526).is_err());
+    game.set_stack("cook", BASE, 203).expect("max dish");
+    assert!(game.set_stack("cook", BASE, 204).is_err());
+
+    let path = fixture_with_grade("limits-grade-six", 6);
+    let mut session = SaveSession::open(&path).expect("open");
+    let mut game = Game::new(&mut session, Catalog::shared());
+    game.set_character(10_001, "level", 70)
+        .expect("grade 6 level");
+    assert!(game.set_character(10_001, "level", 71).is_err());
+    game.set_character(10_001, "exp", 2_990_400)
+        .expect("grade 6 exp");
+    assert!(game.set_character(10_001, "exp", 2_990_401).is_err());
+    game.set_character(10_001, "ascend", 5)
+        .expect("grade 6 ascend");
+    assert!(game.set_character(10_001, "ascend", 6).is_err());
+    game.set_character(10_001, "transcend", 6)
+        .expect("grade 6 transcend");
+    assert!(game.set_character(10_001, "transcend", 7).is_err());
+    game.set_skill(10_001, 1, 10).expect("grade 6 low skill");
+    assert!(game.set_skill(10_001, 1, 11).is_err());
+    game.set_skill(10_001, 5, 7).expect("grade 6 mid skill");
+    assert!(game.set_skill(10_001, 5, 8).is_err());
+    game.set_skill(10_001, 801, 1)
+        .expect("grade 6 special skill");
+    assert!(game.set_skill(10_001, 801, 2).is_err());
+}
+
+#[test]
+fn unknown_grades_use_the_saves_own_highest_values() {
+    let path = fixture_with_grade("limits-grade-three", 3);
+    let mut session = SaveSession::open(&path).expect("open");
+    let mut game = Game::new(&mut session, Catalog::shared());
+    let limits = game.character_limits().expect("limits");
+    assert_eq!(limits.grade, 3);
+    assert_eq!(limits.level, 5, "highest existing character level");
+    assert_eq!(limits.exp, 0, "highest existing character exp");
+    assert_eq!(limits.ascend, 1, "highest existing ascend");
+    assert_eq!(limits.transcend, 2, "highest existing transcend");
+
+    game.set_character(10_001, "level", 5)
+        .expect("observed level");
+    assert!(game.set_character(10_001, "level", 6).is_err());
+    game.set_character(10_001, "ascend", 1)
+        .expect("observed ascend");
+    assert!(game.set_character(10_001, "ascend", 2).is_err());
+    game.set_character(10_001, "transcend", 2)
+        .expect("observed transcend");
+    assert!(game.set_character(10_001, "transcend", 3).is_err());
+
+    // A grade with no skill rows falls back to the grade-1 grouping.
+    game.set_skill(10_001, 1, 3).expect("grade-1 fallback low");
+    assert!(game.set_skill(10_001, 1, 4).is_err());
+    game.set_skill(10_001, 5, 2).expect("grade-1 fallback mid");
+    assert!(game.set_skill(10_001, 5, 3).is_err());
+    game.set_skill(10_001, 801, 1)
+        .expect("grade-1 fallback special");
+    assert!(game.set_skill(10_001, 801, 2).is_err());
+}
+
+#[test]
+fn a_newer_schema_is_warned_and_never_written() {
+    let path = fixture_with_version("schema-newer", 3);
+    let original = fs::read(&path).expect("read original");
+    let mut session = SaveSession::open(&path).expect("open");
+    assert!(
+        session
+            .warnings()
+            .iter()
+            .any(|warning| warning.contains("schema version 3")),
+        "opening a newer schema warns the user"
+    );
+    {
+        let mut game = Game::new(&mut session, Catalog::shared());
+        game.set_stack("stackable", 1_420_001, 11)
+            .expect("in-memory edit");
+    }
+    let error = session.write().expect_err("newer schema must not write");
+    assert_eq!(error.kind(), "schema");
+    assert!(error.to_string().contains("schema version 3"));
+    assert_eq!(
+        fs::read(&path).expect("read after refusal"),
+        original,
+        "the save file was untouched"
+    );
+
+    let path = fixture_with_version("schema-supported", 2);
+    let mut session = SaveSession::open(&path).expect("open");
+    {
+        let mut game = Game::new(&mut session, Catalog::shared());
+        game.set_stack("stackable", 1_420_001, 11)
+            .expect("in-memory edit");
+    }
+    session.write().expect("schema 2 still writes");
 }
 
 #[test]

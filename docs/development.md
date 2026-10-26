@@ -55,7 +55,7 @@ cargo test --workspace
 
 ## Testing against a real save
 
-The normal test suite is self-contained. `crates/core/tests/phase0.rs` builds a small encrypted save from a synthetic database and covers the stale-file guard, journal and WAL refusal, backups, dense 64-bit ids, the raw editor's rules, the refusal of a newly broken gem link, and the disabled recruit path. Two tests need a real save because the schema and the interesting data cannot be synthesized safely. They copy the file to a temporary directory, so the source is never modified.
+The normal test suite is self-contained. `crates/core/tests/phase0.rs` builds a small encrypted save from a synthetic database and covers the stale-file guard, journal and WAL refusal, backups, dense 64-bit ids, the raw editor's rules, the refusal of a newly broken gem link, the adventure-grade caps, the cooked-dish limit, the schema-version write block, and the no-direct-recruit guard. Two tests need a real save because the schema and the interesting data cannot be synthesized safely. They copy the file to a temporary directory, so the source is never modified.
 
 ```bash
 DSA_SAVE="$HOME/Games/DragonSword Awakening/DS/Saved/SaveGames/1000/1000_Slot3.db" \
@@ -80,9 +80,15 @@ The phase0 fixture writes a plaintext database and then rewrites each page to re
 
 Do not add a command that accepts a 64-bit ID as a JSON number. Raw rowids are 64-bit ids too: `tb_equipment`, `tb_gem`, and `tb_karma` use `ITEM_DBID` as their primary key, so the raw editor addresses rows by string.
 
-## Character roster
+## Character recruiting
 
-Recruiting is disabled. `add_character` and `unlock_all_characters` return an error until the editor has a verified roster. Do not use `tb_init_character` as that roster: it is the game's new-account seed, with three `NORMAL` starters and twenty `MASTER` rows for what looks like a developer account, and it does not match the characters a save owns. The bundled catalog's `character` category is not a roster either, because it also contains character items (111xxxx) and skins (999xxxx). A real roster has to come from the game's paks or from CIDs observed in game-written saves.
+The editor has no direct recruit write path. `add_character` and `unlock_all_characters` remain as core stubs that refuse every request, so a future caller cannot accidentally insert a row. Do not use `tb_init_character` as a roster: it is the game's new-account seed, with three `NORMAL` starters and twenty `MASTER` rows for what looks like a developer account, and it does not match the characters a save owns. The bundled catalog's `character` category is not a roster either, because it also contains character items (111xxxx) and skins (999xxxx).
+
+The supported route is the game's own shop. Add Fate's Invitation (`ITEM_CID` 1,000,500) as a stackable item, save, then buy the character in game. The game writes the level-1 character row and the purchase record itself. This covers the 11 shop characters; story characters arrive by playing. The editor's job ends at supplying the invitation, so it never has to guess at `tb_character` columns or shop bookkeeping.
+
+## Schema versions
+
+`SUPPORTED_SCHEMA_VERSION` in `crates/core/src/save.rs` is 2. A save with a higher `USER_DB_VERSION` opens for inspection with a warning, but `SaveSession::write` refuses with a `schema` error before touching the file. The version is read from `tb_user`; a save without that column is treated as version 0. Bump the constant only after checking the game's changed columns and adding tests for both the new schema and the old one.
 
 ## Adding a typed field
 
