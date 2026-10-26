@@ -20,15 +20,16 @@ The slot cards show the screenshot the game saved with the slot, when one exists
 
 The editor's limits fall into three groups. [Game rules](game-rules.md) has the sources, the open questions and the in-game observations.
 
-**Game rules**, from the game's own tables. The Mercenary Corps grade unlocks breakthroughs, one per promotion, and each hero's own breakthrough (`ASCEND`) sets its caps. The editor applies the global servers' limits (breakthrough 4, hero level 60, grade 5), because a save does not record its region:
+**Game rules**, from the game's own tables. The Mercenary Corps grade unlocks breakthroughs, one per promotion, and each hero's own breakthrough (`ASCEND`) sets its caps. The editor applies the limits of the offline game, which caps heroes at level 70: breakthrough 5 and grade 6.
 
 | Breakthrough | Level cap | Active skill cap (1–4) | Basic skill cap (5–7) |
 | ------------ | --------- | ---------------------- | --------------------- |
 | 0            | 20        | 3                      | 3                     |
 | 1            | 30        | 5                      | 5                     |
 | 2            | 40        | 7                      | 7                     |
-| 3            | 50        | 7                      | 7                     |
-| 4            | 60        | 7                      | 7                     |
+| 3            | 50        | 9                      | 7                     |
+| 4            | 60        | 10                     | 7                     |
+| 5            | 70        | 10                     | 7                     |
 
 EXP is a running total that follows the level: changing a level writes the EXP that starts it, EXP edits stay inside the current level, and a hero at its level cap sits at that level's start, because the game refunds EXP past the cap. A breakthrough cannot be lowered below what the level needs: a level-35 hero needs breakthrough 2, so lower the level first. Karma uses the same level caps; its EXP comes from its rarity's level table. The special 801 slot caps at 1, awakening caps at 6, and the Mercenary Corps level caps at 50. The grade itself is read-only, because it follows the promotion quests the save records.
 
@@ -60,7 +61,7 @@ Lists stackable materials and cooked dishes. Edit a count, add a missing catalog
 ### Characters
 
 The character list selects one character at a time. Edit level, EXP, ascension, HP, transcendence, and soldier grade, manage skills, and fill the three slots of each team page.
-- Level, EXP, ascension, and transcendence follow the hero's own breakthrough caps above. The header shows the stage, for example "Breakthrough 1 of 4 · level cap 30 · skill cap 5". Level starts at 1, and a level change writes that level's starting EXP.
+- Level, EXP, ascension, and transcendence follow the hero's own breakthrough caps above. The header shows the stage, for example "Breakthrough 1 of 5 · level cap 30 · skill cap 5". Level starts at 1, and a level change writes that level's starting EXP.
 - The editor does not insert character rows. To recruit a shop character, add **Fate's Invitation** (CID 1,000,500) on the Inventory screen, save, then buy the character in the game's shop. The game writes the level-1 character row and purchase record. Story characters still arrive by playing.
 - Removing a character also clears their skills, team slots, loadout links, and costume assignments.
 - Skills are keyed by `TYPE_VALUE`; the game writes 1–7 and 801. Active slots 1–4 and basic slots 5–7 follow the hero's breakthrough stage, and 801 caps at 1.

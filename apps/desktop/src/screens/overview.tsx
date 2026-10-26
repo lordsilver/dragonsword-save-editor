@@ -22,6 +22,7 @@ import { ConfirmButton } from '@/components/common';
 import { NumberField } from '@/components/fields';
 import { ItemIcon } from '@/components/item-icon';
 import { KeyValue, PageHeader, Panel } from '@/components/page';
+import { InfoNote } from '@/components/summary';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,7 +40,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { consistencyIssues } from '@/lib/consistency';
 import { FATES_INVITATION_CID, MAX_PLAY_TIME, MAX_STACK, currencyLimit } from '@/lib/limits';
 import { formatNumber, itemName, useApp } from '@/lib/store';
-import type { ConsistencyReport, GrowthLimits } from '@/lib/types';
+import type { ConsistencyReport, GrowthLimits, MainQuest, Story } from '@/lib/types';
 
 export function OverviewScreen() {
   const overview = useApp((state) => state.overview);
@@ -94,6 +95,8 @@ export function OverviewScreen() {
       />
 
       <ConsistencyPanel report={save.consistency} />
+
+      <StoryNote story={overview.story} language={language} />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Metric
@@ -590,6 +593,26 @@ function FillDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function StoryNote({ story, language }: { story: Story; language: string }) {
+  const name = (quest: MainQuest) => `${quest.number}. ${language === 'fr' ? quest.nameFr : quest.nameEn}`;
+  const next = story.nextPromotion;
+  return (
+    <InfoNote>
+      <span className="font-medium text-foreground">
+        Main story {story.completed} of {story.total}
+      </span>
+      {story.current && <> · in progress: {name(story.current)}</>}
+      {next && (
+        <>
+          {' '}
+          · next promotion, {language === 'fr' ? next.rankFr : next.rankEn}:{' '}
+          {next.storyDone ? 'the exam is open, take it in game' : `the exam opens after quest ${name(next.requires)}`}
+        </>
+      )}
+    </InfoNote>
   );
 }
 

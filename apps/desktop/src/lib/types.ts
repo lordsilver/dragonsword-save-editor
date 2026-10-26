@@ -174,6 +174,29 @@ export interface Overview {
   promotionsTotal: number;
   /** Corps level cap and the EXP range at the current corps level. */
   adventureLimits: GrowthLimits;
+  story: Story;
+}
+
+/** A main-story quest, numbered the way the game shows it. */
+export interface MainQuest {
+  id: number;
+  number: number;
+  nameEn: string;
+  nameFr: string;
+}
+
+export interface Story {
+  completed: number;
+  total: number;
+  /** The quest in progress, or the first one not done. */
+  current: MainQuest | null;
+  nextPromotion: {
+    grade: number;
+    rankEn: string;
+    rankFr: string;
+    requires: MainQuest;
+    storyDone: boolean;
+  } | null;
 }
 
 export interface Stack {
