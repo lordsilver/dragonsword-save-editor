@@ -17,7 +17,8 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "test": "pnpm -r test",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "preview:ui": "pnpm --filter @dsa/desktop exec vite build --mode preview && pnpm --filter @dsa/desktop exec vite preview --mode preview"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.2",

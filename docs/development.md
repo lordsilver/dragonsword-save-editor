@@ -37,6 +37,17 @@ pnpm desktop:build
 
 The save format uses PBKDF2-HMAC-SHA512 with 256,000 iterations. In an unoptimized `cargo run` build, opening or saving a file can take several seconds; a release build is much faster. This is CPU time in the key derivation, not a hang.
 
+## Browser preview
+
+The UI can run in an ordinary browser against answers recorded from a save, which is how screens are checked without the Tauri window (for example with headless Chrome from WSL). Record a copy of a save, then build and serve the preview:
+
+```bash
+cargo run -p dsa-core --example preview_fixture -- /path/to/copy/1000_Slot3.db /tmp/fixtures/fixture.json
+DSA_PREVIEW_FIXTURE=/tmp/fixtures pnpm preview:ui
+```
+
+Open `http://127.0.0.1:1421/preview.html`. `DSA_PREVIEW_FIXTURE` names one recording or a folder of them; query parameters pick the recording (`fixture=<name>`, default `fixture`), the screen (`section=characters`), the hero (`hero=10001`) and the theme (`theme=light`), and `trace` lists commands the recording does not answer. Read commands replay the recording and edits do nothing. The example only reads the save, but record a copy anyway. Headless Chrome needs `--virtual-time-budget=10000` rather than `--timeout`, which stops the page before it loads the recording.
+
 ## Checks
 
 ```bash
