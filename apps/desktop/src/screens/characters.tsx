@@ -349,28 +349,56 @@ function HeroInformation({ character, busy }: { character: Character; busy: bool
   );
 }
 
-/** Steps from the tree's centre per SlotOrder, tracing the game's two diamonds. */
-const SKILL_INDENT: Record<number, number> = { 1: 2, 2: 1, 3: 0, 4: 1, 5: 0, 6: 1, 7: 0, 8: -1 };
+/**
+ * The disc behind a skill's glyph, tinted by the effect it applies the way
+ * the game tints it; a plain attack keeps the grey metal disc.
+ */
+const EFFECT_DISC: Record<string, string> = {
+  AIR: 'from-sky-400 to-sky-800 border-sky-200/60',
+  BLEED: 'from-rose-400 to-rose-800 border-rose-200/60',
+  DOWN: 'from-violet-400 to-violet-800 border-violet-200/60',
+  FIRE: 'from-orange-400 to-red-800 border-orange-200/60',
+  HEAL: 'from-pink-300 to-pink-700 border-pink-100/60',
+  ICE: 'from-cyan-300 to-cyan-700 border-cyan-100/60',
+  POISON: 'from-green-400 to-green-800 border-green-200/60',
+  SHOCK: 'from-purple-400 to-purple-800 border-purple-200/60',
+  STUN: 'from-amber-300 to-amber-700 border-amber-100/70',
+};
+const PLAIN_DISC = 'from-zinc-500 to-zinc-800 border-white/25';
 
 function skillName(skill: Skill, language: string): string {
   if (skill.info) return language === 'fr' ? skill.info.nameFr : skill.info.nameEn;
   return `Skill ${skill.typeValue}`;
 }
 
+function effectName(skill: Skill, language: string): string | null {
+  if (!skill.effect) return null;
+  return language === 'fr' ? skill.effect.nameFr : skill.effect.nameEn;
+}
+
 function SkillIcon({ skill, size }: { skill: Skill; size: number }) {
+  const badge = Math.round(size * 0.4);
   return (
-    <ItemIcon
-      item={{
-        nameEn: skill.info?.nameEn ?? '?',
-        iconX: skill.info?.iconX ?? 0,
-        iconY: skill.info?.iconY ?? 0,
-        category: 'skill',
-        icon: Boolean(skill.info && (skill.info.iconX || skill.info.iconY)),
-      }}
-      size={size}
-      // The game draws its white skill glyphs on a dark metal disc.
-      className="rounded-full border-white/25 bg-radial from-zinc-500 to-zinc-800"
-    />
+    <span className="relative shrink-0">
+      <ItemIcon
+        item={{
+          nameEn: skill.info?.nameEn ?? '?',
+          iconX: skill.info?.iconX ?? 0,
+          iconY: skill.info?.iconY ?? 0,
+          category: 'skill',
+          icon: Boolean(skill.info && (skill.info.iconX || skill.info.iconY)),
+        }}
+        size={size}
+        className={cn('rounded-full border-2 bg-radial', (skill.effect && EFFECT_DISC[skill.effect.key]) ?? PLAIN_DISC)}
+      />
+      {skill.effect && (
+        <ItemIcon
+          item={{ ...skill.effect, category: 'skill', icon: true }}
+          size={badge}
+          className="absolute -top-1 -left-1 rounded-full border-white/40 bg-zinc-900"
+        />
+      )}
+    </span>
   );
 }
 
@@ -387,6 +415,8 @@ function HeroSkills({ character, language, busy }: { character: Character; langu
     );
   }
 
+  // The game's two columns: SlotOrder 1–4 on the left, 5–8 on the right,
+  // and the master skill (9) below.
   const order = (skill: Skill) => skill.info?.order ?? 10;
   const left = skills.filter((skill) => order(skill) <= 4);
   const right = skills.filter((skill) => order(skill) >= 5 && order(skill) <= 8);
@@ -401,16 +431,20 @@ function HeroSkills({ character, language, busy }: { character: Character; langu
     />
   );
 
+  // The detail pane sits beside the tree only when the panel has room for
+  // both, so narrow windows never cut the skill names short.
   return (
-    <div className="grid max-w-4xl gap-6 lg:grid-cols-[minmax(0,1fr)_17rem]">
-      <div className="space-y-5">
-        <div className="grid grid-cols-2 gap-x-6">
-          <div className="space-y-2">{left.map(node)}</div>
-          <div className="space-y-2">{right.map(node)}</div>
+    <div className="@container">
+      <div className="grid max-w-4xl gap-6 @2xl:grid-cols-[minmax(0,1fr)_17rem]">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-x-3">
+            <div className="space-y-1">{left.map(node)}</div>
+            <div className="space-y-1">{right.map(node)}</div>
+          </div>
+          {rest.length > 0 && <div className="grid grid-cols-2 gap-x-3 border-t pt-4">{rest.map(node)}</div>}
         </div>
-        {rest.length > 0 && <div className="space-y-2 border-t pt-4">{rest.map(node)}</div>}
+        <SkillDetail key={selected.typeValue} skill={selected} character={character} language={language} busy={busy} />
       </div>
-      <SkillDetail key={selected.typeValue} skill={selected} character={character} language={language} busy={busy} />
     </div>
   );
 }
@@ -426,28 +460,33 @@ function SkillNode({
   selected: boolean;
   onSelect: () => void;
 }) {
-  const indent = SKILL_INDENT[skill.info?.order ?? 0] ?? 0;
+  const detail = skill.info?.master ? 'Master skill' : effectName(skill, language);
   return (
     <button
       type="button"
       onClick={onSelect}
       aria-pressed={selected}
-      style={{ marginLeft: `${(indent + 1) * 1.5}rem` }}
       className={cn(
-        'flex w-fit max-w-full items-center gap-3 rounded-full py-1 pr-4 pl-1 text-left outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring',
-        selected && 'bg-muted ring-1 ring-brand',
-        !skill.saved && skill.editable && 'opacity-55',
+        'flex w-full min-w-0 items-center gap-3 rounded-lg border border-transparent px-2 py-1.5 text-left outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring',
+        selected && 'border-brand/60 bg-muted',
       )}
     >
-      <span className="relative shrink-0">
-        <SkillIcon skill={skill} size={48} />
+      <span className={cn('relative', !skill.saved && skill.editable && 'opacity-50')}>
+        <SkillIcon skill={skill} size={44} />
         <span className="absolute -bottom-1 -left-1 flex size-5 items-center justify-center rounded-full border bg-background text-[11px] font-semibold tabular-nums">
           {skill.saved || !skill.editable ? skill.level : '–'}
         </span>
       </span>
-      <span className="min-w-0">
-        <span className="block truncate text-sm font-medium">{skillName(skill, language)}</span>
-        {skill.info?.master && <span className="block text-xs text-muted-foreground">Master skill</span>}
+      <span className="min-w-0 flex-1">
+        <span
+          className={cn(
+            'block truncate text-sm font-medium',
+            !skill.saved && skill.editable && 'text-muted-foreground',
+          )}
+        >
+          {skillName(skill, language)}
+        </span>
+        {detail && <span className="block truncate text-xs text-muted-foreground">{detail}</span>}
       </span>
     </button>
   );
@@ -469,6 +508,7 @@ function SkillDetail({
   const max = skillLimit(character.limits, skill.typeValue);
   const name = skillName(skill, language);
   const description = language === 'fr' ? skill.info?.descFr : skill.info?.descEn;
+  const effect = effectName(skill, language);
 
   return (
     <aside className="flex flex-col items-center gap-3 self-start rounded-lg border p-5 text-center">
@@ -478,6 +518,7 @@ function SkillDetail({
           {skill.saved || !skill.editable ? `Lv. ${skill.level}` : 'Not in this save'}
         </div>
         <h3 className="font-heading text-lg font-semibold">{name}</h3>
+        {effect && <div className="text-xs text-muted-foreground">Applies {effect}</div>}
       </div>
       {description && <p className="text-sm text-muted-foreground">{description}</p>}
       <div className="mt-1 w-full border-t pt-4">

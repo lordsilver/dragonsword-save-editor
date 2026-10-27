@@ -22,6 +22,12 @@
 // signals) and 9 the master skill. The icon is a texture or a Paper2D
 // sprite; the export has each sprite's texture as a PNG without the _Sprite
 // suffix, and scripts/gen-icons.mjs packs it and writes the offsets.
+//
+// A skill's effect (the coloured disc and corner badge in the game) is the
+// IconColor of its first combo step: PCCharacterData.ComboTableID names the
+// hero's rows in PCComboData, and GroupIndex is the skill's TypeValue. ATTACK
+// is a plain skill. The game's Skill screen names each effect with fixed UI
+// strings (EFFECTS below) and draws the State_Mark_<state> badge.
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -121,6 +127,27 @@ const titleFile = {
 writeFileSync(titlesPath, `${JSON.stringify(titleFile, null, 2)}\n`);
 console.log(`wrote ${titles.length} titles, ${titles.filter((title) => title.stats).length} with stat bonuses`);
 
+/** Each IconColor's name string (the Skill screen's own) and badge texture. */
+const EFFECTS = {
+  STUN: { string: '800037', badge: 'STUN' },
+  AIR: { string: '800038', badge: 'AIR' },
+  DOWN: { string: '800039', badge: 'DOWN' },
+  BLEED: { string: '800040', badge: 'BLEEDING' },
+  SHOCK: { string: '800041', badge: 'SHOCK' },
+  FIRE: { string: '800042', badge: 'FIRE' },
+  POISON: { string: '800043', badge: 'POISON' },
+  ICE: { string: '800044', badge: 'ICE' },
+  HEAL: { string: '800051', badge: 'HEAL' },
+};
+
+const comboTables = new Map(rows('PCCharacterData').map((row) => [row.ID, row.ComboTableID]));
+/** "comboTable:group" -> IconColor of the group's first combo step. */
+const comboColors = new Map();
+for (const row of rows('PCComboData').sort((left, right) => Number(left.SubGroupIndex) - Number(right.SubGroupIndex))) {
+  const key = `${row.ID}:${row.GroupIndex}`;
+  if (!comboColors.has(key)) comboColors.set(key, row.IconColor);
+}
+
 /** A StringData text without the game's colour tags (<LightOrange>…</>). */
 function plain(text) {
   return text.replace(/<[^<>]*>/g, '').trim();
@@ -136,6 +163,8 @@ for (const row of rows('PCSkillGrowthData')) {
   const name = strings.get(row.Name);
   if (!name?.En) fail(`hero ${cid} skill ${type} has no English name (string ${row.Name})`);
   const desc = strings.get(row.SkillDesc_1 || row.SkillDesc);
+  const color = comboColors.get(`${comboTables.get(cid)}:${row.TypeValue}`);
+  if (color && color !== 'ATTACK' && !EFFECTS[color]) fail(`hero ${cid} skill ${type} has unknown effect ${color}`);
   const icon = row.Icon.match(/'\/Game\/([^.']+?)(?:_Sprite)?\./)?.[1];
   if (!icon) fail(`hero ${cid} skill ${type} has no sprite icon: ${row.Icon}`);
   heroSkills[cid][type] = {
@@ -147,6 +176,7 @@ for (const row of rows('PCSkillGrowthData')) {
     descEn: desc?.En ? plain(desc.En) : '',
     descFr: desc ? plain(desc.Fr || desc.En) : '',
     iconPath: icon,
+    ...(EFFECTS[color] && { effect: color }),
     x: 0,
     y: 0,
   };
@@ -155,6 +185,20 @@ const skillsPath = new URL('../crates/core/data/skills.json', import.meta.url);
 const skillFile = {
   _source:
     "Each hero's skill slots from the game's own PCSkillGrowthData/StringData, written by scripts/gen-catalog-extras.mjs; icon offsets come from scripts/gen-icons.mjs. type = tb_skill_growth TYPE_VALUE, order = the game's SlotOrder.",
+  effects: Object.fromEntries(
+    Object.entries(EFFECTS).map(([key, { string, badge }]) => {
+      const name = strings.get(string);
+      if (!name?.En) fail(`effect ${key} has no name (string ${string})`);
+      const effect = {
+        nameEn: name.En.trim(),
+        nameFr: (name.Fr || name.En).trim(),
+        iconPath: `Art/UI/InGame/Common/State/State_Mark_${badge}`,
+        x: 0,
+        y: 0,
+      };
+      return [key, effect];
+    }),
+  ),
   heroes: Object.fromEntries(
     Object.entries(heroSkills).map(([cid, slots]) => [
       cid,

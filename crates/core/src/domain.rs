@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use rusqlite::{Connection, OptionalExtension, params};
 use serde::Serialize;
 
-use crate::catalog::{Catalog, EffectText, Item, SkillSeed, TitleStat};
+use crate::catalog::{Catalog, EffectText, Item, SkillEffect, SkillSeed, TitleStat};
 use crate::error::{Error, Result};
 use crate::growth::{self, Growth, REGION};
 use crate::save::SaveSession;
@@ -1461,7 +1461,8 @@ impl<'a> Game<'a> {
         })?;
         let mut levels = rows.collect::<std::result::Result<Vec<_>, _>>()?;
         let mut skills = Vec::new();
-        for seed in Catalog::shared().hero_skills(cid) {
+        let catalog = Catalog::shared();
+        for seed in catalog.hero_skills(cid) {
             let saved = levels.iter().position(|(kind, _)| *kind == seed.type_value);
             let level = saved.map(|index| levels.remove(index).1);
             let editable = SKILL_TYPES.contains(&seed.type_value);
@@ -1473,6 +1474,11 @@ impl<'a> Game<'a> {
                 saved: level.is_some(),
                 editable,
                 info: Some(seed.clone()),
+                effect: seed
+                    .effect
+                    .as_deref()
+                    .and_then(|key| catalog.skill_effect(key))
+                    .cloned(),
             });
         }
         skills.extend(levels.into_iter().map(|(type_value, level)| Skill {
@@ -1481,6 +1487,7 @@ impl<'a> Game<'a> {
             saved: true,
             editable: SKILL_TYPES.contains(&type_value),
             info: None,
+            effect: None,
         }));
         Ok(skills)
     }
@@ -2954,6 +2961,8 @@ pub struct Skill {
     pub editable: bool,
     /// The game's name, description and icon for the slot, when known.
     pub info: Option<SkillSeed>,
+    /// The effect the skill applies, as the game names and badges it.
+    pub effect: Option<SkillEffect>,
 }
 
 fn team_rows(conn: &Connection, user_id: i64) -> Result<Vec<(i64, [i64; 3])>> {

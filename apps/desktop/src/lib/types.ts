@@ -244,6 +244,8 @@ export interface SkillInfo {
   nameFr: string;
   descEn: string;
   descFr: string;
+  /** The SkillEffect key, or null for a plain attack. */
+  effect: string | null;
   iconX: number;
   iconY: number;
 }
@@ -256,6 +258,17 @@ export interface Skill {
   /** False for Dodge, which the game never stores and keeps at level 1. */
   editable: boolean;
   info: SkillInfo | null;
+  /** The effect the skill applies, named and badged as in the game. */
+  effect: SkillEffect | null;
+}
+
+export interface SkillEffect {
+  /** The game's IconColor: AIR, BLEED, STUN, … */
+  key: string;
+  nameEn: string;
+  nameFr: string;
+  iconX: number;
+  iconY: number;
 }
 
 export interface TeamSlot {

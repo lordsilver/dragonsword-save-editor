@@ -165,6 +165,25 @@ pub struct SkillSeed {
     pub name_fr: String,
     pub desc_en: String,
     pub desc_fr: String,
+    /// The effect the skill applies (a `SkillEffect` key such as `BLEED`),
+    /// or none for a plain attack.
+    #[serde(default)]
+    pub effect: Option<String>,
+    #[serde(rename(serialize = "iconX", deserialize = "x"))]
+    pub icon_x: i32,
+    #[serde(rename(serialize = "iconY", deserialize = "y"))]
+    pub icon_y: i32,
+}
+
+/// A skill effect as the game's Skill screen names it, with its badge icon.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SkillEffect {
+    /// The game's `IconColor`: `AIR`, `BLEED`, `STUN`, …
+    #[serde(default)]
+    pub key: String,
+    pub name_en: String,
+    pub name_fr: String,
     #[serde(rename(serialize = "iconX", deserialize = "x"))]
     pub icon_x: i32,
     #[serde(rename(serialize = "iconY", deserialize = "y"))]
@@ -217,6 +236,7 @@ struct TitleFile {
 
 #[derive(Debug, Deserialize)]
 struct SkillFile {
+    effects: HashMap<String, SkillEffect>,
     heroes: HashMap<String, Vec<SkillSeed>>,
 }
 
@@ -233,6 +253,7 @@ pub struct Catalog {
     recipes: Vec<RecipeSeed>,
     titles: Vec<TitleSeed>,
     skills: HashMap<i64, Vec<SkillSeed>>,
+    skill_effects: HashMap<String, SkillEffect>,
     ingredient_icons: HashMap<i64, i64>,
     icon_size: u32,
 }
@@ -270,6 +291,17 @@ impl Catalog {
                 .heroes
                 .into_iter()
                 .filter_map(|(cid, slots)| cid.parse::<i64>().ok().map(|cid| (cid, slots)))
+                .collect(),
+            skill_effects: skills
+                .effects
+                .into_iter()
+                .map(|(key, effect)| {
+                    let effect = SkillEffect {
+                        key: key.clone(),
+                        ..effect
+                    };
+                    (key, effect)
+                })
                 .collect(),
             ingredient_icons,
             icon_size: if seed.icon_size == 0 {
@@ -313,6 +345,10 @@ impl Catalog {
     /// A hero's skill slots in the game's order, or none for an unknown hero.
     pub fn hero_skills(&self, cid: i64) -> &[SkillSeed] {
         self.skills.get(&cid).map_or(&[], Vec::as_slice)
+    }
+
+    pub fn skill_effect(&self, key: &str) -> Option<&SkillEffect> {
+        self.skill_effects.get(key)
     }
 
     pub fn ingredient_icon(&self, group: i64) -> Option<i64> {
@@ -495,6 +531,23 @@ mod tests {
             ]
         );
         assert!(lute[8].master);
+        let effects: Vec<_> = lute.iter().map(|slot| slot.effect.as_deref()).collect();
+        assert_eq!(
+            effects,
+            [
+                None,
+                None,
+                None,
+                None,
+                Some("STUN"),
+                Some("HEAL"),
+                Some("DOWN"),
+                None,
+                None
+            ]
+        );
+        assert_eq!(catalog.skill_effect("BLEED").unwrap().name_en, "Bleed");
+        assert_eq!(catalog.skill_effect("AIR").unwrap().name_fr, "En l'air");
         assert!(lute.iter().all(|slot| slot.icon_x != 0 || slot.icon_y != 0));
         assert!(catalog.hero_skills(1).is_empty());
     }

@@ -19,7 +19,8 @@
 //   cropped the same way;
 // - a familiar without an item icon: the icon of the familiar whose
 //   VehicleCharacterData row names the same image.
-// It also packs each hero skill's icon from crates/core/data/skills.json.
+// It also packs each hero skill's icon and each skill effect's badge from
+// crates/core/data/skills.json.
 // It packs them into apps/desktop/src/assets/sprite.webp and rewrites the
 // cell offsets in crates/core/data/items.json, items_extra.json (the game's
 // items that items.json lacks) and skills.json, the last two written by
@@ -123,7 +124,7 @@ for (const [cid, item] of Object.entries(allItems)) {
 // Skill icons have no fallbacks; scripts/gen-catalog-extras.mjs already
 // checked that each names a texture.
 const skills = JSON.parse(readFileSync(skillsPath, 'utf8'));
-const skillSlots = Object.values(skills.heroes).flat();
+const skillSlots = [...Object.values(skills.heroes).flat(), ...Object.values(skills.effects)];
 for (const slot of skillSlots) {
   if (!exists(slot.iconPath)) fail(`skill icon ${slot.iconPath} is not in the export`);
   sources.set(`${slot.iconPath}|false`, { path: slot.iconPath, crop: false, cell: 0 });
@@ -177,7 +178,7 @@ writeFileSync(catalogPath, `${JSON.stringify(catalog, null, 2)}\n`);
 writeFileSync(extraPath, `${JSON.stringify(extra, null, 2)}\n`);
 
 console.log(
-  `packed ${ordered.length} icons for ${placed.size} of ${Object.keys(allItems).length} items and ${skillSlots.length} skill slots into ${COLUMNS}x${sheetRows} cells of ${CELL}px (${(sheet.length / 1048576).toFixed(1)} MB)`,
+  `packed ${ordered.length} icons for ${placed.size} of ${Object.keys(allItems).length} items and ${skillSlots.length} skill slots and effects into ${COLUMNS}x${sheetRows} cells of ${CELL}px (${(sheet.length / 1048576).toFixed(1)} MB)`,
 );
 if (missing.length > 0) {
   console.log(`${missing.length} items have no icon in the export:`);

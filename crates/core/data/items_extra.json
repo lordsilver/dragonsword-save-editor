@@ -8,7 +8,7 @@
       "type": "ACCOUNT_TITLE",
       "grade": "epic",
       "iconPath": "Art/UI/InGame/Icon_Item/Common/Icon_Item_Common_Title",
-      "x": -2048,
+      "x": -3200,
       "y": -1024
     },
     "9990032": {
@@ -18,7 +18,7 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Cerese_Unique_02",
-      "x": -1536,
+      "x": -2688,
       "y": -2688
     },
     "9990033": {
@@ -28,7 +28,7 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Cerese_Unique_Weapon_02",
-      "x": -2304,
+      "x": -3456,
       "y": -2688
     },
     "9990034": {
@@ -38,7 +38,7 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Eileen_Epic_01",
-      "x": -1664,
+      "x": -2816,
       "y": -2688
     },
     "9990035": {
@@ -48,7 +48,7 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Eileen_Epic_Weapon_01",
-      "x": -2432,
+      "x": -3584,
       "y": -2688
     },
     "9990036": {
@@ -58,7 +58,7 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Reina_Epic_01",
-      "x": -1920,
+      "x": -3072,
       "y": -2688
     },
     "9990037": {
@@ -68,7 +68,7 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Reina_Epic_Weapon_01",
-      "x": -2688,
+      "x": -3840,
       "y": -2688
     },
     "9990038": {
@@ -78,7 +78,7 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Othello_Unique_01",
-      "x": -1792,
+      "x": -2944,
       "y": -2688
     },
     "9990039": {
@@ -88,7 +88,7 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Othello_Unique_Weapon_01",
-      "x": -2560,
+      "x": -3712,
       "y": -2688
     }
   }

@@ -1,5 +1,70 @@
 {
   "_source": "Each hero's skill slots from the game's own PCSkillGrowthData/StringData, written by scripts/gen-catalog-extras.mjs; icon offsets come from scripts/gen-icons.mjs. type = tb_skill_growth TYPE_VALUE, order = the game's SlotOrder.",
+  "effects": {
+    "STUN": {
+      "nameEn": "Stun",
+      "nameFr": "Étourdissement",
+      "iconPath": "Art/UI/InGame/Common/State/State_Mark_STUN",
+      "x": -1152,
+      "y": 0
+    },
+    "AIR": {
+      "nameEn": "Airborne",
+      "nameFr": "En l'air",
+      "iconPath": "Art/UI/InGame/Common/State/State_Mark_AIR",
+      "x": -128,
+      "y": 0
+    },
+    "DOWN": {
+      "nameEn": "Knockdown",
+      "nameFr": "À terre",
+      "iconPath": "Art/UI/InGame/Common/State/State_Mark_DOWN",
+      "x": -384,
+      "y": 0
+    },
+    "BLEED": {
+      "nameEn": "Bleed",
+      "nameFr": "Hémorragie",
+      "iconPath": "Art/UI/InGame/Common/State/State_Mark_BLEEDING",
+      "x": -256,
+      "y": 0
+    },
+    "SHOCK": {
+      "nameEn": "Shock",
+      "nameFr": "Électrocution",
+      "iconPath": "Art/UI/InGame/Common/State/State_Mark_SHOCK",
+      "x": -1024,
+      "y": 0
+    },
+    "FIRE": {
+      "nameEn": "Burn",
+      "nameFr": "Brûlure",
+      "iconPath": "Art/UI/InGame/Common/State/State_Mark_FIRE",
+      "x": -512,
+      "y": 0
+    },
+    "POISON": {
+      "nameEn": "Poison",
+      "nameFr": "Intoxication",
+      "iconPath": "Art/UI/InGame/Common/State/State_Mark_POISON",
+      "x": -896,
+      "y": 0
+    },
+    "ICE": {
+      "nameEn": "Frost",
+      "nameFr": "Froid",
+      "iconPath": "Art/UI/InGame/Common/State/State_Mark_ICE",
+      "x": -768,
+      "y": 0
+    },
+    "HEAL": {
+      "nameEn": "Recovery",
+      "nameFr": "Récupération",
+      "iconPath": "Art/UI/InGame/Common/State/State_Mark_HEAL",
+      "x": -640,
+      "y": 0
+    }
+  },
   "heroes": {
     "10001": [
       {
@@ -11,8 +76,8 @@
         "descEn": "Charge toward the enemy while swinging the halberd.",
         "descFr": "Elle avance vers l'ennemi en brandissant sa hallebarde.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Eileen/Skill_Eileen_Attack_Growth",
-        "x": -3840,
-        "y": -2304
+        "x": -896,
+        "y": -2432
       },
       {
         "type": 5,
@@ -23,7 +88,7 @@
         "descEn": "While jumping, swing the halberd at the enemy and then slam it into the ground.",
         "descFr": "En plein saut, brandit la hallebarde vers l'ennemi puis la plante au sol.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2688
       },
       {
@@ -35,7 +100,7 @@
         "descEn": "Rolls forward to move.",
         "descFr": "Roule vers l'avant pour se déplacer.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -47,7 +112,7 @@
         "descEn": "Charge forward while swinging the halberd, then strike upward.",
         "descFr": "Elle avance en brandissant sa hallebarde, puis la lève pour frapper.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       },
       {
@@ -59,8 +124,9 @@
         "descEn": "Stab the enemy repeatedly with the halberd, then slash upward.",
         "descFr": "Elle enfonce sa hallebarde à plusieurs reprises dans l'ennemi, puis taillade vers le haut.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Eileen/Skill_Eileen_Active01_Growth",
-        "x": -3584,
-        "y": -2304
+        "effect": "AIR",
+        "x": -640,
+        "y": -2432
       },
       {
         "type": 2,
@@ -71,8 +137,8 @@
         "descEn": "Stab the halberd into the ground to intimidate enemies and boost allies' morale for a short time.",
         "descFr": "Enfonce la hallebarde dans le sol pour intimider l'ennemi et remonter le moral des alliés pendant un certain temps.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Eileen/Skill_Eileen_Active02_Growth",
-        "x": -3712,
-        "y": -2304
+        "x": -768,
+        "y": -2432
       },
       {
         "type": 3,
@@ -83,8 +149,8 @@
         "descEn": "Charges toward the enemy, spins multiple times, and slashes them upward, sending them flying into the air.",
         "descFr": "Elle charge l'ennemi, effectue plusieurs rotations et le projette en l'air d'un coup de hallebarde.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Eileen/Skill_Eileen_Signal01_Growth",
-        "x": -3968,
-        "y": -2304
+        "x": -1024,
+        "y": -2432
       },
       {
         "type": 4,
@@ -95,7 +161,7 @@
         "descEn": "You swing your halberd as if dancing while moving toward the enemy.",
         "descFr": "Elle se déplace vers l'ennemi en maniant sa hallebarde comme si elle dansait.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Eileen/Skill_Eileen_Signal02_Growth",
-        "x": 0,
+        "x": -1152,
         "y": -2432
       },
       {
@@ -107,7 +173,7 @@
         "descEn": "The number of attacks for the 【Barraging Spear】 skill increases.",
         "descFr": "Le nombre d'attaques de la compétence 【Barraging Spear】 augmente.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -121,8 +187,8 @@
         "descEn": "Swing the greatsword at the enemy.",
         "descFr": "Il brandit sa grande épée vers l'ennemi.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Lute/Skill_Lute_Attack_Growth",
-        "x": -2944,
-        "y": -2432
+        "x": 0,
+        "y": -2560
       },
       {
         "type": 5,
@@ -133,7 +199,7 @@
         "descEn": "While jumping, swing the greatsword at the enemy, then strike downwards to attack.",
         "descFr": "En plein saut, il brandit sa grande épée vers l'ennemi, puis l'abat sur lui.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2688
       },
       {
@@ -145,7 +211,7 @@
         "descEn": "Rolls forward to move.",
         "descFr": "Roule vers l'avant pour se déplacer.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -157,7 +223,7 @@
         "descEn": "Performs a roundhouse kick forward, then a side kick.",
         "descFr": "Effectue un coup de pied circulaire vers l'avant puis un coup de pied latéral.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       },
       {
@@ -169,7 +235,8 @@
         "descEn": "Swings the greatsword powerfully at the enemy, then jumps and finishes with a powerful downward strike.",
         "descFr": "Il brandit sa grande épée avec force vers l'ennemi, puis saute pour terminer par un puissant coup vers le bas.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Lute/Skill_Lute_Active01_Growth",
-        "x": -2688,
+        "effect": "STUN",
+        "x": -3840,
         "y": -2432
       },
       {
@@ -181,7 +248,8 @@
         "descEn": "Creates an area in front that heals damage for a certain period of time.",
         "descFr": "Déploie une zone devant soi qui soigne les blessures pendant un certain temps.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Lute/Skill_Lute_Active02_Growth",
-        "x": -2816,
+        "effect": "HEAL",
+        "x": -3968,
         "y": -2432
       },
       {
@@ -193,8 +261,9 @@
         "descEn": "Close in on the enemy, pierce them with the greatsword, then strike downward onto the ground.",
         "descFr": "Il s'approche de l'ennemi, le transperce avec sa grande épée, puis frappe le sol.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Lute/Skill_Lute_Signal01_Growth",
-        "x": -3072,
-        "y": -2432
+        "effect": "DOWN",
+        "x": -128,
+        "y": -2560
       },
       {
         "type": 4,
@@ -205,8 +274,8 @@
         "descEn": "Summon a massive sacred artifact using Sacred Energy and bring it crashing down.",
         "descFr": "Utilise la puissance sacrée pour invoquer un immense artefact sacré et l'abattre sur l'ennemi.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Lute/Skill_Lute_Signal02_Growth",
-        "x": -3200,
-        "y": -2432
+        "x": -256,
+        "y": -2560
       },
       {
         "type": 801,
@@ -217,7 +286,7 @@
         "descEn": "The number of attacks for the 【Kick Combo】 skill and the Rage gained from the 【Dropkick】 skill increase, and the Stun status effect is additionally applied to enemies hit.",
         "descFr": "Le nombre d'attaques de la compétence 【Combo de coups de pied】 et la quantité de Rage obtenue avec la compétence 【Dropkick】 augmentent, et les ennemis touchés subissent en plus l'état d'étourdissement.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -231,7 +300,7 @@
         "descEn": "Swing the axe toward the enemy.",
         "descFr": "Elle brandit sa hache vers l'ennemi.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Castela/Skill_Castela_Attack_Growth",
-        "x": -1280,
+        "x": -2432,
         "y": -2304
       },
       {
@@ -243,7 +312,7 @@
         "descEn": "While jumping, strikes downward with an axe toward the front.",
         "descFr": "En plein saut, frappe vers l'avant avec sa hache.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2688
       },
       {
@@ -255,7 +324,7 @@
         "descEn": "Rolls forward to move.",
         "descFr": "Roule vers l'avant pour se déplacer.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -267,7 +336,7 @@
         "descEn": "Deliver a shoulder strike forward, then deliver a powerful upward swing with the axe.",
         "descFr": "Elle donne un coup d'épaule vers l'avant, puis porte un puissant coup vers le haut avec sa hache.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       },
       {
@@ -279,7 +348,7 @@
         "descEn": "Performs an area attack by rapidly spinning the axe toward enemies.",
         "descFr": "Effectue une attaque de zone en faisant tournoyer rapidement la hache vers l'ennemi.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Castela/Skill_Castela_Active01_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2304
       },
       {
@@ -291,7 +360,7 @@
         "descEn": "Shouts a rage-filled war cry at the enemy.",
         "descFr": "Lance un cri de rage vers l'ennemi.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Castela/Skill_Castela_Active02_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2304
       },
       {
@@ -303,7 +372,8 @@
         "descEn": "Close in on the enemy and crush them with a merciless axe strike.",
         "descFr": "Elle s'approche de l'ennemi et le pulvérise à coups de hache impitoyables.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Castela/Skill_Castela_Signal01_Growth",
-        "x": -1408,
+        "effect": "STUN",
+        "x": -2560,
         "y": -2304
       },
       {
@@ -315,7 +385,8 @@
         "descEn": "Close in on the enemy and deliver a powerful upward strike with all your might.",
         "descFr": "Elle s'approche de l'ennemi et, rassemblant toute sa force, lui assène un puissant coup vers le haut.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Castela/Skill_Castela_Signal02_Growth",
-        "x": -1536,
+        "effect": "AIR",
+        "x": -2688,
         "y": -2304
       },
       {
@@ -327,7 +398,7 @@
         "descEn": "The movement distance and number of attacks for the 【Shoulder Crusher】 skill are increased.",
         "descFr": "La distance de déplacement et le nombre d'attaques de la compétence 【Shoulder Crusher】 augmentent.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -341,7 +412,7 @@
         "descEn": "Charge toward the enemy while swinging your sword.",
         "descFr": "Elle avance vers l'ennemi en brandissant son épée.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Reina/Skill_Reina_Attack_Growth",
-        "x": -768,
+        "x": -1920,
         "y": -2560
       },
       {
@@ -353,7 +424,7 @@
         "descEn": "While jumping, swing your sword at the enemy and strike downward.",
         "descFr": "En plein saut, elle brandit son épée vers l'ennemi puis l'abat.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2688
       },
       {
@@ -365,7 +436,7 @@
         "descEn": "Rolls forward to move.",
         "descFr": "Roule vers l'avant pour se déplacer.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -377,7 +448,7 @@
         "descEn": "Spin toward the enemy and kick them.",
         "descFr": "Elle pivote vers l'ennemi et lui donne un coup de pied.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       },
       {
@@ -389,7 +460,8 @@
         "descEn": "Charge forward, swinging the sword powerfully like a whirlwind toward the enemy. Slash upward powerfully, then strike downward.",
         "descFr": "Elle avance en brandissant son épée avec la force d'une tornade. Elle effectue un puissant coup vers le haut, puis un coup vers le bas.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Reina/Skill_Reina_Active01_Growth",
-        "x": -512,
+        "effect": "AIR",
+        "x": -1664,
         "y": -2560
       },
       {
@@ -401,7 +473,8 @@
         "descEn": "Dash toward the enemy like a storm, slashing quickly as you pass.",
         "descFr": "Elle fonce vers l'ennemi comme une tempête et le fend rapidement de son épée.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Reina/Skill_Reina_Active02_Growth",
-        "x": -640,
+        "effect": "AIR",
+        "x": -1792,
         "y": -2560
       },
       {
@@ -413,7 +486,7 @@
         "descEn": "Close in on the enemy and launch a series of attacks, swinging the sword as if dancing.",
         "descFr": "Elle s'approche de l'ennemi et enchaîne les attaques en maniant son épée comme si elle dansait.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Reina/Skill_Reina_Signal01_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2560
       },
       {
@@ -425,7 +498,8 @@
         "descEn": "Closes in on the enemy, grabs them, and slashes with the sword.",
         "descFr": "Elle s'approche de l'ennemi, l'attrape, puis le tranche avec son épée.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Reina/Skill_Reina_Signal02_Growth",
-        "x": -1024,
+        "effect": "AIR",
+        "x": -2176,
         "y": -2560
       },
       {
@@ -437,7 +511,7 @@
         "descEn": "【Dodge】 The skill changes to a form that can be used in mid-air.",
         "descFr": "【Esquive】 La compétence devient utilisable en l'air.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -451,7 +525,7 @@
         "descEn": "Fires an arrow forward.",
         "descFr": "Tire une flèche vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Roxy/Skill_Roxy_Attack_Growth",
-        "x": -1408,
+        "x": -2560,
         "y": -2560
       },
       {
@@ -463,7 +537,7 @@
         "descEn": "Fires a rapid volley of arrows forward.",
         "descFr": "Tire une rafale de flèches vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2688
       },
       {
@@ -475,7 +549,7 @@
         "descEn": "Rolls forward to move.",
         "descFr": "Roule vers l'avant pour se déplacer.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -487,7 +561,8 @@
         "descEn": "Slides forward, strikes the surrounding area with a bow, then fires arrows in rapid succession.",
         "descFr": "Glisse vers l'avant, frappe les environs avec son arc, puis tire des flèches à répétition.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "effect": "BLEED",
+        "x": -2176,
         "y": -2688
       },
       {
@@ -499,7 +574,8 @@
         "descEn": "Spin forward, charge, and deliver a powerful kick.",
         "descFr": "Elle effectue une pirouette vers l'avant, charge, puis donne un coup de pied puissant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Roxy/Skill_Roxy_Active01_Growth",
-        "x": -1152,
+        "effect": "BLEED",
+        "x": -2304,
         "y": -2560
       },
       {
@@ -511,7 +587,8 @@
         "descEn": "Rapidly fire arrows forward.",
         "descFr": "Tire rapidement une rafale de flèches vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Roxy/Skill_Roxy_Active02_Growth",
-        "x": -1280,
+        "effect": "BLEED",
+        "x": -2432,
         "y": -2560
       },
       {
@@ -523,7 +600,8 @@
         "descEn": "Close in on the enemy, kick them, then fire an arrow.",
         "descFr": "S'approche de l'ennemi, lui donne un coup de pied, puis tire une flèche.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Roxy/Skill_Roxy_Signal01_Growth",
-        "x": -1536,
+        "effect": "BLEED",
+        "x": -2688,
         "y": -2560
       },
       {
@@ -535,7 +613,8 @@
         "descEn": "Closes in on the enemy, grabs them, twists them, and strikes.",
         "descFr": "Elle s'approche de l'ennemi, l'attrape, puis le fait basculer pour le frapper.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Roxy/Skill_Roxy_Signal02_Growth",
-        "x": -1664,
+        "effect": "BLEED",
+        "x": -2816,
         "y": -2560
       },
       {
@@ -547,7 +626,7 @@
         "descEn": "While using the 【Dodge】 skill, pressing the jump key performs a mid-air somersault to move further.",
         "descFr": "Lorsque vous appuyez sur la touche de saut pendant l'utilisation de la compétence 【Esquive】, vous effectuez une pirouette dans les airs et vous vous déplacez plus loin.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -561,8 +640,8 @@
         "descEn": "Fires an arrow forward.",
         "descFr": "Tire une flèche vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Aria/Skill_Aria_Attack_Growth",
-        "x": -3456,
-        "y": -2176
+        "x": -512,
+        "y": -2304
       },
       {
         "type": 5,
@@ -573,7 +652,8 @@
         "descEn": "While jumping, fires an arrow forward and then throws a bomb.",
         "descFr": "En plein saut, tire des flèches vers l'avant puis lance une bombe.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "effect": "FIRE",
+        "x": -2048,
         "y": -2688
       },
       {
@@ -585,7 +665,7 @@
         "descEn": "Rolls forward to move.",
         "descFr": "Roule vers l'avant pour se déplacer.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -597,7 +677,7 @@
         "descEn": "After rolling, fires arrows continuously toward the front.",
         "descFr": "Après une roulade, tire des flèches en rafale vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       },
       {
@@ -609,8 +689,9 @@
         "descEn": "Throws a bomb and fires at it to detonate it in midair.",
         "descFr": "Lance une bombe puis tire dessus pour la faire exploser en plein vol.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Aria/Skill_Aria_Active01_Growth",
-        "x": -3200,
-        "y": -2176
+        "effect": "FIRE",
+        "x": -256,
+        "y": -2304
       },
       {
         "type": 2,
@@ -621,8 +702,9 @@
         "descEn": "Rolls a bomb forward that automatically explodes after a certain amount of time.",
         "descFr": "Elle lance une bombe qui roule vers l'avant et explose automatiquement après un certain temps.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Aria/Skill_Aria_Active02_Growth",
-        "x": -3328,
-        "y": -2176
+        "effect": "FIRE",
+        "x": -384,
+        "y": -2304
       },
       {
         "type": 3,
@@ -633,8 +715,8 @@
         "descEn": "Fires a homing 【Bomb Arrow】 at enemies.",
         "descFr": "Tire des 【Flèche explosive】 guidées vers les ennemis.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Aria/Skill_Aria_Signal01_Growth",
-        "x": -3584,
-        "y": -2176
+        "x": -640,
+        "y": -2304
       },
       {
         "type": 4,
@@ -645,8 +727,9 @@
         "descEn": "Detonates all 【Bomb Arrows】 on the battlefield simultaneously.",
         "descFr": "Fait exploser simultanément toutes les 【Flèche explosive】 présentes sur le champ de bataille.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Aria/Skill_Aria_Signal02_Growth",
-        "x": -3712,
-        "y": -2176
+        "effect": "FIRE",
+        "x": -768,
+        "y": -2304
       },
       {
         "type": 801,
@@ -657,7 +740,7 @@
         "descEn": "【Shoot and Bomb】 While using this skill, pressing the attack key again throws another bomb.",
         "descFr": "【Tir et bombe】 : appuyer à nouveau sur la touche d'attaque pendant la compétence permet de lancer une bombe supplémentaire.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -671,7 +754,7 @@
         "descEn": "Swing the dual daggers at the enemy.",
         "descFr": "Il brandit ses deux dagues vers l'ennemi.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Johnny/Skill_Johnny_Attack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2432
       },
       {
@@ -683,7 +766,7 @@
         "descEn": "Jumps into the air toward the enemy, spins spectacularly, and slashes the surrounding area.",
         "descFr": "Saute en l'air vers l'ennemi, effectue une pirouette spectaculaire et frappe tout autour de lui.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2688
       },
       {
@@ -695,7 +778,7 @@
         "descEn": "Rolls forward to move.",
         "descFr": "Roule vers l'avant pour se déplacer.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -707,7 +790,8 @@
         "descEn": "Quickly thrusts the dagger forward. Then stabs the enemy again.",
         "descFr": "Donne un rapide coup de poignard vers l'avant. Enchaîne ensuite en enfonçant son poignard dans l'ennemi.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "effect": "POISON",
+        "x": -2176,
         "y": -2688
       },
       {
@@ -719,7 +803,8 @@
         "descEn": "Swing the dual daggers at the enemy to slash repeatedly, then finish with a kick.",
         "descFr": "Il brandit ses deux dagues vers l'ennemi pour l'entailler à plusieurs reprises, puis termine par un coup de pied.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Johnny/Skill_Johnny_Active01_Growth",
-        "x": -768,
+        "effect": "POISON",
+        "x": -1920,
         "y": -2432
       },
       {
@@ -731,7 +816,8 @@
         "descEn": "Rapidly charge toward the enemy and slash through them with dual daggers.",
         "descFr": "Il charge rapidement vers l'ennemi et le fend d'un coup de ses deux dagues.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Johnny/Skill_Johnny_Active02_Growth",
-        "x": -896,
+        "effect": "AIR",
+        "x": -2048,
         "y": -2432
       },
       {
@@ -743,7 +829,8 @@
         "descEn": "Closes in on the enemy and slashes through them with a series of flashy strikes.",
         "descFr": "Il s'approche de l'ennemi et le transperce d'une série de coups spectaculaires.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Johnny/Skill_Johnny_Signal01_Growth",
-        "x": -1152,
+        "effect": "POISON",
+        "x": -2304,
         "y": -2432
       },
       {
@@ -755,7 +842,8 @@
         "descEn": "Closes in on the enemy, grabs them, and delivers a deep slash with the dual daggers.",
         "descFr": "Il s'approche de l'ennemi, l'attrape, puis lui inflige une profonde entaille avec ses deux dagues.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Johnny/Skill_Johnny_Signal02_Growth",
-        "x": -1280,
+        "effect": "POISON",
+        "x": -2432,
         "y": -2432
       },
       {
@@ -767,7 +855,8 @@
         "descEn": "The movement distance and number of attacks for the 【Venom Dance】 skill increase.",
         "descFr": "La distance de déplacement et le nombre d'attaques de la compétence 【Danse venimeuse】 augmentent.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "effect": "POISON",
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -781,8 +870,8 @@
         "descEn": "Swing the scythe while advancing toward the enemy.",
         "descFr": "Elle avance vers l'ennemi tout en brandissant sa faux.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Onette/Skill_Onette_Attack_Growth",
-        "x": -3584,
-        "y": -2432
+        "x": -640,
+        "y": -2560
       },
       {
         "type": 5,
@@ -793,7 +882,7 @@
         "descEn": "While jumping, swing the scythe toward the enemy and strike downward.",
         "descFr": "En plein saut, brandit la faux vers l'ennemi puis l'abat sur lui.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2688
       },
       {
@@ -805,7 +894,7 @@
         "descEn": "Rolls forward to move.",
         "descFr": "Roule vers l'avant pour se déplacer.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -817,7 +906,8 @@
         "descEn": "Spin forward while swinging the lightning-wrapped sickle.",
         "descFr": "Elle pivote vers l'avant tout en brandissant sa faux enveloppée d'électricité.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "effect": "SHOCK",
+        "x": -2176,
         "y": -2688
       },
       {
@@ -829,8 +919,9 @@
         "descEn": "Swing a sickle wrapped in lightning toward the front to create a slowly advancing cross.",
         "descFr": "Elle brandit sa faux enveloppée d'électricité vers l'avant, formant une croix qui avance lentement.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Onette/Skill_Onette_Active01_Growth",
-        "x": -3328,
-        "y": -2432
+        "effect": "SHOCK",
+        "x": -384,
+        "y": -2560
       },
       {
         "type": 2,
@@ -841,8 +932,9 @@
         "descEn": "Wraps the scythe in lightning, then strikes down at the enemy to create a lightning zone and receive 【Revelation of Dawn】.",
         "descFr": "Après avoir enveloppé la faux d'un éclair, elle l'abat sur l'ennemi pour déployer une zone de foudre et recevoir 【Révélation de l'aube】.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Onette/Skill_Onette_Active02_Growth",
-        "x": -3456,
-        "y": -2432
+        "effect": "SHOCK",
+        "x": -512,
+        "y": -2560
       },
       {
         "type": 3,
@@ -853,8 +945,9 @@
         "descEn": "Close in on the enemy and quickly slash in a cross pattern with the lightning-wrapped sickle.",
         "descFr": "Elle s'approche de l'ennemi et le fend rapidement en dessinant une croix avec sa faux enveloppée d'éclairs.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Onette/Skill_Onette_Signal02_Growth",
-        "x": -3840,
-        "y": -2432
+        "effect": "DOWN",
+        "x": -896,
+        "y": -2560
       },
       {
         "type": 4,
@@ -865,8 +958,9 @@
         "descEn": "Close in on the enemy, stab them with the lightning-wrapped sickle to grab them, then spin them away.",
         "descFr": "Elle s'approche de l'ennemi, le transperce avec sa faux enveloppée d'éclairs, puis le projette en tournoyant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Onette/Skill_Onette_Signal01_Growth",
-        "x": -3712,
-        "y": -2432
+        "effect": "SHOCK",
+        "x": -768,
+        "y": -2560
       },
       {
         "type": 801,
@@ -877,7 +971,7 @@
         "descEn": "Enhances the 【Holy Cutter】 skill so that when an additional attack button is pressed while the skill is active, the scythe is swung widely to deliver an extra attack, inflicting the Shock and Knockdown status effects on the struck enemy.",
         "descFr": "Renforce la compétence 【Holy Cutter】 : lorsque vous appuyez sur la touche d'attaque pendant l'utilisation de la compétence, la faux est brandie avec force pour effectuer une attaque supplémentaire et inflige les altérations Électrocution et À terre aux ennemis touchés.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -891,8 +985,8 @@
         "descEn": "Swing the scythe while advancing toward the enemy.",
         "descFr": "Elle avance vers l'ennemi tout en brandissant sa faux.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Onette/Skill_Onette_Attack_Growth",
-        "x": -3584,
-        "y": -2432
+        "x": -640,
+        "y": -2560
       },
       {
         "type": 5,
@@ -903,7 +997,7 @@
         "descEn": "While jumping, swing the scythe toward the enemy and strike downward.",
         "descFr": "En plein saut, brandit la faux vers l'ennemi puis l'abat sur lui.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2688
       },
       {
@@ -915,7 +1009,7 @@
         "descEn": "Rolls forward to move.",
         "descFr": "Roule vers l'avant pour se déplacer.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -927,7 +1021,8 @@
         "descEn": "Spin forward while swinging the lightning-wrapped sickle.",
         "descFr": "Elle pivote vers l'avant tout en brandissant sa faux enveloppée d'électricité.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "effect": "DOWN",
+        "x": -2176,
         "y": -2688
       },
       {
@@ -939,8 +1034,9 @@
         "descEn": "Swing a sickle wrapped in lightning toward the front to create a slowly advancing cross.",
         "descFr": "Elle brandit sa faux enveloppée d'électricité vers l'avant, formant une croix qui avance lentement.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Onette/Skill_Onette_Active01_Growth",
-        "x": -3328,
-        "y": -2432
+        "effect": "ICE",
+        "x": -384,
+        "y": -2560
       },
       {
         "type": 2,
@@ -951,8 +1047,9 @@
         "descEn": "Wraps the scythe in lightning, then strikes down at the enemy to create a lightning zone and receive 【Revelation of Dawn】.",
         "descFr": "Après avoir enveloppé la faux d'un éclair, elle l'abat sur l'ennemi pour déployer une zone de foudre et recevoir 【Révélation de l'aube】.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Onette/Skill_Onette_Active02_Growth",
-        "x": -3456,
-        "y": -2432
+        "effect": "ICE",
+        "x": -512,
+        "y": -2560
       },
       {
         "type": 3,
@@ -963,8 +1060,9 @@
         "descEn": "Close in on the enemy, stab them with the lightning-wrapped sickle to grab them, then spin them away.",
         "descFr": "Elle s'approche de l'ennemi, le transperce avec sa faux enveloppée d'éclairs, puis le projette en tournoyant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Onette/Skill_Onette_Signal01_Growth",
-        "x": -3712,
-        "y": -2432
+        "effect": "ICE",
+        "x": -768,
+        "y": -2560
       },
       {
         "type": 4,
@@ -975,8 +1073,9 @@
         "descEn": "Close in on the enemy and quickly slash in a cross pattern with the lightning-wrapped sickle.",
         "descFr": "Elle s'approche de l'ennemi et le fend rapidement en dessinant une croix avec sa faux enveloppée d'éclairs.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Onette/Skill_Onette_Signal02_Growth",
-        "x": -3840,
-        "y": -2432
+        "effect": "DOWN",
+        "x": -896,
+        "y": -2560
       },
       {
         "type": 801,
@@ -987,7 +1086,7 @@
         "descEn": "Enhances the 【Holy Cutter】 skill so that when an additional attack button is pressed while the skill is active, the scythe is swung widely to deliver an extra attack, inflicting the Shock and Knockdown status effects on the struck enemy.",
         "descFr": "Renforce la compétence 【Holy Cutter】 : lorsque vous appuyez sur la touche d'attaque pendant l'utilisation de la compétence, la faux est brandie avec force pour effectuer une attaque supplémentaire et inflige les altérations Électrocution et À terre aux ennemis touchés.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -1001,7 +1100,7 @@
         "descEn": "Charges toward the enemy while swinging the greatsword.",
         "descFr": "Il avance vers l'ennemi en brandissant sa grande épée.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Cassius/Skill_Cassius_Attack_Growth",
-        "x": -640,
+        "x": -1792,
         "y": -2304
       },
       {
@@ -1013,7 +1112,7 @@
         "descEn": "While jumping, swing the greatsword toward the enemy and slam it down.",
         "descFr": "En plein saut, il brandit sa grande épée vers l'ennemi, puis l'abat sur lui.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2688
       },
       {
@@ -1025,7 +1124,7 @@
         "descEn": "Rolls forward to move.",
         "descFr": "Roule vers l'avant pour se déplacer.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -1037,7 +1136,7 @@
         "descEn": "Swings a greatsword wide toward the front, then strikes with a fist.",
         "descFr": "Il brandit sa grande épée vers l'avant pour porter un coup, puis frappe avec son poing.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       },
       {
@@ -1049,7 +1148,8 @@
         "descEn": "He unleashes a burst of fiery energy, imbuing his greatsword with the 【Royal Flame】.",
         "descFr": "Fait exploser une vague de flammes pour imprégner la grande épée de la 【Flamme royale】.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Cassius/Skill_Cassius_Active01_Growth",
-        "x": -384,
+        "effect": "FIRE",
+        "x": -1536,
         "y": -2304
       },
       {
@@ -1061,7 +1161,7 @@
         "descEn": "Swing the greatsword widely toward the enemy, move forward, and finish with a powerful downward strike that creates a shockwave.",
         "descFr": "Il effectue un grand mouvement avec sa grande épée en direction de l'ennemi, puis abat son épée pour terminer par une puissante onde de choc.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Cassius/Skill_Cassius_Active02_Growth",
-        "x": -512,
+        "x": -1664,
         "y": -2304
       },
       {
@@ -1073,7 +1173,8 @@
         "descEn": "Close in on the enemy, stab them with the greatsword to pin them, then slam them into the ground.",
         "descFr": "Il s'approche de l'ennemi, le transperce avec sa grande épée pour le retenir, puis l'abat sur le sol.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Cassius/Skill_Cassius_Signal01_Growth",
-        "x": -768,
+        "effect": "FIRE",
+        "x": -1920,
         "y": -2304
       },
       {
@@ -1085,7 +1186,7 @@
         "descEn": "Generate a fireball to pull in surrounding enemies, then detonate it.",
         "descFr": "Crée un noyau de flammes pour attirer les ennemis environnants, puis le fait exploser.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Cassius/Skill_Cassius_Signal02_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2304
       },
       {
@@ -1097,7 +1198,7 @@
         "descEn": "When using the 【Burst Grab】 skill, an additional explosion occurs.",
         "descFr": "Une explosion supplémentaire se produit lors de l'utilisation de la compétence 【Burst Grab】.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -1111,7 +1212,7 @@
         "descEn": "Swing the spear toward the enemy.",
         "descFr": "Il brandit sa lance vers l'ennemi.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Othello/Skill_Othello_Attack_Growth",
-        "x": -128,
+        "x": -1280,
         "y": -2560
       },
       {
@@ -1123,7 +1224,7 @@
         "descEn": "While jumping, swing the spear toward the enemy and thrust it.",
         "descFr": "En plein saut, il brandit sa lance vers l'ennemi et le transperce.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2688
       },
       {
@@ -1135,7 +1236,7 @@
         "descEn": "Rolls forward to move.",
         "descFr": "Roule vers l'avant pour se déplacer.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -1147,7 +1248,8 @@
         "descEn": "Roll, then swing the spear forward.",
         "descFr": "Après une roulade, il brandit sa lance vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "effect": "ICE",
+        "x": -2176,
         "y": -2688
       },
       {
@@ -1159,8 +1261,9 @@
         "descEn": "Charges toward the enemy and repeatedly thrusts 【Ice Spears】 into them.",
         "descFr": "Il charge vers l'ennemi et enfonce plusieurs fois sa 【Lance de glace】.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Othello/Skill_Othello_Active01_Growth",
-        "x": -3968,
-        "y": -2432
+        "effect": "ICE",
+        "x": -1024,
+        "y": -2560
       },
       {
         "type": 2,
@@ -1171,7 +1274,8 @@
         "descEn": "Leaps toward an enemy, slams a spear into the ground, and creates a prison of 【Ice Spears】 on the surrounding terrain.",
         "descFr": "Il bondit vers l'ennemi, puis abat sa lance pour ériger une prison de 【Lance de glace】 sur le sol environnant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Othello/Skill_Othello_Active02_Growth",
-        "x": 0,
+        "effect": "ICE",
+        "x": -1152,
         "y": -2560
       },
       {
@@ -1183,7 +1287,8 @@
         "descEn": "Close in on the enemy, grab them, thrust 【Ice Spear】 into them, then break free.",
         "descFr": "Il s'approche de l'ennemi, l'attrape, lui enfonce une 【Lance de glace】, puis s'échappe.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Othello/Skill_Othello_Signal01_Growth",
-        "x": -256,
+        "effect": "ICE",
+        "x": -1408,
         "y": -2560
       },
       {
@@ -1195,7 +1300,8 @@
         "descEn": "Simultaneously shatters all frozen enemies and 【Ice Spears】 on the battlefield.",
         "descFr": "Brise simultanément les ennemis gelés et les 【Lance de glace】 présents sur le champ de bataille.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Othello/Skill_Othello_Signal02_Growth",
-        "x": -384,
+        "effect": "ICE",
+        "x": -1536,
         "y": -2560
       },
       {
@@ -1207,7 +1313,7 @@
         "descEn": "【Half-Moon Cutter】 is changed into a charge action: holding the attack key deals greater damage over a wider area.",
         "descFr": "【Coupe en demi-lune】 devient une action de charge : maintenir la touche d'attaque inflige des dégâts plus importants sur une zone plus large.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -1221,7 +1327,8 @@
         "descEn": "Swing the greatsword at the enemy.",
         "descFr": "Il brandit sa grande épée vers l'ennemi.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Jerome/Skill_Jerome_Attack_Growth",
-        "x": -384,
+        "effect": "BLEED",
+        "x": -1536,
         "y": -2432
       },
       {
@@ -1233,7 +1340,8 @@
         "descEn": "While jumping, swing your greatsword at the enemy.",
         "descFr": "En plein saut, il brandit sa grande épée en direction de l'ennemi.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "effect": "BLEED",
+        "x": -2048,
         "y": -2688
       },
       {
@@ -1245,7 +1353,7 @@
         "descEn": "Rolls forward to move.",
         "descFr": "Roule vers l'avant pour se déplacer.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -1257,7 +1365,8 @@
         "descEn": "Roll, then swing your greatsword at the enemy to attack.",
         "descFr": "Après une roulade, il attaque en brandissant sa grande épée vers l'ennemi.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "effect": "BLEED",
+        "x": -2176,
         "y": -2688
       },
       {
@@ -1269,7 +1378,8 @@
         "descEn": "Stab the enemy with the greatsword.",
         "descFr": "Enfonce la grande épée dans l'ennemi.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Jerome/Skill_Jerome_Active01_Growth",
-        "x": -128,
+        "effect": "DOWN",
+        "x": -1280,
         "y": -2432
       },
       {
@@ -1281,7 +1391,8 @@
         "descEn": "Hold your greatsword out toward the enemy and prepare to counterattack. When you use this skill in sync with the enemy's attack timing, you swing your greatsword to counterattack.",
         "descFr": "Préparez-vous à contre-attaquer en brandissant votre grande épée vers l'ennemi. Lorsque vous utilisez cette compétence au moment où l'ennemi attaque, vous contre-attaquez en brandissant votre grande épée.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Jerome/Skill_Jerome_Active02_Growth",
-        "x": -256,
+        "effect": "AIR",
+        "x": -1408,
         "y": -2432
       },
       {
@@ -1293,7 +1404,8 @@
         "descEn": "Close in on the enemy, stab them with your greatsword, and then drive it into the ground.",
         "descFr": "Il s'approche de l'ennemi, le transperce avec sa grande épée, puis la plante dans le sol.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Jerome/Skill_Jerome_Signal01_Growth",
-        "x": -512,
+        "effect": "BLEED",
+        "x": -1664,
         "y": -2432
       },
       {
@@ -1305,7 +1417,8 @@
         "descEn": "Approach the enemy, swing your greatsword, and then bring it down.",
         "descFr": "Il s'approche de l'ennemi, brandit sa grande épée, puis l'abat sur lui.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Jerome/Skill_Jerome_Signal02_Growth",
-        "x": -640,
+        "effect": "DOWN",
+        "x": -1792,
         "y": -2432
       },
       {
@@ -1317,7 +1430,7 @@
         "descEn": "Coming Soon",
         "descFr": "À venir",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -1331,7 +1444,7 @@
         "descEn": "Swing a dagger at the enemy and attack with a kick.",
         "descFr": "Elle brandit son poignard vers l'ennemi et l'attaque d'un coup de pied.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Charlotte/Skill_Charlotte_Attack_Growth",
-        "x": -2560,
+        "x": -3712,
         "y": -2304
       },
       {
@@ -1343,7 +1456,7 @@
         "descEn": "While jumping, swings a dagger at the enemy and then stomps down with a foot.",
         "descFr": "En plein saut, brandit une dague vers l'ennemi puis frappe du pied.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2688
       },
       {
@@ -1355,7 +1468,7 @@
         "descEn": "Performs a forward somersault to move forward.",
         "descFr": "Elle effectue une pirouette dans les airs en se déplaçant vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -1367,7 +1480,8 @@
         "descEn": "Move forward while tumbling and swing a dagger toward the front.",
         "descFr": "Se déplace en roulant tout en brandissant son poignard vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "effect": "POISON",
+        "x": -2176,
         "y": -2688
       },
       {
@@ -1379,7 +1493,7 @@
         "descEn": "Steps back and hides in the darkness, entering 【Stealth】 for a set time and summoning a 【Clone】 on the spot. The 【Clone】 automatically explodes after a set time.",
         "descFr": "Elle recule et se dissimule dans l'obscurité, entrant en 【Furtivité】 pendant un certain temps et invoquant un 【Clone】 sur place. Le 【Clone】 explose automatiquement après un certain temps.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Charlotte/Skill_Charlotte_Active01_Growth",
-        "x": -2304,
+        "x": -3456,
         "y": -2304
       },
       {
@@ -1391,7 +1505,8 @@
         "descEn": "Throw daggers repeatedly at the enemy.",
         "descFr": "Lance plusieurs dagues à la suite vers l'ennemi.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Charlotte/Skill_Charlotte_Active02_Growth",
-        "x": -2432,
+        "effect": "POISON",
+        "x": -3584,
         "y": -2304
       },
       {
@@ -1403,7 +1518,8 @@
         "descEn": "Approach the enemy, stab them with a dagger, then kick them.",
         "descFr": "Elle s'approche de l'ennemi, le transperce avec son poignard, puis lui donne un coup de pied.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Charlotte/Skill_Charlotte_Signal01_Growth",
-        "x": -2688,
+        "effect": "AIR",
+        "x": -3840,
         "y": -2304
       },
       {
@@ -1415,7 +1531,8 @@
         "descEn": "Close in on the enemy and slam the ground.",
         "descFr": "Elle s'approche de l'ennemi et frappe le sol.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Charlotte/Skill_Charlotte_Signal02_Growth",
-        "x": -2816,
+        "effect": "DOWN",
+        "x": -3968,
         "y": -2304
       },
       {
@@ -1427,7 +1544,7 @@
         "descEn": "The motion of the 4th hit of the basic attack changes and its damage increases.&lt;br&gt;Pressing the attack key again during a jump attack or dodge attack casts an enhanced attack.",
         "descFr": "L'animation du 4e coup de l'attaque de base est modifiée et ses dégâts augmentent.&lt;br&gt;Appuyer de nouveau sur la touche d'attaque pendant une attaque sautée ou une attaque d'esquive déclenche une attaque renforcée.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -1441,7 +1558,7 @@
         "descEn": "Swings the spear wildly forward, thrusting repeatedly, then strikes downward.",
         "descFr": "Elle brandit violemment sa lance vers l'avant, enchaîne plusieurs coups, puis la plante dans le sol.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Ryza/Skill_Ryza_Attack_Growth",
-        "x": -2048,
+        "x": -3200,
         "y": -2560
       },
       {
@@ -1453,7 +1570,7 @@
         "descEn": "Attacks the target twice in midair, then strikes downward with the spear.",
         "descFr": "Attaque la cible deux fois en l'air, puis la transperce avec sa lance.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2688
       },
       {
@@ -1465,7 +1582,7 @@
         "descEn": "Teleports a short distance forward.",
         "descFr": "Se téléporte sur une courte distance vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -1477,7 +1594,8 @@
         "descEn": "Leap through space to move a short distance, then strike downward with the spear.",
         "descFr": "Elle effectue un saut spatial pour se déplacer sur une courte distance, puis frappe vers le bas avec sa lance.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "effect": "SHOCK",
+        "x": -2176,
         "y": -2688
       },
       {
@@ -1489,7 +1607,8 @@
         "descEn": "Throw a spear charged with lightning toward the front.",
         "descFr": "Projette une lance chargée d'électricité vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Ryza/Skill_Ryza_Active01",
-        "x": -1792,
+        "effect": "SHOCK",
+        "x": -2944,
         "y": -2560
       },
       {
@@ -1501,7 +1620,8 @@
         "descEn": "Spin while swinging the spear, then strike with a powerful bolt of lightning.",
         "descFr": "Tourne sur soi-même en brandissant la lance, puis fait s'abattre un puissant éclair pour attaquer.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Ryza/Skill_Ryza_Active02",
-        "x": -1920,
+        "effect": "SHOCK",
+        "x": -3072,
         "y": -2560
       },
       {
@@ -1513,7 +1633,8 @@
         "descEn": "Teleports to a spear located on the field. Recovers the spear and attacks the surrounding area.",
         "descFr": "Elle effectue un saut spatial pour se déplacer vers une lance présente sur le terrain. Elle récupère ensuite la lance et attaque les environs.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Ryza/Skill_Ryza_Signal01",
-        "x": -2176,
+        "effect": "SHOCK",
+        "x": -3328,
         "y": -2560
       },
       {
@@ -1525,7 +1646,8 @@
         "descEn": "Charges at a targeted enemy, impales them with the spear, and then strikes the ground twice with great force.",
         "descFr": "Elle charge l'ennemi touché, enfonce sa lance, puis frappe violemment le sol à deux reprises pour attaquer.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Ryza/Skill_Ryza_Signal02",
-        "x": -2304,
+        "effect": "SHOCK",
+        "x": -3456,
         "y": -2560
       },
       {
@@ -1537,7 +1659,7 @@
         "descEn": "Physical status effects are added to the activation conditions of the 【Thunder Grab】 skill.",
         "descFr": "Les altérations d'état physiques sont ajoutées aux conditions d'activation de la compétence 【Thunder Grab】.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -1551,7 +1673,7 @@
         "descEn": "Performs a martial arts move toward the enemy.",
         "descFr": "Elle utilise des techniques de combat au corps à corps contre l'ennemi.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Veronica/Skill_Veronica_Attack_Growth",
-        "x": -512,
+        "x": -1664,
         "y": -2688
       },
       {
@@ -1563,7 +1685,7 @@
         "descEn": "While jumping, delivers a kick toward the enemy.",
         "descFr": "Lance un coup de pied vers l'ennemi en plein saut.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2688
       },
       {
@@ -1575,7 +1697,7 @@
         "descEn": "Rolls forward to move.",
         "descFr": "Roule vers l'avant pour se déplacer.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -1587,7 +1709,7 @@
         "descEn": "While rolling, draws a pistol and fires a bullet forward. If the bullet hits 【Gas】, it explodes, dealing greater damage.",
         "descFr": "Tout en roulant, elle sort son pistolet et tire vers l'avant. Lorsque les balles touchent le 【Gaz】, elles explosent et infligent des dégâts supplémentaires.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       },
       {
@@ -1599,7 +1721,7 @@
         "descEn": "Dash briefly toward an enemy, then attach an ampoule that emits 【Gas】 onto them.",
         "descFr": "Elle effectue une courte charge vers l'ennemi, puis lui attache une ampoule qui libère du 【Gaz】.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Veronica/Skill_Veronica_Active01_Growth",
-        "x": -256,
+        "x": -1408,
         "y": -2688
       },
       {
@@ -1611,7 +1733,8 @@
         "descEn": "Spins rapidly forward, pulling in nearby enemies and 【Gas】. Then leaps into the air and strikes down hard.",
         "descFr": "Elle tourne rapidement sur elle-même vers l'avant pour attirer les ennemis proches et le 【Gaz】. Elle s'élance ensuite dans les airs pour frapper violemment vers le bas.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Veronica/Skill_Veronica_Active02_Growth",
-        "x": -384,
+        "effect": "STUN",
+        "x": -1536,
         "y": -2688
       },
       {
@@ -1623,7 +1746,8 @@
         "descEn": "Approach enemies trapped in the 【Gas】, knock them back with a kick, and unleash a flurry of kicks. Both the enemies and the surrounding 【Gas】 are pushed backward.",
         "descFr": "Elle s'approche des ennemis pris dans le 【Gaz】, les repousse d'un coup de pied, puis leur assène une rafale de coups de pied. Les ennemis et le 【Gaz】 environnant sont repoussés vers l'arrière.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Veronica/Skill_Veronica_Signal01_Growth",
-        "x": -640,
+        "effect": "STUN",
+        "x": -1792,
         "y": -2688
       },
       {
@@ -1635,7 +1759,8 @@
         "descEn": "Close in on the enemy, grab them, leap into the air, and slam them into the ground.",
         "descFr": "Elle s'approche de l'ennemi, l'attrape, saute en l'air et le projette au sol.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Veronica/Skill_Veronica_Signal02_Growth",
-        "x": -768,
+        "effect": "DOWN",
+        "x": -1920,
         "y": -2688
       },
       {
@@ -1647,7 +1772,7 @@
         "descEn": "Coming Soon",
         "descFr": "À venir",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -1661,7 +1786,7 @@
         "descEn": "Swing your sword and shield at the enemy.",
         "descFr": "Il brandit son épée et son bouclier vers l'ennemi.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Alex/Skill_Alex_Attack_Growth",
-        "x": -2816,
+        "x": -3968,
         "y": -2176
       },
       {
@@ -1673,7 +1798,7 @@
         "descEn": "While jumping, swing your sword at the enemy, then kick the ground.",
         "descFr": "En plein saut, il brandit son épée vers l'ennemi, puis lui assène un coup de pied au sol.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2688
       },
       {
@@ -1685,7 +1810,7 @@
         "descEn": "Rolls forward to move.",
         "descFr": "Roule vers l'avant pour se déplacer.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -1697,7 +1822,7 @@
         "descEn": "Rolls and swings the sword widely at the enemy.",
         "descFr": "Après une roulade, il brandit son épée avec force vers l'ennemi.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       },
       {
@@ -1709,7 +1834,8 @@
         "descEn": "Swing the shield at the enemy, then kick them.",
         "descFr": "Il brandit son bouclier vers l'ennemi, puis lui donne un coup de pied.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Alex/Skill_Alex_Active01_Growth",
-        "x": -2432,
+        "effect": "DOWN",
+        "x": -3584,
         "y": -2176
       },
       {
@@ -1721,7 +1847,7 @@
         "descEn": "Hold the shield forward to enter 【Defensive Stance】.",
         "descFr": "Il place son bouclier devant lui et se met en 【Posture défensive】.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Alex/Skill_Alex_Active02_Growth",
-        "x": -2688,
+        "x": -3840,
         "y": -2176
       },
       {
@@ -1733,8 +1859,8 @@
         "descEn": "Closes in on the enemy, thrusts the sword, then lifts it up and slams it down.",
         "descFr": "Il s'approche de l'ennemi, enfonce son épée, puis la soulève avant de l'abattre.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Alex/Skill_Alex_Signal02_Growth",
-        "x": -3072,
-        "y": -2176
+        "x": -128,
+        "y": -2304
       },
       {
         "type": 4,
@@ -1745,8 +1871,9 @@
         "descEn": "While in 【Defensive Stance】 mode, using this skill in sync with an enemy's attack timing causes you to swing your shield in a counterattack, canceling 【Defensive Stance】 mode.",
         "descFr": "En mode 【Posture défensive】, si vous utilisez cette compétence au moment où l'ennemi attaque, vous brandissez votre bouclier pour contre-attaquer et désactivez le mode 【Posture défensive】.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Alex/Skill_Alex_Signal01_Growth",
-        "x": -2944,
-        "y": -2176
+        "effect": "DOWN",
+        "x": 0,
+        "y": -2304
       },
       {
         "type": 801,
@@ -1757,7 +1884,7 @@
         "descEn": "Enhances the 【Guard Stance】 skill to unconditionally apply the Taunt status to enemies within range.",
         "descFr": "Renforce la compétence 【Position de garde】 pour infliger systématiquement un état de provocation aux ennemis se trouvant dans la zone d'effet.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -1771,8 +1898,8 @@
         "descEn": "Swings the flails in rapid succession.",
         "descFr": "Elle brandit le fléau à plusieurs reprises.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Theresia/Skill_Theresia_Attack_Growth",
-        "x": -3968,
-        "y": -2560
+        "x": -1024,
+        "y": -2688
       },
       {
         "type": 5,
@@ -1783,7 +1910,7 @@
         "descEn": "Swings the flail upward, then spins and slams it downward.",
         "descFr": "Lève le fléau puis l'abat en tournoyant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2688
       },
       {
@@ -1795,7 +1922,7 @@
         "descEn": "Rolls forward to move.",
         "descFr": "Roule vers l'avant pour se déplacer.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -1807,7 +1934,7 @@
         "descEn": "After rolling, quickly thrust the flail forward to strike.",
         "descFr": "Après une roulade, elle tend rapidement le fléau vers l'avant pour frapper.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       },
       {
@@ -1819,8 +1946,9 @@
         "descEn": "After activating 【Heretic Judgment】, alternately strike and pull back both flails toward the front.",
         "descFr": "Après avoir activé 【Inquisition】, elle frappe et retire alternativement ses deux fléaux vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Theresia/Skill_Theresia_Active01_Growth",
-        "x": -3712,
-        "y": -2560
+        "effect": "BLEED",
+        "x": -768,
+        "y": -2688
       },
       {
         "type": 2,
@@ -1831,8 +1959,9 @@
         "descEn": "Slams the iron balls of the two-handed flail forward to create a shockwave.",
         "descFr": "Frappe vers l'avant avec les boules de fer des deux fléaux pour provoquer un choc.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Theresia/Skill_Theresia_Active02_Growth",
-        "x": -3840,
-        "y": -2560
+        "effect": "STUN",
+        "x": -896,
+        "y": -2688
       },
       {
         "type": 3,
@@ -1843,7 +1972,8 @@
         "descEn": "Quickly close in on the target and strike with a series of spins.",
         "descFr": "Elle s'approche rapidement de la cible et la frappe par une série de rotations.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Theresia/Skill_Theresia_Signal01_Growth",
-        "x": 0,
+        "effect": "BLEED",
+        "x": -1152,
         "y": -2688
       },
       {
@@ -1855,7 +1985,8 @@
         "descEn": "Quickly approaches the target, delivers a series of strikes, then strikes upward.",
         "descFr": "Elle s'approche rapidement de sa cible, enchaîne les coups, puis la projette en l'air.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Theresia/Skill_Theresia_Signal02_Growth",
-        "x": -128,
+        "effect": "BLEED",
+        "x": -1280,
         "y": -2688
       },
       {
@@ -1867,7 +1998,7 @@
         "descEn": "While in 【Heretic Judgment】 mode, using the 【Dodge】 skill increases super armor reduction and damage reduction for a certain period.",
         "descFr": "En mode 【Inquisition】, l'utilisation de la compétence 【Esquive】 augmente le taux de réduction de la super-armure et le taux de réduction des dégâts pendant un certain temps.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -1881,8 +2012,8 @@
         "descEn": "Fires a 【Holy Orb】 toward the front.",
         "descFr": "Lance un 【Orbe sacré】 vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Tarte/Skill_Tarte_Attack_Growth",
-        "x": -3328,
-        "y": -2560
+        "x": -384,
+        "y": -2688
       },
       {
         "type": 5,
@@ -1893,7 +2024,8 @@
         "descEn": "While jumping, fires 【Holy Orbs】 toward the front.",
         "descFr": "Lance des 【Orbe sacré】 vers l'avant tout en sautant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "effect": "SHOCK",
+        "x": -2048,
         "y": -2688
       },
       {
@@ -1905,7 +2037,7 @@
         "descEn": "Rolls forward to move.",
         "descFr": "Roule vers l'avant pour se déplacer.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -1917,7 +2049,8 @@
         "descEn": "After rolling, fires a sphere that detonates the 【Holy Orb】.",
         "descFr": "Après avoir roulé, lance une sphère qui fait exploser l'【Orbe sacré】.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "effect": "SHOCK",
+        "x": -2176,
         "y": -2688
       },
       {
@@ -1929,8 +2062,9 @@
         "descEn": "Fires a sacred lightning bolt forward.",
         "descFr": "Lance un éclair sacré vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Tarte/Skill_Tarte_Active01_Growth",
-        "x": -3072,
-        "y": -2560
+        "effect": "SHOCK",
+        "x": -128,
+        "y": -2688
       },
       {
         "type": 2,
@@ -1941,8 +2075,8 @@
         "descEn": "Swings the wand to continuously generate 【Holy Orbs】.",
         "descFr": "Elle brandit sa baguette pour générer une série d'【Orbe sacré】.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Tarte/Skill_Tarte_Active02_Growth",
-        "x": -3200,
-        "y": -2560
+        "x": -256,
+        "y": -2688
       },
       {
         "type": 3,
@@ -1953,8 +2087,9 @@
         "descEn": "Lift the scripture you are holding into the air, then slam it down onto the enemy's head with a bolt of lightning.",
         "descFr": "Fait flotter en l'air le livre sacré qu'elle tient, puis le fait s'abattre sur la tête de l'ennemi accompagné d'un éclair.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Tarte/Skill_Tarte_Signal01_Growth",
-        "x": -3456,
-        "y": -2560
+        "effect": "SHOCK",
+        "x": -512,
+        "y": -2688
       },
       {
         "type": 4,
@@ -1965,8 +2100,9 @@
         "descEn": "Runs to an ally afflicted by a physical status effect, casts a blessing to remove the status effect, and restores vitality.",
         "descFr": "Elle court vers un allié affecté par une altération physique, lui confère une bénédiction pour lever cette altération et lui redonne de la vitalité.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Tarte/Skill_Tarte_Signal02_Growth",
-        "x": -3584,
-        "y": -2560
+        "effect": "HEAL",
+        "x": -640,
+        "y": -2688
       },
       {
         "type": 801,
@@ -1977,7 +2113,7 @@
         "descEn": "【Bolt Bubble】 skill duration is increased. Generates 【Holy Orb】 even while jumping.",
         "descFr": "La durée de la compétence 【Boule de foudre】 est augmentée. Un 【Orbe sacré】 est généré même pendant un saut.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -1991,7 +2127,8 @@
         "descEn": "Fires a frost spell forward.",
         "descFr": "Lance un sort de glace vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Cerese/Skill_Cerese_Attack_Growth",
-        "x": -1920,
+        "effect": "ICE",
+        "x": -3072,
         "y": -2304
       },
       {
@@ -2003,7 +2140,8 @@
         "descEn": "While jumping, fires a frost spell forward.",
         "descFr": "En plein saut, elle lance un sort de glace vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "effect": "ICE",
+        "x": -2048,
         "y": -2688
       },
       {
@@ -2015,7 +2153,7 @@
         "descEn": "Slides forward.",
         "descFr": "Glisse vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -2027,7 +2165,8 @@
         "descEn": "Lifts you slightly into the air, then moves you quickly while leaving an icy path on the ground. The icy path increases the movement speed of allies and slows down enemies. It automatically melts and disappears after a certain amount of time.",
         "descFr": "S'élève légèrement dans les airs puis se déplace rapidement en laissant une piste de glace derrière soi. La piste de glace augmente la vitesse de déplacement des alliés et ralentit celle des adversaires. Elle fond et disparaît automatiquement après un certain temps.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "effect": "ICE",
+        "x": -2176,
         "y": -2688
       },
       {
@@ -2039,7 +2178,8 @@
         "descEn": "Leaps into the air and creates a cold storm in front.",
         "descFr": "S'élance dans les airs puis génère une tempête glaciale devant elle.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Cerese/Skill_Cerese_Active01_Growth",
-        "x": -1664,
+        "effect": "ICE",
+        "x": -2816,
         "y": -2304
       },
       {
@@ -2051,7 +2191,8 @@
         "descEn": "Casts a spell that causes a giant 【Ice Block】 to surge forward. The 【Ice Block】 automatically melts and disappears after a certain amount of time.",
         "descFr": "Lance un sort qui fait jaillir un énorme 【Bloc de glace】 devant elle. Le 【Bloc de glace】 fond et disparaît automatiquement après un certain temps.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Cerese/Skill_Cerese_Active02_Growth",
-        "x": -1792,
+        "effect": "ICE",
+        "x": -2944,
         "y": -2304
       },
       {
@@ -2063,7 +2204,8 @@
         "descEn": "Fires a barrage of frost magic spells at the enemy all at once.",
         "descFr": "Elle lance simultanément une multitude de sorts de glace sur l'ennemi.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Cerese/Skill_Cerese_Signal01_Growth",
-        "x": -2048,
+        "effect": "ICE",
+        "x": -3200,
         "y": -2304
       },
       {
@@ -2075,7 +2217,7 @@
         "descEn": "Simultaneously shatters and destroys all 【Ice Blocks】 and frozen enemies on the battlefield.",
         "descFr": "Elle fait exploser simultanément les 【Bloc de glace】 présents sur le champ de bataille et les ennemis gelés pour les détruire.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Cerese/Skill_Cerese_Signal02_Growth",
-        "x": -2176,
+        "x": -3328,
         "y": -2304
       },
       {
@@ -2087,7 +2229,7 @@
         "descEn": "The duration of the frost path created by the 【Frozen Road】 skill is increased, and enemies hit by the skill are additionally afflicted with the Frost status effect.",
         "descFr": "La durée de la piste de glace créée par la compétence 【Route glacée】 est prolongée et, lors de l'utilisation de la compétence, l'altération d'état Froid est infligée en plus aux ennemis touchés.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -2101,7 +2243,7 @@
         "descEn": "Fire a sphere forward.",
         "descFr": "Lance une sphère vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Sion/Skill_Sion_Attack_Growth",
-        "x": -2688,
+        "x": -3840,
         "y": -2560
       },
       {
@@ -2113,7 +2255,7 @@
         "descEn": "While jumping, fires a sphere toward the front.",
         "descFr": "En plein saut, il lance une sphère vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2688
       },
       {
@@ -2125,7 +2267,7 @@
         "descEn": "Rolls forward to move.",
         "descFr": "Roule vers l'avant pour se déplacer.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -2137,7 +2279,8 @@
         "descEn": "Slides forward to deliver a kick, then fires a sphere toward the front. The sphere moves slowly forward, attacking any enemies it collides with.",
         "descFr": "Il attaque d'un coup de pied en glissant, puis lance une sphère vers l'avant. La sphère avance lentement et attaque les ennemis qu'elle touche.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "effect": "SHOCK",
+        "x": -2176,
         "y": -2688
       },
       {
@@ -2149,7 +2292,8 @@
         "descEn": "Throws a sacred relic forward.",
         "descFr": "Lance une relique sacrée vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Sion/Skill_Sion_Active01_Growth",
-        "x": -2432,
+        "effect": "SHOCK",
+        "x": -3584,
         "y": -2560
       },
       {
@@ -2161,7 +2305,8 @@
         "descEn": "Leaps toward the enemy, then places a sacred relic to create an area affected by 【Orzea's Blessing】.",
         "descFr": "Il bondit vers l'ennemi puis pose une relique sacrée pour déployer une zone sous l'effet de la 【Bénédiction d'Orzea】.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Sion/Skill_Sion_Active02_Growth",
-        "x": -2560,
+        "effect": "DOWN",
+        "x": -3712,
         "y": -2560
       },
       {
@@ -2173,7 +2318,8 @@
         "descEn": "Switch between the buffs of deployed Relics to generate a shockwave that pulls in nearby enemies.",
         "descFr": "En alternant les buffs des reliques installées, génère une onde de choc qui attire les ennemis environnants.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Sion/Skill_Sion_Signal01_Growth",
-        "x": -2816,
+        "effect": "SHOCK",
+        "x": -3968,
         "y": -2560
       },
       {
@@ -2185,8 +2331,9 @@
         "descEn": "Summon a sacred relic at the enemy's location and drive it into the ground to deploy an area affected by 【Orzea's Blessing】.",
         "descFr": "Invoque une relique sacrée sur l'ennemi, l'enfonce dans le sol et la pose pour déployer la zone d'effet de 【Bénédiction d'Orzea】.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Sion/Skill_Sion_Signal02_Growth",
-        "x": -2944,
-        "y": -2560
+        "effect": "DOWN",
+        "x": 0,
+        "y": -2688
       },
       {
         "type": 801,
@@ -2197,7 +2344,7 @@
         "descEn": "The area of effect for 【Orzea's Blessing】 and 【Orzea's Protection】 is expanded, and they additionally inflict the Shock status effect.",
         "descFr": "La zone d'effet de 【Bénédiction d'Orzea】 et 【Protection d'Orzea】 s'élargit et inflige en plus l'altération Électrocution.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -2211,7 +2358,7 @@
         "descEn": "Fires arrows forward. If out of arrows, swings the ballista.",
         "descFr": "Tire des flèches vers l'avant. S'il n'y a pas de flèches, brandit la baliste.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Astria/Skill_Astria_Attack_Growth",
-        "x": 0,
+        "x": -1152,
         "y": -2304
       },
       {
@@ -2223,7 +2370,7 @@
         "descEn": "While jumping, fires an arrow forward. If no arrows are available, swings the ballista.",
         "descFr": "En plein saut, elle tire une flèche vers l'avant. Si elle n'a pas de flèche, elle brandit la baliste.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2688
       },
       {
@@ -2235,7 +2382,7 @@
         "descEn": "Rolls forward to move.",
         "descFr": "Roule vers l'avant pour se déplacer.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -2247,7 +2394,7 @@
         "descEn": "While rolling, slide forward and collide with enemies in your path.",
         "descFr": "Tout en roulant, glisse vers l'avant et percute les ennemis se trouvant sur sa trajectoire.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       },
       {
@@ -2259,8 +2406,8 @@
         "descEn": "Stabs the ballista into the ground to enter 【Precision Shot】 mode.",
         "descFr": "Enfonce la baliste dans le sol pour passer en mode 【Tir de précision】.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Astria/Skill_Astria_Active01_Growth",
-        "x": -3840,
-        "y": -2176
+        "x": -896,
+        "y": -2304
       },
       {
         "type": 2,
@@ -2271,8 +2418,8 @@
         "descEn": "Fire arrows in a fan-shaped pattern toward the front.",
         "descFr": "Tire des flèches en éventail vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Astria/Skill_Astria_Active02_Growth",
-        "x": -3968,
-        "y": -2176
+        "x": -1024,
+        "y": -2304
       },
       {
         "type": 3,
@@ -2283,7 +2430,7 @@
         "descEn": "Swings the ballista toward the enemy and fires an arrow into the air. The arrow explodes, scattering sharp shrapnel around the area.",
         "descFr": "Elle fait pivoter la baliste vers l'ennemi et tire des flèches en l'air. Les flèches explosent et projettent des éclats acérés tout autour.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Astria/Skill_Astria_Signal02_Growth",
-        "x": -256,
+        "x": -1408,
         "y": -2304
       },
       {
@@ -2295,7 +2442,7 @@
         "descEn": "Load the ballista with the maximum number of arrows. After loading, your body feels light as your energy surges.",
         "descFr": "Charge la baliste au maximum. Une fois chargée, son corps s'allège sous l'effet d'une force débordante.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Astria/Skill_Astria_Signal01_Growth",
-        "x": -128,
+        "x": -1280,
         "y": -2304
       },
       {
@@ -2307,7 +2454,7 @@
         "descEn": "The 【Slide】 skill is enhanced, increasing movement distance and speed.&lt;br&gt;While in 【Precision Shooting】 mode, when using the 【Dodge】 skill, 1 arrow is reloaded.",
         "descFr": "La compétence 【Glissade】 est renforcée, augmentant la distance et la vitesse de déplacement. &lt;br&gt;En mode 【Tir de précision】, l'utilisation de la compétence 【Esquive】 recharge une flèche.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -2321,7 +2468,7 @@
         "descEn": "Swings the shield at the enemy, then spins to perform an area-of-effect attack.",
         "descFr": "Il brandit son bouclier vers l'ennemi, puis effectue une attaque de zone en tournoyant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Logan/Skill_Logan_Attack_Growth",
-        "x": -2304,
+        "x": -3456,
         "y": -2432
       },
       {
@@ -2333,7 +2480,7 @@
         "descEn": "While jumping, swings the shield at an enemy and slams it into the ground. If this skill is used in sync with an enemy's attack, it blocks the attack and thrusts the shield forward to counterattack.",
         "descFr": "En plein saut, brandit son bouclier vers l'ennemi avant de s'écraser au sol. En utilisant cette compétence au moment où l'ennemi attaque, il bloque l'attaque et contre-attaque en projetant son bouclier vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2688
       },
       {
@@ -2345,7 +2492,7 @@
         "descEn": "Rolls forward to move.",
         "descFr": "Roule vers l'avant pour se déplacer.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -2357,7 +2504,7 @@
         "descEn": "Grips the shield tightly and swings it forward to strike.",
         "descFr": "Il saisit fermement son bouclier et le brandit vers l'avant pour frapper.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       },
       {
@@ -2369,7 +2516,7 @@
         "descEn": "Slams the shield into the ground in front, entering 【Fortress】 mode.",
         "descFr": "Frappe le sol devant soi avec son bouclier pour entrer en état de 【Forteresse d'acier】.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Logan/Skill_Logan_Active01_Growth",
-        "x": -2048,
+        "x": -3200,
         "y": -2432
       },
       {
@@ -2381,7 +2528,7 @@
         "descEn": "Charges forward with a shield extended, pulling enemies within range toward you.",
         "descFr": "Il charge vers l'avant en brandissant son bouclier, entraînant avec lui les ennemis se trouvant dans la zone d'effet.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Logan/Skill_Logan_Active02_Growth",
-        "x": -2176,
+        "x": -3328,
         "y": -2432
       },
       {
@@ -2393,7 +2540,8 @@
         "descEn": "Quickly snatches and protects an ally affected by a physical status effect. Cannot attack or use skills while protecting an ally.",
         "descFr": "Il attrape rapidement un allié affecté par une altération d'état physique pour le protéger. Il ne peut ni attaquer ni utiliser de compétences pendant qu'il protège un allié.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Logan/Skill_Logan_Signal01_Growth",
-        "x": -2432,
+        "effect": "HEAL",
+        "x": -3584,
         "y": -2432
       },
       {
@@ -2405,7 +2553,7 @@
         "descEn": "Closes in on an enemy, strikes down with the shield, and delivers a flurry of blows.",
         "descFr": "Il s'approche de l'ennemi et lui assène une série de coups avec son bouclier.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Logan/Skill_Logan_Signal02_Growth",
-        "x": -2560,
+        "x": -3712,
         "y": -2432
       },
       {
@@ -2417,7 +2565,7 @@
         "descEn": "Coming Soon",
         "descFr": "À venir",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -2431,7 +2579,7 @@
         "descEn": "Throws the weapon and then snatches it back to swing it.&lt;br&gt;During 【Hair Enhancement】, strikes the grabbed target.",
         "descFr": "Lance son arme puis la rattrape pour la brandir. &lt;br&gt; Frappe la cible immobilisée pendant 【Renforcement des cheveux】.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2688
       },
       {
@@ -2443,7 +2591,7 @@
         "descEn": "Swings the weapon repeatedly in midair.&lt;br&gt;Can use 【Extra Jump】.",
         "descFr": "Balance son arme à plusieurs reprises en plein vol. &lt;br&gt; Peut utiliser 【Saut supplémentaire】.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2688
       },
       {
@@ -2455,7 +2603,7 @@
         "descEn": "Dashes forward while flying low.",
         "descFr": "Se déplace en volant à ras du sol vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -2467,7 +2615,7 @@
         "descEn": "Spin your weapon after dashing.",
         "descFr": "Fait pivoter son arme après une charge.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       },
       {
@@ -2479,7 +2627,8 @@
         "descEn": "Throws a weapon that pierces through the target, cuts across, and spins.",
         "descFr": "Lance une arme qui transperce la cible, la traverse et effectue une rotation.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Lute/Skill_Lute_Active01_Growth",
-        "x": -2688,
+        "effect": "BLEED",
+        "x": -3840,
         "y": -2432
       },
       {
@@ -2491,7 +2640,8 @@
         "descEn": "Fires a continuous stream of spikes from the her twin tails.",
         "descFr": "Lance des épines à répétition depuis ses couettes.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Lute/Skill_Lute_Active02_Growth",
-        "x": -2816,
+        "effect": "BLEED",
+        "x": -3968,
         "y": -2432
       },
       {
@@ -2503,8 +2653,9 @@
         "descEn": "Grabs the target, deals damage, and enters 【Hair Enhancement】.",
         "descFr": "Elle attrape la cible pour lui infliger des dégâts et passe en mode 【Renforcement des cheveux】.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Lute/Skill_Lute_Signal01_Growth",
-        "x": -3072,
-        "y": -2432
+        "effect": "BLEED",
+        "x": -128,
+        "y": -2560
       },
       {
         "type": 4,
@@ -2515,8 +2666,9 @@
         "descEn": "Grabs an enemy and slams them to the ground.",
         "descFr": "Elle attrape l'ennemi et le projette au sol.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Lute/Skill_Lute_Signal02_Growth",
-        "x": -3200,
-        "y": -2432
+        "effect": "AIR",
+        "x": -256,
+        "y": -2560
       },
       {
         "type": 801,
@@ -2527,7 +2679,7 @@
         "descEn": "Coming Soon",
         "descFr": "À venir",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -2541,8 +2693,9 @@
         "descEn": "Fires a snowball forward.",
         "descFr": "Elle lance des boules de neige vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Dana/Skill_Dana_Attack",
-        "x": -3200,
-        "y": -2304
+        "effect": "ICE",
+        "x": -256,
+        "y": -2432
       },
       {
         "type": 5,
@@ -2553,7 +2706,8 @@
         "descEn": "While jumping, she swings her staff to create a frost wind in front of her and fires snowballs at enemies.",
         "descFr": "En sautant, elle brandit son bâton pour créer un vent glacial devant elle et lancer des boules de neige sur les ennemis.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "effect": "ICE",
+        "x": -2048,
         "y": -2688
       },
       {
@@ -2565,7 +2719,7 @@
         "descEn": "Slides forward.",
         "descFr": "Glisse vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -2577,7 +2731,8 @@
         "descEn": "Slides forward while creating an icy path with her staff.&#xA;The icy path automatically melts and disappears after a certain amount of time.",
         "descFr": "Glisse en créant une piste de glace devant soi à l'aide de son bâton.&#xA;La piste de glace fond et disparaît automatiquement après un certain temps.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "effect": "ICE",
+        "x": -2176,
         "y": -2688
       },
       {
@@ -2589,8 +2744,9 @@
         "descEn": "Summon 【Chako】 at the designated location.&#xA;If 【Chako】 is already summoned, order 【Chako】 to drop down to the target location.&#xA;Gain Rime Energy when using this skill.",
         "descFr": "Invoque 【Chako】 à l'emplacement désigné.&#xA;Si 【Chako】 est déjà invoqué, lui ordonne de se laisser tomber sur le point de destination.&#xA;L'utilisation de cette compétence permet d'obtenir de l'énergie de givre.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Dana/Skill_Dana_Active01",
-        "x": -2944,
-        "y": -2304
+        "effect": "ICE",
+        "x": 0,
+        "y": -2432
       },
       {
         "type": 2,
@@ -2601,8 +2757,8 @@
         "descEn": "Summon 【Chako】 to protect allies behind it.&#xA;If it blocks an enemy attack while in a defensive stance, it attacks the surrounding area with a shockwave and grants a shield to allies for a certain period.&#xA;Gain Rime Energy when using this skill.",
         "descFr": "Invoque 【Chako】 pour protéger les alliés situés derrière elle.&#xA;Si elle bloque une attaque ennemie pendant sa posture défensive, elle attaque les environs avec une onde et confère un bouclier à ses alliés pendant un certain temps.&#xA;L'utilisation de cette compétence permet d'acquérir de l'énergie de givre.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Dana/Skill_Dana_Active02",
-        "x": -3072,
-        "y": -2304
+        "x": -128,
+        "y": -2432
       },
       {
         "type": 3,
@@ -2613,8 +2769,9 @@
         "descEn": "Dana consumes Rime Energy to command 【Chako】 to attack.&#xA;【Chako】 either delivers rapid strikes or a powerful single blow, depending on the activation conditions.&#xA;When used while in a defensive stance, it returns to the defensive stance after the attack ends.",
         "descFr": "Dana consomme de l'énergie de givre pour ordonner à 【Chako】 d'attaquer.&#xA;【Chako】 enchaîne des coups sur la cible ou lui assène un coup puissant selon les conditions d'activation.&#xA;Si cette compétence est utilisée en posture défensive, elle revient en posture défensive une fois l'attaque terminée.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Dana/Skill_Dana_Signal01",
-        "x": -3328,
-        "y": -2304
+        "effect": "ICE",
+        "x": -384,
+        "y": -2432
       },
       {
         "type": 4,
@@ -2625,8 +2782,9 @@
         "descEn": "Dana consumes Rime Energy to command 【Chako】 to perform a spinning charge attack.&#xA;Upon receiving the command, 【Chako】 closes in on the target and attacks while continuously spinning.",
         "descFr": "Dana consomme de l'énergie de givre pour ordonner à 【Chako】 d'effectuer une attaque de charge tournoyante.&#xA;【Chako】, ayant reçu l'ordre, s'approche de la cible et l'attaque en tournoyant sans cesse.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Dana/Skill_Dana_Signal02",
-        "x": -3456,
-        "y": -2304
+        "effect": "ICE",
+        "x": -512,
+        "y": -2432
       },
       {
         "type": 801,
@@ -2637,7 +2795,7 @@
         "descEn": "When using 【Chako Shield】, grants a shield to herself and allies within range.&lt;br&gt;Empowers allies within range for a certain duration.",
         "descFr": "Lors de l'utilisation de 【Bouclier de Chako】, confère un bouclier à elle-même et aux alliés à portée.&lt;br&gt;Renforce les alliés à portée pendant un certain temps.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -2651,7 +2809,8 @@
         "descEn": "Launches a spirit-infused flame forward.",
         "descFr": "Lance des flammes imprégnées d'esprits vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Kalien/Skill_Kalien_Attack_Growth",
-        "x": -1664,
+        "effect": "FIRE",
+        "x": -2816,
         "y": -2432
       },
       {
@@ -2663,7 +2822,8 @@
         "descEn": "While jumping, launches a spirit-infused flame forward.",
         "descFr": "Lance des flammes imprégnées d'esprits vers l'avant pendant un saut.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "effect": "FIRE",
+        "x": -2048,
         "y": -2688
       },
       {
@@ -2675,7 +2835,7 @@
         "descEn": "Teleports forward while unleashing a burst of flames.",
         "descFr": "Se téléporte vers l'avant tout en faisant tournoyer ses flammes.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -2687,7 +2847,7 @@
         "descEn": "Summon 2 Fox spirits to pull in and incinerate enemies within the area.",
         "descFr": "Invoque deux esprits renards qui attirent les ennemis dans leur zone d'effet pour les brûler.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       },
       {
@@ -2699,7 +2859,8 @@
         "descEn": "Summon multiple Fox Spirits and command them to charge at enemies.",
         "descFr": "Invoque plusieurs esprits renards et leur ordonne de charger l'ennemi.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Kalien/Skill_Kalien_Active01_Growth",
-        "x": -1408,
+        "effect": "FIRE",
+        "x": -2560,
         "y": -2432
       },
       {
@@ -2711,7 +2872,8 @@
         "descEn": "Summon 【Sur】 in front of you to incinerate enemies within range.",
         "descFr": "Invoque 【Sur】 devant soi pour brûler les ennemis dans la zone d'effet.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Kalien/Skill_Kalien_Active02_Growth",
-        "x": -1536,
+        "effect": "FIRE",
+        "x": -2688,
         "y": -2432
       },
       {
@@ -2723,7 +2885,8 @@
         "descEn": "Summon multiple 【Sur's Clones】 toward enemies to detonate them.",
         "descFr": "Invoque plusieurs 【Clone de Sur】 vers l'ennemi pour le faire exploser.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Kalien/Skill_Kalien_Signal01_Growth",
-        "x": -1792,
+        "effect": "FIRE",
+        "x": -2944,
         "y": -2432
       },
       {
@@ -2735,7 +2898,8 @@
         "descEn": "Simultaneously detonates all 【Sur's Clones】 summoned on the battlefield.",
         "descFr": "Fait exploser simultanément tous les 【Clone de Sur】 invoqués sur le champ de bataille.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Kalien/Skill_Kalien_Signal02_Growth",
-        "x": -1920,
+        "effect": "STUN",
+        "x": -3072,
         "y": -2432
       },
       {
@@ -2747,7 +2911,7 @@
         "descEn": "The duration of the 【Twin Tails】 skill is increased, and the rotation range of the Fox spirits is expanded.",
         "descFr": "La durée de la compétence 【Twin Tails】 augmente et le rayon de rotation des esprits renards s'élargit.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ],
@@ -2761,7 +2925,7 @@
         "descEn": "Throws the weapon and then snatches it back to swing it.&lt;br&gt;During 【Hair Enhancement】, strikes the grabbed target.",
         "descFr": "Lance son arme puis la rattrape pour la brandir. &lt;br&gt; Frappe la cible immobilisée pendant 【Renforcement des cheveux】.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2688
       },
       {
@@ -2773,7 +2937,7 @@
         "descEn": "Swings the weapon repeatedly in midair.&lt;br&gt;Can use 【Extra Jump】.",
         "descFr": "Balance son arme à plusieurs reprises en plein vol. &lt;br&gt; Peut utiliser 【Saut supplémentaire】.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_JumpAttack_Growth",
-        "x": -896,
+        "x": -2048,
         "y": -2688
       },
       {
@@ -2785,7 +2949,7 @@
         "descEn": "Dashes forward while flying low.",
         "descFr": "Se déplace en volant à ras du sol vers l'avant.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_Roll_Growth",
-        "x": -1152,
+        "x": -2304,
         "y": -2688
       },
       {
@@ -2797,7 +2961,7 @@
         "descEn": "Spin your weapon after dashing.",
         "descFr": "Fait pivoter son arme après une charge.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       },
       {
@@ -2809,7 +2973,8 @@
         "descEn": "Throws a weapon that pierces through the target, cuts across, and spins.",
         "descFr": "Lance une arme qui transperce la cible, la traverse et effectue une rotation.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Lute/Skill_Lute_Active01_Growth",
-        "x": -2688,
+        "effect": "DOWN",
+        "x": -3840,
         "y": -2432
       },
       {
@@ -2821,7 +2986,7 @@
         "descEn": "Fires a continuous stream of spikes from the her twin tails.",
         "descFr": "Lance des épines à répétition depuis ses couettes.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Lute/Skill_Lute_Active02_Growth",
-        "x": -2816,
+        "x": -3968,
         "y": -2432
       },
       {
@@ -2833,8 +2998,9 @@
         "descEn": "Grabs the target, deals damage, and enters 【Hair Enhancement】.",
         "descFr": "Elle attrape la cible pour lui infliger des dégâts et passe en mode 【Renforcement des cheveux】.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Lute/Skill_Lute_Signal01_Growth",
-        "x": -3072,
-        "y": -2432
+        "effect": "DOWN",
+        "x": -128,
+        "y": -2560
       },
       {
         "type": 4,
@@ -2845,8 +3011,8 @@
         "descEn": "Grabs an enemy and slams them to the ground.",
         "descFr": "Elle attrape l'ennemi et le projette au sol.",
         "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Lute/Skill_Lute_Signal02_Growth",
-        "x": -3200,
-        "y": -2432
+        "x": -256,
+        "y": -2560
       },
       {
         "type": 801,
@@ -2857,7 +3023,7 @@
         "descEn": "Coming Soon",
         "descFr": "À venir",
         "iconPath": "Art/UI/InGame/Icon_Skill/Skill_Action_RollAttack_Growth",
-        "x": -1024,
+        "x": -2176,
         "y": -2688
       }
     ]
