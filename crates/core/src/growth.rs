@@ -47,8 +47,23 @@ pub struct Growth {
     advent_level_rewards: Vec<Vec<(i64, i64)>>,
     heroes: Vec<Hero>,
     hero_items: HashMap<String, i64>,
+    equipment: HashMap<String, EquipmentStats>,
+    equipment_stats: HashMap<String, Vec<StatChoice>>,
     regions: Regions,
 }
+
+/// The stat groups a new piece of equipment rolls from: one main stat and up
+/// to five sub stats, each a group in `equipmentStats`.
+#[derive(Debug, Clone, Deserialize)]
+pub struct EquipmentStats {
+    pub main: i64,
+    pub subs: Vec<i64>,
+}
+
+/// One row a stat group can roll: the ID the save stores, its weight, and
+/// the stat it grants (lower case).
+#[derive(Debug, Clone, Deserialize)]
+pub struct StatChoice(pub i64, pub i64, pub String);
 
 /// A hero the game hands out somewhere: the shop, a quest reward, or a
 /// quest in which the hero joins the team.
@@ -236,6 +251,18 @@ impl Growth {
     }
 
     /// What reaching a corps level hands out.
+    /// The stat groups an equipment item rolls from, when the game creates it.
+    pub fn equipment(&self, item: i64) -> Option<&EquipmentStats> {
+        self.equipment.get(&item.to_string())
+    }
+
+    /// The rows a stat group can roll.
+    pub fn stat_choices(&self, group: i64) -> &[StatChoice] {
+        self.equipment_stats
+            .get(&group.to_string())
+            .map_or(&[], Vec::as_slice)
+    }
+
     pub fn advent_level_reward(&self, level: i64) -> &[(i64, i64)] {
         usize::try_from(level - 1)
             .ok()
@@ -525,6 +552,43 @@ mod tests {
         assert_eq!(growth.hero(10_006).unwrap().sources, ["joins:10005"]);
         assert_eq!(growth.hero_for_item(1_110_601), Some(10_007), "Johnny");
         assert_eq!(growth.hero_for_item(1_110_301), Some(10_004), "Reina");
+    }
+
+    #[test]
+    fn equipment_rolls_one_row_from_each_stat_group() {
+        let growth = Growth::shared();
+        // Apprentice Knight Helmet, quest 7's reward: a fixed main stat and
+        // two sub stats from three equally weighted choices each.
+        let helmet = growth.equipment(1_360_021).unwrap();
+        assert_eq!(
+            (helmet.main, helmet.subs.as_slice()),
+            (2311, &[22_100, 22_200][..])
+        );
+        let choices: Vec<(i64, i64, &str)> = growth
+            .stat_choices(22_200)
+            .iter()
+            .map(|choice| (choice.0, choice.1, choice.2.as_str()))
+            .collect();
+        assert_eq!(
+            choices,
+            [
+                (22_200, 5, "attack"),
+                (22_205, 5, "maxhp"),
+                (22_210, 5, "defence")
+            ]
+        );
+        // The Song of Life boots dropped in two dungeons with different rolls.
+        let boots = growth.equipment(1_370_125).unwrap();
+        assert_eq!(
+            (boots.main, boots.subs.as_slice()),
+            (3400, &[33_100, 33_200, 33_300][..])
+        );
+        assert_eq!(growth.stat_choices(3400).len(), 10);
+        assert_eq!(growth.stat_choices(33_100).len(), 23);
+        assert!(
+            growth.equipment(1_000_001).is_none(),
+            "gold is not equipment"
+        );
     }
 
     #[test]

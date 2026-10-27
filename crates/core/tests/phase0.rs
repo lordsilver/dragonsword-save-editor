@@ -401,11 +401,11 @@ fn fixture_with(name: &str, gold: i64, grade: i64, version: i64) -> Fixture {
             rusqlite::params![KARMA, USER],
         )
         .expect("karma");
-        // Quests 1, 4 and 9 are complete; 1 gives nothing.
+        // Quests 1, 4, 7 and 9 are complete; 1 gives nothing.
         conn.execute(
             "INSERT INTO tb_quest_complete (USER_DBID, QUEST_CID, CATEGORY)
-             VALUES (?, 10001, 1), (?, 10004, 1), (?, 10009, 1)",
-            rusqlite::params![USER, USER, USER],
+             VALUES (?1, 10001, 1), (?1, 10004, 1), (?1, 10007, 1), (?1, 10009, 1)",
+            [USER],
         )
         .expect("quests");
         // In progress: quest 5 (a hero joins), quest 10 and the Novice exam.
@@ -1015,7 +1015,7 @@ fn completed_quests_hand_out_their_missed_rewards() {
 
     let rewards = game.quest_rewards().expect("rewards");
     let ids: Vec<i64> = rewards.iter().map(|reward| reward.quest_id).collect();
-    assert_eq!(ids, [10_004, 10_009], "quest 1 gives nothing");
+    assert_eq!(ids, [10_004, 10_007, 10_009], "quest 1 gives nothing");
 
     // A quest the save has not completed is refused before anything changes.
     assert!(game.grant_quest_rewards(&[10_009, 10_010]).is_err());
@@ -1058,6 +1058,78 @@ fn completed_quests_hand_out_their_missed_rewards() {
         .filter(|mount| mount.cid == 1_320_016)
         .count();
     assert_eq!(wolves, 1);
+}
+
+#[test]
+fn equipment_rewards_roll_their_stats_the_way_the_game_does() {
+    let path = fixture("quest-equipment");
+    let mut session = SaveSession::open(&path).expect("open");
+    let mut game = Game::new(&mut session, Catalog::shared());
+    let apprentice = 1_360_021..=1_360_025;
+    let owned = |game: &Game<'_>| {
+        game.equipment()
+            .expect("equipment")
+            .into_iter()
+            .filter(|piece| apprentice.contains(&piece.cid))
+            .collect::<Vec<_>>()
+    };
+    assert!(owned(&game).is_empty());
+
+    // Quest 7 hands out the five-piece Apprentice Knight set.
+    let grant = game.grant_quest_rewards(&[10_007]).expect("grant");
+    assert!(grant.not_granted.is_empty(), "{:?}", grant.not_granted);
+    let pieces = owned(&game);
+    assert_eq!(pieces.len(), 5);
+
+    let growth = Growth::shared();
+    let stat = |group: i64, id: i64| {
+        growth
+            .stat_choices(group)
+            .iter()
+            .find(|choice| choice.0 == id)
+            .map(|choice| choice.2.clone())
+    };
+    for piece in &pieces {
+        let groups = growth
+            .equipment(piece.cid)
+            .expect("equipment the game creates");
+        assert!(
+            stat(groups.main, piece.main_stat_cid).is_some(),
+            "main stat of {}",
+            piece.cid
+        );
+        let rolled: Vec<i64> = piece
+            .sub_stat_cids
+            .iter()
+            .copied()
+            .filter(|id| *id != 0)
+            .collect();
+        assert_eq!(rolled.len(), groups.subs.len());
+        let names: Vec<String> = groups
+            .subs
+            .iter()
+            .zip(&rolled)
+            .map(|(group, id)| stat(*group, *id).expect("sub stat in its group"))
+            .collect();
+        let mut unique = names.clone();
+        unique.sort();
+        unique.dedup();
+        assert_eq!(
+            unique.len(),
+            names.len(),
+            "{} repeats a sub stat",
+            piece.cid
+        );
+        assert_eq!(
+            (piece.enchant_level, piece.exp, piece.is_lock),
+            (0, 0, false)
+        );
+        let dbid: i64 = piece.dbid.parse().expect("dbid");
+        assert!(
+            (0..0x1000).contains(&((dbid >> 32) - 0x0105_8000)),
+            "game-style id {dbid}"
+        );
+    }
 }
 
 fn quest_rows(session: &SaveSession, table: &str) -> Vec<i64> {
@@ -1147,7 +1219,7 @@ fn completing_a_quest_records_it_and_hands_out_its_rewards() {
     assert_eq!(team_page_zero(&session), [10_001, 10_002, 10_006]);
     assert_eq!(
         quest_rows(&session, "tb_quest_complete"),
-        [10_001, 10_004, 10_005, 10_009, 10_010]
+        [10_001, 10_004, 10_005, 10_007, 10_009, 10_010]
     );
     assert_eq!(
         quest_rows(&session, "tb_quest_hold"),

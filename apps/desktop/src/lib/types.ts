@@ -324,7 +324,7 @@ export interface QuestRewards {
   items: Array<{
     item: Item;
     count: number;
-    route: 'currency' | 'stack' | 'mount' | 'title' | 'hero' | 'dish' | 'none';
+    route: 'currency' | 'stack' | 'mount' | 'title' | 'hero' | 'dish' | 'equipment' | 'none';
   }>;
   /** Why the editor cannot complete this quest, for a quest in progress. */
   blocked: string | null;

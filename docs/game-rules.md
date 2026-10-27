@@ -119,6 +119,10 @@ The game does not write `tb_completed_quest` when it completes a quest. Quest-re
 
 Equipment, gems, karma and dishes use 64-bit instance IDs: the upper 32 bits are `0x01058000` plus a counter for items created in the same second, and the lower 32 bits are the creation time in UTC seconds. `CREATED_DATE` holds the same moment in local time. Snapshot 10 confirms it for three equipment drops: IDs `0x01058000…`, `…01…` and `…02…` over the same UTC second, each with a main stat CID and three sub-stat CIDs, enchant 0, EXP 0 and `CREATED_DATE` in local time. Mounts and costumes use random 32-bit IDs. A dish is one live `tb_cook_item` row per dish, whose `STACK_CNT` grows.
 
+## Equipment
+
+`EquipmentData` gives each piece a main-stat group and up to five sub-stat groups. A new piece stores one row ID from each group: `MAIN_STAT_CID` from `EquipmentMainStatData`, `SUB_STAT_CID1`… from `EquipmentSubStatData`, each picked by the rows' `Weight`. All 13 pieces the game created in snapshots 10, 11 and 13 follow this, and none repeats a stat across its sub slots. The Apprentice Knight set (quest 7) has a fixed main stat and three equal choices per sub slot; the Song of Life set (dungeon drops) has ten main and 23 sub choices, and the same boots dropped twice with different rolls. Enchant, EXP, lock and gem start at 0, and the ID and `CREATED_DATE` follow the item instance ID rule. The editor creates equipment rewards the same way; `scripts/gen-growth.mjs` copies the groups into `growth.json`. Some older saves have `*_STAT_VALUE` columns, which the editor leaves at 0.
+
 ## Dungeons
 
 Snapshot 10 clears the Goblin Bandit Cave (dungeon group 11031) at adventure difficulty 1. The game writes:
@@ -174,6 +178,13 @@ The corps is at level 3 with 1,800 EXP, inside `AdventLevelData`'s 1,650–2,549
 - 8, warp point unlocked: main quest 10006 completed (category 1) and 10007 started at step 2; tutorial quest 90039 held at step 1; `tb_switch` category 0 gains bit 512; gold and corps EXP from the quest.
 - 9, corps level 3 and more quests: tutorial 90039 completed (category 12) and 10007 moved to step 5. Heroes gained levels in combat, with HP changing as current health. Respawn timers and opened treasure boxes appear.
 - 10, Goblin Bandit Cave cleared: see Dungeons. Tutorial 90038 completed too.
+
+### 2026-10-27: new-game snapshots 11–13
+
+- 11, about 1h40 of play: main quests 7 and 8 completed. Quest 7's Apprentice Knight set arrived as five `tb_equipment` rows sharing one creation second, and Reina wore them (`tb_equip_mount`). Quest 8's familiar arrived as a `tb_vehicle` row.
+- 12, Johnny joined: completing quest 10009 wrote his level-1 row (HP 461), the Snowstorm Sky Wolf and one Fate's Invitation, and started 10010 at step 1. Replaying 11 → 12 in the editor gives the same rows; only the creation times, play time, position, current HP and the achievement counter differ.
+- 13, Dragon Worshipper Ruins cleared: `tb_active_dungeon` gains groups 10001 and 500001, `tb_user_instance_region` type 5 map 10001 records one clear, a dynamic quest is recorded (`tb_dynamic_quest_complete`, `tb_dynamic_quest_group`), and the Song of Life set dropped.
+- Achievement group 500014 is the challenge "Collect 10,000,000 gold" (Steam `ACH_CHL_500014`). Its count has equalled the gold balance in every snapshot, but gold was never spent, so it may count gold earned rather than held. The editor leaves it to the game.
 
 ### In-game checks still to do
 

@@ -243,9 +243,7 @@ function RewardChips({
           label={`${itemName(entry.item, language)} ×${formatNumber(entry.count)}`}
           icon={<ItemIcon item={entry.item} size={18} />}
           muted={entry.route === 'none'}
-          title={
-            entry.route === 'none' ? 'Not granted: equipment needs rows the editor does not create yet.' : undefined
-          }
+          title={entry.route === 'none' ? 'Not granted: the editor has no way to hand this item out.' : undefined}
         />
       ))}
       {quest.advExp > 0 && (

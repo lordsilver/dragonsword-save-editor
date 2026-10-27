@@ -47,6 +47,9 @@ const TABLES = [
   'BMGoodsData_AMERICA',
   'BMGoodsData_EUROPE',
   'BMGoodsData_ASIA',
+  'EquipmentData',
+  'EquipmentMainStatData',
+  'EquipmentSubStatData',
 ];
 
 /** Every row of a table, as attribute maps with the namespace prefix removed. */
@@ -399,6 +402,48 @@ for (const [name, limits] of [
   }
 }
 
+// Equipment the game creates. Each item names a main-stat group and up to five
+// sub-stat groups; a new piece stores one row ID from each, picked by weight
+// (the save's MAIN_STAT_CID and SUB_STAT_CID1..5). Main and sub groups share
+// one map, so their IDs must not collide.
+const equipmentStats = {};
+for (const [table, kind] of [
+  ['EquipmentMainStatData', 'main'],
+  ['EquipmentSubStatData', 'sub'],
+]) {
+  for (const row of rows(table)) {
+    const id = int(row.ID, `${table} ID`);
+    const weight = int(row.Weight, `${table} ${id} Weight`);
+    if (weight <= 0) fail(`${table} ${id} has weight ${weight}`);
+    if (!row.StatList) fail(`${table} ${id} names no stat`);
+    equipmentStats[row.GroupID] ??= { kind, choices: [] };
+    const group = equipmentStats[row.GroupID];
+    if (group.kind !== kind) fail(`stat group ${row.GroupID} is both a main and a sub group`);
+    group.choices.push([id, weight, row.StatList.toLowerCase()]);
+  }
+}
+const equipment = {};
+for (const row of rows('EquipmentData')) {
+  const id = int(row.ItemID, 'EquipmentData ItemID');
+  const groups = [row.Main_Stat_GroupID, ...[1, 2, 3, 4, 5].map((slot) => row[`Sub${slot}_Stat_GroupID`])];
+  const [main, ...subs] = groups.map((group) => (group ? group : null));
+  if (!main) fail(`equipment ${id} has no main-stat group`);
+  if (equipmentStats[main]?.kind !== 'main') fail(`equipment ${id} names a missing main-stat group ${main}`);
+  const subGroups = [];
+  let gap = false;
+  for (const group of subs) {
+    if (group === null) {
+      gap = true;
+      continue;
+    }
+    if (gap) fail(`equipment ${id} skips a sub-stat slot`);
+    if (equipmentStats[group]?.kind !== 'sub') fail(`equipment ${id} names a missing sub-stat group ${group}`);
+    subGroups.push(int(group, 'sub-stat group'));
+  }
+  equipment[id] = { main: int(main, 'main-stat group'), subs: subGroups };
+}
+for (const group of Object.values(equipmentStats)) delete group.kind;
+
 function maxStep(table, column) {
   return Math.max(...rows(table).map((row) => int(row[column], `${table} ${column}`)));
 }
@@ -412,6 +457,7 @@ const growth = {
     notes: [
       'Every *StartExp array is a running total: index N − 1 is the EXP at which level N starts.',
       'No table holds the level cap per breakthrough; levelCapBase + levelCapStep × stage matches every live maximum.',
+      'equipmentStats maps a stat group to [row ID, weight, stat] choices; a new piece stores one row ID per group.',
     ],
   },
   levelCapBase: LEVEL_CAP_BASE,
@@ -429,6 +475,8 @@ const growth = {
   adventLevelRewards,
   heroes: Object.values(heroes).sort((left, right) => left.id - right.id),
   heroItems,
+  equipment,
+  equipmentStats: Object.fromEntries(Object.entries(equipmentStats).map(([group, { choices }]) => [group, choices])),
   regions: { KOR: korea, GLOBAL: global },
 };
 

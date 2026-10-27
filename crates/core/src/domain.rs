@@ -723,8 +723,9 @@ impl<'a> Game<'a> {
         Ok(started)
     }
 
-    /// Hands out gold and reward items. Currency, stackable items, mounts and
-    /// titles are written; anything else is listed in `grant.not_granted`.
+    /// Hands out gold and reward items. Currency, stackable items, mounts,
+    /// titles, heroes, dishes and equipment are written; anything else is
+    /// listed in `grant.not_granted`.
     fn add_reward(&self, gold: i64, items: &[(i64, i64)], grant: &mut RewardGrant) -> Result<()> {
         if gold > 0 {
             self.add_currency(GOLD_CID, gold, grant)?;
@@ -798,10 +799,62 @@ impl<'a> Game<'a> {
                     self.add_dish(*cid, *count)?;
                     note(&mut grant.granted, item, *count);
                 }
+                RewardRoute::Equipment => {
+                    for _ in 0..*count {
+                        self.add_equipment(*cid)?;
+                    }
+                    note(&mut grant.granted, item, *count);
+                }
                 RewardRoute::None => note(&mut grant.not_granted, item, *count),
             }
         }
         Ok(())
+    }
+
+    /// Creates a piece of equipment the way the game does: a game-style
+    /// instance ID, enchant and EXP at zero, and one row ID rolled by weight
+    /// from each of the item's stat groups. Sub stats do not repeat a stat,
+    /// as in every piece the game has been seen to create.
+    fn add_equipment(&self, cid: i64) -> Result<i64> {
+        let stats = Growth::shared()
+            .equipment(cid)
+            .ok_or_else(|| Error::invalid(format!("{cid} is not equipment the game creates")))?;
+        let mut rng = rand::thread_rng();
+        let main = roll_stat(&mut rng, Growth::shared().stat_choices(stats.main), &[]).ok_or_else(
+            || Error::invalid(format!("equipment {cid} has an empty main-stat group")),
+        )?;
+        let mut subs = [0i64; 5];
+        let mut taken: Vec<&str> = Vec::new();
+        for (slot, group) in stats.subs.iter().enumerate().take(5) {
+            let choices = Growth::shared().stat_choices(*group);
+            let choice = roll_stat(&mut rng, choices, &taken)
+                .or_else(|| roll_stat(&mut rng, choices, &[]))
+                .ok_or_else(|| {
+                    Error::invalid(format!("equipment {cid} has an empty sub-stat group"))
+                })?;
+            subs[slot] = choice.0;
+            taken.push(&choice.2);
+        }
+        let dbid = self.mint_item_id("tb_equipment")?;
+        self.conn().execute(
+            "INSERT INTO tb_equipment
+                (ITEM_DBID, USER_DBID, ITEM_CID, ENCHANT_LEVEL, EXP, IS_LOCK, GEM_DBID, MAIN_STAT_CID,
+                 SUB_STAT_CID1, SUB_STAT_CID2, SUB_STAT_CID3, SUB_STAT_CID4, SUB_STAT_CID5,
+                 CREATED_DATE, DELETED_DATE)
+             VALUES (?,?,?,0,0,0,0,?,?,?,?,?,?,CAST(strftime('%s','now','localtime') AS INTEGER),0)",
+            params![
+                dbid,
+                self.user_id,
+                cid,
+                main.0,
+                subs[0],
+                subs[1],
+                subs[2],
+                subs[3],
+                subs[4]
+            ],
+        )?;
+        Ok(dbid)
     }
 
     /// Adds to a dish's stack, or starts one with a game-style instance ID.
@@ -2506,8 +2559,31 @@ pub enum RewardRoute {
     Hero,
     /// A cooked dish: a `tb_cook_item` stack.
     Dish,
-    /// Equipment, and hero items the game data does not map to a hero.
+    /// Equipment the game data can roll: one new `tb_equipment` row per piece.
+    Equipment,
+    /// Hero items the game data does not map to a hero, and anything else.
     None,
+}
+
+/// Picks one row by weight, skipping rows whose stat is already `taken`.
+fn roll_stat<'a>(
+    rng: &mut impl rand::Rng,
+    choices: &'a [crate::growth::StatChoice],
+    taken: &[&str],
+) -> Option<&'a crate::growth::StatChoice> {
+    let open: Vec<&crate::growth::StatChoice> = choices
+        .iter()
+        .filter(|choice| !taken.contains(&choice.2.as_str()))
+        .collect();
+    let total: i64 = open.iter().map(|choice| choice.1).sum();
+    if total <= 0 {
+        return None;
+    }
+    let mut pick = rng.gen_range(0..total);
+    open.into_iter().find(|choice| {
+        pick -= choice.1;
+        pick < 0
+    })
 }
 
 fn reward_route(item: &Item) -> RewardRoute {
@@ -2521,6 +2597,8 @@ fn reward_route(item: &Item) -> RewardRoute {
         RewardRoute::Hero
     } else if item.category == "food" {
         RewardRoute::Dish
+    } else if Growth::shared().equipment(item.cid).is_some() {
+        RewardRoute::Equipment
     } else if item.is_stackable() {
         RewardRoute::Stack
     } else {
