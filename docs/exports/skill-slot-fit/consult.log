@@ -1,0 +1,100 @@
+I fitted a new skill-slot formula against your six in-game screenshots and wrote it as a patch, which I have not applied. It cuts the mean colour error (ΔE in CIELAB, lower is better) from 20.6 to 7.6 in a real browser. The best any still image can do is about 6.6, because the game's rings move: that's how much the same disc differs between two of your screenshots.
+
+The test set was 36 discs: the six screenshots, excluding Dodge and the selected slot.
+
+| Formula | Overall | Circles | Diamonds |
+|---|---|---|---|
+| Current editor (`ed39ca8`) | 20.62 | 20.09 | 22.00 |
+| Fitted model, offline | 6.50 | | |
+| Proposed CSS, simulated offline | 7.41 | 6.65 | 9.38 |
+| Proposed CSS, rendered by Chrome | 7.62 | 6.86 | 9.59 |
+
+WebKitGTK, which your Tauri editor uses, renders those tiles pixel for pixel the same as Chrome.
+
+## 1. How the game composites each ring
+
+**Verified by running code:**
+- The table at `0x14911d910` is the exact sRGB-to-linear table (within 3e-8), and the constant used is exactly 1/255. In the slot's colour code, the three FX rings get byte/255 used directly as linear. Only the name-plate path goes through the sRGB table. So the brief's claim that the colour is converted through the sRGB table is wrong for the rings.
+- The fit still says the colour lands on screen as the hex itself, multiplied by the ring texture's brightness (6.8 against 8.5 when it assumes the extra conversion). Fitting each effect's colour freely confirms it:
+
+| Effect | Free fit | `MesmerizedUIColor` | `MesmerizedSwitchingColor` |
+|---|---|---|---|
+| Stun | #FFDB59 (8.54) | #FFDA59 | #F5D000 (14.07) |
+| Bleed | #C60F43 | #CC0048 (10.92) | #C63555 (12.32) |
+| Attack | #B29A6F | #B39C6F | |
+| Airborne | #46D4FA | #47D1F8 | |
+
+  The screenshots independently confirm the game reads `MesmerizedUIColor`.
+
+**Inferred from the fit, not verified:** why the colour shows as the hex. The likely reason is that the UI never gamma-encodes the vertex colour, since the base material's graph is unreadable. With that, the formula per ring is:
+- **Translucent glow (`ring13b`):** coverage = `ring13b` alpha × `fxt_flare11` alpha × O, colour = hex × brightness.
+- **Additive rings (`ring13c`, signal):** add hex × brightness × alpha × gain.
+
+**Also from the fit:**
+- The glyph is drawn at 0.99× the slot with a gain of 0.99, so the 1.15× size and the brightness and contrast filters are wrong.
+- No interior fill is needed (0.00–0.06 when the fit was allowed one): the glow ring itself tints the interior.
+
+## 2. Offline renderer and fitted values
+
+The renderer uses the real textures, the disc positions found by correlation (slot box 168 px at 2560×1440), and a mask over the opaque disc that leaves out the name plate and badge.
+
+**Fitted values:**
+
+| Ring | Coverage or gain | Brightness scale |
+|---|---|---|
+| Glow | coverage 0.566 | 0.666 |
+| Line | gain 2.158 | 1.213 |
+| Signal | gain 3.6 | — |
+
+Glyph at 1.0×, no filter. The parameters were refitted in CSS form, so these are the values the CSS should use.
+
+**Error per crop, best fit against the current formula:**
+- Plain circles: 4.3–6.3, was 16–22.
+- Airborne circles: 5.3–6.3, was 15.7–16.3.
+- Stun Slash: 7.5, was 24.1.
+- Consecration (Bleed): 9.7, was 26.1.
+- Diamonds: 6.8–12.9, was 16.8–31.3. Divine Arc and Holy Rise (both Bleed) are the worst, at 10.1 and 12.9.
+
+## 3. CSS that works in Chrome and WebKitGTK
+
+The patch is `/tmp/claude-1000/-home-user-git-silver-dragonsword-save-editor/79f50595-6672-4408-b93e-d51ab19012fd/scratchpad/consult/work/skill-slot-formula.patch`. It changes three files:
+- **`characters.tsx`:**
+  - Drops the interior fill and draws the glyph at the slot's own size with no filter.
+  - The glow fills `background-color: hex` and multiplies in a new greyscale `skill-ring-glow-shade.webp` (`background-blend-mode: multiply`), masked by `skill-ring-glow.webp`.
+  - The line and signal rings fill `background-color: hex` with `mix-blend-mode: plus-lighter`.
+  - Every mask has both the `mask-image` and `-webkit-mask-image` properties, and the per-ring opacities are gone because the strengths are baked into the masks.
+- **`gen-icons.mjs`:** a `RING` constants table, and bakes the four masks and the shade image from it.
+- **`docs/game-assets.md`:** the method and the numbers.
+
+**Checks:**
+- `git apply --check` passes on the current `main` (`ed39ca8`).
+- `tsc` and Biome are clean on a copy of the app.
+- Run in a scratch copy, the patched `gen-icons.mjs` produces the same layers I measured, to within 1/255.
+
+**Dark and light pages:** neither needs special handling. Inside the disc everything is opaque, so the page doesn't matter. On a white page the additive halo outside the disc disappears and the game's own disc rim keeps the edge defined; I checked this in a Chrome render.
+
+**Layers:** stacking extra `plus-lighter` layers where a weight goes above 1 didn't help (7.565 with one layer each, 7.583 with more), so one layer per ring is enough.
+
+## 4. Contradictions, and cheap experiments to settle the rest
+
+1. **sRGB claim:** as in section 1, the rings use byte/255 as linear, not the sRGB table.
+2. **Diamond edge:** the user's "edge too thick" complaint came from the old masks. With the fitted signal gain of 3.6, the visual sheet shows a narrow edge, because the signal mask's alpha falls off steeply. A thin edge plus a uniform wash scores worse (9.3–9.9), so the diamonds' leftover error must come from the material's scrolling noise fill, which isn't modelled.
+3. **Exact material:** cooked builds strip the material's node graph, so the exact maths only survives in the compiled pixel shader for `fxm_default_UI`, inside the game's shader archive in the paks. Disassembling it (for example with `dxc -dumpbin`) would settle it. That's the decisive experiment; I haven't done it.
+4. **Cheaper alternative:** three or four screenshots of the same skill screen a few seconds apart, without moving. They would measure the ring rotation and let a time-averaged model go below the current floor.
+5. **Missing defaults:** decoding the base material's parameter defaults by hand, as `decode_root.py` did for the root panel, would give the values the Mask_Fx_Skill_SignalOutGame material leaves unset, such as its strength. The export failed on them with "MaterialCachedParameterEntry: Unknown property".
+6. **Colour setter:** which function `0x1429f5010` is remains unverified, and it doesn't change the result.
+
+## What I ran, what I changed
+
+**Ran:**
+- In the scratch `work/` folder, with `node` and Python using `-I`: the baseline and noise-floor scripts, the model and variant fits (`fit.mjs`), the diamond and per-effect colour checks and the visual sheet (`analyse.mjs`), the CSS emulation (`bake.mjs`), the direct CSS fit (`cssfit.mjs`), and the test page build and measurement (`testpage.mjs`).
+- Windows Chrome headless screenshots of the test page.
+- WebKitGTK MiniBrowser on Xvfb display `:97`.
+- `tsc` and Biome in the scratch copy, and the patched `gen-icons.mjs` there.
+- `git apply --check` against the repository.
+
+**Changed:**
+- Files only under `consult/work`: the scripts, logs, `css/`, `site/`, `tscheck/`, `patch/`, `RESULTS.md` and the patch.
+- I started a test HTTP server on 127.0.0.1:1431 and an Xvfb display, and stopped both afterwards. The preview server on port 1421 is still running and was never touched.
+- The repository is unchanged (`git status` is empty), the patch is not applied, and the game program was never run.
+claude exit=0

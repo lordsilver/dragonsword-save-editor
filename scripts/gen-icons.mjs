@@ -30,11 +30,13 @@
 // And the layers of a skill slot, as the game's DUWG_CharacterSkill_Def
 // (circle) and _Tag (diamond) widgets stack them (docs/game-assets.md): the
 // discs Btn/Btn_Skill_Info_Bg_02 and _05, and the effect rings as white masks
-// whose alpha is the texture's strength (brightness x alpha), for the editor to
-// tint with the effect colour as the game does: FXT_ring13_UI_ad01 (ring13b
-// masked by flare11), FXT_ring13_UI_ad02 (ring13c), and the diamond's
-// Mask_Fx_Skill_SignalOutGame (Mask/Mask_Fx_Skill_Signal). <fx-dir> is the
-// png/ folder of the skill-screen export, which holds the FX textures.
+// whose alpha is each ring's strength, for the editor to tint with the effect
+// colour as the game does: FXT_ring13_UI_ad01 (ring13b masked by flare11, plus
+// a greyscale shade of its brightness), FXT_ring13_UI_ad02 (ring13c), and the
+// diamond's Mask_Fx_Skill_SignalOutGame (Mask/Mask_Fx_Skill_Signal). The
+// strengths (RING below) were fitted to in-game screenshots, because the rings'
+// base material could not be read (docs/game-assets.md). <fx-dir> is the png/
+// folder of the skill-screen export, which holds the FX textures.
 // It packs them into apps/desktop/src/assets/sprite.webp and rewrites the
 // cell offsets in crates/core/data/items.json, items_extra.json (the game's
 // items that items.json lacks) and skills.json, the last two written by
@@ -208,34 +210,43 @@ for (const [index, grade] of GRADES.entries()) {
   }
 }
 
-/** A white mask whose alpha is a texture's strength, times an optional mask texture. */
-// A ring's strength is its brightness times its alpha, as the material
-// multiplies the texture by the tint.
-async function ringMask(path, maskPath) {
-  const load = (file) => {
-    if (!existsSync(file)) fail(`texture ${file} is not in the export`);
-    return sharp(file).resize(256, 256).ensureAlpha().raw().toBuffer();
-  };
-  const ring = await load(path);
-  const mask = maskPath ? await load(maskPath) : null;
-  const out = Buffer.alloc(ring.length);
-  for (let index = 0; index < ring.length; index += 4) {
-    const strength = Math.max(ring[index], ring[index + 1], ring[index + 2]) / 255;
-    const masked = mask ? mask[index + 3] / 255 : 1;
-    out.fill(255, index, index + 3);
-    out[index + 3] = Math.round(strength * ring[index + 3] * masked);
+// Ring strengths fitted to 36 skill discs in in-game screenshots (mean CIELAB
+// error 7.6 against 20.6 for the hand-tuned formula they replace; the same disc
+// in two screenshots differs by 6.6). glowCover scales the translucent glow's
+// coverage (ring13b alpha x flare11 alpha); glowShade and line scale the
+// rings' brightness (in linear light); lineGain and signalGain scale the
+// additive rings' alpha.
+const RING = { glowCover: 0.566, glowShade: 0.666, line: 1.213, lineGain: 2.158, signalGain: 3.6 };
+const toLinear = (c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+const toSrgb = (c) => (c <= 0.0031308 ? c * 12.92 : 1.055 * c ** (1 / 2.4) - 0.055);
+async function texels(file) {
+  if (!existsSync(file)) fail(`texture ${file} is not in the export`);
+  const raw = await sharp(file).resize(256, 256).ensureAlpha().raw().toBuffer();
+  return { red: (index) => raw[index * 4] / 255, alpha: (index) => raw[index * 4 + 3] / 255 };
+}
+/** A 256x256 layer: a white mask with alpha = value, or an opaque grey of that value. */
+function layer(value, grey = false) {
+  const out = Buffer.alloc(256 * 256 * 4);
+  for (let index = 0; index < 256 * 256; index += 1) {
+    const level = Math.round(Math.min(1, Math.max(0, value(index))) * 255);
+    out.fill(grey ? level : 255, index * 4, index * 4 + 3);
+    out[index * 4 + 3] = grey ? 255 : level;
   }
   return sharp(out, { raw: { width: 256, height: 256, channels: 4 } });
 }
+const ring13b = await texels(join(fxDir, 'Art/FX/textures/ring/fxt_ring13b.png'));
+const ring13c = await texels(join(fxDir, 'Art/FX/textures/ring/fxt_ring13c.png'));
+const flare11 = await texels(join(fxDir, 'Art/FX/textures/glow/fxt_flare11.png'));
+const signalMask = await texels(join(assetsDir, 'Art/UI/InGame/Mask/Mask_Fx_Skill_Signal.png'));
 const skillLayers = {
   'skill-disc-circle': sharp(join(assetsDir, 'Art/UI/InGame/Btn/Btn_Skill_Info_Bg_02.png')),
   'skill-disc-diamond': sharp(join(assetsDir, 'Art/UI/InGame/Btn/Btn_Skill_Info_Bg_05.png')),
-  'skill-ring-glow': await ringMask(
-    join(fxDir, 'Art/FX/textures/ring/fxt_ring13b.png'),
-    join(fxDir, 'Art/FX/textures/glow/fxt_flare11.png'),
+  'skill-ring-glow': layer((i) => ring13b.alpha(i) * flare11.alpha(i) * RING.glowCover),
+  'skill-ring-glow-shade': layer((i) => toSrgb(Math.min(1, toLinear(ring13b.red(i)) * RING.glowShade)), true),
+  'skill-ring-line': layer(
+    (i) => toSrgb(Math.min(1, toLinear(ring13c.red(i)) * RING.line)) * ring13c.alpha(i) * RING.lineGain,
   ),
-  'skill-ring-line': await ringMask(join(fxDir, 'Art/FX/textures/ring/fxt_ring13c.png')),
-  'skill-ring-signal': await ringMask(join(assetsDir, 'Art/UI/InGame/Mask/Mask_Fx_Skill_Signal.png')),
+  'skill-ring-signal': layer((i) => signalMask.alpha(i) * RING.signalGain),
 };
 for (const [name, image] of Object.entries(skillLayers)) {
   const out = await image.webp({ quality: 90, alphaQuality: 100, effort: 6 }).toBuffer();
