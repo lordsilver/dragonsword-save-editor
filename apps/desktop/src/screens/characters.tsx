@@ -352,22 +352,26 @@ function HeroInformation({ character, busy }: { character: Character; busy: bool
 /**
  * The disc behind a skill's glyph, in the game's colour for the skill (its
  * effect's, or the khaki ATTACK colour for a plain skill). Like the game's, it
- * is dark in the middle, so the bright glyph stands out, and turns to a thin,
- * vivid ring of the full colour at the edge.
+ * stays dark nearly to the edge, so the bright glyph stands out, and carries
+ * the colour in a vivid band along the edge.
  */
-function disc(skill: Skill): CSSProperties {
+function disc(skill: Skill, size: number): CSSProperties {
   const color = skill.color;
-  const middle = `color-mix(in oklab, ${color} 30%, #09090b)`;
-  const inner = `color-mix(in oklab, ${color} 45%, #18181b)`;
+  // The band's width follows the icon's size, so small icons stay dark inside.
+  const band = `inset 0 0 ${Math.round(size * 0.12)}px ${Math.round(size * 0.05)}px ${color}`;
+  const middle = `color-mix(in oklab, ${color} 25%, #18181b)`;
+  const inner = `color-mix(in oklab, ${color} 40%, #27272a)`;
   return {
-    backgroundImage: `radial-gradient(circle closest-side, ${middle} 0%, ${inner} 55%, ${color} 100%)`,
+    // The gradient only shades the dark interior. The coloured band and the
+    // light highlight are inset shadows, so they follow the frame's shape,
+    // circle or diamond (a radial gradient would leave a diamond's corners
+    // fully coloured). The faint dark outline holds the edge on a light page
+    // as on the game's teal one.
+    backgroundImage: `radial-gradient(circle farthest-side, ${middle} 0%, ${inner} 100%)`,
     borderColor: color,
-    // The light highlight inside the edge is an inset shadow, so it follows the
-    // frame's shape, circle or diamond; the faint dark outline holds the edge
-    // on a light page as on the game's teal one.
     boxShadow: [
       `inset 0 0 0 2px color-mix(in oklab, ${color} 50%, white)`,
-      `inset 0 0 6px 3px color-mix(in oklab, ${color} 80%, transparent)`,
+      band,
       '0 0 0 1px rgb(0 0 0 / 0.3)',
       `0 0 8px color-mix(in oklab, ${color} 70%, transparent)`,
     ].join(', '),
@@ -406,7 +410,7 @@ function SkillIcon({ skill, size }: { skill: Skill; size: number }) {
           // A signal skill sits on a diamond: the frame turns, the glyph does not.
           skill.info?.signal ? 'inset-[12%] rotate-45 rounded-[18%]' : 'inset-0 rounded-full',
         )}
-        style={disc(skill)}
+        style={disc(skill, size)}
       />
       {/* Like the game's, the glyph is about as large as its frame, so a tip
           (a sword's point, a wing) can reach past the edge. */}
