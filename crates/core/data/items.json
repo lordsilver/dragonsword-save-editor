@@ -223,8 +223,8 @@
       "fr": "Viola",
       "en": "Viola",
       "category": "character",
-      "x": -2560,
-      "y": -2176
+      "x": -1280,
+      "y": -2688
     },
     "10036": {
       "fr": "Dana",
@@ -10766,8 +10766,8 @@
       "grade": "normal",
       "group": "unsorted",
       "iconPath": "Art/UI/InGame/Img_Item/Quest/Img_Item_Quest_MercenaryContract",
-      "x": -128,
-      "y": -2304
+      "x": -2944,
+      "y": -2688
     },
     "1510006": {
       "fr": "Minerai de fer utilisable",
@@ -11712,7 +11712,7 @@
       "grade": "legendary",
       "group": "1406",
       "iconPath": "Art/UI/InGame/Icon_Skill/Charater/Alex/Skill_Alex_Active01",
-      "x": -2432,
+      "x": -2560,
       "y": -2176
     },
     "1710527": {
@@ -13211,8 +13211,8 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Cassius_Unique_01",
-      "x": -2688,
-      "y": -2176
+      "x": -1408,
+      "y": -2688
     },
     "9990027": {
       "fr": "Serment gravé",
@@ -13221,8 +13221,8 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Cassius_Unique_Weapon_01",
-      "x": -3456,
-      "y": -2176
+      "x": -2176,
+      "y": -2688
     },
     "9990028": {
       "fr": "Espièglerie d'été couleur corail",
@@ -13231,8 +13231,8 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Astria_Unique_Weapon_01",
-      "x": -3328,
-      "y": -2176
+      "x": -2048,
+      "y": -2688
     },
     "9990029": {
       "fr": "Tir au cœur ensoleillé",
@@ -13241,8 +13241,8 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Astria_Unique_Weapon_01",
-      "x": -3328,
-      "y": -2176
+      "x": -2048,
+      "y": -2688
     },
     "9990030": {
       "fr": "Fleur blanche des vagues bleues",
@@ -13251,8 +13251,8 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Reina_Unique_Weapon_01",
-      "x": 0,
-      "y": -2304
+      "x": -2816,
+      "y": -2688
     },
     "9990031": {
       "fr": "Pétales à la crête des vagues",
@@ -13261,8 +13261,8 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Reina_Unique_Weapon_01",
-      "x": 0,
-      "y": -2304
+      "x": -2816,
+      "y": -2688
     }
   }
 }

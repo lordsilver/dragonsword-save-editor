@@ -16,6 +16,7 @@ const ITEMS_EXTRA_JSON: &str = include_str!("../data/items_extra.json");
 const CATEGORIES_JSON: &str = include_str!("../data/item_categories.json");
 const RECIPES_JSON: &str = include_str!("../data/recipes.json");
 const TITLES_JSON: &str = include_str!("../data/titles.json");
+const SKILLS_JSON: &str = include_str!("../data/skills.json");
 
 /// A resolved catalog entry. Names are kept in both languages so the UI can
 /// switch without another round trip.
@@ -149,6 +150,27 @@ pub struct TitleSeed {
     pub stats: Vec<TitleStat>,
 }
 
+/// One slot of a hero's skill tree, as the game's Skill screen shows it.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SkillSeed {
+    /// `tb_skill_growth.TYPE_VALUE`.
+    #[serde(rename = "type")]
+    pub type_value: i64,
+    /// The game's `SlotOrder`: 1–4 the left column, 5–8 the right, 9 the
+    /// master skill.
+    pub order: i64,
+    pub master: bool,
+    pub name_en: String,
+    pub name_fr: String,
+    pub desc_en: String,
+    pub desc_fr: String,
+    #[serde(rename(serialize = "iconX", deserialize = "x"))]
+    pub icon_x: i32,
+    #[serde(rename(serialize = "iconY", deserialize = "y"))]
+    pub icon_y: i32,
+}
+
 #[derive(Debug, Clone, Deserialize, Default)]
 struct SeedItem {
     #[serde(default)]
@@ -194,6 +216,11 @@ struct TitleFile {
 }
 
 #[derive(Debug, Deserialize)]
+struct SkillFile {
+    heroes: HashMap<String, Vec<SkillSeed>>,
+}
+
+#[derive(Debug, Deserialize)]
 struct CategoryFile {
     #[serde(default)]
     categories: Vec<Category>,
@@ -205,6 +232,7 @@ pub struct Catalog {
     categories: Vec<Category>,
     recipes: Vec<RecipeSeed>,
     titles: Vec<TitleSeed>,
+    skills: HashMap<i64, Vec<SkillSeed>>,
     ingredient_icons: HashMap<i64, i64>,
     icon_size: u32,
 }
@@ -227,6 +255,7 @@ impl Catalog {
         let categories: CategoryFile = serde_json::from_str(CATEGORIES_JSON)?;
         let recipes: RecipeFile = serde_json::from_str(RECIPES_JSON)?;
         let titles: TitleFile = serde_json::from_str(TITLES_JSON)?;
+        let skills: SkillFile = serde_json::from_str(SKILLS_JSON)?;
         let ingredient_icons = recipes
             .ingredient_type_icons
             .into_iter()
@@ -237,6 +266,11 @@ impl Catalog {
             categories: categories.categories,
             recipes: recipes.recipes,
             titles: titles.titles,
+            skills: skills
+                .heroes
+                .into_iter()
+                .filter_map(|(cid, slots)| cid.parse::<i64>().ok().map(|cid| (cid, slots)))
+                .collect(),
             ingredient_icons,
             icon_size: if seed.icon_size == 0 {
                 64
@@ -274,6 +308,11 @@ impl Catalog {
 
     pub fn titles(&self) -> &[TitleSeed] {
         &self.titles
+    }
+
+    /// A hero's skill slots in the game's order, or none for an unknown hero.
+    pub fn hero_skills(&self, cid: i64) -> &[SkillSeed] {
+        self.skills.get(&cid).map_or(&[], Vec::as_slice)
     }
 
     pub fn ingredient_icon(&self, group: i64) -> Option<i64> {
@@ -431,6 +470,33 @@ mod tests {
         assert_eq!(catalog.recipes().len(), 1025);
         assert_eq!(catalog.titles().len(), 109);
         assert_eq!(catalog.categories().len(), 51);
+    }
+
+    #[test]
+    fn heroes_have_the_game_s_skill_tree() {
+        let catalog = Catalog::shared();
+        let lute = catalog.hero_skills(10_002);
+        let names: Vec<_> = lute
+            .iter()
+            .map(|slot| (slot.type_value, slot.name_en.as_str()))
+            .collect();
+        assert_eq!(
+            names,
+            [
+                (6, "Sword Slash"),
+                (5, "Dropkick"),
+                (8, "Dodge"),
+                (7, "Kick Combo"),
+                (1, "Stun Slash"),
+                (2, "Healing Circle"),
+                (3, "Swordgrab"),
+                (4, "Relic Fall"),
+                (801, "A Young Boy's Choice"),
+            ]
+        );
+        assert!(lute[8].master);
+        assert!(lute.iter().all(|slot| slot.icon_x != 0 || slot.icon_y != 0));
+        assert!(catalog.hero_skills(1).is_empty());
     }
 
     #[test]

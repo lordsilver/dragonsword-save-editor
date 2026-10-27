@@ -649,7 +649,7 @@ fn every_mutation_survives_a_write() {
                 .skills(character_a)
                 .expect("skills")
                 .iter()
-                .any(|skill| skill.type_value == 3)
+                .any(|skill| skill.type_value == 3 && skill.saved)
         );
         let team = game
             .teams()

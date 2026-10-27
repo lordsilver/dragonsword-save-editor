@@ -23,16 +23,8 @@ import { NativeSelect } from '@/components/select';
 import { CountPill } from '@/components/summary';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -40,21 +32,11 @@ import {
   MAX_POINTS,
   MAX_SOLDIER_GRADE,
   MAX_TRANSCEND_TOTAL,
-  SKILL_TYPES,
   breakthroughSummary,
   skillLimit,
 } from '@/lib/limits';
 import { formatNumber, itemName, useApp } from '@/lib/store';
-import type {
-  Character,
-  GrowthLimits,
-  HeroEntry,
-  HeroSource,
-  HeroTab,
-  Loadout,
-  LoadoutEntry,
-  TeamPage,
-} from '@/lib/types';
+import type { Character, HeroEntry, HeroSource, HeroTab, Loadout, LoadoutEntry, Skill, TeamPage } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 type SlotKey = keyof Omit<Loadout, 'characterCid'>;
@@ -300,7 +282,7 @@ function HeroDetail({ character, language, busy }: { character: Character; langu
 
       <div className="scroll-thin min-h-0 flex-1 overflow-y-auto px-6 py-5">
         {tab === 'info' && <HeroInformation character={character} busy={busy} />}
-        {tab === 'skills' && <HeroSkills character={character} busy={busy} />}
+        {tab === 'skills' && <HeroSkills character={character} language={language} busy={busy} />}
         {tab === 'equipment' && <HeroEquipment language={language} />}
       </div>
     </div>
@@ -367,78 +349,177 @@ function HeroInformation({ character, busy }: { character: Character; busy: bool
   );
 }
 
-function skillLabel(typeValue: number): string {
-  if (typeValue >= 800) return 'Special skill';
-  if (typeValue >= 5) return `Basic skill ${typeValue - 4}`;
-  return `Active skill ${typeValue}`;
+/** Steps from the tree's centre per SlotOrder, tracing the game's two diamonds. */
+const SKILL_INDENT: Record<number, number> = { 1: 2, 2: 1, 3: 0, 4: 1, 5: 0, 6: 1, 7: 0, 8: -1 };
+
+function skillName(skill: Skill, language: string): string {
+  if (skill.info) return language === 'fr' ? skill.info.nameFr : skill.info.nameEn;
+  return `Skill ${skill.typeValue}`;
 }
 
-function HeroSkills({ character, busy }: { character: Character; busy: boolean }) {
+function SkillIcon({ skill, size }: { skill: Skill; size: number }) {
+  return (
+    <ItemIcon
+      item={{
+        nameEn: skill.info?.nameEn ?? '?',
+        iconX: skill.info?.iconX ?? 0,
+        iconY: skill.info?.iconY ?? 0,
+        category: 'skill',
+        icon: Boolean(skill.info && (skill.info.iconX || skill.info.iconY)),
+      }}
+      size={size}
+      // The game draws its white skill glyphs on a dark metal disc.
+      className="rounded-full border-white/25 bg-radial from-zinc-500 to-zinc-800"
+    />
+  );
+}
+
+function HeroSkills({ character, language, busy }: { character: Character; language: string; busy: boolean }) {
   const skills = useApp((state) => state.skills);
-  const setSkill = useApp((state) => state.setSkill);
-  const removeSkill = useApp((state) => state.removeSkill);
-  const [skillOpen, setSkillOpen] = useState(false);
+  const [selectedType, setSelectedType] = useState<number | null>(null);
+  const selected = skills.find((skill) => skill.typeValue === selectedType) ?? skills[0];
+
+  if (!selected) {
+    return (
+      <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+        The game data names no skills for this hero, and the save has no skill rows.
+      </p>
+    );
+  }
+
+  const order = (skill: Skill) => skill.info?.order ?? 10;
+  const left = skills.filter((skill) => order(skill) <= 4);
+  const right = skills.filter((skill) => order(skill) >= 5 && order(skill) <= 8);
+  const rest = skills.filter((skill) => order(skill) >= 9);
+  const node = (skill: Skill) => (
+    <SkillNode
+      key={skill.typeValue}
+      skill={skill}
+      language={language}
+      selected={skill.typeValue === selected.typeValue}
+      onSelect={() => setSelectedType(skill.typeValue)}
+    />
+  );
 
   return (
-    <div className="max-w-2xl space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
-          Slots 1–4 are active skills, 5–7 basic skills and 801 the special skill. Levels belong to the skill, not the
-          hero.
-        </p>
-        <Button variant="outline" size="sm" disabled={busy} onClick={() => setSkillOpen(true)}>
-          <Plus />
-          Add skill
-        </Button>
-      </div>
-      {skills.length === 0 ? (
-        <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-          This hero has no skill rows yet.
-        </p>
-      ) : (
-        <div className="space-y-px">
-          {skills.map((skill) => (
-            <div key={skill.typeValue} className="flex items-center gap-3 rounded-md px-3 py-1 odd:bg-muted/50">
-              <span className="flex size-7 items-center justify-center rounded-full border bg-background text-xs font-semibold tabular-nums">
-                {skill.level}
-              </span>
-              <span className="flex-1 text-sm">{skillLabel(skill.typeValue)}</span>
-              <span className="text-xs text-muted-foreground tabular-nums">
-                max {skillLimit(character.limits, skill.typeValue)}
-              </span>
-              <NumberField
-                value={skill.level}
-                onCommit={(level) => void setSkill(character.cid, skill.typeValue, level)}
-                max={skillLimit(character.limits, skill.typeValue)}
-                disabled={busy}
-                ariaLabel={`${skillLabel(skill.typeValue)} level`}
-                className="h-8 w-24 border-transparent bg-transparent text-base font-medium shadow-none hover:border-input focus-visible:border-ring dark:bg-transparent"
-              />
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                title="Remove this skill row"
-                disabled={busy}
-                onClick={() => void removeSkill(character.cid, skill.typeValue)}
-              >
-                <Trash2 />
-                <span className="sr-only">Remove skill</span>
-              </Button>
-            </div>
-          ))}
+    <div className="grid max-w-4xl gap-6 lg:grid-cols-[minmax(0,1fr)_17rem]">
+      <div className="space-y-5">
+        <div className="grid grid-cols-2 gap-x-6">
+          <div className="space-y-2">{left.map(node)}</div>
+          <div className="space-y-2">{right.map(node)}</div>
         </div>
-      )}
-      <SkillDialog
-        open={skillOpen}
-        onOpenChange={setSkillOpen}
-        limits={character.limits}
-        busy={busy}
-        onAdd={(typeValue, level) => {
-          void setSkill(character.cid, typeValue, level);
-          setSkillOpen(false);
-        }}
-      />
+        {rest.length > 0 && <div className="space-y-2 border-t pt-4">{rest.map(node)}</div>}
+      </div>
+      <SkillDetail key={selected.typeValue} skill={selected} character={character} language={language} busy={busy} />
     </div>
+  );
+}
+
+function SkillNode({
+  skill,
+  language,
+  selected,
+  onSelect,
+}: {
+  skill: Skill;
+  language: string;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const indent = SKILL_INDENT[skill.info?.order ?? 0] ?? 0;
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      style={{ marginLeft: `${(indent + 1) * 1.5}rem` }}
+      className={cn(
+        'flex w-fit max-w-full items-center gap-3 rounded-full py-1 pr-4 pl-1 text-left outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring',
+        selected && 'bg-muted ring-1 ring-brand',
+        !skill.saved && skill.editable && 'opacity-55',
+      )}
+    >
+      <span className="relative shrink-0">
+        <SkillIcon skill={skill} size={48} />
+        <span className="absolute -bottom-1 -left-1 flex size-5 items-center justify-center rounded-full border bg-background text-[11px] font-semibold tabular-nums">
+          {skill.saved || !skill.editable ? skill.level : '–'}
+        </span>
+      </span>
+      <span className="min-w-0">
+        <span className="block truncate text-sm font-medium">{skillName(skill, language)}</span>
+        {skill.info?.master && <span className="block text-xs text-muted-foreground">Master skill</span>}
+      </span>
+    </button>
+  );
+}
+
+function SkillDetail({
+  skill,
+  character,
+  language,
+  busy,
+}: {
+  skill: Skill;
+  character: Character;
+  language: string;
+  busy: boolean;
+}) {
+  const setSkill = useApp((state) => state.setSkill);
+  const removeSkill = useApp((state) => state.removeSkill);
+  const max = skillLimit(character.limits, skill.typeValue);
+  const name = skillName(skill, language);
+  const description = language === 'fr' ? skill.info?.descFr : skill.info?.descEn;
+
+  return (
+    <aside className="flex flex-col items-center gap-3 self-start rounded-lg border p-5 text-center">
+      <SkillIcon skill={skill} size={88} />
+      <div>
+        <div className="text-sm text-muted-foreground tabular-nums">
+          {skill.saved || !skill.editable ? `Lv. ${skill.level}` : 'Not in this save'}
+        </div>
+        <h3 className="font-heading text-lg font-semibold">{name}</h3>
+      </div>
+      {description && <p className="text-sm text-muted-foreground">{description}</p>}
+      <div className="mt-1 w-full border-t pt-4">
+        {!skill.editable ? (
+          <p className="text-xs text-muted-foreground">
+            The game keeps no save row for this slot. It is always at level {skill.level}.
+          </p>
+        ) : skill.saved ? (
+          <div className="flex items-center justify-center gap-2">
+            <NumberField
+              value={skill.level}
+              onCommit={(level) => void setSkill(character.cid, skill.typeValue, level)}
+              max={max}
+              disabled={busy}
+              ariaLabel={`${name} level`}
+              className="h-8 w-20"
+            />
+            <span className="text-xs text-muted-foreground tabular-nums">max {max}</span>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              title="Remove this skill's save row"
+              disabled={busy}
+              onClick={() => void removeSkill(character.cid, skill.typeValue)}
+            >
+              <Trash2 />
+              <span className="sr-only">Remove skill row</span>
+            </Button>
+          </div>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={busy || max < 1}
+            onClick={() => void setSkill(character.cid, skill.typeValue, 1)}
+          >
+            <Plus />
+            Add at level 1
+          </Button>
+        )}
+      </div>
+    </aside>
   );
 }
 
@@ -608,74 +689,6 @@ function TeamCard({
         })}
       </div>
     </div>
-  );
-}
-
-function SkillDialog({
-  open,
-  onOpenChange,
-  limits,
-  busy,
-  onAdd,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  /** Null until a hero is selected; the dialog cannot add anything then. */
-  limits: GrowthLimits | null;
-  busy: boolean;
-  onAdd: (typeValue: number, level: number) => void;
-}) {
-  const [typeValue, setTypeValue] = useState('1');
-  const [level, setLevel] = useState('1');
-  const parsedType = Number(typeValue) || 0;
-  const parsedLevel = Number(level) || 0;
-  const maxLevel = limits ? skillLimit(limits, parsedType) : 0;
-  const valid = limits !== null && SKILL_TYPES.includes(parsedType) && parsedLevel >= 0 && parsedLevel <= maxLevel;
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add a skill row</DialogTitle>
-          <DialogDescription>
-            TYPE_VALUE identifies the skill slot: 1–4 active, 5–7 basic, and 801 special.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="skill-type">TYPE_VALUE</Label>
-            <Input
-              id="skill-type"
-              value={typeValue}
-              inputMode="numeric"
-              className="numeric"
-              onChange={(event) => setTypeValue(event.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">1–7 or 801</p>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="skill-level">Level</Label>
-            <Input
-              id="skill-level"
-              value={level}
-              inputMode="numeric"
-              className="numeric"
-              onChange={(event) => setLevel(event.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">0–{maxLevel} for this hero's breakthrough and slot</p>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button disabled={busy || !valid} onClick={() => onAdd(parsedType, parsedLevel)}>
-            {busy ? <Spinner /> : <Plus />}
-            Add skill
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
 

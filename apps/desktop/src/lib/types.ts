@@ -234,9 +234,28 @@ export interface HeroEntry {
 
 export type HeroSource = { kind: 'shop' } | { kind: 'quest'; questId: number; nameEn: string; nameFr: string };
 
+/** One slot of a hero's skill tree from the game data. */
+export interface SkillInfo {
+  type: number;
+  /** The game's SlotOrder: 1–4 the left column, 5–8 the right, 9 the master skill. */
+  order: number;
+  master: boolean;
+  nameEn: string;
+  nameFr: string;
+  descEn: string;
+  descFr: string;
+  iconX: number;
+  iconY: number;
+}
+
 export interface Skill {
   typeValue: number;
   level: number;
+  /** Whether the save has a tb_skill_growth row for this slot. */
+  saved: boolean;
+  /** False for Dodge, which the game never stores and keeps at level 1. */
+  editable: boolean;
+  info: SkillInfo | null;
 }
 
 export interface TeamSlot {

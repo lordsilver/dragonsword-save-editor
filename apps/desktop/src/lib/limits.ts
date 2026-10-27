@@ -37,9 +37,6 @@ export const MAX_STAT = 2_147_483_647;
 export const MAX_TRANSCEND_TOTAL = 99;
 export const MAX_SOLDIER_GRADE = 99;
 
-/** The only skill type values the game writes: regular slots 1–7 and 801. */
-export const SKILL_TYPES: readonly number[] = [1, 2, 3, 4, 5, 6, 7, 801];
-
 export interface CurrencyLimit {
   max: number;
   /** True only when a nonzero balance was seen in the reference save. */

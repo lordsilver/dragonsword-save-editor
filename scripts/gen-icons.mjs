@@ -19,10 +19,12 @@
 //   cropped the same way;
 // - a familiar without an item icon: the icon of the familiar whose
 //   VehicleCharacterData row names the same image.
+// It also packs each hero skill's icon from crates/core/data/skills.json.
 // It packs them into apps/desktop/src/assets/sprite.webp and rewrites the
-// cell offsets in crates/core/data/items.json and items_extra.json (the game's
-// items that items.json lacks, from scripts/gen-catalog-extras.mjs). Cell 0 stays empty, because an
-// item at offset 0,0 means "no icon" to the catalog.
+// cell offsets in crates/core/data/items.json, items_extra.json (the game's
+// items that items.json lacks) and skills.json, the last two written by
+// scripts/gen-catalog-extras.mjs. Cell 0 stays empty, because an item at
+// offset 0,0 means "no icon" to the catalog.
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -40,6 +42,7 @@ const COLUMNS = 32;
 
 const catalogPath = new URL('../crates/core/data/items.json', import.meta.url);
 const extraPath = new URL('../crates/core/data/items_extra.json', import.meta.url);
+const skillsPath = new URL('../crates/core/data/skills.json', import.meta.url);
 const spritePath = new URL('../apps/desktop/src/assets/sprite.webp', import.meta.url);
 
 function fail(message) {
@@ -117,6 +120,15 @@ for (const [cid, item] of Object.entries(allItems)) {
   sources.set(key, { ...source, cell: 0 });
 }
 
+// Skill icons have no fallbacks; scripts/gen-catalog-extras.mjs already
+// checked that each names a texture.
+const skills = JSON.parse(readFileSync(skillsPath, 'utf8'));
+const skillSlots = Object.values(skills.heroes).flat();
+for (const slot of skillSlots) {
+  if (!exists(slot.iconPath)) fail(`skill icon ${slot.iconPath} is not in the export`);
+  sources.set(`${slot.iconPath}|false`, { path: slot.iconPath, crop: false, cell: 0 });
+}
+
 // Cells in game-path order, so a rerun on the same export gives the same sheet.
 const ordered = [...sources.keys()].sort();
 for (const [index, key] of ordered.entries()) sources.get(key).cell = index + 1;
@@ -152,6 +164,12 @@ for (const [cid, item] of [...Object.entries(catalog.items), ...Object.entries(e
   item.x = -(cell % COLUMNS) * CELL;
   item.y = -Math.floor(cell / COLUMNS) * CELL;
 }
+for (const slot of skillSlots) {
+  const cell = sources.get(`${slot.iconPath}|false`).cell;
+  slot.x = -(cell % COLUMNS) * CELL;
+  slot.y = -Math.floor(cell / COLUMNS) * CELL;
+}
+writeFileSync(skillsPath, `${JSON.stringify(skills, null, 2)}\n`);
 catalog.iconSize = CELL;
 catalog._source =
   "Item names datamined from the game's own GameItemData/StringData (paks). Icons are the game's own textures, packed by scripts/gen-icons.mjs from the export described in docs/game-assets.md.";
@@ -159,7 +177,7 @@ writeFileSync(catalogPath, `${JSON.stringify(catalog, null, 2)}\n`);
 writeFileSync(extraPath, `${JSON.stringify(extra, null, 2)}\n`);
 
 console.log(
-  `packed ${ordered.length} icons for ${placed.size} of ${Object.keys(allItems).length} items into ${COLUMNS}x${sheetRows} cells of ${CELL}px (${(sheet.length / 1048576).toFixed(1)} MB)`,
+  `packed ${ordered.length} icons for ${placed.size} of ${Object.keys(allItems).length} items and ${skillSlots.length} skill slots into ${COLUMNS}x${sheetRows} cells of ${CELL}px (${(sheet.length / 1048576).toFixed(1)} MB)`,
 );
 if (missing.length > 0) {
   console.log(`${missing.length} items have no icon in the export:`);

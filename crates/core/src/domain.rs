@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use rusqlite::{Connection, OptionalExtension, params};
 use serde::Serialize;
 
-use crate::catalog::{Catalog, EffectText, Item, TitleStat};
+use crate::catalog::{Catalog, EffectText, Item, SkillSeed, TitleStat};
 use crate::error::{Error, Result};
 use crate::growth::{self, Growth, REGION};
 use crate::save::SaveSession;
@@ -1446,18 +1446,43 @@ impl<'a> Game<'a> {
         Ok(())
     }
 
+    /// The hero's skill tree in the game's slot order, with the save's level
+    /// for each slot, followed by any save row the game data does not name.
     pub fn skills(&self, cid: i64) -> Result<Vec<Skill>> {
         let mut statement = self.conn().prepare(
             "SELECT TYPE_VALUE, SLOT_LEVEL FROM tb_skill_growth
               WHERE USER_DBID=? AND CHARACTER_CID=? ORDER BY TYPE_VALUE",
         )?;
         let rows = statement.query_map(params![self.user_id, cid], |row| {
-            Ok(Skill {
-                type_value: row.get(0)?,
-                level: row.get::<_, Option<i64>>(1)?.unwrap_or(0),
-            })
+            Ok((
+                row.get::<_, i64>(0)?,
+                row.get::<_, Option<i64>>(1)?.unwrap_or(0),
+            ))
         })?;
-        Ok(rows.collect::<std::result::Result<Vec<_>, _>>()?)
+        let mut levels = rows.collect::<std::result::Result<Vec<_>, _>>()?;
+        let mut skills = Vec::new();
+        for seed in Catalog::shared().hero_skills(cid) {
+            let saved = levels.iter().position(|(kind, _)| *kind == seed.type_value);
+            let level = saved.map(|index| levels.remove(index).1);
+            let editable = SKILL_TYPES.contains(&seed.type_value);
+            skills.push(Skill {
+                type_value: seed.type_value,
+                // The game keeps no row for Dodge, its one single-level slot
+                // outside the editable types, which is always at level 1.
+                level: level.unwrap_or(if editable { 0 } else { 1 }),
+                saved: level.is_some(),
+                editable,
+                info: Some(seed.clone()),
+            });
+        }
+        skills.extend(levels.into_iter().map(|(type_value, level)| Skill {
+            type_value,
+            level,
+            saved: true,
+            editable: SKILL_TYPES.contains(&type_value),
+            info: None,
+        }));
+        Ok(skills)
     }
 
     pub fn set_skill(&mut self, cid: i64, type_value: i64, level: i64) -> Result<()> {
@@ -2923,6 +2948,12 @@ pub struct Character {
 pub struct Skill {
     pub type_value: i64,
     pub level: i64,
+    /// Whether the save has a `tb_skill_growth` row for this slot.
+    pub saved: bool,
+    /// Whether the editor may write this slot's level.
+    pub editable: bool,
+    /// The game's name, description and icon for the slot, when known.
+    pub info: Option<SkillSeed>,
 }
 
 fn team_rows(conn: &Connection, user_id: i64) -> Result<Vec<(i64, [i64; 3])>> {

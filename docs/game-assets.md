@@ -21,11 +21,13 @@ node scripts/gen-icons.mjs <assets-dir> <extract-dir>
 
 `<assets-dir>` is the export below, unzipped. `<extract-dir>` is the folder of XML tables used by `scripts/gen-growth.mjs`; only `PCCharacterData.xml` and `VehicleCharacterData.xml` are read. The script is deterministic for a given export. `apps/desktop/test/icons.test.ts` checks that the frontend's cell size matches `iconSize`.
 
-## Items and titles items.json lacks
+## Items, titles and skills from the game tables
 
 `crates/core/data/items.json` stops at 16 of the game's 24 costumes and misses one title. `scripts/gen-catalog-extras.mjs <extract-dir>` adds every `GameItemData` row that `items.json` lacks to `items_extra.json`, named in English and French from `StringData`, and rebuilds `titles.json` whole from `AccountTitleData`: all 109 titles with their colour and every stat bonus (a `*_Per` value is a fraction, 0.023 is +2.3%; the earlier file had dropped them, so 44 titles showed none). On 2026-10-27 that added costumes 9990032–9990039 and title 2103020, and took ten title names from the game's current strings (for example "Veteran Mercenary Crew", as the game's menus say). A new item type stops the script until its catalog category is chosen.
 
-Run it before `gen-icons.mjs`, which gives the new items their icons:
+The same script writes `crates/core/data/skills.json` from `PCSkillGrowthData`: each of the 26 heroes' nine skill slots as the game's Skill screen lays them out. `type` is the save's `tb_skill_growth.TYPE_VALUE`, and `order` is the game's `SlotOrder`: 1–4 the left column (attack 6, jump attack 5, Dodge 8, roll attack 7), 5–8 the right column (actives 1 and 2, signals 3 and 4) and 9 the master skill (801). Names and descriptions come from `StringData` with the colour tags removed. The damage percentages the game shows under a description are not included: they come from `PCComboLevelData` through each skill's data asset, which the tables do not link. Each icon is a texture or a Paper2D sprite under `Icon_Skill`; the export has every sprite's texture as a PNG without the `_Sprite` suffix, so `gen-icons.mjs` packs it like an item icon (118 distinct icons) and writes the offsets back into `skills.json`.
+
+Run it before `gen-icons.mjs`, which gives the new items and the skills their icons:
 
 ```bash
 node scripts/gen-catalog-extras.mjs <extract-dir>
@@ -99,7 +101,7 @@ The game was only read: nothing under the install folder was created or changed,
 
 By folder under `/Game/Art/UI/InGame/`: Common 860, Icon_Item 613, 03_System 574, Icon_Skill 319, Img_Item 301, Btn 222, Img_Character 195, Frame 172, Img_Guide 111, Mask 93, Img_Summon 60, Icon_Character 53, Img_Vehicle 34, BackGround 28, Img_Monster 10, StillCut 9, 02_Main 4. Eighteen more come from outside `/Game/Art/UI` (engine and editor icons, which can be ignored).
 
-Not used yet but useful for the UI: skill icons (`Icon_Skill`), hero busts and key art (`Img_Character/Mini`, `Key`, `keyHalf`), the Mercenary Crew grade emblems and other menu sprites in the atlases (`03_System`).
+Not used yet but useful for the UI: hero busts and key art (`Img_Character/Mini`, `Key`, `keyHalf`), the Mercenary Crew grade emblems and other menu sprites in the atlases (`03_System`).
 
 ### Textures the game does not ship
 

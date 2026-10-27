@@ -61,12 +61,12 @@ Shows materials and cooked dishes as tiles, coloured by grade as in the game's b
 
 ### Heroes
 
-Laid out like the game's Hero menu: the roster on the left, and the selected hero's portrait, breakthrough stars and level bar on the right, with three tabs. **Information** edits level, EXP, breakthrough, transcendence, HP (current health) and soldier grade; **Skills** edits the skill rows; **Equipment** shows the five gear slots, the karma and the familiar. The tab stays as you switch heroes. The three slots of each team page are below.
+Laid out like the game's Hero menu: the roster on the left, and the selected hero's portrait, breakthrough stars and level bar on the right, with three tabs. **Information** edits level, EXP, breakthrough, transcendence, HP (current health) and soldier grade; **Skills** shows the hero's skill tree as the game draws it, with each skill's name, icon and description, and edits its level; **Equipment** shows the five gear slots, the karma and the familiar. The tab stays as you switch heroes. The three slots of each team page are below.
 - **Recruit hero** adds one of the 19 heroes the game hands out (shop, quest rewards and story) the way the game does when a hero joins. A story hero the save holds but who has not joined yet shows as "Not joined yet".
 - Level, EXP, ascension, and transcendence follow the hero's own breakthrough caps above. The header shows the stage, for example "Breakthrough 1 of 5 · level cap 30 · skill cap 5". Level starts at 1, and a level change writes that level's starting EXP.
 - Buying a shop hero in the game still works too: add **Fate's Invitation** (CID 1,000,500) on the Inventory screen, save, and buy the hero in the game's shop.
 - Removing a character also clears their skills, team slots, loadout links, and costume assignments.
-- Skills are keyed by `TYPE_VALUE`; the game writes 1–7 and 801. Active slots 1–4 and basic slots 5–7 follow the hero's breakthrough stage, and 801 caps at 1.
+- Skills are keyed by `TYPE_VALUE`; the game writes 1–7 and 801. Active and signal skills (1–4) and the attack, jump-attack and roll-attack skills (5–7) follow the hero's breakthrough stage, and the master skill (801) caps at 1. Dodge (8) has no save row and is always level 1. A slot the save has no row for is shown dimmed and can be added at level 1.
 
 ### Equipment
 

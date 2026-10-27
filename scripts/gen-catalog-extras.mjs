@@ -14,6 +14,14 @@
 //
 // titles.json is rebuilt whole from AccountTitleData: every title with its
 // name, colour and stat bonuses (a *_Per value is a fraction, 0.023 = 2.3%).
+//
+// skills.json is rebuilt whole from PCSkillGrowthData: each hero's skill
+// slots as the game's Skill screen shows them. TypeValue is the save's
+// tb_skill_growth TYPE_VALUE; SlotOrder 1-4 is the left column (attack, jump
+// attack, dodge, roll attack), 5-8 the right column (two actives, two
+// signals) and 9 the master skill. The icon is a texture or a Paper2D
+// sprite; the export has each sprite's texture as a PNG without the _Sprite
+// suffix, and scripts/gen-icons.mjs packs it and writes the offsets.
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -112,3 +120,51 @@ const titleFile = {
 };
 writeFileSync(titlesPath, `${JSON.stringify(titleFile, null, 2)}\n`);
 console.log(`wrote ${titles.length} titles, ${titles.filter((title) => title.stats).length} with stat bonuses`);
+
+/** A StringData text without the game's colour tags (<LightOrange>…</>). */
+function plain(text) {
+  return text.replace(/<[^<>]*>/g, '').trim();
+}
+
+const heroSkills = {};
+for (const row of rows('PCSkillGrowthData')) {
+  const cid = row.CharacterID;
+  const type = Number(row.TypeValue);
+  heroSkills[cid] ??= {};
+  // Every level of a slot names the same skill; keep the first row.
+  if (heroSkills[cid][type]) continue;
+  const name = strings.get(row.Name);
+  if (!name?.En) fail(`hero ${cid} skill ${type} has no English name (string ${row.Name})`);
+  const desc = strings.get(row.SkillDesc_1 || row.SkillDesc);
+  const icon = row.Icon.match(/'\/Game\/([^.']+?)(?:_Sprite)?\./)?.[1];
+  if (!icon) fail(`hero ${cid} skill ${type} has no sprite icon: ${row.Icon}`);
+  heroSkills[cid][type] = {
+    type,
+    order: Number(row.SlotOrder),
+    master: row.SkllType === 'MASTER',
+    nameEn: name.En.trim(),
+    nameFr: (name.Fr || name.En).trim(),
+    descEn: desc?.En ? plain(desc.En) : '',
+    descFr: desc ? plain(desc.Fr || desc.En) : '',
+    iconPath: icon,
+    x: 0,
+    y: 0,
+  };
+}
+const skillsPath = new URL('../crates/core/data/skills.json', import.meta.url);
+const skillFile = {
+  _source:
+    "Each hero's skill slots from the game's own PCSkillGrowthData/StringData, written by scripts/gen-catalog-extras.mjs; icon offsets come from scripts/gen-icons.mjs. type = tb_skill_growth TYPE_VALUE, order = the game's SlotOrder.",
+  heroes: Object.fromEntries(
+    Object.entries(heroSkills).map(([cid, slots]) => [
+      cid,
+      Object.values(slots).sort((left, right) => left.order - right.order),
+    ]),
+  ),
+};
+for (const [cid, slots] of Object.entries(skillFile.heroes)) {
+  const orders = slots.map((slot) => slot.order).join(',');
+  if (orders !== '1,2,3,4,5,6,7,8,9') fail(`hero ${cid} has skill slots ${orders}, not 1-9`);
+}
+writeFileSync(skillsPath, `${JSON.stringify(skillFile, null, 2)}\n`);
+console.log(`wrote skills for ${Object.keys(skillFile.heroes).length} heroes`);
