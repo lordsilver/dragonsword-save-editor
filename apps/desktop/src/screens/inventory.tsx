@@ -2,6 +2,7 @@ import { Backpack, PackagePlus, Wand2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ConfirmButton, EmptyPanel } from '@/components/common';
 import { NumberField, SearchField } from '@/components/fields';
+import { gradeCard, gradeTile } from '@/components/grade-art';
 import { ItemIcon, gradeTone } from '@/components/item-icon';
 import { PageHeader, Toolbar } from '@/components/page';
 import { CountPill } from '@/components/summary';
@@ -168,27 +169,25 @@ export function InventoryScreen() {
                     aria-pressed={active}
                     title={itemName(stack.item, language)}
                     onClick={() => setSelectedKey(key)}
+                    // The game's own grade tile, with the count bar laid over its
+                    // foot as in the game's inventory.
+                    style={{ backgroundImage: `url(${gradeTile(stack.item.grade)})` }}
                     className={cn(
-                      'group overflow-hidden rounded-lg border text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
-                      active ? 'border-brand ring-2 ring-brand/60' : 'hover:border-foreground/30',
+                      'group relative flex aspect-[194/238] flex-col items-center overflow-hidden rounded-lg bg-cover bg-center text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+                      active ? 'ring-2 ring-brand' : 'hover:brightness-110',
                     )}
                   >
-                    <div
-                      className={cn(
-                        'flex aspect-square items-center justify-center',
-                        gradeBackground(stack.item.grade),
-                      )}
-                    >
+                    <div className="flex flex-1 items-center justify-center">
                       <ItemIcon
                         item={stack.item}
-                        size={56}
+                        size={60}
                         className="border-none bg-transparent bg-none text-white/90"
                       />
                     </div>
                     <div
                       className={cn(
-                        'bg-background/80 py-0.5 text-center text-sm font-semibold tabular-nums',
-                        stack.count === 0 && 'text-muted-foreground',
+                        'mx-[4%] mb-[4%] self-stretch rounded-b-md bg-zinc-900/75 py-0.5 text-center text-sm font-semibold text-white tabular-nums',
+                        stack.count === 0 && 'text-white/50',
                       )}
                     >
                       {formatNumber(stack.count)}
@@ -228,24 +227,6 @@ export function InventoryScreen() {
   );
 }
 
-/** The tile colour the game gives each grade, saturated in either theme as in the game. */
-function gradeBackground(grade: string): string {
-  switch (grade.toLowerCase()) {
-    case 'legendary':
-    case 'mythic':
-      return 'bg-gradient-to-b from-orange-500 to-orange-800';
-    case 'epic':
-      return 'bg-gradient-to-b from-fuchsia-600 to-purple-900';
-    case 'rare':
-      return 'bg-gradient-to-b from-sky-600 to-blue-900';
-    case 'superior':
-    case 'uncommon':
-      return 'bg-gradient-to-b from-emerald-600 to-teal-900';
-    default:
-      return 'bg-gradient-to-b from-zinc-500 to-zinc-800';
-  }
-}
-
 function StackDetail({
   stack,
   language,
@@ -264,18 +245,24 @@ function StackDetail({
   const name = itemName(stack.item, language);
   return (
     <aside className="scroll-thin flex min-h-0 flex-col gap-5 overflow-y-auto border-l p-5">
-      <div className="flex flex-col items-center gap-3 text-center">
+      <div className="flex flex-col gap-3">
+        {/* The game's item card header: the grade's own artwork, name on the
+            left and the icon on the right. */}
         <div
-          className={cn(
-            'flex size-28 items-center justify-center rounded-xl border',
-            gradeBackground(stack.item.grade),
-          )}
+          className="relative flex aspect-[460/200] items-center overflow-hidden rounded-lg bg-cover bg-center p-3"
+          style={{ backgroundImage: `url(${gradeCard(stack.item.grade)})` }}
         >
-          <ItemIcon item={stack.item} size={88} className="border-none bg-transparent bg-none text-white/90" />
+          <h2 className="z-10 max-w-[60%] text-lg leading-tight font-semibold tracking-tight text-balance text-white drop-shadow-[0_1px_2px_rgb(0_0_0/0.6)]">
+            {name}
+          </h2>
+          <ItemIcon
+            item={stack.item}
+            size={96}
+            className="absolute right-2 border-none bg-transparent bg-none text-white/90"
+          />
         </div>
         <div className="space-y-1">
-          <h2 className="text-lg font-semibold tracking-tight text-balance">{name}</h2>
-          <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs">
             {stack.item.grade && (
               <span className={cn('rounded border px-1.5 py-px', gradeTone(stack.item.grade))}>{stack.item.grade}</span>
             )}

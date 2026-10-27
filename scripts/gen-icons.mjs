@@ -21,6 +21,11 @@
 //   VehicleCharacterData row names the same image.
 // It also packs each hero skill's icon and each skill effect's badge from
 // crates/core/data/skills.json.
+//
+// Last, it writes the game's grade artwork next to the sprite: the inventory
+// tile background (Frame/Frame_Item_Grade_0N) as grade-tile-<grade>.webp and
+// the item card header (Frame/Frame_Grade_0N) as grade-card-<grade>.webp, for
+// N = 1..5 from normal to legendary.
 // It packs them into apps/desktop/src/assets/sprite.webp and rewrites the
 // cell offsets in crates/core/data/items.json, items_extra.json (the game's
 // items that items.json lacks) and skills.json, the last two written by
@@ -176,6 +181,23 @@ catalog._source =
   "Item names datamined from the game's own GameItemData/StringData (paks). Icons are the game's own textures, packed by scripts/gen-icons.mjs from the export described in docs/game-assets.md.";
 writeFileSync(catalogPath, `${JSON.stringify(catalog, null, 2)}\n`);
 writeFileSync(extraPath, `${JSON.stringify(extra, null, 2)}\n`);
+
+const GRADES = ['normal', 'superior', 'rare', 'epic', 'legendary'];
+const assetsOut = new URL('../apps/desktop/src/assets/', import.meta.url);
+for (const [index, grade] of GRADES.entries()) {
+  for (const [kind, texture, width] of [
+    ['tile', 'Frame_Item_Grade', 194],
+    ['card', 'Frame_Grade', 460],
+  ]) {
+    const path = `Art/UI/InGame/Frame/${texture}_0${index + 1}`;
+    if (!exists(path)) fail(`grade texture ${path} is not in the export`);
+    const out = await sharp(join(assetsDir, `${path}.png`))
+      .resize({ width, kernel: 'lanczos3' })
+      .webp({ quality: 90, alphaQuality: 100, effort: 6 })
+      .toBuffer();
+    writeFileSync(new URL(`grade-${kind}-${grade}.webp`, assetsOut), out);
+  }
+}
 
 console.log(
   `packed ${ordered.length} icons for ${placed.size} of ${Object.keys(allItems).length} items and ${skillSlots.length} skill slots and effects into ${COLUMNS}x${sheetRows} cells of ${CELL}px (${(sheet.length / 1048576).toFixed(1)} MB)`,

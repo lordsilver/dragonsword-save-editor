@@ -21,6 +21,10 @@ node scripts/gen-icons.mjs <assets-dir> <extract-dir>
 
 `<assets-dir>` is the export below, unzipped. `<extract-dir>` is the folder of XML tables used by `scripts/gen-growth.mjs`; only `PCCharacterData.xml` and `VehicleCharacterData.xml` are read. The script is deterministic for a given export. `apps/desktop/test/icons.test.ts` checks that the frontend's cell size matches `iconSize`.
 
+## Grade artwork
+
+`gen-icons.mjs` also writes the game's grade artwork next to the sprite, for normal, superior, rare, epic and legendary (textures 01 to 05): the inventory tile background `Frame/Frame_Item_Grade_0N` as `grade-tile-<grade>.webp`, and the item card header `Frame/Frame_Grade_0N` as `grade-card-<grade>.webp`. The inventory draws its tiles and its item card from them, as the game's inventory does.
+
 ## Items, titles and skills from the game tables
 
 `crates/core/data/items.json` stops at 16 of the game's 24 costumes and misses one title. `scripts/gen-catalog-extras.mjs <extract-dir>` adds every `GameItemData` row that `items.json` lacks to `items_extra.json`, named in English and French from `StringData`, and rebuilds `titles.json` whole from `AccountTitleData`: all 109 titles with their colour and every stat bonus (a `*_Per` value is a fraction, 0.023 is +2.3%; the earlier file had dropped them, so 44 titles showed none). On 2026-10-27 that added costumes 9990032–9990039 and title 2103020, and took ten title names from the game's current strings (for example "Veteran Mercenary Crew", as the game's menus say). A new item type stops the script until its catalog category is chosen.
