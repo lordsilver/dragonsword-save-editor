@@ -354,12 +354,14 @@ function HeroInformation({ character, busy }: { character: Character; busy: bool
  * effect's badge, so the disc is shaded from that colour; a plain attack keeps
  * the grey metal disc.
  */
-function discStyle(skill: Skill): CSSProperties | undefined {
+function disc(skill: Skill): { underlay: string; style: CSSProperties } {
   const color = skill.effect?.color;
-  if (!color) return undefined;
+  if (!color) {
+    return { underlay: 'radial-gradient(circle, #71717a, #27272a)', style: { borderColor: 'rgb(255 255 255 / 0.25)' } };
+  }
   return {
-    backgroundImage: `radial-gradient(circle, ${color}, color-mix(in oklab, ${color} 65%, black))`,
-    borderColor: `color-mix(in oklab, ${color} 50%, white)`,
+    underlay: `radial-gradient(circle, ${color}, color-mix(in oklab, ${color} 65%, black))`,
+    style: { borderColor: `color-mix(in oklab, ${color} 50%, white)` },
   };
 }
 
@@ -386,8 +388,8 @@ function SkillIcon({ skill, size }: { skill: Skill; size: number }) {
           icon: Boolean(skill.info && (skill.info.iconX || skill.info.iconY)),
         }}
         size={size}
-        className="rounded-full border-2 border-white/25 bg-radial from-zinc-500 to-zinc-800"
-        style={discStyle(skill)}
+        className="rounded-full border-2"
+        {...disc(skill)}
       />
       {skill.effect && (
         <ItemIcon

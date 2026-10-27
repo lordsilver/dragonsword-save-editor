@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 
 /** Pixels per sprite cell: `iconSize` in items.json, written by scripts/gen-icons.mjs. */
 export const SPRITE_CELL = 128;
+/** Cells per sprite row, `COLUMNS` in scripts/gen-icons.mjs. */
+export const SPRITE_COLUMNS = 32;
 
 const CATEGORY_COLORS: Record<string, string> = {
   character: 'from-sky-500/25 to-sky-900/10 text-sky-300',
@@ -22,12 +24,15 @@ export function ItemIcon({
   size = 40,
   className,
   style,
+  underlay,
 }: {
   item: Pick<Item, 'nameEn' | 'iconX' | 'iconY' | 'category' | 'icon'>;
   size?: number;
   className?: string;
-  /** Extra styles for the icon's frame, such as a computed background. */
+  /** Extra styles for the icon's frame, such as its border colour. */
   style?: CSSProperties;
+  /** A CSS image drawn under the icon, such as a skill's tinted disc. */
+  underlay?: string;
 }) {
   if (!item.icon) {
     const tone = CATEGORY_COLORS[item.category] ?? 'from-muted to-muted/40 text-muted-foreground';
@@ -46,25 +51,25 @@ export function ItemIcon({
     );
   }
 
+  // The cell is scaled through background-size and drawn from the border
+  // box, so a frame's border never shifts the icon off centre.
   const scale = size / SPRITE_CELL;
+  const layers = (sprite: string, under: string) => (underlay ? `${sprite}, ${under}` : sprite);
   return (
     <div
       aria-hidden
       className={cn('relative shrink-0 overflow-hidden rounded-md border border-white/5 bg-black/20', className)}
-      style={{ ...style, width: size, height: size }}
-    >
-      <div
-        style={{
-          width: SPRITE_CELL,
-          height: SPRITE_CELL,
-          backgroundImage: `url(${sprite})`,
-          backgroundPosition: `${item.iconX}px ${item.iconY}px`,
-          backgroundRepeat: 'no-repeat',
-          transform: `scale(${scale})`,
-          transformOrigin: 'top left',
-        }}
-      />
-    </div>
+      style={{
+        ...style,
+        width: size,
+        height: size,
+        backgroundImage: layers(`url(${sprite})`, underlay ?? ''),
+        backgroundSize: layers(`${SPRITE_COLUMNS * SPRITE_CELL * scale}px auto`, '100% 100%'),
+        backgroundPosition: layers(`${item.iconX * scale}px ${item.iconY * scale}px`, 'center'),
+        backgroundRepeat: 'no-repeat',
+        backgroundOrigin: 'border-box',
+      }}
+    />
   );
 }
 
