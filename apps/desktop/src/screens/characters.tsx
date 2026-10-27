@@ -408,19 +408,14 @@ function SkillIcon({ skill, size }: { skill: Skill; size: number }) {
         )}
         style={disc(skill)}
       />
-      {/* The enlarged glyph is clipped to the frame's shape. */}
-      <span
-        aria-hidden
-        className="absolute inset-0"
-        style={{ clipPath: skill.info?.signal ? 'polygon(50% 0, 100% 50%, 50% 100%, 0 50%)' : 'circle(48%)' }}
-      >
-        <ItemIcon
-          item={glyph}
-          size={glyphSize}
-          className="absolute rounded-none border-0 bg-transparent brightness-125 contrast-110"
-          style={{ left: (size - glyphSize) / 2, top: (size - glyphSize) / 2 }}
-        />
-      </span>
+      {/* Like the game's, the glyph is about as large as its frame, so a tip
+          (a sword's point, a wing) can reach past the edge. */}
+      <ItemIcon
+        item={glyph}
+        size={glyphSize}
+        className="absolute rounded-none border-0 bg-transparent brightness-125 contrast-110"
+        style={{ left: (size - glyphSize) / 2, top: (size - glyphSize) / 2 }}
+      />
       {skill.effect && (
         <ItemIcon
           item={{ ...skill.effect, category: 'skill', icon: true }}
