@@ -817,7 +817,10 @@ fn only_heroes_the_game_hands_out_can_be_recruited() {
         .iter()
         .position(|hero| matches!(hero.sources[0], dsa_core::domain::HeroSource::Shop))
         .expect("a shop hero to recruit");
-    assert!(story.len() <= first_shop, "story heroes come before the shop's");
+    assert!(
+        story.len() <= first_shop,
+        "story heroes come before the shop's"
+    );
 }
 
 fn character(game: &Game<'_>, cid: i64) -> dsa_core::domain::Character {
