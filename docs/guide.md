@@ -41,7 +41,7 @@ Existing values above a cap stay editable, and every field uses `max(cap, curren
 
 ## Editing
 
-Every screen edits only the open temporary copy. The title bar shows **Unsaved** until you save, and the sidebar shows whether the file on disk is current.
+Every screen edits only the open temporary copy. The status bar at the bottom shows **Unsaved changes** until you save, and holds **Save** (Ctrl+S), **Backup** (Ctrl+B), **Close** and the theme switch. The sidebar shows how many rows of each kind the save holds.
 
 ### Overview
 
@@ -57,14 +57,14 @@ Edit gold or aether crystals directly. **Set highest seen** fills the field with
 
 ### Inventory
 
-Lists stackable materials and cooked dishes. Edit a count, add a missing catalog item with **Add stackable**, or use **Fill stacks** to set every safe row to a chosen count. Material stacks are capped at 61,525; cooked dishes at 203. The **Max** button appears only for stack kinds Fill can safely raise and for cooked dishes.
+Shows materials and cooked dishes as tiles, coloured by grade as in the game's bag, with the count under each. Pick a tile to edit its count in the pane beside the grid, add a missing catalog item with **Add item**, or use **Fill material stacks** to raise every safe row. Material stacks are capped at 61,525; cooked dishes at 203. The **Max** button appears only for stack kinds Fill can safely raise and for cooked dishes.
 
-### Characters
+### Heroes
 
-The character list selects one character at a time. Edit level, EXP, ascension, HP, transcendence, and soldier grade, manage skills, and fill the three slots of each team page.
+Laid out like the game's Hero menu: the roster on the left, and the selected hero's portrait, breakthrough stars and level bar on the right, with three tabs. **Information** edits level, EXP, breakthrough, transcendence, HP (current health) and soldier grade; **Skills** edits the skill rows; **Equipment** shows the five gear slots, the karma and the familiar. The tab stays as you switch heroes. The three slots of each team page are below.
 - **Recruit hero** adds one of the 19 heroes the game hands out (shop, quest rewards and story) the way the game does when a hero joins. A story hero the save holds but who has not joined yet shows as "Not joined yet".
 - Level, EXP, ascension, and transcendence follow the hero's own breakthrough caps above. The header shows the stage, for example "Breakthrough 1 of 5 · level cap 30 · skill cap 5". Level starts at 1, and a level change writes that level's starting EXP.
-- The editor does not insert character rows. To recruit a shop character, add **Fate's Invitation** (CID 1,000,500) on the Inventory screen, save, then buy the character in the game's shop. The game writes the level-1 character row and purchase record. Story characters still arrive by playing.
+- Buying a shop hero in the game still works too: add **Fate's Invitation** (CID 1,000,500) on the Inventory screen, save, and buy the hero in the game's shop.
 - Removing a character also clears their skills, team slots, loadout links, and costume assignments.
 - Skills are keyed by `TYPE_VALUE`; the game writes 1–7 and 801. Active slots 1–4 and basic slots 5–7 follow the hero's breakthrough stage, and 801 caps at 1.
 

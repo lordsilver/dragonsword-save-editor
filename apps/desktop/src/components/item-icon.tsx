@@ -65,13 +65,13 @@ export function gradeTone(grade: string): string {
   switch (grade.toLowerCase()) {
     case 'legendary':
     case 'mythic':
-      return 'text-amber-300 border-amber-400/30 bg-amber-400/10';
+      return 'text-amber-700 dark:text-amber-300 border-amber-400/40 bg-amber-400/10';
     case 'epic':
-      return 'text-fuchsia-300 border-fuchsia-400/30 bg-fuchsia-400/10';
+      return 'text-fuchsia-700 dark:text-fuchsia-300 border-fuchsia-400/40 bg-fuchsia-400/10';
     case 'rare':
-      return 'text-sky-300 border-sky-400/30 bg-sky-400/10';
+      return 'text-sky-700 dark:text-sky-300 border-sky-400/40 bg-sky-400/10';
     case 'uncommon':
-      return 'text-emerald-300 border-emerald-400/30 bg-emerald-400/10';
+      return 'text-emerald-700 dark:text-emerald-300 border-emerald-400/40 bg-emerald-400/10';
     default:
       return 'text-muted-foreground border-border bg-muted/40';
   }

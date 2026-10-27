@@ -302,7 +302,7 @@ function ConsistencyPanel({ report }: { report: ConsistencyReport }) {
         ))}
       </ul>
       <p className="mt-3 text-xs text-muted-foreground">
-        Clear a broken gem link on the Equipment screen, or fix a team problem on the Characters screen.
+        Clear a broken gem link on the Equipment screen, or fix a team problem on the Heroes screen.
       </p>
     </Panel>
   );

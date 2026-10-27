@@ -1,10 +1,10 @@
-import { Backpack, ChefHat, PackagePlus, Search, Sparkles, Wand2 } from 'lucide-react';
+import { Backpack, PackagePlus, Wand2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ConfirmButton, EmptyPanel } from '@/components/common';
 import { NumberField, SearchField } from '@/components/fields';
 import { ItemIcon, gradeTone } from '@/components/item-icon';
-import { PageHeader, Panel, Toolbar } from '@/components/page';
-import { CountPill, InfoNote, StatTile } from '@/components/summary';
+import { PageHeader, Toolbar } from '@/components/page';
+import { CountPill } from '@/components/summary';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { MAX_DISH, MAX_STACK, isFillableStackKind } from '@/lib/limits';
 import { formatNumber, itemName, useApp } from '@/lib/store';
-import type { Item } from '@/lib/types';
+import type { Item, Stack } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 type Kind = 'all' | 'stackable' | 'cook';
@@ -31,7 +31,6 @@ export function InventoryScreen() {
   const stackables = useApp((state) => state.stackables);
   const save = useApp((state) => state.save);
   const language = useApp((state) => state.settings.language);
-  const compactRows = useApp((state) => state.settings.compactRows);
   const showUnknown = useApp((state) => state.settings.showUnknown);
   const pending = useApp((state) => state.pending);
   const setStack = useApp((state) => state.setStack);
@@ -41,7 +40,7 @@ export function InventoryScreen() {
   const [kind, setKind] = useState<Kind>('all');
   const [sort, setSort] = useState<Sort>('name');
   const [addOpen, setAddOpen] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
   const rows = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -63,7 +62,6 @@ export function InventoryScreen() {
     });
   }, [inventory, kind, query, showUnknown, sort]);
 
-  const visible = expanded ? rows : rows.slice(0, 200);
   const totalUnits = inventory.reduce((sum, stack) => sum + stack.count, 0);
   const stackCount = inventory.filter((stack) => stack.kind === 'stackable').length;
   const cookCount = inventory.filter((stack) => stack.kind === 'cook').length;
@@ -72,26 +70,30 @@ export function InventoryScreen() {
   ).length;
   const busy = pending !== null;
   const owned = useMemo(() => new Map(inventory.map((stack) => [stack.item.cid, stack.count])), [inventory]);
+  const selected =
+    rows.find((stack) => `${stack.kind}:${stack.id}` === selectedKey) ??
+    inventory.find((stack) => `${stack.kind}:${stack.id}` === selectedKey) ??
+    rows[0] ??
+    null;
 
   if (!save) return null;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <PageHeader
         title="Inventory"
-        description="Stackable materials and cooked dishes. Counts are per row, so a full stack is a single value the game reads back directly."
+        description={`${formatNumber(stackCount)} materials · ${formatNumber(cookCount)} cooked dishes · ${formatNumber(totalUnits)} units in all`}
         actions={
           <>
-            <Button variant="outline" size="sm" disabled={busy} onClick={() => setAddOpen(true)}>
+            <Button variant="outline" disabled={busy} onClick={() => setAddOpen(true)}>
               <PackagePlus />
-              Add stackable
+              Add item
             </Button>
             <ConfirmButton
               title="Fill material stacks?"
               description={`Raises common materials, cooking ingredients, gem-socket materials, equipment-sub-stat items and *_EXP rows to at least ${formatNumber(MAX_STACK)}. It never lowers a count and leaves quest, map, achievement and master-soul rows alone. Cooked dishes are not changed.`}
               confirmLabel="Fill material stacks"
               variant="outline"
-              size="sm"
               disabled={busy || fillableCount === 0}
               onConfirm={() => void fillStacks(MAX_STACK)}
             >
@@ -101,33 +103,6 @@ export function InventoryScreen() {
           </>
         }
       />
-
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatTile
-          icon={<Backpack />}
-          label="Distinct rows"
-          value={formatNumber(inventory.length)}
-          detail={`${stackCount} stackable · ${cookCount} cooked`}
-        />
-        <StatTile
-          icon={<Sparkles />}
-          label="Total units"
-          value={formatNumber(totalUnits)}
-          detail="Sum of every stack"
-        />
-        <StatTile
-          icon={<Search />}
-          label="Matching filter"
-          value={formatNumber(rows.length)}
-          detail={query ? `Search: ${query}` : 'No search applied'}
-        />
-        <StatTile
-          icon={<ChefHat />}
-          label="Highest stack seen"
-          value={formatNumber(MAX_STACK)}
-          detail="Reference save"
-        />
-      </div>
 
       <Toolbar>
         <SearchField value={query} onChange={setQuery} placeholder="Search by name, CID or instance id" />
@@ -152,7 +127,7 @@ export function InventoryScreen() {
         <select
           value={sort}
           onChange={(event) => setSort(event.target.value as Sort)}
-          className="h-8 rounded-md border border-input bg-background px-2 text-xs shadow-xs dark:bg-input/30"
+          className="h-8 rounded-md border border-input bg-background px-2 text-sm shadow-xs dark:bg-input/30"
           aria-label="Sort inventory"
         >
           <option value="name">Sort by name</option>
@@ -161,125 +136,81 @@ export function InventoryScreen() {
         </select>
       </Toolbar>
 
-      {visible.length === 0 ? (
+      {rows.length === 0 ? (
         <EmptyPanel
           icon={<Backpack />}
           title={inventory.length === 0 ? 'Nothing in the bag yet' : 'No rows match that filter'}
           description={
             inventory.length === 0
-              ? 'Add a stackable item to create its inventory row, or clear the search to see everything.'
+              ? 'Add a stackable item to create its inventory row.'
               : 'Try a different search term or switch the kind filter.'
           }
           action={
             inventory.length === 0 ? (
               <Button size="sm" onClick={() => setAddOpen(true)}>
                 <PackagePlus />
-                Add stackable
+                Add item
               </Button>
             ) : undefined
           }
         />
       ) : (
-        <Panel
-          contentClassName="p-0"
-          title="Stacks"
-          description={`Showing ${formatNumber(visible.length)} of ${formatNumber(rows.length)} matching rows.`}
-          actions={<Badge variant="outline">{formatNumber(totalUnits)} units</Badge>}
-        >
-          <div className="divide-y">
-            <div className="hidden grid-cols-[minmax(0,1fr)_7rem_9rem_8rem] gap-4 px-4 py-2 text-xs text-muted-foreground md:grid">
-              <span>Item</span>
-              <span>Kind</span>
-              <span className="text-right">Count</span>
-              <span className="text-right">Row</span>
-            </div>
-            {visible.map((stack) => {
-              const limit = stack.kind === 'cook' ? MAX_DISH : MAX_STACK;
-              // Fill is the authority on what is safe to raise. A cooked dish
-              // has its own limit and is always safe to Max.
-              const showMax = stack.kind === 'cook' || isFillableStackKind(stack.item.kind);
-              return (
-                <div
-                  key={`${stack.kind}:${stack.id}`}
-                  className={cn(
-                    'grid gap-3 px-4 md:grid-cols-[minmax(0,1fr)_7rem_9rem_8rem] md:items-center md:gap-4',
-                    compactRows ? 'py-1.5' : 'py-2.5',
-                  )}
-                >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <ItemIcon item={stack.item} size={compactRows ? 30 : 38} />
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-medium">{itemName(stack.item, language)}</div>
-                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                        <span className="font-mono">CID {stack.item.cid}</span>
-                        {stack.item.grade && (
-                          <span className={cn('rounded border px-1 py-px', gradeTone(stack.item.grade))}>
-                            {stack.item.grade}
-                          </span>
-                        )}
-                        {!stack.item.known && <span className="text-warn-strong">unknown item</span>}
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <Badge variant="outline" className="text-xs">
-                      {stack.kind === 'cook' ? 'Cooked dish' : 'Material'}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-end gap-2">
-                    <NumberField
-                      value={stack.count}
-                      onCommit={(count) => void setStack(stack.kind, stack.id, count)}
-                      max={limit}
-                      disabled={busy}
-                      className="w-28"
-                      ariaLabel={`${itemName(stack.item, language)} count`}
-                    />
-                    {showMax && (
-                      <button
-                        type="button"
-                        className="text-xs text-brand hover:underline disabled:opacity-50"
-                        disabled={busy || stack.count >= limit}
-                        onClick={() => void setStack(stack.kind, stack.id, limit)}
-                      >
-                        Max
-                      </button>
+        <div className="grid h-[calc(100svh-15rem)] min-h-[480px] grid-cols-[minmax(0,1fr)_300px] overflow-hidden rounded-xl border bg-card/40">
+          <div className="scroll-thin min-h-0 overflow-y-auto p-4">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-2.5">
+              {rows.map((stack) => {
+                const key = `${stack.kind}:${stack.id}`;
+                const active = selected !== null && key === `${selected.kind}:${selected.id}`;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    aria-pressed={active}
+                    title={itemName(stack.item, language)}
+                    onClick={() => setSelectedKey(key)}
+                    className={cn(
+                      'group overflow-hidden rounded-lg border text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+                      active ? 'border-brand ring-2 ring-brand/60' : 'hover:border-foreground/30',
                     )}
-                  </div>
-                  <div className="hidden text-right font-mono text-xs text-muted-foreground md:block">
-                    {stack.kind === 'stackable' ? `CID ${stack.id}` : `DBID ${stack.id}`}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          {!expanded && rows.length > visible.length && (
-            <div className="border-t p-3 text-center">
-              <Button variant="ghost" size="sm" onClick={() => setExpanded(true)}>
-                Show all {formatNumber(rows.length)} rows
-              </Button>
+                  >
+                    <div
+                      className={cn(
+                        'flex aspect-square items-center justify-center',
+                        gradeBackground(stack.item.grade),
+                      )}
+                    >
+                      <ItemIcon
+                        item={stack.item}
+                        size={56}
+                        className="border-none bg-transparent bg-none text-white/90"
+                      />
+                    </div>
+                    <div
+                      className={cn(
+                        'bg-background/80 py-0.5 text-center text-sm font-semibold tabular-nums',
+                        stack.count === 0 && 'text-muted-foreground',
+                      )}
+                    >
+                      {formatNumber(stack.count)}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
+          </div>
+          {selected ? (
+            <StackDetail
+              key={`${selected.kind}:${selected.id}`}
+              stack={selected}
+              language={language}
+              busy={busy}
+              onCount={(count) => void setStack(selected.kind, selected.id, count)}
+            />
+          ) : (
+            <div />
           )}
-        </Panel>
-      )}
-
-      <Panel title="Editing tips" description="Inventory rows are safe to change in place.">
-        <div className="grid gap-2 md:grid-cols-2">
-          <InfoNote>
-            Materials live in <span className="font-mono">tb_stackable_item</span> and are keyed by CID. Adding an item
-            that already exists replaces its count instead of creating a duplicate.
-          </InfoNote>
-          <InfoNote>
-            Cooked dishes live in <span className="font-mono">tb_cook_item</span> and keep their own instance ids. Their
-            counts are edited here but the rows are created by cooking in game. Dishes use a {formatNumber(MAX_DISH)}
-            ceiling, not the material-stack ceiling.
-          </InfoNote>
-          <InfoNote>
-            Fill only raises normal material and EXP counts. Quest, map, achievement and master-soul rows are progress
-            data and keep the values the game wrote.
-          </InfoNote>
         </div>
-      </Panel>
+      )}
 
       <AddStackDialog
         open={addOpen}
@@ -294,6 +225,109 @@ export function InventoryScreen() {
         }}
       />
     </div>
+  );
+}
+
+/** The tile colour the game gives each grade, saturated in either theme as in the game. */
+function gradeBackground(grade: string): string {
+  switch (grade.toLowerCase()) {
+    case 'legendary':
+    case 'mythic':
+      return 'bg-gradient-to-b from-orange-500 to-orange-800';
+    case 'epic':
+      return 'bg-gradient-to-b from-fuchsia-600 to-purple-900';
+    case 'rare':
+      return 'bg-gradient-to-b from-sky-600 to-blue-900';
+    case 'superior':
+    case 'uncommon':
+      return 'bg-gradient-to-b from-emerald-600 to-teal-900';
+    default:
+      return 'bg-gradient-to-b from-zinc-500 to-zinc-800';
+  }
+}
+
+function StackDetail({
+  stack,
+  language,
+  busy,
+  onCount,
+}: {
+  stack: Stack;
+  language: string;
+  busy: boolean;
+  onCount: (count: number) => void;
+}) {
+  const limit = stack.kind === 'cook' ? MAX_DISH : MAX_STACK;
+  // Fill is the authority on what is safe to raise. A cooked dish has its own
+  // limit and is always safe to Max.
+  const showMax = stack.kind === 'cook' || isFillableStackKind(stack.item.kind);
+  const name = itemName(stack.item, language);
+  return (
+    <aside className="scroll-thin flex min-h-0 flex-col gap-5 overflow-y-auto border-l p-5">
+      <div className="flex flex-col items-center gap-3 text-center">
+        <div
+          className={cn(
+            'flex size-28 items-center justify-center rounded-xl border',
+            gradeBackground(stack.item.grade),
+          )}
+        >
+          <ItemIcon item={stack.item} size={88} className="border-none bg-transparent bg-none text-white/90" />
+        </div>
+        <div className="space-y-1">
+          <h2 className="text-lg font-semibold tracking-tight text-balance">{name}</h2>
+          <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs">
+            {stack.item.grade && (
+              <span className={cn('rounded border px-1.5 py-px', gradeTone(stack.item.grade))}>{stack.item.grade}</span>
+            )}
+            <Badge variant="outline">{stack.kind === 'cook' ? 'Cooked dish' : 'Material'}</Badge>
+            {!stack.item.known && <span className="text-warn-strong">unknown item</span>}
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-baseline justify-between text-sm">
+          <span className="font-medium">Count</span>
+          <span className="text-xs text-muted-foreground tabular-nums">max {formatNumber(limit)}</span>
+        </div>
+        <div className="flex gap-2">
+          <NumberField
+            value={stack.count}
+            onCommit={onCount}
+            max={limit}
+            disabled={busy}
+            className="h-9 flex-1 text-base"
+            ariaLabel={`${name} count`}
+          />
+          {showMax && (
+            <Button variant="outline" disabled={busy || stack.count >= limit} onClick={() => onCount(limit)}>
+              Max
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+        <dt className="text-muted-foreground">CID</dt>
+        <dd className="font-mono text-xs leading-5">{stack.item.cid}</dd>
+        {stack.kind === 'cook' && (
+          <>
+            <dt className="text-muted-foreground">Instance</dt>
+            <dd className="font-mono text-xs leading-5 break-all">{stack.id}</dd>
+          </>
+        )}
+        <dt className="text-muted-foreground">Kind</dt>
+        <dd className="text-xs leading-5">{stack.item.kind || '—'}</dd>
+      </dl>
+
+      <p className="mt-auto text-xs text-muted-foreground">
+        {stack.kind === 'cook'
+          ? `A dish is one tb_cook_item row whose count grows; the game creates the row when you cook. Dishes stop at ${formatNumber(MAX_DISH)}.`
+          : showMax
+            ? 'A material lives in tb_stackable_item, keyed by CID. Fill and Max raise it to the highest stack the reference save holds.'
+            : 'Quest, map, achievement and master-soul items are progress data; Fill leaves them alone.'}
+      </p>
+    </aside>
   );
 }
 
