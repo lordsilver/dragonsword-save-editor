@@ -262,6 +262,8 @@ export interface Skill {
   info: SkillInfo | null;
   /** The effect the skill applies, named and badged as in the game. */
   effect: SkillEffect | null;
+  /** The disc colour, #rrggbb: the effect's, or the game's ATTACK colour. */
+  color: string;
 }
 
 export interface SkillEffect {
@@ -269,7 +271,7 @@ export interface SkillEffect {
   key: string;
   nameEn: string;
   nameFr: string;
-  /** The badge's colour, #rrggbb, which tints the skill's disc. */
+  /** The skill disc's colour, #rrggbb, from the game's MesmerizedUIColor. */
   color: string;
   iconX: number;
   iconY: number;

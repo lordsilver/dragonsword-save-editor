@@ -3,9 +3,12 @@
 // crates/core/data/items_extra.json, named from the game's own tables, and
 // write crates/core/data/titles.json from the game's title table.
 //
-// Usage: node scripts/gen-catalog-extras.mjs <extract-dir>
+// Usage: node scripts/gen-catalog-extras.mjs <extract-dir> <root-maps.json>
 //
 // <extract-dir> holds the game's XML tables (see scripts/gen-growth.mjs).
+// <root-maps.json> is the skill-screen colour map decoded from the game's
+// /Game/UI/Root/DRootIngame by tools/asset-export/decode_root.py (see
+// docs/game-assets.md).
 // GameItemData lists every item; StringData has its names. items.json is
 // left alone apart from icon offsets; every
 // GameItemData row it does not have is written here instead, and the catalog
@@ -27,14 +30,16 @@
 // IconColor of its first combo step: PCCharacterData.ComboTableID names the
 // hero's rows in PCComboData, and GroupIndex is the skill's TypeValue. ATTACK
 // is a plain skill. The game's Skill screen names each effect with fixed UI
-// strings (EFFECTS below) and draws the State_Mark_<state> badge.
+// strings (EFFECTS below) and draws the State_Mark_<state> badge. The disc
+// colour of every IconColor, ATTACK included, is the root widget's
+// MesmerizedUIColor map.
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const [extractDir] = process.argv.slice(2);
-if (!extractDir) {
-  console.error('usage: node scripts/gen-catalog-extras.mjs <extract-dir>');
+const [extractDir, rootMapsPath] = process.argv.slice(2);
+if (!extractDir || !rootMapsPath) {
+  console.error('usage: node scripts/gen-catalog-extras.mjs <extract-dir> <root-maps.json>');
   process.exit(2);
 }
 
@@ -140,6 +145,17 @@ const EFFECTS = {
   HEAL: { string: '800051', badge: 'HEAL' },
 };
 
+/** IconColor -> #rrggbb from DRootIngame's MesmerizedUIColor. */
+const effectColors = new Map(
+  JSON.parse(readFileSync(rootMapsPath, 'utf8')).MesmerizedUIColor.map((entry) => [
+    entry.key.replace('EMesmerizedUIType::', ''),
+    entry.hex.toLowerCase(),
+  ]),
+);
+for (const key of ['ATTACK', ...Object.keys(EFFECTS)]) {
+  if (!effectColors.has(key)) fail(`MesmerizedUIColor has no colour for ${key}`);
+}
+
 const comboTables = new Map(rows('PCCharacterData').map((row) => [row.ID, row.ComboTableID]));
 /** "comboTable:group" -> IconColor of the group's first combo step. */
 const comboColors = new Map();
@@ -187,6 +203,7 @@ const skillsPath = new URL('../crates/core/data/skills.json', import.meta.url);
 const skillFile = {
   _source:
     "Each hero's skill slots from the game's own PCSkillGrowthData/StringData, written by scripts/gen-catalog-extras.mjs; icon offsets come from scripts/gen-icons.mjs. type = tb_skill_growth TYPE_VALUE, order = the game's SlotOrder.",
+  attackColor: effectColors.get('ATTACK'),
   effects: Object.fromEntries(
     Object.entries(EFFECTS).map(([key, { string, badge }]) => {
       const name = strings.get(string);
@@ -194,6 +211,7 @@ const skillFile = {
       const effect = {
         nameEn: name.En.trim(),
         nameFr: (name.Fr || name.En).trim(),
+        color: effectColors.get(key),
         iconPath: `Art/UI/InGame/Common/State/State_Mark_${badge}`,
         x: 0,
         y: 0,

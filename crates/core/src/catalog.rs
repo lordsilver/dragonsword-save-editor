@@ -187,7 +187,7 @@ pub struct SkillEffect {
     pub key: String,
     pub name_en: String,
     pub name_fr: String,
-    /// The badge's colour (`#rrggbb`), which tints the effect's skill disc.
+    /// The skill disc's colour (`#rrggbb`), from the game's MesmerizedUIColor.
     pub color: String,
     #[serde(rename(serialize = "iconX", deserialize = "x"))]
     pub icon_x: i32,
@@ -241,6 +241,8 @@ struct TitleFile {
 
 #[derive(Debug, Deserialize)]
 struct SkillFile {
+    #[serde(rename = "attackColor")]
+    attack_color: String,
     effects: HashMap<String, SkillEffect>,
     heroes: HashMap<String, Vec<SkillSeed>>,
 }
@@ -259,6 +261,7 @@ pub struct Catalog {
     titles: Vec<TitleSeed>,
     skills: HashMap<i64, Vec<SkillSeed>>,
     skill_effects: HashMap<String, SkillEffect>,
+    attack_color: String,
     ingredient_icons: HashMap<i64, i64>,
     icon_size: u32,
 }
@@ -308,6 +311,7 @@ impl Catalog {
                     (key, effect)
                 })
                 .collect(),
+            attack_color: skills.attack_color,
             ingredient_icons,
             icon_size: if seed.icon_size == 0 {
                 64
@@ -354,6 +358,11 @@ impl Catalog {
 
     pub fn skill_effect(&self, key: &str) -> Option<&SkillEffect> {
         self.skill_effects.get(key)
+    }
+
+    /// The disc colour of a skill with no effect: the game's ATTACK colour.
+    pub fn attack_color(&self) -> &str {
+        &self.attack_color
     }
 
     pub fn ingredient_icon(&self, group: i64) -> Option<i64> {
@@ -559,6 +568,8 @@ mod tests {
         );
         assert_eq!(catalog.skill_effect("BLEED").unwrap().name_en, "Bleed");
         assert_eq!(catalog.skill_effect("STUN").unwrap().color, "#ffda59");
+        assert_eq!(catalog.skill_effect("BLEED").unwrap().color, "#cc0048");
+        assert_eq!(catalog.attack_color(), "#b39c6f");
         assert_eq!(catalog.skill_effect("AIR").unwrap().name_fr, "En l'air");
         assert!(lute.iter().all(|slot| slot.icon_x != 0 || slot.icon_y != 0));
         assert!(catalog.hero_skills(1).is_empty());

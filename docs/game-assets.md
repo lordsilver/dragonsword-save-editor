@@ -27,14 +27,34 @@ node scripts/gen-icons.mjs <assets-dir> <extract-dir>
 
 The same script writes `crates/core/data/skills.json` from `PCSkillGrowthData`: each of the 26 heroes' nine skill slots as the game's Skill screen lays them out. `type` is the save's `tb_skill_growth.TYPE_VALUE`, and `order` is the game's `SlotOrder`: 1–4 the left column (attack 6, jump attack 5, Dodge 8, roll attack 7), 5–8 the right column (actives 1 and 2, signals 3 and 4) and 9 the master skill (801). `signal` marks `SlotType` 3, the two signal skills (types 3 and 4), which the game draws as diamonds instead of circles. Names and descriptions come from `StringData` with the colour tags removed. The damage percentages the game shows under a description are not included: they come from `PCComboLevelData` through each skill's data asset, which the tables do not link. Each icon is a texture or a Paper2D sprite under `Icon_Skill`; the export has every sprite's texture as a PNG without the `_Sprite` suffix, so `gen-icons.mjs` packs it like an item icon (118 distinct icons) and writes the offsets back into `skills.json`.
 
-A skill's effect, which the game shows as a tinted disc and a corner badge, is the `IconColor` of its first combo step. `PCCharacterData.ComboTableID` names the hero's rows in `PCComboData`, and their `GroupIndex` is the skill's `TYPE_VALUE`. `ATTACK` is a plain skill; the others are `AIR`, `BLEED`, `DOWN`, `FIRE`, `HEAL`, `ICE`, `POISON`, `SHOCK` and `STUN`. The names come from the Skill screen's own strings, 800037–800044 and 800051 (Stun, Airborne, Knockdown, Bleed, Shock, Burn, Poison, Frost, Recovery), which no table links, so the script maps them by hand. The badge is `Common/State/State_Mark_<state>`, with `BLEEDING` for `BLEED`. The disc tint is not a texture in the export (the game tints it in a material), so `gen-icons.mjs` records each badge's colour, the average of its opaque pixels, in `skills.json`. Like the game, the editor draws the disc dark in the middle, which keeps the white glyphs readable, and ramps it to the effect's full colour at a glowing rim. The game's own disc textures are `Btn/Btn_Skill_Info_Bg_01` (circle) and `_04` (diamond), with `_02` and `_05` as their selected states; they are dark grey, and the game tints them in its skill widget or material, which this export does not include. Exporting that widget as JSON would give the exact tint per effect. (`PCSkillGrowthData.SkillIconColor` looks related but disagrees with the game's screen, for example STUN on Theresia's Judgment Spiral, so it is ignored.)
+A skill's effect, which the game shows as a tinted disc and a corner badge, is the `IconColor` of its first combo step. `PCCharacterData.ComboTableID` names the hero's rows in `PCComboData`, and their `GroupIndex` is the skill's `TYPE_VALUE`. `ATTACK` is a plain skill; the others are `AIR`, `BLEED`, `DOWN`, `FIRE`, `HEAL`, `ICE`, `POISON`, `SHOCK` and `STUN`. The names come from the Skill screen's own strings, 800037–800044 and 800051 (Stun, Airborne, Knockdown, Bleed, Shock, Burn, Poison, Frost, Recovery), which no table links, so the script maps them by hand. The badge is `Common/State/State_Mark_<state>`, with `BLEEDING` for `BLEED`, as the root widget's `MesmerizedUIVer2IconMap` says; `ATTACK` has none. (`PCSkillGrowthData.SkillIconColor` uses the same enum but disagrees with the game's screen, for example STUN on Theresia's Judgment Spiral, so it is ignored.)
+
+The disc colour comes from the in-game root widget, see [Skill colours](#skill-colours) below: `IconColor` is the enum `EMesmerizedUIType`, and `MesmerizedUIColor` gives every value a colour, `ATTACK` (#B39C6F, khaki gold) included. `skills.json` stores it per effect and as `attackColor`, and the backend gives each skill its disc colour. The editor draws the disc dark in the middle, which keeps the white glyphs readable, and ramps it to that colour at a glowing rim. The game's disc textures are `Btn/Btn_Skill_Info_Bg_01` (circle) and `_04` (diamond, the two signal skills), with `_02` and `_05` in the list; they are dark grey, and the game's C++ recolours a border over them, so the editor's shading is drawn, not copied.
 
 Run it before `gen-icons.mjs`, which gives the new items and the skills their icons:
 
 ```bash
-node scripts/gen-catalog-extras.mjs <extract-dir>
+node scripts/gen-catalog-extras.mjs <extract-dir> <root-maps.json>
 node scripts/gen-icons.mjs <assets-dir> <extract-dir>
 ```
+
+## Skill colours
+
+The colours the skill screen paints per effect are not in the XML tables. A second export on 2026-10-27 (the agent's `dsa-skill-ui.zip`, kept outside the repository like the first) found them:
+- Three `TMap<EMesmerizedUIType, FColor>` properties belong to the game's C++ root widget class `DRootPanelIngame`: `MesmerizedUIColor`, `MesmerizedSwitchingColor` and `MesmerizedSkillTypeColor`. Its one blueprint subclass, `/Game/UI/Root/DRootIngame`, stores the first two in its class default object. The third keeps its C++ default, which is compiled into the exe and could not be recovered.
+- Which map the skill screen reads is decided in C++. `MesmerizedUIColor` is the only one keyed by exactly the `IconColor` values, so the editor uses it; `MesmerizedSwitchingColor` differs only for STUN (#F5D000), BLEED (#C63555) and ATTACK (#B39C70).
+- The skill-slot widgets (`DUWG_CharacterSkill_Def`, circle, and `DUWG_CharacterSkill_Tag`, diamond) and the detail layer (`DLayerCharacterSkill`) hold a `Border` named `ColorBorder` (designer tint #32403F) that the C++ recolours. The glow and ring materials use fixed gold tints and do not change with the effect.
+
+CUE4Parse cannot read those maps: the Nexus `.usmap` lacks one property of `DRootPanelIngame` for this game build, so every property after it is read one slot late. `tools/asset-export/decode_root.py` decodes the class default object's bytes by hand and checks the layout (the value after the nine maps must be the 10-entry `AttackCombatSprite` array) before writing anything. With the updated exporter in `tools/asset-export/`:
+
+```bat
+set DOTNET_ROOT=C:\Users\Gary\dsa-work\dotnet
+dotnet DsaExport.dll raw   "C:\Games\DragonSword Awakening" C:\Users\Gary\dsa-work\tools DS/Content/UI/Root/DRootIngame.uexp DRootIngame.uexp
+dotnet DsaExport.dll names "C:\Games\DragonSword Awakening" C:\Users\Gary\dsa-work\tools DS/Content/UI/Root/DRootIngame.uasset DRootIngame.names.tsv
+python -I decode_root.py DRootIngame.uexp DRootIngame.names.tsv DRootIngame.Default__DRootIngame_C.maps.json
+```
+
+The exporter's other modes (`list`, `grep`, `schema`, `props`, `dump`) search package headers, print the mappings, and dump packages as JSON; that is how the widget and the maps were found. Pass the decoded `.maps.json` to `gen-catalog-extras.mjs`, which stops if a colour is missing. If a game update moves the export offset (655 in this build, from the `names` export map), the decoder's layout check fails instead of writing wrong colours.
 
 ## Git LFS
 

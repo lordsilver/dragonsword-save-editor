@@ -1480,6 +1480,10 @@ impl<'a> Game<'a> {
             let saved = levels.iter().position(|(kind, _)| *kind == seed.type_value);
             let level = saved.map(|index| levels.remove(index).1);
             let editable = SKILL_TYPES.contains(&seed.type_value);
+            let effect = seed
+                .effect
+                .as_deref()
+                .and_then(|key| catalog.skill_effect(key));
             skills.push(Skill {
                 type_value: seed.type_value,
                 // The game keeps no row for Dodge, its one single-level slot
@@ -1488,11 +1492,10 @@ impl<'a> Game<'a> {
                 saved: level.is_some(),
                 editable,
                 info: Some(seed.clone()),
-                effect: seed
-                    .effect
-                    .as_deref()
-                    .and_then(|key| catalog.skill_effect(key))
-                    .cloned(),
+                effect: effect.cloned(),
+                color: effect
+                    .map_or(catalog.attack_color(), |effect| &effect.color)
+                    .to_string(),
             });
         }
         skills.extend(levels.into_iter().map(|(type_value, level)| Skill {
@@ -1502,6 +1505,7 @@ impl<'a> Game<'a> {
             editable: SKILL_TYPES.contains(&type_value),
             info: None,
             effect: None,
+            color: catalog.attack_color().to_string(),
         }));
         Ok(skills)
     }
@@ -2994,6 +2998,8 @@ pub struct Skill {
     pub info: Option<SkillSeed>,
     /// The effect the skill applies, as the game names and badges it.
     pub effect: Option<SkillEffect>,
+    /// The disc colour (`#rrggbb`): the effect's, or the game's ATTACK colour.
+    pub color: String,
 }
 
 fn team_rows(conn: &Connection, user_id: i64) -> Result<Vec<(i64, [i64; 3])>> {

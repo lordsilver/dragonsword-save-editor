@@ -2,7 +2,13 @@
 //
 //   (the newest *.usmap in <toolsDir>, if any, is used as the mappings file)
 //   DsaExport probe  <gameDir> <toolsDir>
-//   DsaExport export <gameDir> <toolsDir> <outDir> [gamePathPrefix]
+//   DsaExport export <gameDir> <toolsDir> <outDir> [gamePathPrefix | @packageListFile]
+//   DsaExport list   <gameDir> <toolsDir> <outFile>
+//   DsaExport grep   <gameDir> <toolsDir> <outFile> <needle>...   (package headers containing a name)
+//   DsaExport schema <gameDir> <toolsDir> <outFile>   (every enum and class/struct in the mappings, as text)
+//   DsaExport names  <gameDir> <toolsDir> <package> <outFile>   (name map, import map, export map)
+//   DsaExport props  <gameDir> <toolsDir> <package> <exportName>   (which properties an export serializes)
+//   DsaExport dump   <gameDir> <toolsDir> <outDir> <package | @packageListFile>   (exports as JSON)
 //
 // The paks are only ever opened for reading. Without a prefix, export selects every package
 // under /Game/Art/UI/ plus any package whose folder path contains Icon, Portrait or Img_.
@@ -14,11 +20,14 @@ using CUE4Parse.Compression;
 using CUE4Parse.Encryption.Aes;
 using CUE4Parse.FileProvider;
 using CUE4Parse.FileProvider.Objects;
+using CUE4Parse.MappingsProvider;
 using CUE4Parse.MappingsProvider.Usmap;
+using CUE4Parse.UE4.Assets;
 using CUE4Parse.UE4.Assets.Exports;
 using CUE4Parse.UE4.Assets.Exports.Texture;
 using CUE4Parse.UE4.Objects.Core.Misc;
 using CUE4Parse.UE4.Versions;
+using CUE4Parse.UE4.VirtualFileSystem;
 using CUE4Parse_Conversion.Options;
 using CUE4Parse_Conversion.Textures;
 using CUE4Parse_Conversion.Textures.BC;
@@ -42,8 +51,11 @@ DetexHelper.LoadDll(detexDll);
 DetexHelper.Initialize(detexDll);
 
 var sw = Stopwatch.StartNew();
-var provider = new DefaultFileProvider(Path.Combine(gameDir, "DS", "Content", "Paks"), SearchOption.TopDirectoryOnly,
-    new VersionContainer(EGame.GAME_DragonSwordAwakening), StringComparer.OrdinalIgnoreCase);
+// DSA_PAKS_DIR overrides the archive folder (used to check paks outside DS\Content\Paks).
+var paksDir = Environment.GetEnvironmentVariable("DSA_PAKS_DIR") is { Length: > 0 } d ? d : Path.Combine(gameDir, "DS", "Content", "Paks");
+var provider = new DefaultFileProvider(paksDir, SearchOption.TopDirectoryOnly,
+    new VersionContainer(Enum.TryParse<EGame>(Environment.GetEnvironmentVariable("DSA_GAME"), out var g) ? g : EGame.GAME_DragonSwordAwakening),
+    StringComparer.OrdinalIgnoreCase);
 var usmap = Directory.GetFiles(toolsDir, "*.usmap").OrderByDescending(File.GetLastWriteTimeUtc).FirstOrDefault();
 if (usmap is not null)
 {
@@ -59,6 +71,13 @@ return mode switch
 {
     "probe" => Probe(),
     "inspect" when args.Length >= 4 => Inspect(args[3]),
+    "list" when args.Length >= 4 => ListAll(args[3]),
+    "raw" when args.Length >= 5 => SaveRaw(args[3], args[4]),
+    "grep" when args.Length >= 5 => Grep(args[3], args[4..]),
+    "schema" when args.Length >= 4 => Schema(args[3]),
+    "names" when args.Length >= 5 => Names(args[3], args[4]),
+    "props" when args.Length >= 5 => Props(args[3], args[4]),
+    "dump" when args.Length >= 5 => Dump(args[3], args[4]),
     "export" when args.Length >= 4 => Export(args[3], args.Length >= 5 ? args[4] : null),
     _ => 2,
 };
@@ -117,6 +136,143 @@ int Probe()
     return 0;
 }
 
+// Writes every mounted file as "<archive>\t<path>" to outFile, and each archive's mount status to stdout.
+int ListAll(string outFile)
+{
+    foreach (var v in provider.MountedVfs.OrderBy(v => v.Name, StringComparer.OrdinalIgnoreCase))
+        Console.WriteLine($"mounted   {v.Name}  files {v.FileCount}  mount {v.MountPoint}  encrypted {v.IsEncrypted}");
+    foreach (var v in provider.UnloadedVfs.OrderBy(v => v.Name, StringComparer.OrdinalIgnoreCase))
+        Console.WriteLine($"UNLOADED  {v.Name}  files {v.FileCount}  encrypted {v.IsEncrypted}  key {v.EncryptionKeyGuid}");
+    using var w = new StreamWriter(outFile);
+    foreach (var f in provider.Files.Values.OrderBy(f => f.Path, StringComparer.OrdinalIgnoreCase))
+        w.WriteLine($"{(f as VfsEntry)?.Vfs.Name}\t{f.Path}");
+    Console.WriteLine($"{provider.Files.Count} files written to {outFile}");
+    return 0;
+}
+
+// Searches the header (.uasset/.umap: name map, import and export tables) of every package for each
+// needle, ASCII, case-insensitive. Writes "<game path>	<needle>,<needle>…" per matching package.
+int Grep(string outFile, string[] needles)
+{
+    var pats = needles.Select(n => Encoding.ASCII.GetBytes(n.ToLowerInvariant())).ToArray();
+    var files = provider.Files.Values.Where(f => f.Extension.Equals("uasset", StringComparison.OrdinalIgnoreCase)
+        || f.Extension.Equals("umap", StringComparison.OrdinalIgnoreCase)).ToList();
+    var hits = new ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+    var errors = 0;
+    Parallel.ForEach(files, f =>
+    {
+        try
+        {
+            var b = f.Read();
+            for (var i = 0; i < b.Length; i++) if (b[i] is >= (byte)'A' and <= (byte)'Z') b[i] += 32;
+            var found = needles.Where((_, i) => b.AsSpan().IndexOf(pats[i]) >= 0).ToArray();
+            if (found.Length > 0) hits[GamePath(f) + "." + f.Extension] = string.Join(',', found);
+        }
+        catch { Interlocked.Increment(ref errors); }
+    });
+    File.WriteAllLines(outFile, hits.OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase).Select(kv => $"{kv.Key}	{kv.Value}"));
+    Console.WriteLine($"{files.Count} package headers searched, {hits.Count} matched, {errors} unreadable -> {outFile}");
+    return 0;
+}
+
+// Writes the mappings' enums ("enum E: 0=A 1=B") and classes/structs ("struct S : Super" then one
+// "  Name: Type<Inner,Value> [Enum|Struct]" line per property) to outFile.
+int Schema(string outFile)
+{
+    var m = provider.MappingsForGame ?? throw new InvalidOperationException("no mappings loaded");
+    static string T(PropertyType? t) => t is null ? "" : t.Type
+        + (t.InnerType is null ? "" : $"<{T(t.InnerType)}{(t.ValueType is null ? "" : "," + T(t.ValueType))}>")
+        + (t.EnumName is null ? "" : $" [{t.EnumName}]") + (t.StructType is null ? "" : $" [{t.StructType}]");
+    using var w = new StreamWriter(outFile);
+    foreach (var (name, values) in m.Enums.OrderBy(e => e.Key, StringComparer.Ordinal))
+        w.WriteLine($"enum {name}: " + string.Join(' ', values.OrderBy(v => v.Key).Select(v => $"{v.Key}={v.Value}")));
+    foreach (var (name, st) in m.Types.OrderBy(e => e.Key, StringComparer.Ordinal))
+    {
+        w.WriteLine($"struct {name}{(st.SuperType is null ? "" : " : " + st.SuperType)}");
+        foreach (var p in st.Properties.Values.OrderBy(p => p.Index)) w.WriteLine($"  {p.Name}: {T(p.MappingType)}");
+    }
+    Console.WriteLine($"{m.Enums.Count} enums, {m.Types.Count} structs -> {outFile}");
+    return 0;
+}
+
+// Writes a package's name map ("N	<index>	<name>"), import map ("I	<-index>	<class>	<outer path>.<name>")
+// and export map ("E	<index>	<name>	<serial offset in .uexp>	<serial size>"), for decoding raw export bytes by hand.
+int Names(string path, string outFile)
+{
+    var pkg = (Package)provider.LoadPackage(path);
+    using var w = new StreamWriter(outFile);
+    for (var i = 0; i < pkg.NameMap.Length; i++) w.WriteLine($"N	{i}	{pkg.NameMap[i].Name}");
+    for (var i = 0; i < pkg.ImportMap.Length; i++)
+    {
+        var im = pkg.ImportMap[i];
+        var outer = im.OuterIndex.IsImport ? pkg.ImportMap[-im.OuterIndex.Index - 1].ObjectName.Text + "." : "";
+        w.WriteLine($"I	{-(i + 1)}	{im.ClassName.Text}	{outer}{im.ObjectName.Text}");
+    }
+    for (var i = 0; i < pkg.ExportMap.Length; i++)
+    {
+        var ex = pkg.ExportMap[i];
+        w.WriteLine($"E	{i + 1}	{ex.ObjectName.Text}	{ex.SerialOffset - pkg.Summary.TotalHeaderSize}	{ex.SerialSize}");
+    }
+    Console.WriteLine($"{pkg.NameMap.Length} names, {pkg.ImportMap.Length} imports, {pkg.ExportMap.Length} exports -> {outFile}");
+    return 0;
+}
+
+// Reads only the unversioned-property header of one export and prints, per serialized property, its
+// schema index and name as CUE4Parse's mappings resolve it (for checking a hand decode).
+int Props(string path, string exportName)
+{
+    var pkg = (Package)provider.LoadPackage(path);
+    var i = Array.FindIndex(pkg.ExportMap, e => e.ObjectName.Text == exportName);
+    var ex = pkg.ExportMap[i];
+    var uexp = provider.SaveAsset(Path.ChangeExtension(path, ".uexp"));
+    var at = ex.SerialOffset - pkg.Summary.TotalHeaderSize;
+    var ar = new CUE4Parse.UE4.Readers.FByteArchive("export", uexp[(int)at..]);
+    var header = new CUE4Parse.UE4.Assets.Objects.Unversioned.FUnversionedHeader(ar);
+    Console.WriteLine($"{exportName}: .uexp offset {at}, header {ar.Position} bytes");
+    var obj = ((IPackage)pkg).GetExports().First(e => e.Name == exportName);
+    var cls = obj.Class?.Load<CUE4Parse.UE4.Objects.UObject.UStruct>();
+    var st = new SerializedStruct(provider.MappingsForGame, cls!);
+    using var it = new CUE4Parse.UE4.Assets.Objects.Unversioned.FIterator(header);
+    do
+    {
+        var (val, nonZero) = it.Current;
+        Console.WriteLine($"  {val,4}  {(nonZero ? "value" : "zero ")}  {(st.TryGetValue(val, out var pi) ? pi.Name + ": " + pi.MappingType.Type : "?")}");
+    } while (it.MoveNext());
+    return 0;
+}
+
+// Serializes every export of each package to <outDir>/<game path without /Game/>.json.
+int Dump(string outDir, string what)
+{
+    var paths = what.StartsWith('@') ? File.ReadAllLines(what[1..]).Select(l => l.Trim()).Where(l => l.Length > 0).ToList() : [what];
+    var settings = new JsonSerializerSettings { Formatting = Formatting.Indented, ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
+    var failed = 0;
+    foreach (var gp in paths)
+    {
+        var path = gp.StartsWith("/Game/", StringComparison.OrdinalIgnoreCase) ? ContentRoot + gp[6..] : gp.TrimStart('/');
+        var rel = (gp.StartsWith("/Game/") ? gp[6..] : gp.TrimStart('/')) + ".json";
+        var dst = Path.Combine(outDir, rel.Replace('/', Path.DirectorySeparatorChar));
+        try
+        {
+            if (!provider.TryLoadPackage(path, out var pkg)) { Console.WriteLine($"FAIL {gp}: not found"); failed++; continue; }
+            Directory.CreateDirectory(Path.GetDirectoryName(dst)!);
+            File.WriteAllText(dst, JsonConvert.SerializeObject(pkg.GetExports(), settings));
+            Console.WriteLine($"ok   {gp}");
+        }
+        catch (Exception ex) { Console.WriteLine($"FAIL {gp}: {ex.GetType().Name}: {ex.Message}"); failed++; }
+    }
+    Console.WriteLine($"{paths.Count - failed}/{paths.Count} packages dumped");
+    return 0;
+}
+
+// Writes one mounted file's bytes, unmodified, to outFile.
+int SaveRaw(string path, string outFile)
+{
+    File.WriteAllBytes(outFile, provider.SaveAsset(path));
+    Console.WriteLine($"{path} -> {outFile} ({new FileInfo(outFile).Length} bytes)");
+    return 0;
+}
+
 // Dumps a texture's mip chain and bulk-data flags, for diagnosing partial decodes.
 int Inspect(string packagePath)
 {
@@ -138,10 +294,14 @@ int Inspect(string packagePath)
 int Export(string outDir, string? prefix)
 {
     Directory.CreateDirectory(outDir);
+    // "@file" instead of a prefix: export exactly the package paths (/Game/...) listed in that file.
+    var listed = prefix is not null && prefix.StartsWith('@')
+        ? File.ReadAllLines(prefix[1..]).Select(l => l.Trim()).Where(l => l.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase)
+        : null;
     var candidates = provider.Files.Values
         .Where(f => f.Extension.Equals("uasset", StringComparison.OrdinalIgnoreCase))
-        .Where(f => prefix is null
-            ? Selected(GamePath(f))
+        .Where(f => prefix is null ? Selected(GamePath(f))
+            : listed is not null ? listed.Contains(GamePath(f))
             : GamePath(f).StartsWith(prefix.TrimEnd('/') + "/", StringComparison.OrdinalIgnoreCase))
         .OrderBy(f => f.Path, StringComparer.OrdinalIgnoreCase)
         .ToList();
