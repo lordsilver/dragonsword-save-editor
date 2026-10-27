@@ -353,26 +353,21 @@ function HeroInformation({ character, busy }: { character: Character; busy: bool
 const DISC = ['#3f3f46', '#52525b', '#a1a1aa'];
 
 /**
- * The disc behind a skill's glyph. Like the game's, it is dark in the middle
- * and brightens to a glowing rim, and an effect blends its colour (the
- * badge's) into the grey metal rather than replacing it, which keeps the
- * white glyph readable. A plain attack keeps the grey disc.
+ * The disc behind a skill's glyph. Like the game's, it is dark in the middle,
+ * which keeps the white glyph readable, and brightens to a glowing rim in the
+ * effect's full colour (its badge's). A plain attack keeps the grey disc.
  */
 function disc(skill: Skill): { underlay: string; style: CSSProperties } {
   const color = skill.effect?.color;
   const [middle, ring, rim] = color
-    ? [
-        `color-mix(in oklab, ${color} 40%, ${DISC[0]})`,
-        `color-mix(in oklab, ${color} 60%, ${DISC[1]})`,
-        `color-mix(in oklab, ${color} 90%, white)`,
-      ]
+    ? [`color-mix(in oklab, ${color} 50%, #18181b)`, `color-mix(in oklab, ${color} 85%, #27272a)`, color]
     : DISC;
   return {
-    underlay: `radial-gradient(circle closest-side, ${middle} 35%, ${ring} 80%, ${rim} 100%)`,
+    underlay: `radial-gradient(circle closest-side, ${middle} 30%, ${ring} 78%, ${rim} 100%)`,
     style: color
       ? {
-          borderColor: `color-mix(in oklab, ${color} 55%, white)`,
-          boxShadow: `0 0 6px color-mix(in oklab, ${color} 60%, transparent)`,
+          borderColor: `color-mix(in oklab, ${color} 60%, white)`,
+          boxShadow: `0 0 8px color-mix(in oklab, ${color} 75%, transparent)`,
         }
       : { borderColor: '#d4d4d8' },
   };
@@ -399,7 +394,8 @@ function SkillIcon({ skill, size }: { skill: Skill; size: number }) {
     icon: Boolean(skill.info && (skill.info.iconX || skill.info.iconY)),
   };
   return (
-    <span className="relative shrink-0" style={{ width: size, height: size }}>
+    // A block box: the diamond's frame takes its size from this one.
+    <span className="relative block shrink-0" style={{ width: size, height: size }}>
       {skill.info?.signal ? (
         // A signal skill sits on a diamond: the frame turns, the glyph does not.
         <>
@@ -497,7 +493,7 @@ function SkillNode({
         selected && 'border-brand/60 bg-muted',
       )}
     >
-      <span className={cn('relative', !skill.saved && skill.editable && 'opacity-50')}>
+      <span className={cn('relative block shrink-0', !skill.saved && skill.editable && 'opacity-60')}>
         <SkillIcon skill={skill} size={44} />
         <span className="absolute -bottom-1 -left-1 flex size-5 items-center justify-center rounded-full border bg-background text-[11px] font-semibold tabular-nums">
           {skill.saved || !skill.editable ? skill.level : '–'}
