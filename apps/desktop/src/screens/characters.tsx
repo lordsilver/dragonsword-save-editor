@@ -360,11 +360,17 @@ function disc(skill: Skill): CSSProperties {
   const middle = `color-mix(in oklab, ${color} 30%, #09090b)`;
   const inner = `color-mix(in oklab, ${color} 45%, #18181b)`;
   return {
-    // A light highlight just inside the coloured edge, and a faint dark outline
-    // so the edge holds on a light page as on the game's teal one.
-    backgroundImage: `radial-gradient(circle closest-side, ${middle} 0%, ${inner} 60%, ${color} 84%, color-mix(in oklab, ${color} 55%, white) 93%, ${color} 100%)`,
+    backgroundImage: `radial-gradient(circle closest-side, ${middle} 0%, ${inner} 55%, ${color} 100%)`,
     borderColor: color,
-    boxShadow: `0 0 0 1px rgb(0 0 0 / 0.3), 0 0 8px color-mix(in oklab, ${color} 70%, transparent)`,
+    // The light highlight inside the edge is an inset shadow, so it follows the
+    // frame's shape, circle or diamond; the faint dark outline holds the edge
+    // on a light page as on the game's teal one.
+    boxShadow: [
+      `inset 0 0 0 2px color-mix(in oklab, ${color} 50%, white)`,
+      `inset 0 0 6px 3px color-mix(in oklab, ${color} 80%, transparent)`,
+      '0 0 0 1px rgb(0 0 0 / 0.3)',
+      `0 0 8px color-mix(in oklab, ${color} 70%, transparent)`,
+    ].join(', '),
   };
 }
 
@@ -402,12 +408,19 @@ function SkillIcon({ skill, size }: { skill: Skill; size: number }) {
         )}
         style={disc(skill)}
       />
-      <ItemIcon
-        item={glyph}
-        size={glyphSize}
-        className="absolute rounded-none border-0 bg-transparent brightness-125 contrast-110"
-        style={{ left: (size - glyphSize) / 2, top: (size - glyphSize) / 2 }}
-      />
+      {/* The enlarged glyph is clipped to the frame's shape. */}
+      <span
+        aria-hidden
+        className="absolute inset-0"
+        style={{ clipPath: skill.info?.signal ? 'polygon(50% 0, 100% 50%, 50% 100%, 0 50%)' : 'circle(48%)' }}
+      >
+        <ItemIcon
+          item={glyph}
+          size={glyphSize}
+          className="absolute rounded-none border-0 bg-transparent brightness-125 contrast-110"
+          style={{ left: (size - glyphSize) / 2, top: (size - glyphSize) / 2 }}
+        />
+      </span>
       {skill.effect && (
         <ItemIcon
           item={{ ...skill.effect, category: 'skill', icon: true }}
