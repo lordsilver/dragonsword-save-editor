@@ -1318,9 +1318,9 @@ impl<'a> Game<'a> {
                 owned: owned.get(&hero.id).is_some_and(|hp| *hp != UNJOINED_HP),
             })
             .collect();
-        // Heroes still to recruit first; within each group, the story's heroes
-        // in the order their quests come, then the shop's.
-        heroes.sort_by_key(|hero| (hero.owned, story_position(growth, hero), hero.cid));
+        // One fixed order, recruited or not, so recruiting never reshuffles the
+        // list: the story's heroes in the order their quests come, then the shop's.
+        heroes.sort_by_key(|hero| (story_position(growth, hero), hero.cid));
         Ok(heroes)
     }
 

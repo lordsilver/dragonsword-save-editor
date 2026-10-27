@@ -804,22 +804,15 @@ fn only_heroes_the_game_hands_out_can_be_recruited() {
     assert_eq!(heroes.len(), 19);
     assert!(heroes.iter().any(|hero| hero.cid == 10_004 && hero.owned));
     assert!(heroes.iter().any(|hero| hero.cid == 10_003 && hero.owned));
-    // Heroes still to recruit come first, the story's in quest order, then
-    // the shop's; the roster's own heroes follow in the same order.
-    let owned_from = heroes.iter().position(|hero| hero.owned).expect("owned");
-    assert!(heroes[owned_from..].iter().all(|hero| hero.owned));
-    let story: Vec<i64> = heroes[..owned_from]
-        .iter()
-        .filter(|hero| matches!(hero.sources[0], dsa_core::domain::HeroSource::Quest(_)))
-        .map(|hero| hero.cid)
-        .collect();
-    let first_shop = heroes[..owned_from]
-        .iter()
-        .position(|hero| matches!(hero.sources[0], dsa_core::domain::HeroSource::Shop))
-        .expect("a shop hero to recruit");
-    assert!(
-        story.len() <= first_shop,
-        "story heroes come before the shop's"
+    // The story's heroes in the order their quests come, then the shop's,
+    // whether or not they are on the roster.
+    let order: Vec<i64> = heroes.iter().map(|hero| hero.cid).collect();
+    assert_eq!(
+        order,
+        [
+            10_003, 10_006, 10_007, 10_008, 10_029, 10_011, 10_014, 10_017, 10_001, 10_004, 10_005,
+            10_016, 10_020, 10_022, 10_028, 10_030, 10_032, 10_036, 10_037,
+        ]
     );
 }
 
