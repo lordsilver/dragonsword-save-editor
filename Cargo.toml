@@ -6,7 +6,7 @@ default-members = ["crates/core", "apps/desktop/src-tauri"]
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.96"
+rust-version = "1.99"
 repository = "https://github.com/lordsilver/dragonsword-save-editor"
 
 [workspace.dependencies]
@@ -41,3 +41,14 @@ opt-level = 3
 
 [profile.dev.package.dsa-core]
 opt-level = 3
+
+# Release builds, after Tauri's size guide (v2.tauri.app/concept/size): one
+# codegen unit and fat LTO let LLVM optimise across crates, and strip drops
+# the symbols. Speed over size (opt-level 3, not "s"), for the PBKDF2 above.
+# Panics keep unwinding: a panic inside a command then fails that command
+# instead of closing the app with the user's unsaved edits.
+[profile.release]
+codegen-units = 1
+lto = "fat"
+opt-level = 3
+strip = true

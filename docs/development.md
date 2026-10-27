@@ -16,7 +16,7 @@ The core crate has no Tauri dependency, so the format and mutation tests run wit
 ## Requirements
 
 - Node.js 24 and pnpm 12 (see `mise.toml`; `mise install` sets both up).
-- Rust stable with the version in `Cargo.toml` (currently 1.96 or newer).
+- Rust stable with the version in `Cargo.toml` (currently 1.99 or newer).
 - Tauri's Linux dependencies if you build on Linux: `libwebkit2gtk-4.1-dev`, `libayatana-appindicator3-dev`, `librsvg2-dev`, `patchelf`, and the usual GTK/WebKit development packages.
 - On Windows and macOS, the standard Tauri prerequisites for that platform.
 
