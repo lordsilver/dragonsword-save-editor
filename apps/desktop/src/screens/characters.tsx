@@ -352,19 +352,19 @@ function HeroInformation({ character, busy }: { character: Character; busy: bool
 /**
  * The disc behind a skill's glyph, in the game's colour for the skill (its
  * effect's, or the khaki ATTACK colour for a plain skill). Like the game's, it
- * is dark in the middle, which keeps the white glyph readable, and brightens to
- * a glowing rim in the full colour.
+ * is dark in the middle, so the bright glyph stands out, and turns to a thin,
+ * vivid ring of the full colour at the edge.
  */
-function disc(skill: Skill): { underlay: string; style: CSSProperties } {
+function disc(skill: Skill): CSSProperties {
   const color = skill.color;
-  const middle = `color-mix(in oklab, ${color} 50%, #18181b)`;
-  const ring = `color-mix(in oklab, ${color} 85%, #27272a)`;
+  const middle = `color-mix(in oklab, ${color} 30%, #09090b)`;
+  const inner = `color-mix(in oklab, ${color} 45%, #18181b)`;
   return {
-    underlay: `radial-gradient(circle closest-side, ${middle} 30%, ${ring} 78%, ${color} 100%)`,
-    style: {
-      borderColor: `color-mix(in oklab, ${color} 60%, white)`,
-      boxShadow: `0 0 8px color-mix(in oklab, ${color} 75%, transparent)`,
-    },
+    // A light highlight just inside the coloured edge, and a faint dark outline
+    // so the edge holds on a light page as on the game's teal one.
+    backgroundImage: `radial-gradient(circle closest-side, ${middle} 0%, ${inner} 60%, ${color} 84%, color-mix(in oklab, ${color} 55%, white) 93%, ${color} 100%)`,
+    borderColor: color,
+    boxShadow: `0 0 0 1px rgb(0 0 0 / 0.3), 0 0 8px color-mix(in oklab, ${color} 70%, transparent)`,
   };
 }
 
@@ -380,7 +380,9 @@ function effectName(skill: Skill, language: string): string | null {
 
 function SkillIcon({ skill, size }: { skill: Skill; size: number }) {
   const badge = Math.round(size * 0.4);
-  const { underlay, style } = disc(skill);
+  // The game draws the glyph nearly as large as the disc and brighter than its
+  // grey texture; it is its own layer so only the glyph is brightened.
+  const glyphSize = Math.round(size * 1.15);
   const glyph = {
     nameEn: skill.info?.nameEn ?? '?',
     iconX: skill.info?.iconX ?? 0,
@@ -389,21 +391,23 @@ function SkillIcon({ skill, size }: { skill: Skill; size: number }) {
     icon: Boolean(skill.info && (skill.info.iconX || skill.info.iconY)),
   };
   return (
-    // A block box: the diamond's frame takes its size from this one.
+    // A block box: the disc and the glyph take their size from this one.
     <span className="relative block shrink-0" style={{ width: size, height: size }}>
-      {skill.info?.signal ? (
-        // A signal skill sits on a diamond: the frame turns, the glyph does not.
-        <>
-          <span
-            aria-hidden
-            className="absolute inset-[12%] rotate-45 rounded-[18%] border-2"
-            style={{ ...style, backgroundImage: underlay }}
-          />
-          <ItemIcon item={glyph} size={size} className="relative rounded-none border-0 bg-transparent" />
-        </>
-      ) : (
-        <ItemIcon item={glyph} size={size} className="rounded-full border-2" underlay={underlay} style={style} />
-      )}
+      <span
+        aria-hidden
+        className={cn(
+          'absolute border-2',
+          // A signal skill sits on a diamond: the frame turns, the glyph does not.
+          skill.info?.signal ? 'inset-[12%] rotate-45 rounded-[18%]' : 'inset-0 rounded-full',
+        )}
+        style={disc(skill)}
+      />
+      <ItemIcon
+        item={glyph}
+        size={glyphSize}
+        className="absolute rounded-none border-0 bg-transparent brightness-125 contrast-110"
+        style={{ left: (size - glyphSize) / 2, top: (size - glyphSize) / 2 }}
+      />
       {skill.effect && (
         <ItemIcon
           item={{ ...skill.effect, category: 'skill', icon: true }}
