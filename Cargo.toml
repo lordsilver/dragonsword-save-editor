@@ -31,3 +31,13 @@ walkdir = "2.5.0"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
+
+# Opening or writing a save runs 256,000 PBKDF2-SHA512 rounds. Unoptimized,
+# that takes about 5 s per open in `pnpm desktop`, against 0.1 s optimized.
+# Dependencies rarely rebuild, so dev builds compile them optimized too, and
+# dsa-core as well, because the generic PBKDF2/HMAC code is compiled there.
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.dev.package.dsa-core]
+opt-level = 3
