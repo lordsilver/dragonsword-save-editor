@@ -804,6 +804,20 @@ fn only_heroes_the_game_hands_out_can_be_recruited() {
     assert_eq!(heroes.len(), 19);
     assert!(heroes.iter().any(|hero| hero.cid == 10_004 && hero.owned));
     assert!(heroes.iter().any(|hero| hero.cid == 10_003 && hero.owned));
+    // Heroes still to recruit come first, the story's in quest order, then
+    // the shop's; the roster's own heroes follow in the same order.
+    let owned_from = heroes.iter().position(|hero| hero.owned).expect("owned");
+    assert!(heroes[owned_from..].iter().all(|hero| hero.owned));
+    let story: Vec<i64> = heroes[..owned_from]
+        .iter()
+        .filter(|hero| matches!(hero.sources[0], dsa_core::domain::HeroSource::Quest(_)))
+        .map(|hero| hero.cid)
+        .collect();
+    let first_shop = heroes[..owned_from]
+        .iter()
+        .position(|hero| matches!(hero.sources[0], dsa_core::domain::HeroSource::Shop))
+        .expect("a shop hero to recruit");
+    assert!(story.len() <= first_shop, "story heroes come before the shop's");
 }
 
 fn character(game: &Game<'_>, cid: i64) -> dsa_core::domain::Character {

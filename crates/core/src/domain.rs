@@ -1303,7 +1303,8 @@ impl<'a> Game<'a> {
             .into_iter()
             .map(|character| (character.cid, character.hp))
             .collect();
-        Ok(Growth::shared()
+        let growth = Growth::shared();
+        let mut heroes: Vec<HeroEntry> = growth
             .heroes()
             .iter()
             .map(|hero| HeroEntry {
@@ -1316,7 +1317,11 @@ impl<'a> Game<'a> {
                     .collect(),
                 owned: owned.get(&hero.id).is_some_and(|hp| *hp != UNJOINED_HP),
             })
-            .collect())
+            .collect();
+        // Heroes still to recruit first; within each group, the story's heroes
+        // in the order their quests come, then the shop's.
+        heroes.sort_by_key(|hero| (hero.owned, story_position(growth, hero), hero.cid));
+        Ok(heroes)
     }
 
     /// Brings a hero onto the roster. Returns false when the hero was already
@@ -2603,6 +2608,23 @@ pub enum RewardRoute {
 
 /// A growth.json hero source (`shop`, `quest:<id>`, `joins:<id>`) with the
 /// quest's own name, which carries the number the game shows.
+/// Where a hero first comes in the story: the earliest main quest that brings
+/// them, by its number in the story. A side quest sorts after every main
+/// quest, and a shop-only hero after every quest.
+fn story_position(growth: &Growth, hero: &HeroEntry) -> (i64, i64) {
+    hero.sources
+        .iter()
+        .filter_map(|source| match source {
+            HeroSource::Quest(quest) => Some(match growth.main_quest(quest.quest_id) {
+                Some(main) => (0, main.number),
+                None => (1, quest.quest_id),
+            }),
+            HeroSource::Shop => None,
+        })
+        .min()
+        .unwrap_or((2, 0))
+}
+
 fn hero_source(source: &str) -> HeroSource {
     let quest_id = source
         .split_once(':')
