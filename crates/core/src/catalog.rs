@@ -161,6 +161,9 @@ pub struct SkillSeed {
     /// master skill.
     pub order: i64,
     pub master: bool,
+    /// One of the two signal skills, which the game draws as diamonds.
+    #[serde(default)]
+    pub signal: bool,
     pub name_en: String,
     pub name_fr: String,
     pub desc_en: String,
@@ -533,6 +536,12 @@ mod tests {
             ]
         );
         assert!(lute[8].master);
+        let signals: Vec<_> = lute
+            .iter()
+            .filter(|slot| slot.signal)
+            .map(|slot| slot.type_value)
+            .collect();
+        assert_eq!(signals, [3, 4]);
         let effects: Vec<_> = lute.iter().map(|slot| slot.effect.as_deref()).collect();
         assert_eq!(
             effects,

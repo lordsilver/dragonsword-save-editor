@@ -171,6 +171,8 @@ for (const row of rows('PCSkillGrowthData')) {
     type,
     order: Number(row.SlotOrder),
     master: row.SkllType === 'MASTER',
+    // SlotType 3: the two signal skills, which the game draws as diamonds.
+    signal: row.SlotType === '3',
     nameEn: name.En.trim(),
     nameFr: (name.Fr || name.En).trim(),
     descEn: desc?.En ? plain(desc.En) : '',

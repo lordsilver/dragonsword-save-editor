@@ -240,6 +240,8 @@ export interface SkillInfo {
   /** The game's SlotOrder: 1–4 the left column, 5–8 the right, 9 the master skill. */
   order: number;
   master: boolean;
+  /** One of the two signal skills, which the game draws as diamonds. */
+  signal: boolean;
   nameEn: string;
   nameFr: string;
   descEn: string;

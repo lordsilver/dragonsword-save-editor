@@ -390,20 +390,29 @@ function effectName(skill: Skill, language: string): string | null {
 
 function SkillIcon({ skill, size }: { skill: Skill; size: number }) {
   const badge = Math.round(size * 0.4);
+  const { underlay, style } = disc(skill);
+  const glyph = {
+    nameEn: skill.info?.nameEn ?? '?',
+    iconX: skill.info?.iconX ?? 0,
+    iconY: skill.info?.iconY ?? 0,
+    category: 'skill',
+    icon: Boolean(skill.info && (skill.info.iconX || skill.info.iconY)),
+  };
   return (
-    <span className="relative shrink-0">
-      <ItemIcon
-        item={{
-          nameEn: skill.info?.nameEn ?? '?',
-          iconX: skill.info?.iconX ?? 0,
-          iconY: skill.info?.iconY ?? 0,
-          category: 'skill',
-          icon: Boolean(skill.info && (skill.info.iconX || skill.info.iconY)),
-        }}
-        size={size}
-        className="rounded-full border-2"
-        {...disc(skill)}
-      />
+    <span className="relative shrink-0" style={{ width: size, height: size }}>
+      {skill.info?.signal ? (
+        // A signal skill sits on a diamond: the frame turns, the glyph does not.
+        <>
+          <span
+            aria-hidden
+            className="absolute inset-[12%] rotate-45 rounded-[18%] border-2"
+            style={{ ...style, backgroundImage: underlay }}
+          />
+          <ItemIcon item={glyph} size={size} className="relative rounded-none border-0 bg-transparent" />
+        </>
+      ) : (
+        <ItemIcon item={glyph} size={size} className="rounded-full border-2" underlay={underlay} style={style} />
+      )}
       {skill.effect && (
         <ItemIcon
           item={{ ...skill.effect, category: 'skill', icon: true }}
