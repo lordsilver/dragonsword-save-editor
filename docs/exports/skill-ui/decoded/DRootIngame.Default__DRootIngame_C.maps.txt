@@ -1,0 +1,118 @@
+MesmerizedIconMap
+  EMesmerizedType::DOWN                    /Game/Art/UI/InGame/Common/State/StateSymbol_DOWN_Sprite.StateSymbol_DOWN_Sprite
+  EMesmerizedType::FREEZE                  /Game/Art/UI/InGame/Common/State/StateSymbol_FREEZE_Sprite.StateSymbol_FREEZE_Sprite
+  EMesmerizedType::STUN                    /Game/Art/UI/InGame/Common/State/StateSymbol_STUN_Sprite.StateSymbol_STUN_Sprite
+  EMesmerizedType::AIR                     /Game/Art/UI/InGame/Common/State/StateSymbol_AIR_Sprite.StateSymbol_AIR_Sprite
+  EMesmerizedType::HOLD                    /Game/Art/UI/InGame/Common/State/StateSymbol_HOLD_Sprite.StateSymbol_HOLD_Sprite
+  EMesmerizedType::SLOW                    /Game/Art/UI/InGame/Common/State/StateSymbol_SLOW_Sprite.StateSymbol_SLOW_Sprite
+  EMesmerizedType::SHOCK                   /Game/Art/UI/InGame/Common/State/StateSymbol_SHOCK_Sprite.StateSymbol_SHOCK_Sprite
+  EMesmerizedType::FIRE                    /Game/Art/UI/InGame/Common/State/StateSymbol_FIRE_Sprite.StateSymbol_FIRE_Sprite
+  EMesmerizedType::POISON                  /Game/Art/UI/InGame/Common/State/StateSymbol_POISON_Sprite.StateSymbol_POISON_Sprite
+  EMesmerizedType::BLEED                   /Game/Art/UI/InGame/Common/State/StateSymbol_BLEEDING_Sprite.StateSymbol_BLEEDING_Sprite
+  EMesmerizedType::ICE                     /Game/Art/UI/InGame/Common/State/StateSymbol_FREEZE_Sprite.StateSymbol_FREEZE_Sprite
+BossMesmerizedIconMap
+  EMesmerizedType::EMesmerizedType_MAX     /Game/Art/UI/InGame/Common/State/State_Mark_DOWN_Sprite.State_Mark_DOWN_Sprite
+  EMesmerizedType::FREEZE                  /Game/Art/UI/InGame/Common/State/State_Mark_ICE_Sprite.State_Mark_ICE_Sprite
+  EMesmerizedType::STUN                    /Game/Art/UI/InGame/Common/State/State_Mark_STUN_Sprite.State_Mark_STUN_Sprite
+  EMesmerizedType::AIR                     /Game/Art/UI/InGame/Common/State/State_Mark_AIR_Sprite.State_Mark_AIR_Sprite
+  EMesmerizedType::DOWN                    /Game/Art/UI/InGame/Common/State/State_Mark_DOWN_Sprite.State_Mark_DOWN_Sprite
+  EMesmerizedType::HOLD                    /Game/Art/UI/InGame/Common/State/State_Mark_HOLD_Sprite.State_Mark_HOLD_Sprite
+  EMesmerizedType::SLOW                    /Game/Art/UI/InGame/Common/State/State_Mark_SLOW_Sprite.State_Mark_SLOW_Sprite
+  EMesmerizedType::SHOCK                   /Game/Art/UI/InGame/Common/State/State_Mark_SHOCK_Sprite.State_Mark_SHOCK_Sprite
+  EMesmerizedType::ICE                     /Game/Art/UI/InGame/Common/State/State_Mark_ICE_Sprite.State_Mark_ICE_Sprite
+  EMesmerizedType::FIRE                    /Game/Art/UI/InGame/Common/State/State_Mark_FIRE_Sprite.State_Mark_FIRE_Sprite
+  EMesmerizedType::POISON                  /Game/Art/UI/InGame/Common/State/State_Mark_POISON_Sprite.State_Mark_POISON_Sprite
+  EMesmerizedType::BLEED                   /Game/Art/UI/InGame/Common/State/State_Mark_BLEEDING_Sprite.State_Mark_BLEEDING_Sprite
+BossMesmerizedTextOnMap
+  EMesmerizedType::STUN                    /Game/Art/UI/InGame/Common/State/State_TXT_STUN_Sprite.State_TXT_STUN_Sprite
+  EMesmerizedType::AIR                     /Game/Art/UI/InGame/Common/State/State_TXT_AIR_Off_Sprite.State_TXT_AIR_Off_Sprite
+  EMesmerizedType::DOWN                    /Game/Art/UI/InGame/Common/State/State_TXT_DOWN_Sprite.State_TXT_DOWN_Sprite
+  EMesmerizedType::HOLD                    /Game/Art/UI/InGame/Common/State/State_TXT_HOLD_Sprite.State_TXT_HOLD_Sprite
+  EMesmerizedType::SLOW                    /Game/Art/UI/InGame/Common/State/State_TXT_SLOW_Sprite.State_TXT_SLOW_Sprite
+  EMesmerizedType::SHOCK                   /Game/Art/UI/InGame/Common/State/State_TXT_SHOCK_Sprite.State_TXT_SHOCK_Sprite
+  EMesmerizedType::ICE                     /Game/Art/UI/InGame/Common/State/State_TXT_ICE_Sprite.State_TXT_ICE_Sprite
+  EMesmerizedType::FIRE                    /Game/Art/UI/InGame/Common/State/State_TXT_FIRE_Sprite.State_TXT_FIRE_Sprite
+  EMesmerizedType::POISON                  /Game/Art/UI/InGame/Common/State/State_TXT_POISON_Sprite.State_TXT_POISON_Sprite
+  EMesmerizedType::BLEED                   /Game/Art/UI/InGame/Common/State/State_TXT_BLEEDING_Sprite.State_TXT_BLEEDING_Sprite
+BossMesmerizedTextOffMap
+  EMesmerizedType::STUN                    /Game/Art/UI/InGame/Common/State/State_TXT_STUN_Off_Sprite.State_TXT_STUN_Off_Sprite
+  EMesmerizedType::AIR                     /Game/Art/UI/InGame/Common/State/State_TXT_AIR_Off_Sprite.State_TXT_AIR_Off_Sprite
+  EMesmerizedType::DOWN                    /Game/Art/UI/InGame/Common/State/State_TXT_DOWN_Off_Sprite.State_TXT_DOWN_Off_Sprite
+  EMesmerizedType::HOLD                    /Game/Art/UI/InGame/Common/State/State_TXT_HOLD_Off_Sprite.State_TXT_HOLD_Off_Sprite
+  EMesmerizedType::SLOW                    /Game/Art/UI/InGame/Common/State/State_TXT_SLOW_Off_Sprite.State_TXT_SLOW_Off_Sprite
+  EMesmerizedType::SHOCK                   /Game/Art/UI/InGame/Common/State/State_TXT_SHOCK_Off_Sprite.State_TXT_SHOCK_Off_Sprite
+  EMesmerizedType::ICE                     /Game/Art/UI/InGame/Common/State/State_TXT_ICE_Off_Sprite.State_TXT_ICE_Off_Sprite
+  EMesmerizedType::FIRE                    /Game/Art/UI/InGame/Common/State/State_TXT_FIRE_Off_Sprite.State_TXT_FIRE_Off_Sprite
+  EMesmerizedType::POISON                  /Game/Art/UI/InGame/Common/State/State_TXT_POISON_Off_Sprite.State_TXT_POISON_Off_Sprite
+  EMesmerizedType::BLEED                   /Game/Art/UI/InGame/Common/State/State_TXT_BLEEDING_Off_Sprite.State_TXT_BLEEDING_Off_Sprite
+MesmerizedUIIconMap
+  EMesmerizedUIType::STUN                  /Game/Art/UI/InGame/Common/State/StateSymbol_STUN_Sprite.StateSymbol_STUN_Sprite
+  EMesmerizedUIType::AIR                   /Game/Art/UI/InGame/Common/State/StateSymbol_AIR_Sprite.StateSymbol_AIR_Sprite
+  EMesmerizedUIType::DOWN                  /Game/Art/UI/InGame/Common/State/StateSymbol_DOWN_Sprite.StateSymbol_DOWN_Sprite
+  EMesmerizedUIType::BLEED                 /Game/Art/UI/InGame/Common/State/StateSymbol_BLEEDING_Sprite.StateSymbol_BLEEDING_Sprite
+  EMesmerizedUIType::HOLD                  /Game/Art/UI/InGame/Common/State/StateSymbol_HOLD_Sprite.StateSymbol_HOLD_Sprite
+  EMesmerizedUIType::SHOCK                 /Game/Art/UI/InGame/Common/State/StateSymbol_SHOCK_Sprite.StateSymbol_SHOCK_Sprite
+  EMesmerizedUIType::FIRE                  /Game/Art/UI/InGame/Common/State/StateSymbol_FIRE_Sprite.StateSymbol_FIRE_Sprite
+  EMesmerizedUIType::POISON                /Game/Art/UI/InGame/Common/State/StateSymbol_POISON_Sprite.StateSymbol_POISON_Sprite
+  EMesmerizedUIType::SLOW                  /Game/Art/UI/InGame/Common/State/StateSymbol_SLOW_Sprite.StateSymbol_SLOW_Sprite
+  EMesmerizedUIType::ICE                   /Game/Art/UI/InGame/Common/State/StateSymbol_FREEZE_Sprite.StateSymbol_FREEZE_Sprite
+  EMesmerizedUIType::ATTACK                /Game/Art/UI/InGame/Common/State/StateSymbol_DOWN_Sprite.StateSymbol_DOWN_Sprite
+  EMesmerizedUIType::HEAL                  /Game/Art/UI/InGame/Common/State/StateSymbol_HEAL_Sprite.StateSymbol_HEAL_Sprite
+  EMesmerizedUIType::SUPERARMOR            /Game/Art/UI/InGame/Common/State/StateSymbol_BreakArmor_Sprite.StateSymbol_BreakArmor_Sprite
+MesmerizedUIVer2IconMap
+  EMesmerizedUIType::STUN                  /Game/Art/UI/InGame/Common/State/State_Mark_STUN_Sprite.State_Mark_STUN_Sprite
+  EMesmerizedUIType::AIR                   /Game/Art/UI/InGame/Common/State/State_Mark_AIR_Sprite.State_Mark_AIR_Sprite
+  EMesmerizedUIType::DOWN                  /Game/Art/UI/InGame/Common/State/State_Mark_DOWN_Sprite.State_Mark_DOWN_Sprite
+  EMesmerizedUIType::BLEED                 /Game/Art/UI/InGame/Common/State/State_Mark_BLEEDING_Sprite.State_Mark_BLEEDING_Sprite
+  EMesmerizedUIType::HOLD                  /Game/Art/UI/InGame/Common/State/State_Mark_HOLD_Sprite.State_Mark_HOLD_Sprite
+  EMesmerizedUIType::SHOCK                 /Game/Art/UI/InGame/Common/State/State_Mark_SHOCK_Sprite.State_Mark_SHOCK_Sprite
+  EMesmerizedUIType::FIRE                  /Game/Art/UI/InGame/Common/State/State_Mark_FIRE_Sprite.State_Mark_FIRE_Sprite
+  EMesmerizedUIType::POISON                /Game/Art/UI/InGame/Common/State/State_Mark_POISON_Sprite.State_Mark_POISON_Sprite
+  EMesmerizedUIType::SLOW                  /Game/Art/UI/InGame/Common/State/State_Mark_SLOW_Sprite.State_Mark_SLOW_Sprite
+  EMesmerizedUIType::ICE                   /Game/Art/UI/InGame/Common/State/State_Mark_ICE_Sprite.State_Mark_ICE_Sprite
+  EMesmerizedUIType::HEAL                  /Game/Art/UI/InGame/Common/State/State_Mark_HEAL_Sprite.State_Mark_HEAL_Sprite
+  EMesmerizedUIType::TYPE_NONE             /Game/Art/UI/InGame/Common/State/State_Mark_SuperArmor_Sprite.State_Mark_SuperArmor_Sprite
+MesmerizedColor
+  EMesmerizedType::STUN                    #F5D000  rgb(245,208,0)
+  EMesmerizedType::AIR                     #47D1F8  rgb(71,209,248)
+  EMesmerizedType::DOWN                    #7D5BF1  rgb(125,91,241)
+  EMesmerizedType::BLEED                   #C63555  rgb(198,53,85)
+  EMesmerizedType::EMesmerizedType_MAX     #FFFFFF  rgb(255,255,255)
+  EMesmerizedType::SHOCK                   #C465FF  rgb(196,101,255)
+  EMesmerizedType::POISON                  #3DC32E  rgb(61,195,46)
+  EMesmerizedType::FIRE                    #F40000  rgb(244,0,0)
+  EMesmerizedType::SLOW                    #E7766E  rgb(231,118,110)
+  EMesmerizedType::HOLD                    #C4C4E6  rgb(196,196,230)
+  EMesmerizedType::FREEZE                  #55DDFF  rgb(85,221,255)
+  EMesmerizedType::ICE                     #55DDFF  rgb(85,221,255)
+MesmerizedUIColor
+  EMesmerizedUIType::STUN                  #FFDA59  rgb(255,218,89)
+  EMesmerizedUIType::AIR                   #47D1F8  rgb(71,209,248)
+  EMesmerizedUIType::DOWN                  #7D5BF1  rgb(125,91,241)
+  EMesmerizedUIType::BLEED                 #CC0048  rgb(204,0,72)
+  EMesmerizedUIType::HOLD                  #C4C4E6  rgb(196,196,230)
+  EMesmerizedUIType::SHOCK                 #C465FF  rgb(196,101,255)
+  EMesmerizedUIType::FIRE                  #F40000  rgb(244,0,0)
+  EMesmerizedUIType::POISON                #3DC32E  rgb(61,195,46)
+  EMesmerizedUIType::SLOW                  #E7766E  rgb(231,118,110)
+  EMesmerizedUIType::ICE                   #55DDFF  rgb(85,221,255)
+  EMesmerizedUIType::ATTACK                #B39C6F  rgb(179,156,111)
+  EMesmerizedUIType::HEAL                  #ED7F9B  rgb(237,127,155)
+  EMesmerizedUIType::SUPERARMOR            #DDD8D0  rgb(221,216,208)
+MesmerizedSwitchingColor
+  EMesmerizedUIType::STUN                  #F5D000  rgb(245,208,0)
+  EMesmerizedUIType::AIR                   #47D1F8  rgb(71,209,248)
+  EMesmerizedUIType::DOWN                  #7D5BF1  rgb(125,91,241)
+  EMesmerizedUIType::BLEED                 #C63555  rgb(198,53,85)
+  EMesmerizedUIType::EMesmerizedUIType_MAX #FFFFFF  rgb(255,255,255)
+  EMesmerizedUIType::SHOCK                 #C465FF  rgb(196,101,255)
+  EMesmerizedUIType::POISON                #3DC32E  rgb(61,195,46)
+  EMesmerizedUIType::FIRE                  #F40000  rgb(244,0,0)
+  EMesmerizedUIType::SLOW                  #E7766E  rgb(231,118,110)
+  EMesmerizedUIType::HOLD                  #C4C4E6  rgb(196,196,230)
+  EMesmerizedUIType::ICE                   #55DDFF  rgb(85,221,255)
+  EMesmerizedUIType::SUPERARMOR            #DDD8D0  rgb(221,216,208)
+  EMesmerizedUIType::ATTACK                #B39C70  rgb(179,156,112)
+  EMesmerizedUIType::HEAL                  #ED7F9B  rgb(237,127,155)
+  EMesmerizedUIType::TYPE_MAX              #000000  rgb(0,0,0)
+next value at .uexp offset 2043: TArray of 10 package indices (AttackCombatSprite)

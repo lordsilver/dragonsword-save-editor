@@ -143,17 +143,19 @@ What spawns depends on save state. `ActorSpawnConditionData` gates actors on a q
 
 ## Open questions
 
-| #   | Question                                                                         | Status                                                                                |
-| --- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Q1  | Hero level cap at each breakthrough                                              | Answered: 20 + 10 × stage, up to 60 (global) or 70 (Korea).                           |
-| Q2  | Is EXP a running total, and what is the table?                                   | Answered: running total, `PCCharacterLevelData`.                                      |
-| Q3  | Skill caps per stage                                                             | Answered: `PCSkillGrowthData`, above.                                                 |
-| Q4  | Karma level and EXP caps                                                         | Answered: hero level caps, with `KarmaLevelData` EXP per rarity.                      |
-| Q5  | Rank name per grade                                                              | Answered: `AdventGradeData` and `StringData`, above.                                  |
-| Q6  | Does the game promote again after the grade is lowered?                          | Not worth testing. The grade is read-only.                                            |
-| Q7  | Will the game load a save the editor wrote at all?                               | Open. The in-game test gates decide it; don't edit the real save before they pass.    |
-| Q8  | What do `HP`, `TRANSCEND_TOTAL`, `SOLDIER_GRADE` and `SOLDIER_GRADE_POINT` mean? | Open. `dsgamedb_sqlite.sql` is the schema only, and `SoldierGradeData` has no grades. |
-| Q9  | Which region's limits does the offline game use?                                 | Answered: Korea's. The offline game caps heroes at level 70.                          |
+| #   | Question                                                                         | Status                                                                                                                                                                                     |
+| --- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Q1  | Hero level cap at each breakthrough                                              | Answered: 20 + 10 × stage, up to 60 (global) or 70 (Korea).                                                                                                                                |
+| Q2  | Is EXP a running total, and what is the table?                                   | Answered: running total, `PCCharacterLevelData`.                                                                                                                                           |
+| Q3  | Skill caps per stage                                                             | Answered: `PCSkillGrowthData`, above.                                                                                                                                                      |
+| Q4  | Karma level and EXP caps                                                         | Answered: hero level caps, with `KarmaLevelData` EXP per rarity.                                                                                                                           |
+| Q5  | Rank name per grade                                                              | Answered: `AdventGradeData` and `StringData`, above.                                                                                                                                       |
+| Q6  | Does the game promote again after the grade is lowered?                          | Not worth testing. The grade is read-only.                                                                                                                                                 |
+| Q7  | Will the game load a save the editor wrote at all?                               | Open. The in-game test gates decide it; don't edit the real save before they pass.                                                                                                         |
+| Q8  | What do `HP`, `TRANSCEND_TOTAL`, `SOLDIER_GRADE` and `SOLDIER_GRADE_POINT` mean? | Open. `dsgamedb_sqlite.sql` is the schema only, and `SoldierGradeData` has no grades.                                                                                                      |
+| Q9  | Which region's limits does the offline game use?                                 | Answered: Korea's. The offline game caps heroes at level 70.                                                                                                                               |
+| Q10 | Which combo rows give a skill's "Attack Power N%" and activation conditions?     | Open. `PCComboLevelData.AttackWeight` holds the percentages (3.67 = 367%); the skill data assets hold no link, so it is in the tables, probably through `PCSkillGrowthData.ComboChangeID`. |
+| Q11 | Which of the root widget's colour maps does the skill screen read?               | Open. The choice is in C++; the editor uses `MesmerizedUIColor` (see Game assets, Skill colours).                                                                                          |
 
 ## Observations
 

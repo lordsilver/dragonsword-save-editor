@@ -1,0 +1,327 @@
+MAT /Game/Art/FX/Material/UI/fxm_RGB_UI  MaterialDomain=EMaterialDomain::MD_UI, BlendMode=EBlendMode::BLEND_Translucent, ShadingModel=EMaterialShadingModel::MSM_Unlit, ShadingModels={'ShadingModelField': 1}, bUsedWithSkeletalMesh=True, bUsedWithParticleSprites=True, bUsedWithNiagaraSprites=True, bUsedWithNiagaraRibbons=True, bUsedWithNiagaraMeshParticles=True, bCanMaskedBeAssumedOpaque=True, bCastRayTracedShadows=False, bIncludedInBaseGame=True
+MAT /Game/Art/FX/Material/UI/fxm_Ray_ui  MaterialDomain=EMaterialDomain::MD_UI, BlendMode=EBlendMode::BLEND_Additive, bCanMaskedBeAssumedOpaque=True, bIncludedInBaseGame=True
+MAT /Game/Art/FX/Material/UI/fxm_default_UI  MaterialDomain=EMaterialDomain::MD_UI, BlendMode=EBlendMode::BLEND_Translucent, ShadingModel=EMaterialShadingModel::MSM_Unlit, ShadingModels={'ShadingModelField': 1}, bUsedWithSkeletalMesh=True, bUsedWithParticleSprites=True, bUsedWithNiagaraSprites=True, bUsedWithNiagaraRibbons=True, bUsedWithNiagaraMeshParticles=True, bCastRayTracedShadows=False, bIncludedInBaseGame=True
+MI  /Game/Art/FX/textures/UI/Uins/FXT_UI_Icon01_N_ad04
+    parent  /Game/Art/FX/Material/UI/fxm_default_UI
+    scalar  distortion_str = 0.05
+    scalar  Uspeed_D = 0.0
+    scalar  Vspeed_D = 0.1
+    scalar  Main_Intensity = 1.0
+    scalar  Main_Str = 2.0
+    scalar  Main_Opa = 1.0
+    scalar  noise_str = 0.0
+    scalar  Rotator_Speed = 0.0
+    scalar  RefractionDepthBias = 0.0
+    texture MainTX = /Game/Art/FX/textures/UI/fxt_UI_Frame
+    texture noise = /Game/Art/FX/textures/gradient/fxt_grad40
+    overrides {"bOverride_BlendMode": true, "BlendMode": "EBlendMode::BLEND_Additive", "ShadingModel": "EMaterialShadingModel::MSM_Unlit", "OpacityMaskClipValue": 0.3333}
+MI  /Game/Art/FX/textures/UI/Uins/FXT_UI_Icon05_ad01
+    parent  /Game/Art/FX/Material/UI/fxm_default_UI
+    scalar  distortion_str = 0.1
+    scalar  Uspeed_D = 0.0
+    scalar  Vspeed_D = 0.1
+    scalar  Main_Str = 2.0
+    scalar  Main_Opa = 1.0
+    scalar  DimensionX = 1.0
+    scalar  Utile = 1.0
+    scalar  Vtile = 1.0
+    scalar  Vspeed = 0.0
+    scalar  noise_pow = 1.0
+    scalar  noise_str = 1.0
+    scalar  Rotator_Speed = 0.0
+    scalar  RefractionDepthBias = 0.0
+    texture distortionTX = /Game/Art/FX/textures/noise/fxt_noise018
+    texture MainTX = /Game/Art/FX/textures/UI/FXT_UI_Icon02
+    texture noise = /Game/Art/FX/textures/gradient/fxt_grad40
+    overrides {"bOverride_BlendMode": true, "BlendMode": "EBlendMode::BLEND_Additive", "ShadingModel": "EMaterialShadingModel::MSM_Unlit", "OpacityMaskClipValue": 0.3333}
+MI  /Game/Art/FX/textures/UI/Uins/FXT_UI_SkillMaster_Icon01_ad02
+    parent  /Game/Art/FX/Material/UI/fxm_Ray_ui
+    scalar  distortion_Utile = 3.0
+    scalar  distortion_VTile = 1.0
+    scalar  distortion_Uspeed = 0.0
+    scalar  distortion_Vspeed = 0.0
+    scalar  distortion_str = 0.0
+    scalar  MainTex_Mask = -0.02
+    scalar  Main_Opa = 0.5
+    scalar  Main_Str = 4.0
+    scalar  TX_TileX = 4.0
+    scalar  TX_TileY = -1.0
+    scalar  TX_OffsetX = 0.0
+    scalar  TX_OffsetY = 0.0
+    scalar  TX_SpeedX = 0.0
+    scalar  TX_SpeedY = 0.5
+    scalar  InnerCurve = 0.15
+    scalar  CircleCurve = 3.0
+    scalar  EdgeFade = 6.0
+    scalar  RefractionDepthBias = 0.0
+    vector  Color = R 1.0000 G 0.4946 B 0.0000 A 1.0000  (#FFBB00)
+    texture distortionTX = /Game/Art/FX/textures/noise/fxt_noise031
+    texture MainTex = /Game/Art/FX/textures/UI/FXT_UI_Frame03_B
+    overrides {"bOverride_BlendMode": true, "BlendMode": "EBlendMode::BLEND_Translucent", "ShadingModel": "EMaterialShadingModel::MSM_Unlit", "OpacityMaskClipValue": 0.3333}
+MI  /Game/Art/FX/textures/UI/Uins/FXT_UI_SkillMaster_Icon01_ad03
+    parent  /Game/Art/FX/Material/UI/fxm_Ray_ui
+    scalar  MainTex_Mask = -0.001
+    scalar  Main_Opa = 1.0
+    scalar  Main_Str = 3.0
+    scalar  TX_TileX = 2.0
+    scalar  TX_TileY = 0.7
+    scalar  TX_OffsetX = 0.0
+    scalar  TX_OffsetY = 0.0
+    scalar  TX_SpeedX = 0.0
+    scalar  TX_SpeedY = -0.05
+    scalar  InnerCurve = 0.15
+    scalar  CircleCurve = 5.0
+    scalar  EdgeFade = 5.0
+    scalar  RefractionDepthBias = 0.0
+    vector  Color = R 1.0000 G 0.1432 B 0.0000 A 1.0000  (#FF6A00)
+    texture MainTex = /Game/Art/FX/textures/UI/FXT_UI_ParticleMask02
+    overrides {"bOverride_BlendMode": true, "BlendMode": "EBlendMode::BLEND_Additive", "ShadingModel": "EMaterialShadingModel::MSM_Unlit", "OpacityMaskClipValue": 0.3333}
+MI  /Game/Art/FX/textures/UI/Uins/FXT_UI_SkillMaster_Icon01_ts01
+    parent  /Game/Art/FX/Material/UI/fxm_Ray_ui
+    scalar  distortion_Utile = 3.0
+    scalar  distortion_VTile = 0.5
+    scalar  distortion_Uspeed = 0.0
+    scalar  distortion_Vspeed = -0.05
+    scalar  distortion_str = 0.0
+    scalar  MainTex_Mask = -0.1
+    scalar  Main_Opa = 80.0
+    scalar  Main_Str = 12.0
+    scalar  TX_TileX = 1.0
+    scalar  TX_TileY = 0.1
+    scalar  TX_OffsetX = 0.0
+    scalar  TX_OffsetY = 0.0
+    scalar  TX_SpeedX = 0.0
+    scalar  TX_SpeedY = -0.1
+    scalar  InnerCurve = 0.05
+    scalar  CircleCurve = 3.5
+    scalar  EdgeFade = 0.5
+    scalar  RefractionDepthBias = 0.0
+    vector  Color = R 0.0521 G 0.0132 B 0.0000 A 5.0000  (#401E00)
+    texture distortionTX = /Game/Art/FX/textures/noise/fxt_noise031
+    texture MainTex = /Game/Art/FX/textures/noise/fxt_noise014
+    overrides {"bOverride_BlendMode": true, "BlendMode": "EBlendMode::BLEND_Translucent", "ShadingModel": "EMaterialShadingModel::MSM_Unlit", "OpacityMaskClipValue": 0.3333}
+MI  /Game/Art/FX/textures/UI/Uins/Mask_Fx_Skill_SignalOutGame
+    parent  /Game/Art/FX/Material/UI/fxm_default_UI
+    scalar  distortion_str = 0.05
+    scalar  Uspeed_D = 0.0
+    scalar  Vspeed_D = 0.1
+    scalar  Main_Opa = 0.5
+    scalar  noise_str = 3.0
+    scalar  Rotator_Speed = 0.5
+    scalar  RefractionDepthBias = 0.0
+    texture MainTX = /Game/Art/UI/InGame/Mask/Mask_Fx_Skill_Signal
+    texture noise = /Game/Art/FX/textures/gradient/fxt_grad10a
+    overrides {"bOverride_BlendMode": true, "BlendMode": "EBlendMode::BLEND_Additive", "ShadingModel": "EMaterialShadingModel::MSM_Unlit", "OpacityMaskClipValue": 0.3333}
+MI  /Game/Art/FX/textures/UI/Uins/fxm_RGB_UI_Inst15
+    parent  /Game/Art/FX/Material/UI/fxm_RGB_UI
+    scalar  TX_Noise_Intensity = 1.0
+    scalar  TX_Twist = 0.0
+    scalar  Utile_Noise = 1.0
+    scalar  Vtile_Noise = 0.75
+    scalar  Vspeed_Noise = 1.0
+    scalar  Utile_Noise1 = 1.0
+    scalar  Vtile_Noise1 = 1.0
+    scalar  Uspeed_Noise1 = 0.0
+    scalar  Vspeed_Noise1 = 0.0
+    scalar  Utile_Main = 1.0
+    scalar  Vtile_Main = 1.0
+    scalar  mulity = 1.0
+    scalar  power = 0.0
+    scalar  TX_1_Offset_Y = -0.5
+    scalar  -Minus_noise = 0.0
+    scalar  _Line_Utile = 1.0
+    scalar  _Line_Vtile = 1.0
+    scalar  _Line:Voffset = 0.382318
+    scalar  distortion = 0.2
+    scalar  Noise_intencity = 1.0
+    scalar  Rotator_Angle = 0.0
+    scalar  UI_TEX_intencity = 0.5
+    scalar  RefractionDepthBias = 0.0
+    vector  _Line_Color = R 1.0000 G 1.0000 B 1.0000 A 0.0000  (#FFFFFF)
+    vector  TX_Color = R 0.0000 G 0.0287 B 0.0312 A 1.0000  (#002F31)
+    vector  TX_noiseColor = R 0.1875 G 1.0000 B 0.5938 A 1.0000  (#78FFCB)
+    texture TX_Noise = /Game/Art/FX/textures/gradient/fxt_grad25
+    texture TX_Main = /Game/Art/FX/textures/glow/fxt_white
+    texture _Line_TEX = /Game/Art/FX/textures/gradient/fxt_grad18_Curve
+    texture Mask = /Game/Art/FX/textures/UI/FXT_UI_Arrowkey01
+    texture UI_TEX = /Game/Art/UI/InGame/Img_Item/Equip/Img_Item_Equip_Plate_Chest
+    overrides {"bOverride_BlendMode": true, "BlendMode": "EBlendMode::BLEND_Additive", "ShadingModel": "EMaterialShadingModel::MSM_Unlit", "OpacityMaskClipValue": 0.3333}
+MI  /Game/Art/FX/textures/glow/Uins/fxt_flare04_UI_M_ad02
+    parent  /Game/Art/FX/Material/UI/fxm_default_UI
+    scalar  Utile_D = 1.0
+    scalar  Vtile_D = 1.0
+    scalar  distortion_str = 0.1
+    scalar  Uspeed_D = 0.0
+    scalar  Vspeed_D = 0.2
+    scalar  Main_Str = 3.0
+    scalar  Main_Opa = 1.0
+    scalar  Utile = 0.1
+    scalar  Vtile = 0.1
+    scalar  Uspeed = 0.0
+    scalar  Vspeed = 0.1
+    scalar  UParameterX = 0.0
+    scalar  VParameterY = 0.0
+    scalar  noise_pow = 1.0
+    scalar  noise_str = 5.0
+    scalar  UOffset = -0.5
+    scalar  VOffset = -0.5
+    scalar  Rotator_Speed = 0.0
+    scalar  RefractionDepthBias = 0.0
+    texture distortionTX = /Game/Art/FX/textures/noise/fxt_noise009
+    texture MainTX = /Game/Art/UI/InGame/Icon_Skill/Charater/Master/Skill_Master_Icon_03
+    texture MaskTX = /Game/Art/FX/textures/glow/fxt_flare13
+    texture noise = /Game/Art/FX/textures/noise/fxt_noise024
+    overrides {"bOverride_BlendMode": true, "BlendMode": "EBlendMode::BLEND_Translucent", "ShadingModel": "EMaterialShadingModel::MSM_Unlit", "OpacityMaskClipValue": 0.3333}
+MI  /Game/Art/FX/textures/glow/Uins/fxt_flare21_UI_M_ad01
+    parent  /Game/Art/FX/Material/UI/fxm_default_UI
+    scalar  Utile_D = 1.0
+    scalar  Vtile_D = 1.0
+    scalar  distortion_str = 0.1
+    scalar  Uspeed_D = 0.0
+    scalar  Vspeed_D = 0.2
+    scalar  Main_Opa = 0.5
+    scalar  Main_Str = 0.5
+    scalar  Utile = 0.6
+    scalar  Vtile = 1.0
+    scalar  Uspeed = 0.5
+    scalar  VOffset = 0.088
+    scalar  Vspeed = 0.0
+    scalar  noise_str = 12.0
+    scalar  RefractionDepthBias = 0.0
+    texture distortionTX = /Game/Art/FX/textures/noise/fxt_noise009
+    texture MainTX = /Game/Art/FX/textures/glow/fxt_flare21
+    texture MaskTX = /Game/Art/FX/textures/glow/fxt_flare13
+    texture noise = /Game/Art/FX/textures/gradient/fxt_grad19
+    overrides {"bOverride_BlendMode": true, "BlendMode": "EBlendMode::BLEND_Additive", "ShadingModel": "EMaterialShadingModel::MSM_Unlit", "OpacityMaskClipValue": 0.3333}
+MI  /Game/Art/FX/textures/noise/Uins/fxt_noise042_Ray_ad21
+    parent  /Game/Art/FX/Material/UI/fxm_Ray_ui
+    scalar  Main_Opa = 1.0
+    scalar  TX_TileX = 1.0
+    scalar  TX_TileY = 0.5
+    scalar  TX_OffsetX = 0.0
+    scalar  TX_OffsetY = 0.0
+    scalar  TX_SpeedX = 0.0
+    scalar  TX_SpeedY = -0.1
+    scalar  InnerCurve = 0.252
+    scalar  CircleCurve = -17.089684
+    scalar  EdgeFade = 23.5
+    scalar  RefractionDepthBias = 0.0
+    vector  Color = R 8000.0000 G 3660.6016 B 2666.6665 A 1.0000  (#FFFFFF)
+    texture MainTex = /Game/Art/FX/textures/noise/fxt_noise014
+    overrides {"bOverride_BlendMode": true, "BlendMode": "EBlendMode::BLEND_Additive", "ShadingModel": "EMaterialShadingModel::MSM_Unlit", "OpacityMaskClipValue": 0.3333}
+MI  /Game/Art/FX/textures/ring/Uins/FXT_ring13_UI_ad01
+    parent  /Game/Art/FX/Material/UI/fxm_default_UI
+    scalar  Utile_D = 0.8
+    scalar  Vtile_D = 0.8
+    scalar  distortion_str = 0.1
+    scalar  Uspeed_D = 0.2
+    scalar  Vspeed_D = 0.0
+    scalar  Main_Opa = 0.5
+    scalar  Main_Str = 1.0
+    scalar  Utile = 0.8
+    scalar  Vtile = 0.8
+    scalar  Uspeed = 0.0
+    scalar  VOffset = -0.3
+    scalar  Vspeed = 0.0
+    scalar  noise_str = 1.0
+    scalar  Rotator_Speed = -0.05
+    scalar  RefractionDepthBias = 0.0
+    texture distortionTX = /Game/Art/FX/textures/noise/fxt_noise009
+    texture MainTX = /Game/Art/FX/textures/ring/fxt_ring13b
+    texture MaskTX = /Game/Art/FX/textures/glow/fxt_flare11
+    texture noise = /Game/Art/FX/textures/noise/fxt_noise012
+    overrides {"bOverride_BlendMode": true, "BlendMode": "EBlendMode::BLEND_Translucent", "ShadingModel": "EMaterialShadingModel::MSM_Unlit", "OpacityMaskClipValue": 0.3333}
+MI  /Game/Art/FX/textures/ring/Uins/FXT_ring13_UI_ad02
+    parent  /Game/Art/FX/Material/UI/fxm_default_UI
+    scalar  Utile_D = 0.8
+    scalar  Vtile_D = 0.8
+    scalar  distortion_str = 0.1
+    scalar  Uspeed_D = 0.2
+    scalar  Vspeed_D = 0.0
+    scalar  Main_Opa = 0.5
+    scalar  Main_Str = 0.6
+    scalar  Utile = 1.0
+    scalar  Vtile = 1.0
+    scalar  Vspeed = 0.0
+    scalar  noise_pow = 3.0
+    scalar  noise_str = 3.0
+    scalar  Rotator_Speed = -0.25
+    scalar  RefractionDepthBias = 0.0
+    texture MainTX = /Game/Art/FX/textures/ring/fxt_ring13c
+    texture MaskTX = /Game/Art/FX/textures/glow/fxt_flare11
+    texture noise = /Game/Art/FX/textures/gradient/fxt_grad10a
+    overrides {"bOverride_BlendMode": true, "BlendMode": "EBlendMode::BLEND_Additive", "ShadingModel": "EMaterialShadingModel::MSM_Unlit", "OpacityMaskClipValue": 0.3333}
+MI  /Game/Art/FX/textures/ring/Uins/FXT_ring17A_UI_DN_ad02
+    parent  /Game/Art/FX/Material/UI/fxm_default_UI
+    scalar  Utile_D = 0.5
+    scalar  Vtile_D = 0.5
+    scalar  distortion_str = 0.05
+    scalar  Uspeed_D = 0.1
+    scalar  Vspeed_D = 0.2
+    scalar  Main_Str = 0.5
+    scalar  Main_Opa = 0.5
+    scalar  Main_Rotator_Speed = 0.0
+    scalar  Utile = 0.5
+    scalar  Vtile = 0.5
+    scalar  Uspeed = 0.0
+    scalar  Vspeed = 0.0
+    scalar  noise_str = 1.0
+    scalar  Rotator_Speed = 0.0
+    scalar  RefractionDepthBias = 0.0
+    texture distortionTX = /Game/Art/FX/textures/noise/fxt_noise005
+    texture MainTX = /Game/Art/FX/textures/ring/fxt_ring01
+    texture noise = /Game/Art/FX/textures/noise/fxt_noise005
+    overrides {"bOverride_BlendMode": true, "BlendMode": "EBlendMode::BLEND_Additive", "ShadingModel": "EMaterialShadingModel::MSM_Unlit", "OpacityMaskClipValue": 0.3333}
+MAT /Game/Art/UI/InGame/02_Main/Main/FlowMix  MaterialDomain=EMaterialDomain::MD_UI, BlendMode=EBlendMode::BLEND_Additive, NumCustomizedUVs=2, bCanMaskedBeAssumedOpaque=True, bIncludedInBaseGame=True
+MI  /Game/Art/UI/InGame/02_Main/Main/FlowMix_MasterSkill
+    parent  /Game/Art/UI/InGame/02_Main/Main/FlowMix
+    scalar  x = 0.0
+    scalar  y = 0.2
+    scalar  RefractionDepthBias = 0.0
+    texture FlowMask = /Game/Art/UI/InGame/Mask/Mask_Glow_05
+    texture Texture = /Game/Art/UI/InGame/Mask/Mask_Glow_06
+    overrides {"BlendMode": "EBlendMode::BLEND_Additive", "ShadingModel": "EMaterialShadingModel::MSM_Unlit", "OpacityMaskClipValue": 0.3333}
+MI  /Game/Art/UI/InGame/02_Main/Main/MesmerizedBossIconMat
+    parent  /Game/Art/UI/InGame/02_Main/Main/TextureBright_Mat
+    scalar  Brightness = 0.7
+    scalar  RefractionDepthBias = 0.0
+    texture MainTexture = /Game/Art/UI/InGame/Common/State/State_Mark_ICE
+    overrides {"BlendMode": "EBlendMode::BLEND_Translucent", "ShadingModel": "EMaterialShadingModel::MSM_Unlit", "OpacityMaskClipValue": 0.3333}
+MI  /Game/Art/UI/InGame/02_Main/Main/MesmerizedIconMat
+    parent  /Game/Art/UI/InGame/02_Main/Main/TextureBright_Mat
+    scalar  Brightness = 0.0
+    scalar  RefractionDepthBias = 0.0
+    texture MainTexture = /Game/Art/UI/InGame/Common/State/State_Mark_ICE
+    overrides {"BlendMode": "EBlendMode::BLEND_Translucent", "ShadingModel": "EMaterialShadingModel::MSM_Unlit", "OpacityMaskClipValue": 0.3333}
+MAT /Game/Art/UI/InGame/02_Main/Main/TextureBright_Mat  MaterialDomain=EMaterialDomain::MD_UI, BlendMode=EBlendMode::BLEND_Translucent, bCanMaskedBeAssumedOpaque=True, bIncludedInBaseGame=True
+MAT /Game/Art/UI/InGame/02_Main/Main/UI_Glow  MaterialDomain=EMaterialDomain::MD_UI, BlendMode=EBlendMode::BLEND_Additive, NumCustomizedUVs=1, bCanMaskedBeAssumedOpaque=True, bIncludedInBaseGame=True
+MI  /Game/Art/UI/InGame/02_Main/Main/UI_Glow01
+    parent  /Game/Art/UI/InGame/02_Main/Main/UI_Glow
+    scalar  RefractionDepthBias = 0.0
+    texture Textuer = /Game/Art/UI/InGame/Mask/Mask_Glow_01
+    overrides {"BlendMode": "EBlendMode::BLEND_Additive", "ShadingModel": "EMaterialShadingModel::MSM_Unlit", "OpacityMaskClipValue": 0.3333}
+MI  /Game/Art/UI/InGame/02_Main/Main/UI_Glow01_MasterSkill
+    parent  /Game/Art/UI/InGame/02_Main/Main/UI_Glow01
+    scalar  RefractionDepthBias = 0.0
+    texture Textuer = /Game/Art/UI/InGame/Mask/Mask_Glow_06
+    overrides {"BlendMode": "EBlendMode::BLEND_Additive", "ShadingModel": "EMaterialShadingModel::MSM_Unlit", "OpacityMaskClipValue": 0.3333}
+MI  /Game/Art/UI/InGame/02_Main/Main/ui_Color_CircleProgress_Masterskill
+    parent  /Game/Art/UI/InGame/02_Main/Main/ui_Color_CircleProgress_mm
+    scalar  InternalRadius = 0.0
+    scalar  Percent = 1.0
+    scalar  RefractionDepthBias = 0.0
+    texture GaugeTexture = /Game/Art/UI/InGame/03_System/Skill/Skill_Master_BG_02
+    overrides {"BlendMode": "EBlendMode::BLEND_Translucent", "ShadingModel": "EMaterialShadingModel::MSM_Unlit", "OpacityMaskClipValue": 0.3333}
+MI  /Game/Art/UI/InGame/02_Main/Main/ui_Color_CircleProgress_SmallMesFull_mi
+    parent  /Game/Art/UI/InGame/02_Main/Main/ui_Color_CircleProgress_mm
+    scalar  Brightness = 0.0
+    scalar  ExternalDensity = 25.0
+    scalar  InternalDensity = 0.0
+    scalar  InternalRadius = 0.0
+    scalar  Percent = 1.0
+    scalar  StartAngle = 0.0
+    scalar  RefractionDepthBias = 0.0
+    vector  BaseColor = R 1.0000 G 1.0000 B 1.0000 A 0.0000  (#FFFFFF)
+    texture GaugeTexture = /Game/Art/UI/InGame/Common/State/State_Bar_Small
+    overrides {"BlendMode": "EBlendMode::BLEND_Translucent", "ShadingModel": "EMaterialShadingModel::MSM_Unlit", "OpacityMaskClipValue": 0.3333}
+MAT /Game/Art/UI/InGame/02_Main/Main/ui_Color_CircleProgress_mm  MaterialDomain=EMaterialDomain::MD_UI, BlendMode=EBlendMode::BLEND_Translucent, bCanMaskedBeAssumedOpaque=True, bIncludedInBaseGame=True

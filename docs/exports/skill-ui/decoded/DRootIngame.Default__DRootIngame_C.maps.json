@@ -1,0 +1,655 @@
+{
+  "GuideWidgetHighlightWidget": "/Game/UI/Popup/Guide/DPopupGuideHightlightWidget.DPopupGuideHightlightWidget_C",
+  "GuideWidgetEmphasisStringWidget": "/Game/UI/Popup/Guide/DPopupGuideStringWithTerritory.DPopupGuideStringWithTerritory_C",
+  "MesmerizedIconMap": [
+    {
+      "key": "EMesmerizedType::DOWN",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_DOWN_Sprite.StateSymbol_DOWN_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::FREEZE",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_FREEZE_Sprite.StateSymbol_FREEZE_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::STUN",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_STUN_Sprite.StateSymbol_STUN_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::AIR",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_AIR_Sprite.StateSymbol_AIR_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::HOLD",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_HOLD_Sprite.StateSymbol_HOLD_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::SLOW",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_SLOW_Sprite.StateSymbol_SLOW_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::SHOCK",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_SHOCK_Sprite.StateSymbol_SHOCK_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::FIRE",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_FIRE_Sprite.StateSymbol_FIRE_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::POISON",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_POISON_Sprite.StateSymbol_POISON_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::BLEED",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_BLEEDING_Sprite.StateSymbol_BLEEDING_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::ICE",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_FREEZE_Sprite.StateSymbol_FREEZE_Sprite"
+    }
+  ],
+  "BossMesmerizedIconMap": [
+    {
+      "key": "EMesmerizedType::EMesmerizedType_MAX",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_DOWN_Sprite.State_Mark_DOWN_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::FREEZE",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_ICE_Sprite.State_Mark_ICE_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::STUN",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_STUN_Sprite.State_Mark_STUN_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::AIR",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_AIR_Sprite.State_Mark_AIR_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::DOWN",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_DOWN_Sprite.State_Mark_DOWN_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::HOLD",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_HOLD_Sprite.State_Mark_HOLD_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::SLOW",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_SLOW_Sprite.State_Mark_SLOW_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::SHOCK",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_SHOCK_Sprite.State_Mark_SHOCK_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::ICE",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_ICE_Sprite.State_Mark_ICE_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::FIRE",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_FIRE_Sprite.State_Mark_FIRE_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::POISON",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_POISON_Sprite.State_Mark_POISON_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::BLEED",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_BLEEDING_Sprite.State_Mark_BLEEDING_Sprite"
+    }
+  ],
+  "BossMesmerizedTextOnMap": [
+    {
+      "key": "EMesmerizedType::STUN",
+      "value": "/Game/Art/UI/InGame/Common/State/State_TXT_STUN_Sprite.State_TXT_STUN_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::AIR",
+      "value": "/Game/Art/UI/InGame/Common/State/State_TXT_AIR_Off_Sprite.State_TXT_AIR_Off_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::DOWN",
+      "value": "/Game/Art/UI/InGame/Common/State/State_TXT_DOWN_Sprite.State_TXT_DOWN_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::HOLD",
+      "value": "/Game/Art/UI/InGame/Common/State/State_TXT_HOLD_Sprite.State_TXT_HOLD_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::SLOW",
+      "value": "/Game/Art/UI/InGame/Common/State/State_TXT_SLOW_Sprite.State_TXT_SLOW_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::SHOCK",
+      "value": "/Game/Art/UI/InGame/Common/State/State_TXT_SHOCK_Sprite.State_TXT_SHOCK_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::ICE",
+      "value": "/Game/Art/UI/InGame/Common/State/State_TXT_ICE_Sprite.State_TXT_ICE_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::FIRE",
+      "value": "/Game/Art/UI/InGame/Common/State/State_TXT_FIRE_Sprite.State_TXT_FIRE_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::POISON",
+      "value": "/Game/Art/UI/InGame/Common/State/State_TXT_POISON_Sprite.State_TXT_POISON_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::BLEED",
+      "value": "/Game/Art/UI/InGame/Common/State/State_TXT_BLEEDING_Sprite.State_TXT_BLEEDING_Sprite"
+    }
+  ],
+  "BossMesmerizedTextOffMap": [
+    {
+      "key": "EMesmerizedType::STUN",
+      "value": "/Game/Art/UI/InGame/Common/State/State_TXT_STUN_Off_Sprite.State_TXT_STUN_Off_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::AIR",
+      "value": "/Game/Art/UI/InGame/Common/State/State_TXT_AIR_Off_Sprite.State_TXT_AIR_Off_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::DOWN",
+      "value": "/Game/Art/UI/InGame/Common/State/State_TXT_DOWN_Off_Sprite.State_TXT_DOWN_Off_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::HOLD",
+      "value": "/Game/Art/UI/InGame/Common/State/State_TXT_HOLD_Off_Sprite.State_TXT_HOLD_Off_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::SLOW",
+      "value": "/Game/Art/UI/InGame/Common/State/State_TXT_SLOW_Off_Sprite.State_TXT_SLOW_Off_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::SHOCK",
+      "value": "/Game/Art/UI/InGame/Common/State/State_TXT_SHOCK_Off_Sprite.State_TXT_SHOCK_Off_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::ICE",
+      "value": "/Game/Art/UI/InGame/Common/State/State_TXT_ICE_Off_Sprite.State_TXT_ICE_Off_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::FIRE",
+      "value": "/Game/Art/UI/InGame/Common/State/State_TXT_FIRE_Off_Sprite.State_TXT_FIRE_Off_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::POISON",
+      "value": "/Game/Art/UI/InGame/Common/State/State_TXT_POISON_Off_Sprite.State_TXT_POISON_Off_Sprite"
+    },
+    {
+      "key": "EMesmerizedType::BLEED",
+      "value": "/Game/Art/UI/InGame/Common/State/State_TXT_BLEEDING_Off_Sprite.State_TXT_BLEEDING_Off_Sprite"
+    }
+  ],
+  "MesmerizedUIIconMap": [
+    {
+      "key": "EMesmerizedUIType::STUN",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_STUN_Sprite.StateSymbol_STUN_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::AIR",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_AIR_Sprite.StateSymbol_AIR_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::DOWN",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_DOWN_Sprite.StateSymbol_DOWN_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::BLEED",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_BLEEDING_Sprite.StateSymbol_BLEEDING_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::HOLD",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_HOLD_Sprite.StateSymbol_HOLD_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::SHOCK",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_SHOCK_Sprite.StateSymbol_SHOCK_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::FIRE",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_FIRE_Sprite.StateSymbol_FIRE_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::POISON",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_POISON_Sprite.StateSymbol_POISON_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::SLOW",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_SLOW_Sprite.StateSymbol_SLOW_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::ICE",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_FREEZE_Sprite.StateSymbol_FREEZE_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::ATTACK",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_DOWN_Sprite.StateSymbol_DOWN_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::HEAL",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_HEAL_Sprite.StateSymbol_HEAL_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::SUPERARMOR",
+      "value": "/Game/Art/UI/InGame/Common/State/StateSymbol_BreakArmor_Sprite.StateSymbol_BreakArmor_Sprite"
+    }
+  ],
+  "MesmerizedUIVer2IconMap": [
+    {
+      "key": "EMesmerizedUIType::STUN",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_STUN_Sprite.State_Mark_STUN_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::AIR",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_AIR_Sprite.State_Mark_AIR_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::DOWN",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_DOWN_Sprite.State_Mark_DOWN_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::BLEED",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_BLEEDING_Sprite.State_Mark_BLEEDING_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::HOLD",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_HOLD_Sprite.State_Mark_HOLD_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::SHOCK",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_SHOCK_Sprite.State_Mark_SHOCK_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::FIRE",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_FIRE_Sprite.State_Mark_FIRE_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::POISON",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_POISON_Sprite.State_Mark_POISON_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::SLOW",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_SLOW_Sprite.State_Mark_SLOW_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::ICE",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_ICE_Sprite.State_Mark_ICE_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::HEAL",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_HEAL_Sprite.State_Mark_HEAL_Sprite"
+    },
+    {
+      "key": "EMesmerizedUIType::TYPE_NONE",
+      "value": "/Game/Art/UI/InGame/Common/State/State_Mark_SuperArmor_Sprite.State_Mark_SuperArmor_Sprite"
+    }
+  ],
+  "MesmerizedColor": [
+    {
+      "key": "EMesmerizedType::STUN",
+      "r": 245,
+      "g": 208,
+      "b": 0,
+      "a": 255,
+      "hex": "#F5D000",
+      "linear": [0.913099, 0.630757, 0.0]
+    },
+    {
+      "key": "EMesmerizedType::AIR",
+      "r": 71,
+      "g": 209,
+      "b": 248,
+      "a": 255,
+      "hex": "#47D1F8",
+      "linear": [0.06301, 0.637597, 0.938686]
+    },
+    {
+      "key": "EMesmerizedType::DOWN",
+      "r": 125,
+      "g": 91,
+      "b": 241,
+      "a": 255,
+      "hex": "#7D5BF1",
+      "linear": [0.205079, 0.104616, 0.879622]
+    },
+    {
+      "key": "EMesmerizedType::BLEED",
+      "r": 198,
+      "g": 53,
+      "b": 85,
+      "a": 255,
+      "hex": "#C63555",
+      "linear": [0.564712, 0.035601, 0.090842]
+    },
+    {
+      "key": "EMesmerizedType::EMesmerizedType_MAX",
+      "r": 255,
+      "g": 255,
+      "b": 255,
+      "a": 255,
+      "hex": "#FFFFFF",
+      "linear": [1.0, 1.0, 1.0]
+    },
+    {
+      "key": "EMesmerizedType::SHOCK",
+      "r": 196,
+      "g": 101,
+      "b": 255,
+      "a": 255,
+      "hex": "#C465FF",
+      "linear": [0.552011, 0.130136, 1.0]
+    },
+    {
+      "key": "EMesmerizedType::POISON",
+      "r": 61,
+      "g": 195,
+      "b": 46,
+      "a": 255,
+      "hex": "#3DC32E",
+      "linear": [0.046665, 0.545724, 0.027321]
+    },
+    {
+      "key": "EMesmerizedType::FIRE",
+      "r": 244,
+      "g": 0,
+      "b": 0,
+      "a": 255,
+      "hex": "#F40000",
+      "linear": [0.904661, 0.0, 0.0]
+    },
+    {
+      "key": "EMesmerizedType::SLOW",
+      "r": 231,
+      "g": 118,
+      "b": 110,
+      "a": 255,
+      "hex": "#E7766E",
+      "linear": [0.799103, 0.181164, 0.155926]
+    },
+    {
+      "key": "EMesmerizedType::HOLD",
+      "r": 196,
+      "g": 196,
+      "b": 230,
+      "a": 255,
+      "hex": "#C4C4E6",
+      "linear": [0.552011, 0.552011, 0.791298]
+    },
+    {
+      "key": "EMesmerizedType::FREEZE",
+      "r": 85,
+      "g": 221,
+      "b": 255,
+      "a": 255,
+      "hex": "#55DDFF",
+      "linear": [0.090842, 0.723055, 1.0]
+    },
+    {
+      "key": "EMesmerizedType::ICE",
+      "r": 85,
+      "g": 221,
+      "b": 255,
+      "a": 255,
+      "hex": "#55DDFF",
+      "linear": [0.090842, 0.723055, 1.0]
+    }
+  ],
+  "MesmerizedUIColor": [
+    {
+      "key": "EMesmerizedUIType::STUN",
+      "r": 255,
+      "g": 218,
+      "b": 89,
+      "a": 255,
+      "hex": "#FFDA59",
+      "linear": [1.0, 0.701102, 0.099899]
+    },
+    {
+      "key": "EMesmerizedUIType::AIR",
+      "r": 71,
+      "g": 209,
+      "b": 248,
+      "a": 255,
+      "hex": "#47D1F8",
+      "linear": [0.06301, 0.637597, 0.938686]
+    },
+    {
+      "key": "EMesmerizedUIType::DOWN",
+      "r": 125,
+      "g": 91,
+      "b": 241,
+      "a": 255,
+      "hex": "#7D5BF1",
+      "linear": [0.205079, 0.104616, 0.879622]
+    },
+    {
+      "key": "EMesmerizedUIType::BLEED",
+      "r": 204,
+      "g": 0,
+      "b": 72,
+      "a": 255,
+      "hex": "#CC0048",
+      "linear": [0.603827, 0.0, 0.064803]
+    },
+    {
+      "key": "EMesmerizedUIType::HOLD",
+      "r": 196,
+      "g": 196,
+      "b": 230,
+      "a": 255,
+      "hex": "#C4C4E6",
+      "linear": [0.552011, 0.552011, 0.791298]
+    },
+    {
+      "key": "EMesmerizedUIType::SHOCK",
+      "r": 196,
+      "g": 101,
+      "b": 255,
+      "a": 255,
+      "hex": "#C465FF",
+      "linear": [0.552011, 0.130136, 1.0]
+    },
+    {
+      "key": "EMesmerizedUIType::FIRE",
+      "r": 244,
+      "g": 0,
+      "b": 0,
+      "a": 255,
+      "hex": "#F40000",
+      "linear": [0.904661, 0.0, 0.0]
+    },
+    {
+      "key": "EMesmerizedUIType::POISON",
+      "r": 61,
+      "g": 195,
+      "b": 46,
+      "a": 255,
+      "hex": "#3DC32E",
+      "linear": [0.046665, 0.545724, 0.027321]
+    },
+    {
+      "key": "EMesmerizedUIType::SLOW",
+      "r": 231,
+      "g": 118,
+      "b": 110,
+      "a": 255,
+      "hex": "#E7766E",
+      "linear": [0.799103, 0.181164, 0.155926]
+    },
+    {
+      "key": "EMesmerizedUIType::ICE",
+      "r": 85,
+      "g": 221,
+      "b": 255,
+      "a": 255,
+      "hex": "#55DDFF",
+      "linear": [0.090842, 0.723055, 1.0]
+    },
+    {
+      "key": "EMesmerizedUIType::ATTACK",
+      "r": 179,
+      "g": 156,
+      "b": 111,
+      "a": 255,
+      "hex": "#B39C6F",
+      "linear": [0.450786, 0.332452, 0.158961]
+    },
+    {
+      "key": "EMesmerizedUIType::HEAL",
+      "r": 237,
+      "g": 127,
+      "b": 155,
+      "a": 255,
+      "hex": "#ED7F9B",
+      "linear": [0.846873, 0.212231, 0.327778]
+    },
+    {
+      "key": "EMesmerizedUIType::SUPERARMOR",
+      "r": 221,
+      "g": 216,
+      "b": 208,
+      "a": 255,
+      "hex": "#DDD8D0",
+      "linear": [0.723055, 0.686685, 0.630757]
+    }
+  ],
+  "MesmerizedSwitchingColor": [
+    {
+      "key": "EMesmerizedUIType::STUN",
+      "r": 245,
+      "g": 208,
+      "b": 0,
+      "a": 255,
+      "hex": "#F5D000",
+      "linear": [0.913099, 0.630757, 0.0]
+    },
+    {
+      "key": "EMesmerizedUIType::AIR",
+      "r": 71,
+      "g": 209,
+      "b": 248,
+      "a": 255,
+      "hex": "#47D1F8",
+      "linear": [0.06301, 0.637597, 0.938686]
+    },
+    {
+      "key": "EMesmerizedUIType::DOWN",
+      "r": 125,
+      "g": 91,
+      "b": 241,
+      "a": 255,
+      "hex": "#7D5BF1",
+      "linear": [0.205079, 0.104616, 0.879622]
+    },
+    {
+      "key": "EMesmerizedUIType::BLEED",
+      "r": 198,
+      "g": 53,
+      "b": 85,
+      "a": 255,
+      "hex": "#C63555",
+      "linear": [0.564712, 0.035601, 0.090842]
+    },
+    {
+      "key": "EMesmerizedUIType::EMesmerizedUIType_MAX",
+      "r": 255,
+      "g": 255,
+      "b": 255,
+      "a": 255,
+      "hex": "#FFFFFF",
+      "linear": [1.0, 1.0, 1.0]
+    },
+    {
+      "key": "EMesmerizedUIType::SHOCK",
+      "r": 196,
+      "g": 101,
+      "b": 255,
+      "a": 255,
+      "hex": "#C465FF",
+      "linear": [0.552011, 0.130136, 1.0]
+    },
+    {
+      "key": "EMesmerizedUIType::POISON",
+      "r": 61,
+      "g": 195,
+      "b": 46,
+      "a": 255,
+      "hex": "#3DC32E",
+      "linear": [0.046665, 0.545724, 0.027321]
+    },
+    {
+      "key": "EMesmerizedUIType::FIRE",
+      "r": 244,
+      "g": 0,
+      "b": 0,
+      "a": 255,
+      "hex": "#F40000",
+      "linear": [0.904661, 0.0, 0.0]
+    },
+    {
+      "key": "EMesmerizedUIType::SLOW",
+      "r": 231,
+      "g": 118,
+      "b": 110,
+      "a": 255,
+      "hex": "#E7766E",
+      "linear": [0.799103, 0.181164, 0.155926]
+    },
+    {
+      "key": "EMesmerizedUIType::HOLD",
+      "r": 196,
+      "g": 196,
+      "b": 230,
+      "a": 255,
+      "hex": "#C4C4E6",
+      "linear": [0.552011, 0.552011, 0.791298]
+    },
+    {
+      "key": "EMesmerizedUIType::ICE",
+      "r": 85,
+      "g": 221,
+      "b": 255,
+      "a": 255,
+      "hex": "#55DDFF",
+      "linear": [0.090842, 0.723055, 1.0]
+    },
+    {
+      "key": "EMesmerizedUIType::SUPERARMOR",
+      "r": 221,
+      "g": 216,
+      "b": 208,
+      "a": 255,
+      "hex": "#DDD8D0",
+      "linear": [0.723055, 0.686685, 0.630757]
+    },
+    {
+      "key": "EMesmerizedUIType::ATTACK",
+      "r": 179,
+      "g": 156,
+      "b": 112,
+      "a": 255,
+      "hex": "#B39C70",
+      "linear": [0.450786, 0.332452, 0.162029]
+    },
+    {
+      "key": "EMesmerizedUIType::HEAL",
+      "r": 237,
+      "g": 127,
+      "b": 155,
+      "a": 255,
+      "hex": "#ED7F9B",
+      "linear": [0.846873, 0.212231, 0.327778]
+    },
+    {
+      "key": "EMesmerizedUIType::TYPE_MAX",
+      "r": 0,
+      "g": 0,
+      "b": 0,
+      "a": 255,
+      "hex": "#000000",
+      "linear": [0.0, 0.0, 0.0]
+    }
+  ],
+  "_check": "next value at .uexp offset 2043: TArray of 10 package indices (AttackCombatSprite)"
+}

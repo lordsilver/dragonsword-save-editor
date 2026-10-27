@@ -60,6 +60,14 @@ python -I decode_root.py DRootIngame.uexp DRootIngame.names.tsv DRootIngame.Defa
 
 The exporter's other modes (`list`, `grep`, `schema`, `props`, `dump`) search package headers, print the mappings, and dump packages as JSON; that is how the widget and the maps were found. Pass the decoded `.maps.json` to `gen-catalog-extras.mjs`, which stops if a colour is missing. If a game update moves the export offset (655 in this build, from the `names` export map), the decoder's layout check fails instead of writing wrong colours.
 
+## The game's screens compared
+
+Screenshots of the game's Hero > Skill and Inventory screens (2026-10-27) were compared with the editor. What they show, beyond the tables above:
+- **Skill discs.** The game keeps a disc dark nearly to its edge and carries the effect's colour in a band along the rim; plain skills have a dark olive disc with a khaki-gold rim. STUN reads as a muted olive gold on screen, much softer than its `#FFDA59`. Selecting a skill adds a light ring around it but does not change the disc's colour. The glyph is about as large as the disc, so tips (a sword's point, a wing) reach past the edge. The editor draws all of this in CSS from the skill's colour.
+- **Moving light.** The slot's FX materials (`FXT_UI_Icon01_N`, `FXT_UI_Icon05`, additive) scroll a gradient across the icon (`Vspeed_D = 0.1`, distorted by noise), and the master skill's (`FXT_UI_SkillMaster_Icon01_*`) circle an orange-gold ray. That is why the same skill looks brighter in one screenshot than another. The editor does not animate this.
+- **Skill detail pane.** Next to the large icon the game shows an effect chip (badge and name, "Airborne"), the slot's label (strings 800033–800036: Active 1, Active 2, Signal A, Signal B), "Attack Power N% Damage", "Inflicts the X status effect" and, for signal skills, "Activation Conditions" (for example "Can be activated when the target is in the Airborne status"). The editor shows the effect name; the slot label and the inflict line are game strings it could add, and the damage and conditions come from combo data that is not yet linked to skills (see [Game rules](game-rules.md), Q10).
+- **Inventory.** Tiles are the grade artwork above with the count in a bar across the foot, and the item card opens with the grade's header art. Cooked dishes, ingredients and equipment also show 1–5 grade stars (`Common/Icon_Grade_Star_*`), and equipment shows its "+N" upgrade level; the editor does not show these yet. The game's tabs are Cooking, Equipment, Karma, Rune, Materials, Ingredients, Important and Quest.
+
 ## Git LFS
 
 `.gitattributes` stores `apps/desktop/src/assets/*.webp` and `*.png` with Git LFS. A fresh clone needs `git lfs install` (once per machine) before checkout, or the sprite is a small pointer file and every icon is blank. `git lfs install --local` was run in this repository; the tool comes from mise (`git-lfs` in `~/.config/mise/config.toml`).
