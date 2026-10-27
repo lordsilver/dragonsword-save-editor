@@ -1309,7 +1309,11 @@ impl<'a> Game<'a> {
             .map(|hero| HeroEntry {
                 cid: hero.id,
                 item: self.catalog.lookup_hint(hero.item, "character"),
-                sources: hero.sources.clone(),
+                sources: hero
+                    .sources
+                    .iter()
+                    .map(|source| hero_source(source))
+                    .collect(),
                 owned: owned.get(&hero.id).is_some_and(|hp| *hp != UNJOINED_HP),
             })
             .collect())
@@ -2565,6 +2569,25 @@ pub enum RewardRoute {
     None,
 }
 
+/// A growth.json hero source (`shop`, `quest:<id>`, `joins:<id>`) with the
+/// quest's own name, which carries the number the game shows.
+fn hero_source(source: &str) -> HeroSource {
+    let quest_id = source
+        .split_once(':')
+        .and_then(|(_, id)| id.parse::<i64>().ok());
+    match quest_id {
+        None => HeroSource::Shop,
+        Some(quest_id) => {
+            let quest = Growth::shared().quest(quest_id);
+            HeroSource::Quest(QuestRef {
+                quest_id,
+                name_en: quest.map_or_else(|| quest_id.to_string(), |quest| quest.name_en.clone()),
+                name_fr: quest.map_or_else(|| quest_id.to_string(), |quest| quest.name_fr.clone()),
+            })
+        }
+    }
+}
+
 /// Picks one row by weight, skipping rows whose stat is already `taken`.
 fn roll_stat<'a>(
     rng: &mut impl rand::Rng,
@@ -2644,8 +2667,17 @@ pub struct HeroEntry {
     pub cid: i64,
     /// The hero's item, for its name and icon.
     pub item: Item,
-    pub sources: Vec<String>,
+    pub sources: Vec<HeroSource>,
     pub owned: bool,
+}
+
+/// Where the game hands a hero out: the shop, or a quest (as a reward item
+/// or by joining the team during it; both arrive by completing the quest).
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase", tag = "kind")]
+pub enum HeroSource {
+    Shop,
+    Quest(QuestRef),
 }
 
 /// What completing a quest did.

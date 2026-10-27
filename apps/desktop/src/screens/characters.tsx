@@ -45,7 +45,16 @@ import {
   skillLimit,
 } from '@/lib/limits';
 import { formatNumber, itemName, useApp } from '@/lib/store';
-import type { Character, GrowthLimits, HeroEntry, HeroTab, Loadout, LoadoutEntry, TeamPage } from '@/lib/types';
+import type {
+  Character,
+  GrowthLimits,
+  HeroEntry,
+  HeroSource,
+  HeroTab,
+  Loadout,
+  LoadoutEntry,
+  TeamPage,
+} from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 type SlotKey = keyof Omit<Loadout, 'characterCid'>;
@@ -670,10 +679,9 @@ function SkillDialog({
   );
 }
 
-function heroSource(source: string): string {
-  if (source === 'shop') return 'Shop';
-  const [kind, quest] = source.split(':');
-  return kind === 'joins' ? `Joins in quest ${quest}` : `Quest ${quest} reward`;
+function heroSource(source: HeroSource, language: string): string {
+  if (source.kind === 'shop') return "Shop (Fate's Invitation)";
+  return `From quest ${language === 'fr' ? source.nameFr : source.nameEn}`;
 }
 
 function RecruitDialog({
@@ -718,7 +726,9 @@ function RecruitDialog({
                 <ItemIcon item={hero.item} size={34} />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium">{itemName(hero.item, language)}</div>
-                  <div className="text-xs text-muted-foreground">{hero.sources.map(heroSource).join(' · ')}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {hero.sources.map((source) => heroSource(source, language)).join(' · ')}
+                  </div>
                 </div>
                 {hero.owned ? (
                   <Badge variant="outline" className="text-xs text-muted-foreground">

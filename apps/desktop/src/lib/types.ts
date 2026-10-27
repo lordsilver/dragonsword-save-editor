@@ -227,10 +227,12 @@ export interface Character {
 export interface HeroEntry {
   cid: number;
   item: Item;
-  /** `shop`, `quest:<id>` or `joins:<id>`. */
-  sources: string[];
+  /** The shop, or the quest whose completion brings the hero (as a reward or by joining). */
+  sources: HeroSource[];
   owned: boolean;
 }
+
+export type HeroSource = { kind: 'shop' } | { kind: 'quest'; questId: number; nameEn: string; nameFr: string };
 
 export interface Skill {
   typeValue: number;
