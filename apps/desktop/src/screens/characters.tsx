@@ -560,7 +560,7 @@ function TeamCard({
         <div className="flex min-w-0 items-center gap-2">
           <span className="text-xs font-medium">Page {team.pageId}</span>
           {team.selected && (
-            <Badge variant="outline" className="border-brand/50 text-[10px] text-brand">
+            <Badge variant="outline" className="border-brand/50 text-xs text-brand">
               Active
             </Badge>
           )}
@@ -577,7 +577,7 @@ function TeamCard({
                 {slot.item ? (
                   <ItemIcon item={slot.item} size={26} />
                 ) : (
-                  <span className="text-[10px] text-muted-foreground">{slotNumber}</span>
+                  <span className="text-xs text-muted-foreground">{slotNumber}</span>
                 )}
               </div>
               <NativeSelect
@@ -642,7 +642,7 @@ function SkillDialog({
               className="numeric"
               onChange={(event) => setTypeValue(event.target.value)}
             />
-            <p className="text-[10px] text-muted-foreground">1–7 or 801</p>
+            <p className="text-xs text-muted-foreground">1–7 or 801</p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="skill-level">Level</Label>
@@ -653,7 +653,7 @@ function SkillDialog({
               className="numeric"
               onChange={(event) => setLevel(event.target.value)}
             />
-            <p className="text-[10px] text-muted-foreground">0–{maxLevel} for this hero's breakthrough and slot</p>
+            <p className="text-xs text-muted-foreground">0–{maxLevel} for this hero's breakthrough and slot</p>
           </div>
         </div>
         <DialogFooter>
@@ -718,10 +718,10 @@ function RecruitDialog({
                 <ItemIcon item={hero.item} size={34} />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium">{itemName(hero.item, language)}</div>
-                  <div className="text-[10px] text-muted-foreground">{hero.sources.map(heroSource).join(' · ')}</div>
+                  <div className="text-xs text-muted-foreground">{hero.sources.map(heroSource).join(' · ')}</div>
                 </div>
                 {hero.owned ? (
-                  <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                  <Badge variant="outline" className="text-xs text-muted-foreground">
                     On the roster
                   </Badge>
                 ) : (

@@ -245,25 +245,25 @@ function RecipeRow({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="truncate text-sm font-medium">{itemName(recipe.dish, language)}</span>
-            <Badge variant="outline" className="text-[10px]">
+            <Badge variant="outline" className="text-xs">
               {toolLabel(recipe.tool)}
             </Badge>
             {recipe.dishes.length > 1 && (
-              <Badge variant="secondary" className="text-[10px]">
+              <Badge variant="secondary" className="text-xs">
                 {recipe.dishes.length} variants
               </Badge>
             )}
             {recipe.known ? (
-              <Badge variant="outline" className="border-emerald-400/30 bg-emerald-400/10 text-[10px] text-emerald-300">
+              <Badge variant="outline" className="border-emerald-400/30 bg-emerald-400/10 text-xs text-emerald-300">
                 Known
               </Badge>
             ) : (
-              <Badge variant="outline" className="text-[10px] text-muted-foreground">
+              <Badge variant="outline" className="text-xs text-muted-foreground">
                 Unknown
               </Badge>
             )}
           </div>
-          <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
+          <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
             <span className="font-mono">Key {recipe.key}</span>
             <span>·</span>
             <span className="font-mono">CID {recipe.dish.cid}</span>
@@ -275,7 +275,7 @@ function RecipeRow({
             )}
           </div>
           {effect && (
-            <p className="mt-1 line-clamp-1 text-[11px] text-muted-foreground/80">
+            <p className="mt-1 line-clamp-1 text-xs text-muted-foreground/80">
               {language === 'fr' ? effect.fr : effect.en}
             </p>
           )}
@@ -306,7 +306,7 @@ function IngredientChip({ ingredient, language }: { ingredient: RecipeIngredient
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px]',
+        'inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs',
         enough
           ? 'border-emerald-400/20 bg-emerald-400/5 text-emerald-200/90'
           : 'border-border bg-muted/30 text-muted-foreground',
@@ -354,9 +354,7 @@ function RecipeDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <div className="mb-1.5 text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
-              Ingredients
-            </div>
+            <div className="mb-1.5 text-xs text-muted-foreground">Ingredients</div>
             <div className="flex flex-wrap gap-1">
               {recipe.ingredients.map((ingredient) => (
                 <IngredientChip
@@ -368,9 +366,7 @@ function RecipeDialog({
             </div>
           </div>
           <div>
-            <div className="mb-1.5 text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
-              Dish variants
-            </div>
+            <div className="mb-1.5 text-xs text-muted-foreground">Dish variants</div>
             <div className="flex flex-wrap gap-1">
               {recipe.dishes.map((cid) => (
                 <CountPill key={cid}>CID {cid}</CountPill>
@@ -378,7 +374,7 @@ function RecipeDialog({
             </div>
           </div>
           <div>
-            <div className="mb-1.5 text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
+            <div className="mb-1.5 text-xs text-muted-foreground">
               Effects {recipe.effectName ? `· ${language === 'fr' ? recipe.effectName.fr : recipe.effectName.en}` : ''}
             </div>
             <div className="space-y-1">
@@ -388,7 +384,7 @@ function RecipeDialog({
               {recipe.effects.map((effect, index) => (
                 <div
                   key={`${effect.en ?? ''}|${effect.fr ?? ''}`}
-                  className="flex gap-2 rounded-md border bg-muted/20 px-2 py-1.5 text-[11px]"
+                  className="flex gap-2 rounded-md border bg-muted/20 px-2 py-1.5 text-xs"
                 >
                   <span className="numeric shrink-0 text-muted-foreground">{index + 1}.</span>
                   <span>{language === 'fr' ? effect.fr : effect.en}</span>

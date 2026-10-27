@@ -231,7 +231,7 @@ function CostumeCard({
               </Badge>
             )}
           </div>
-          <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
             <span className="font-mono">CID {costume.cid}</span>
             <span>·</span>
             <span className="font-mono">DBID {costume.dbid}</span>
@@ -250,7 +250,7 @@ function CostumeCard({
         <CountPill>{costume.partsOn ? `parts ${costume.partsOn}` : 'parts 0'}</CountPill>
       </div>
       <div className="mt-3 space-y-1 border-t pt-2">
-        <span className="block text-[10px] tracking-wide text-muted-foreground uppercase">Equipped by</span>
+        <span className="block text-xs text-muted-foreground">Equipped by</span>
         <NativeSelect
           value={costume.equipCharacterCid}
           disabled={busy}
@@ -293,7 +293,7 @@ function CatalogCard({
           <div className="truncate text-sm font-medium" title={itemName(entry.item, language)}>
             {itemName(entry.item, language)}
           </div>
-          <div className="text-[10px] text-muted-foreground">CID {entry.item.cid}</div>
+          <div className="text-xs text-muted-foreground">CID {entry.item.cid}</div>
           {entry.item.grade && (
             <span
               className={cn(
@@ -306,7 +306,7 @@ function CatalogCard({
           )}
         </div>
         {entry.owned ? (
-          <Badge variant="outline" className="gap-1 text-[10px]">
+          <Badge variant="outline" className="gap-1 text-xs">
             <Check className="size-3" />
             Owned
           </Badge>

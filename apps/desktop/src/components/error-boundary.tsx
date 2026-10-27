@@ -29,7 +29,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBound
           <p className="mt-1 text-sm text-muted-foreground">
             Nothing was written to your save. Reload the window to start from the last successful state.
           </p>
-          <pre className="scroll-thin mt-4 max-h-40 overflow-auto rounded-lg border bg-muted/30 p-3 font-mono text-[11px] whitespace-pre-wrap">
+          <pre className="scroll-thin mt-4 max-h-40 overflow-auto rounded-lg border bg-muted/30 p-3 font-mono text-xs whitespace-pre-wrap">
             {this.state.error.message}
           </pre>
           <Button className="mt-4" onClick={() => window.location.reload()}>

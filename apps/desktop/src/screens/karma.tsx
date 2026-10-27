@@ -133,18 +133,18 @@ export function KarmaScreen() {
                     <div className="truncate text-sm font-medium" title={itemName(entry.item, language)}>
                       {itemName(entry.item, language)}
                     </div>
-                    <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                       <span className="font-mono">CID {entry.cid}</span>
                       <span>·</span>
                       <span className="font-mono">DBID {entry.dbid}</span>
                     </div>
-                    <div className="text-[10px] text-muted-foreground">
+                    <div className="text-xs text-muted-foreground">
                       Lv {entry.level} · breakthrough {entry.limits.stage} of {entry.limits.maxStage} · level cap{' '}
                       {entry.limits.level} · EXP cap {formatNumber(entry.limits.exp)}
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-muted-foreground">Lock</span>
+                    <span className="text-xs text-muted-foreground">Lock</span>
                     <Switch
                       checked={entry.isLock}
                       disabled={busy}
@@ -156,7 +156,7 @@ export function KarmaScreen() {
 
                 <div className="mt-3 grid grid-cols-3 gap-2 border-t pt-2">
                   <div className="space-y-1">
-                    <span className="block text-[10px] tracking-wide text-muted-foreground uppercase">EXP</span>
+                    <span className="block text-xs text-muted-foreground">EXP</span>
                     <NumberField
                       value={entry.exp}
                       onCommit={(value) => void setKarma(entry.dbid, 'exp', value)}
@@ -167,7 +167,7 @@ export function KarmaScreen() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <span className="block text-[10px] tracking-wide text-muted-foreground uppercase">Ascend</span>
+                    <span className="block text-xs text-muted-foreground">Ascend</span>
                     <NumberField
                       value={entry.ascend}
                       onCommit={(value) => void setKarma(entry.dbid, 'ascend', value)}
@@ -178,7 +178,7 @@ export function KarmaScreen() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <span className="block text-[10px] tracking-wide text-muted-foreground uppercase">Transcend</span>
+                    <span className="block text-xs text-muted-foreground">Transcend</span>
                     <NumberField
                       value={entry.transcend}
                       onCommit={(value) => void setKarma(entry.dbid, 'transcend', value)}
@@ -191,7 +191,7 @@ export function KarmaScreen() {
                 </div>
 
                 <div className="mt-3 space-y-1">
-                  <span className="block text-[10px] tracking-wide text-muted-foreground uppercase">Equipped by</span>
+                  <span className="block text-xs text-muted-foreground">Equipped by</span>
                   <NativeSelect
                     value={entry.equippedBy ?? 0}
                     disabled={busy}
@@ -207,7 +207,7 @@ export function KarmaScreen() {
                   </NativeSelect>
                 </div>
 
-                <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">
+                <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
                   <span className="truncate">{owner ? `On ${itemName(owner.item, language)}` : 'Idle'}</span>
                   <CountPill className="capitalize">{entry.item.grade || entry.item.category}</CountPill>
                 </div>

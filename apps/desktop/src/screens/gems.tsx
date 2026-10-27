@@ -94,14 +94,14 @@ export function GemsScreen() {
                   <div className="truncate text-sm font-medium" title={itemName(gem.item, language)}>
                     {itemName(gem.item, language)}
                   </div>
-                  <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                     <span className="font-mono">CID {gem.cid}</span>
                     <span>·</span>
                     <span className="font-mono">DBID {gem.dbid}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] text-muted-foreground">Lock</span>
+                  <span className="text-xs text-muted-foreground">Lock</span>
                   <Switch
                     checked={gem.isLock}
                     disabled={busy}
@@ -112,7 +112,7 @@ export function GemsScreen() {
               </div>
               <div className="mt-3 grid grid-cols-2 gap-2 border-t pt-2">
                 <div className="space-y-1">
-                  <span className="block text-[10px] tracking-wide text-muted-foreground uppercase">Stat info CID</span>
+                  <span className="block text-xs text-muted-foreground">Stat info CID</span>
                   <NumberField
                     value={gem.statInfoCid}
                     onCommit={(value) => void setGem(gem.dbid, 'statInfoCid', value)}
@@ -123,7 +123,7 @@ export function GemsScreen() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <span className="block text-[10px] tracking-wide text-muted-foreground uppercase">Item CID</span>
+                  <span className="block text-xs text-muted-foreground">Item CID</span>
                   <NumberField
                     value={gem.cid}
                     onCommit={(value) => void setGem(gem.dbid, 'itemCid', value)}
@@ -134,7 +134,7 @@ export function GemsScreen() {
                   />
                 </div>
               </div>
-              <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">
+              <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
                 <span className="capitalize">{gem.item.grade || gem.item.category}</span>
                 <CountPill>tb_gem</CountPill>
               </div>

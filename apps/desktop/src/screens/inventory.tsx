@@ -187,7 +187,7 @@ export function InventoryScreen() {
           actions={<Badge variant="outline">{formatNumber(totalUnits)} units</Badge>}
         >
           <div className="divide-y">
-            <div className="hidden grid-cols-[minmax(0,1fr)_7rem_9rem_8rem] gap-4 px-4 py-2 text-[10px] font-medium tracking-[0.12em] text-muted-foreground uppercase md:grid">
+            <div className="hidden grid-cols-[minmax(0,1fr)_7rem_9rem_8rem] gap-4 px-4 py-2 text-xs text-muted-foreground md:grid">
               <span>Item</span>
               <span>Kind</span>
               <span className="text-right">Count</span>
@@ -210,19 +210,19 @@ export function InventoryScreen() {
                     <ItemIcon item={stack.item} size={compactRows ? 30 : 38} />
                     <div className="min-w-0">
                       <div className="truncate text-sm font-medium">{itemName(stack.item, language)}</div>
-                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                         <span className="font-mono">CID {stack.item.cid}</span>
                         {stack.item.grade && (
                           <span className={cn('rounded border px-1 py-px', gradeTone(stack.item.grade))}>
                             {stack.item.grade}
                           </span>
                         )}
-                        {!stack.item.known && <span className="text-amber-300">unknown item</span>}
+                        {!stack.item.known && <span className="text-warn-strong">unknown item</span>}
                       </div>
                     </div>
                   </div>
                   <div>
-                    <Badge variant="outline" className="text-[10px]">
+                    <Badge variant="outline" className="text-xs">
                       {stack.kind === 'cook' ? 'Cooked dish' : 'Material'}
                     </Badge>
                   </div>
@@ -238,7 +238,7 @@ export function InventoryScreen() {
                     {showMax && (
                       <button
                         type="button"
-                        className="text-[10px] text-brand hover:underline disabled:opacity-50"
+                        className="text-xs text-brand hover:underline disabled:opacity-50"
                         disabled={busy || stack.count >= limit}
                         onClick={() => void setStack(stack.kind, stack.id, limit)}
                       >
@@ -246,7 +246,7 @@ export function InventoryScreen() {
                       </button>
                     )}
                   </div>
-                  <div className="hidden text-right font-mono text-[10px] text-muted-foreground md:block">
+                  <div className="hidden text-right font-mono text-xs text-muted-foreground md:block">
                     {stack.kind === 'stackable' ? `CID ${stack.id}` : `DBID ${stack.id}`}
                   </div>
                 </div>
@@ -374,7 +374,7 @@ function AddStackDialog({
                       <ItemIcon item={item} size={32} />
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-sm font-medium">{itemName(item, language)}</div>
-                        <div className="text-[10px] text-muted-foreground">
+                        <div className="text-xs text-muted-foreground">
                           CID {item.cid} · {item.category}
                           {item.grade ? ` · ${item.grade}` : ''}
                         </div>
@@ -395,10 +395,10 @@ function AddStackDialog({
               <ItemIcon item={selected} size={40} />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium">{itemName(selected, language)}</div>
-                <div className="text-[10px] text-muted-foreground">CID {selected.cid}</div>
+                <div className="text-xs text-muted-foreground">CID {selected.cid}</div>
               </div>
               <div className="space-y-1">
-                <Label htmlFor="add-count" className="text-[10px] text-muted-foreground">
+                <Label htmlFor="add-count" className="text-xs text-muted-foreground">
                   Count
                 </Label>
                 <Input

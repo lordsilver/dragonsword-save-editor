@@ -128,7 +128,7 @@ export function EquipmentScreen() {
         <Panel title="Gear" description="Values are committed when a field loses focus." contentClassName="p-0">
           <div className="overflow-x-auto">
             <div className="min-w-[980px]">
-              <div className="grid grid-cols-[minmax(0,1.2fr)_6rem_7rem_5rem_10rem_minmax(0,0.8fr)_4rem] gap-3 border-b px-4 py-2 text-[10px] font-medium tracking-[0.12em] text-muted-foreground uppercase">
+              <div className="grid grid-cols-[minmax(0,1.2fr)_6rem_7rem_5rem_10rem_minmax(0,0.8fr)_4rem] gap-3 border-b px-4 py-2 text-xs text-muted-foreground">
                 <span>Item</span>
                 <span>Enchant</span>
                 <span>EXP</span>
@@ -150,11 +150,11 @@ export function EquipmentScreen() {
                       <ItemIcon item={piece.item} size={compactRows ? 30 : 38} />
                       <div className="min-w-0">
                         <div className="truncate text-sm font-medium">{itemName(piece.item, language)}</div>
-                        <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                           <span className="font-mono">CID {piece.cid}</span>
                           <span>·</span>
                           <span className="font-mono">DBID {piece.dbid}</span>
-                          {!piece.item.known && <span className="text-amber-300">unknown item</span>}
+                          {!piece.item.known && <span className="text-warn-strong">unknown item</span>}
                         </div>
                       </div>
                     </div>
@@ -190,19 +190,19 @@ export function EquipmentScreen() {
                     <div className="min-w-0">
                       {piece.mainStatCid ? (
                         <div className="space-y-0.5">
-                          <div className="truncate font-mono text-[10px] text-muted-foreground">
+                          <div className="truncate font-mono text-xs text-muted-foreground">
                             main {piece.mainStatCid}
                             {piece.hasStatValues ? ` · value ${formatNumber(piece.mainStatValue)}` : ''}
                           </div>
                           <div
-                            className="truncate font-mono text-[10px] text-muted-foreground/80"
+                            className="truncate font-mono text-xs text-muted-foreground/80"
                             title={piece.subStatCids.filter(Boolean).join(', ')}
                           >
                             sub {piece.subStatCids.filter(Boolean).join(', ') || 'none'}
                           </div>
                         </div>
                       ) : (
-                        <span className="text-[11px] text-muted-foreground/70">No stat rolls</span>
+                        <span className="text-xs text-muted-foreground/70">No stat rolls</span>
                       )}
                     </div>
                     <div className="text-right">
@@ -320,7 +320,7 @@ function StatDialog({
           <div className="flex items-center gap-2 text-xs font-medium">
             <Gem className="size-3.5 text-brand" />
             Rolled values
-            <Badge variant="outline" className="text-[10px]">
+            <Badge variant="outline" className="text-xs">
               {piece.hasStatValues ? 'editable' : 'columns missing'}
             </Badge>
           </div>
@@ -348,7 +348,7 @@ function StatDialog({
               ))}
             </div>
           ) : (
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               This save's tb_equipment has no MAIN_STAT_VALUE or SUB_STAT_VALUE columns, so only the CIDs can be edited.
             </p>
           )}

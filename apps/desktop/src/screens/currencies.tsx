@@ -89,7 +89,7 @@ export function CurrenciesScreen() {
                       <h2 className="truncate font-heading text-base font-semibold tracking-tight">
                         {itemName(currency.item, language)}
                       </h2>
-                      <Badge variant="outline" className="font-mono text-[10px]">
+                      <Badge variant="outline" className="font-mono text-xs">
                         CID {currency.item.cid}
                       </Badge>
                     </div>
@@ -108,7 +108,7 @@ export function CurrenciesScreen() {
                       {limit.observed ? (
                         <button
                           type="button"
-                          className="text-[11px] text-brand hover:underline disabled:opacity-50"
+                          className="text-xs text-brand hover:underline disabled:opacity-50"
                           disabled={busy || currency.amount >= limit.max}
                           title={
                             currency.amount >= limit.max ? 'Already at or above the highest seen balance' : undefined
@@ -119,7 +119,7 @@ export function CurrenciesScreen() {
                         </button>
                       ) : (
                         <span
-                          className="text-[11px] text-muted-foreground"
+                          className="text-xs text-muted-foreground"
                           title="No nonzero balance for this currency exists in the reference save"
                         >
                           No observed balance
@@ -128,7 +128,7 @@ export function CurrenciesScreen() {
                     </div>
                   </div>
                 </div>
-                <div className="mt-3 flex items-center justify-between border-t pt-2 text-[10px] text-muted-foreground">
+                <div className="mt-3 flex items-center justify-between border-t pt-2 text-xs text-muted-foreground">
                   <span className="font-mono">tb_currency · CID {currency.item.cid}</span>
                   <CountPill>{formatNumber(currency.amount)}</CountPill>
                 </div>

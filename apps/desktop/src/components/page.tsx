@@ -24,11 +24,7 @@ export function PageHeader({
 }
 
 export function Toolbar({ children, className }: { children: ReactNode; className?: string }) {
-  return (
-    <div className={cn('flex flex-wrap items-center gap-2 rounded-xl border bg-card/60 p-2 shadow-xs', className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn('flex flex-wrap items-center gap-2', className)}>{children}</div>;
 }
 
 export function Panel({
@@ -47,17 +43,17 @@ export function Panel({
   contentClassName?: string;
 }) {
   return (
-    <section className={cn('overflow-hidden rounded-xl border bg-card/70 shadow-xs', className)}>
+    <section className={cn('overflow-hidden rounded-xl border bg-card/40', className)}>
       {(title || actions) && (
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-3.5">
           <div className="min-w-0">
-            {title && <h2 className="font-heading text-sm font-semibold tracking-tight">{title}</h2>}
-            {description && <p className="text-xs text-muted-foreground">{description}</p>}
+            {title && <h2 className="font-semibold">{title}</h2>}
+            {description && <p className="text-sm text-muted-foreground">{description}</p>}
           </div>
           {actions}
         </header>
       )}
-      <div className={cn('p-4', contentClassName)}>{children}</div>
+      <div className={cn('p-5', contentClassName)}>{children}</div>
     </section>
   );
 }

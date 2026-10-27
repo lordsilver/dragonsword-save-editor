@@ -173,7 +173,7 @@ export function SettingsScreen() {
                   </Button>
                 ))}
               </div>
-              <p className="mt-1 text-[10px] text-muted-foreground">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Item and recipe names come from the bundled catalog. Unknown entries fall back to English.
               </p>
             </div>
@@ -204,7 +204,7 @@ export function SettingsScreen() {
                 <FolderOpen className="size-3.5 text-brand" />
                 Save folder
               </div>
-              <div className="rounded-lg border bg-muted/20 p-2 font-mono text-[11px] break-all">
+              <div className="rounded-lg border bg-muted/20 p-2 font-mono text-xs break-all">
                 {settings.lastFolder ?? 'Not set — scan a folder or open a .db file directly.'}
               </div>
               <div className="flex flex-wrap gap-2">
@@ -230,7 +230,7 @@ export function SettingsScreen() {
                   <span className="text-xs font-medium">Open file</span>
                   <Badge variant="outline">{dirty ? 'Unsaved changes' : 'Current'}</Badge>
                 </div>
-                <div className="rounded-lg border bg-muted/20 p-2 font-mono text-[11px] break-all">{save.path}</div>
+                <div className="rounded-lg border bg-muted/20 p-2 font-mono text-xs break-all">{save.path}</div>
                 <div className="flex flex-wrap gap-2">
                   <Button size="sm" disabled={busy || !dirty} onClick={() => void saveNow()}>
                     <Save />
@@ -269,11 +269,11 @@ export function SettingsScreen() {
                 className="flex items-center justify-between gap-3 rounded-md border bg-background/30 px-2.5 py-1.5 text-xs"
               >
                 <span className="text-muted-foreground">{action}</span>
-                <kbd className="rounded border bg-muted/50 px-1.5 py-0.5 font-mono text-[10px]">{keys}</kbd>
+                <kbd className="rounded border bg-muted/50 px-1.5 py-0.5 font-mono text-xs">{keys}</kbd>
               </div>
             ))}
           </div>
-          <div className="mt-3 flex items-center gap-2 text-[10px] text-muted-foreground">
+          <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
             <Keyboard className="size-3.5" />
             Shortcuts are ignored while a text field has focus.
           </div>
@@ -296,7 +296,7 @@ export function SettingsScreen() {
               <BookOpen className="size-3.5 text-brand" />
               Game data
             </div>
-            <p className="text-[11px] leading-relaxed text-muted-foreground">
+            <p className="text-xs leading-relaxed text-muted-foreground">
               Names, numbers and icons come from DragonSword Awakening's own files. This tool ships no game code.
             </p>
           </div>
@@ -324,7 +324,7 @@ function ToggleRow({
       <span className="text-brand [&_svg]:size-4">{icon}</span>
       <div className="min-w-0 flex-1">
         <div className="text-xs font-medium">{label}</div>
-        <div className="text-[10px] text-muted-foreground">{description}</div>
+        <div className="text-xs text-muted-foreground">{description}</div>
       </div>
       <Switch checked={checked} onCheckedChange={onCheckedChange} aria-label={label} />
     </div>
@@ -335,7 +335,7 @@ function AboutRow({ label, value, mono }: { label: string; value: string; mono?:
   return (
     <div className="flex items-baseline justify-between gap-4 border-b pb-1.5 last:border-0">
       <span className="shrink-0 text-muted-foreground">{label}</span>
-      <span className={cn('min-w-0 truncate text-right', mono && 'font-mono text-[10px]')} title={value}>
+      <span className={cn('min-w-0 truncate text-right', mono && 'font-mono text-xs')} title={value}>
         {value}
       </span>
     </div>

@@ -284,10 +284,10 @@ function ConsistencyPanel({ report }: { report: ConsistencyReport }) {
   if (issues.length === 0) return null;
   return (
     <Panel
-      className="border-amber-500/40"
+      className="border-warn-line"
       title={
         <span className="flex items-center gap-2">
-          <AlertTriangle className="size-4 text-amber-500" />
+          <AlertTriangle className="size-4 text-warn" />
           Consistency problems in this save
         </span>
       }
@@ -296,7 +296,7 @@ function ConsistencyPanel({ report }: { report: ConsistencyReport }) {
       <ul className="space-y-1.5 text-xs">
         {issues.map((issue) => (
           <li key={issue} className="flex gap-2">
-            <span className="text-amber-500">•</span>
+            <span className="text-warn">•</span>
             <span>{issue}</span>
           </li>
         ))}
@@ -311,12 +311,12 @@ function ConsistencyPanel({ report }: { report: ConsistencyReport }) {
 function Metric({ icon, label, value, detail }: { icon: ReactNode; label: string; value: string; detail: string }) {
   return (
     <div className="rounded-xl border bg-card/70 p-4 shadow-xs">
-      <div className="flex items-center gap-2 text-[11px] font-medium tracking-[0.12em] text-muted-foreground uppercase [&_svg]:size-3.5 [&_svg]:text-brand">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground [&_svg]:size-4">
         {icon}
         {label}
       </div>
       <div className="mt-2 font-heading text-lg font-semibold tracking-tight">{value}</div>
-      <div className="mt-0.5 truncate text-[11px] text-muted-foreground">{detail}</div>
+      <div className="mt-0.5 truncate text-xs text-muted-foreground">{detail}</div>
     </div>
   );
 }
@@ -346,7 +346,7 @@ function SmallCount({ icon, label, value }: { icon: ReactNode; label: string; va
       <span className="text-brand [&_svg]:size-4">{icon}</span>
       <div className="min-w-0">
         <div className="numeric text-sm font-medium">{formatNumber(value)}</div>
-        <div className="text-[10px] tracking-wide text-muted-foreground uppercase">{label}</div>
+        <div className="text-xs text-muted-foreground">{label}</div>
       </div>
     </div>
   );
@@ -373,14 +373,14 @@ function CurrencyCard({
       <ItemIcon item={icon} size={42} />
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium">{name}</div>
-        <div className="font-mono text-[10px] text-muted-foreground">CID {cid}</div>
+        <div className="font-mono text-xs text-muted-foreground">CID {cid}</div>
       </div>
       <div className="flex flex-col items-end gap-1">
         <NumberField value={amount} onCommit={onCommit} max={limit.max} disabled={busy} />
         {limit.observed ? (
           <button
             type="button"
-            className="text-[10px] text-brand hover:underline disabled:opacity-50"
+            className="text-xs text-brand hover:underline disabled:opacity-50"
             disabled={busy || amount >= limit.max}
             title={amount >= limit.max ? 'Already at or above the highest seen balance' : undefined}
             onClick={() => onCommit(limit.max)}
@@ -389,7 +389,7 @@ function CurrencyCard({
           </button>
         ) : (
           <span
-            className="text-[10px] text-muted-foreground"
+            className="text-xs text-muted-foreground"
             title="No nonzero balance for this currency exists in the reference save"
           >
             No observed balance
@@ -439,7 +439,7 @@ function RenameDialog({
               if (event.key === 'Enter' && name.trim()) onSave(name.trim());
             }}
           />
-          <p className="text-[11px] text-muted-foreground">1–32 characters.</p>
+          <p className="text-xs text-muted-foreground">1–32 characters.</p>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
@@ -514,7 +514,7 @@ function RankDialog({
           />
           <Field label="Play time (seconds)" value={playTime} onChange={setPlayTime} max={MAX_PLAY_TIME} />
         </div>
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           The grade is read-only. It follows the promotion quests the save records, and each promotion unlocks the next
           hero and karma breakthrough. Play the game to advance it. The live servers cap the corps at level{' '}
           {limits.level}; EXP at level {initial.level} runs from {formatNumber(limits.expMin)} to{' '}

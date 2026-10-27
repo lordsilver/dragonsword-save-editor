@@ -202,7 +202,7 @@ function TitleCard({
           {title.favorite && <Star className="size-3 fill-brand text-brand" />}
         </div>
         {title.nameFr && title.nameFr !== title.nameEn && (
-          <div className="truncate text-[11px] text-muted-foreground">{title.nameFr}</div>
+          <div className="truncate text-xs text-muted-foreground">{title.nameFr}</div>
         )}
         <div className="mt-1 flex flex-wrap items-center gap-1">
           <CountPill>{title.color.toLowerCase()}</CountPill>

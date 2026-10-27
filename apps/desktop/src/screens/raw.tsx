@@ -124,8 +124,8 @@ export function RawScreen() {
                   )}
                 >
                   <Table2 className={cn('size-3.5 shrink-0', active ? 'text-brand' : 'text-muted-foreground/70')} />
-                  <span className="min-w-0 flex-1 truncate font-mono text-[11px]">{table.name}</span>
-                  <span className="numeric shrink-0 text-[10px] text-muted-foreground">{formatNumber(table.rows)}</span>
+                  <span className="min-w-0 flex-1 truncate font-mono text-xs">{table.name}</span>
+                  <span className="numeric shrink-0 text-xs text-muted-foreground">{formatNumber(table.rows)}</span>
                 </button>
               );
             })}
@@ -181,9 +181,9 @@ export function RawScreen() {
                 <Eye />
                 Schema
               </Button>
-              <div className="flex items-center gap-2 rounded-md border border-dashed px-2 py-1.5 text-[11px]">
+              <div className="flex items-center gap-2 rounded-md border border-dashed px-2 py-1.5 text-xs">
                 <Switch checked={advanced} onCheckedChange={setAdvanced} aria-label="Advanced editing" />
-                <span className={cn('font-medium', advanced ? 'text-amber-300' : 'text-muted-foreground')}>
+                <span className={cn('font-medium', advanced ? 'text-warn-strong' : 'text-muted-foreground')}>
                   Advanced editing
                 </span>
               </div>
@@ -191,7 +191,7 @@ export function RawScreen() {
 
             {rawPage.readOnly && (
               <InfoNote tone="warning">
-                <span className="inline-flex items-center gap-1 font-medium text-amber-200">
+                <span className="inline-flex items-center gap-1 font-medium text-warn-strong">
                   <ShieldAlert className="size-3" />
                   Seed table.
                 </span>{' '}
@@ -200,7 +200,7 @@ export function RawScreen() {
             )}
             {advanced && !rawPage.readOnly && (
               <InfoNote tone="warning">
-                <span className="inline-flex items-center gap-1 font-medium text-amber-200">
+                <span className="inline-flex items-center gap-1 font-medium text-warn-strong">
                   <ShieldAlert className="size-3" />
                   Advanced editing is on.
                 </span>{' '}
@@ -214,7 +214,7 @@ export function RawScreen() {
                 <table className="w-full border-collapse text-left text-xs">
                   <thead className="sticky top-0 z-10 bg-card">
                     <tr>
-                      <th className="border-b bg-card px-3 py-2 font-mono text-[10px] font-medium text-muted-foreground">
+                      <th className="border-b bg-card px-3 py-2 font-mono text-xs font-medium text-muted-foreground">
                         rowid
                       </th>
                       {rawPage.columns.map((column) => (
@@ -223,7 +223,7 @@ export function RawScreen() {
                           title={column.name}
                           className="border-b bg-card px-3 py-2 whitespace-nowrap"
                         >
-                          <span className="flex items-center gap-1 font-mono text-[10px] font-medium">
+                          <span className="flex items-center gap-1 font-mono text-xs font-medium">
                             {column.primaryKey && <KeyRound className="size-2.5 text-brand" />}
                             {column.name}
                           </span>
@@ -238,9 +238,7 @@ export function RawScreen() {
                   <tbody>
                     {rawPage.rows.map((row) => (
                       <tr key={row.rowid} className="group hover:bg-accent/30">
-                        <td className="border-b px-3 py-1.5 font-mono text-[10px] text-muted-foreground">
-                          {row.rowid}
-                        </td>
+                        <td className="border-b px-3 py-1.5 font-mono text-xs text-muted-foreground">{row.rowid}</td>
                         {row.cells.map((value, index) => {
                           const column = rawPage.columns[index];
                           const locked =
@@ -256,7 +254,7 @@ export function RawScreen() {
                                 disabled={!column}
                                 onClick={() => column && setCell({ rowid: row.rowid, index })}
                                 className={cn(
-                                  'block w-full max-w-64 truncate px-3 text-left font-mono text-[11px]',
+                                  'block w-full max-w-64 truncate px-3 text-left font-mono text-xs',
                                   compactRows ? 'py-1' : 'py-1.5',
                                   locked ? 'cursor-default text-muted-foreground' : 'hover:bg-brand/10',
                                 )}
@@ -288,7 +286,7 @@ export function RawScreen() {
                 Blob cells are shown as base64 and are read-only.
               </InfoNote>
               <InfoNote tone="warning">
-                <span className="inline-flex items-center gap-1 font-medium text-amber-200">
+                <span className="inline-flex items-center gap-1 font-medium text-warn-strong">
                   <ShieldAlert className="size-3" />
                   Raw edits bypass the typed validation.
                 </span>{' '}
@@ -441,7 +439,7 @@ function CellDialog({
                     ? 'This is a key or link column. Turn on advanced editing to change it.'
                     : 'Blob columns are shown for inspection but cannot be written by the editor.'}
             </InfoNote>
-            <pre className="scroll-thin max-h-48 overflow-auto rounded-lg border bg-muted/30 p-3 font-mono text-[11px] whitespace-pre-wrap break-all">
+            <pre className="scroll-thin max-h-48 overflow-auto rounded-lg border bg-muted/30 p-3 font-mono text-xs whitespace-pre-wrap break-all">
               {value ? rawText(value) : 'NULL'}
             </pre>
           </div>
@@ -493,7 +491,7 @@ function CellDialog({
                 {type === 'integer' ? 'Enter a signed 64-bit integer.' : 'Enter a finite decimal number.'}
               </p>
             )}
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Only the storage classes this column can hold are offered. The value is checked again in Rust before it is
               written.
             </p>
@@ -539,9 +537,9 @@ function SchemaDialog({
           <table className="w-full text-left text-xs">
             <thead className="sticky top-0 bg-card">
               <tr>
-                <th className="border-b px-3 py-2 text-[10px] tracking-wide text-muted-foreground uppercase">Column</th>
-                <th className="border-b px-3 py-2 text-[10px] tracking-wide text-muted-foreground uppercase">Type</th>
-                <th className="border-b px-3 py-2 text-[10px] tracking-wide text-muted-foreground uppercase">Flags</th>
+                <th className="border-b px-3 py-2 text-xs text-muted-foreground">Column</th>
+                <th className="border-b px-3 py-2 text-xs text-muted-foreground">Type</th>
+                <th className="border-b px-3 py-2 text-xs text-muted-foreground">Flags</th>
               </tr>
             </thead>
             <tbody>
@@ -564,8 +562,8 @@ function SchemaDialog({
 function SchemaRow({ column }: { column: RawColumn }) {
   return (
     <tr>
-      <td className="border-b px-3 py-1.5 font-mono text-[11px]">{column.name}</td>
-      <td className="border-b px-3 py-1.5 font-mono text-[10px] text-muted-foreground">{column.kind || 'ANY'}</td>
+      <td className="border-b px-3 py-1.5 font-mono text-xs">{column.name}</td>
+      <td className="border-b px-3 py-1.5 font-mono text-xs text-muted-foreground">{column.kind || 'ANY'}</td>
       <td className="border-b px-3 py-1.5">
         <div className="flex gap-1">
           {column.primaryKey && (

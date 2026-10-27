@@ -175,7 +175,7 @@ export function MountsScreen() {
                     <div className="truncate text-sm font-medium" title={itemName(mount.item, language)}>
                       {itemName(mount.item, language)}
                     </div>
-                    <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                       <span className="font-mono">CID {mount.cid}</span>
                       <span>·</span>
                       <span className="font-mono">DBID {mount.dbid}</span>
@@ -194,7 +194,7 @@ export function MountsScreen() {
                   <CountPill>{mount.equippedBy !== null ? 'in use' : 'idle'}</CountPill>
                 </div>
                 <div className="mt-3 space-y-1 border-t pt-2">
-                  <span className="block text-[10px] tracking-wide text-muted-foreground uppercase">Ridden by</span>
+                  <span className="block text-xs text-muted-foreground">Ridden by</span>
                   <NativeSelect
                     value={mount.equippedBy ?? 0}
                     disabled={busy}
@@ -262,7 +262,7 @@ function MountCatalogCard({
           <div className="truncate text-sm font-medium" title={itemName(entry.item, language)}>
             {itemName(entry.item, language)}
           </div>
-          <div className="text-[10px] text-muted-foreground">CID {entry.item.cid}</div>
+          <div className="text-xs text-muted-foreground">CID {entry.item.cid}</div>
           {entry.item.grade && (
             <span
               className={cn(
@@ -275,7 +275,7 @@ function MountCatalogCard({
           )}
         </div>
         {entry.owned ? (
-          <Badge variant="outline" className="gap-1 text-[10px]">
+          <Badge variant="outline" className="gap-1 text-xs">
             <Check className="size-3" />
             Owned
           </Badge>

@@ -75,7 +75,7 @@ function InProgress() {
 
   return (
     <div className="space-y-3">
-      <p className="text-[11px] text-muted-foreground">
+      <p className="text-xs text-muted-foreground">
         Completing a quest records it as done, hands out its gold, items, dishes and heroes, adds its Mercenary Corps
         EXP, promotes the corps for a promotion exam, and starts the quests that were waiting for it, the way the game
         does. Corps level rewards stay to be claimed in game. Story events such as cutscenes are skipped.
@@ -91,7 +91,7 @@ function InProgress() {
               <div className="min-w-0 flex-1 space-y-1.5">
                 <QuestTitle quest={quest} language={language} />
                 <RewardChips quest={quest} language={language} withCorpsExp />
-                {quest.blocked && <p className="text-[11px] text-amber-600 dark:text-amber-400">{quest.blocked}</p>}
+                {quest.blocked && <p className="text-xs text-warn-strong">{quest.blocked}</p>}
               </div>
               <Button
                 size="sm"
@@ -141,7 +141,7 @@ function MissedRewards({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="space-y-3">
-      <p className="text-[11px] text-muted-foreground">
+      <p className="text-xs text-muted-foreground">
         For quests another tool marked complete without handing out their rewards. Tick the ones you missed. The editor
         cannot tell which rewards the game already gave, so granting a quest twice adds its rewards twice. Corps EXP is
         not granted here.
@@ -170,14 +170,14 @@ function MissedRewards({ onClose }: { onClose: () => void }) {
       )}
 
       {result && result.notGranted.length > 0 && (
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Not granted:{' '}
           {result.notGranted.map((entry) => `${itemName(entry.item, language)} ×${entry.count}`).join(', ')}.
         </p>
       )}
 
       <DialogFooter className="items-center sm:justify-between">
-        <span className="text-[11px] text-muted-foreground">
+        <span className="text-xs text-muted-foreground">
           {picked.length} quest{picked.length === 1 ? '' : 's'} · {formatNumber(gold)} gold · {grantable.length} item
           {grantable.length === 1 ? '' : 's'}
         </span>
@@ -215,7 +215,7 @@ function QuestTitle({ quest, language, htmlFor }: { quest: QuestRewards; languag
       ) : (
         <span className="text-sm font-medium">{name}</span>
       )}
-      <Badge variant="outline" className="text-[10px] font-normal text-muted-foreground">
+      <Badge variant="outline" className="text-xs font-normal text-muted-foreground">
         {quest.category.toLowerCase().replace('_', ' ')}
       </Badge>
     </div>
@@ -232,7 +232,7 @@ function RewardChips({
   withCorpsExp?: boolean;
 }) {
   if (quest.gold === 0 && quest.advExp === 0 && quest.items.length === 0) {
-    return <span className="text-[11px] text-muted-foreground">No reward.</span>;
+    return <span className="text-xs text-muted-foreground">No reward.</span>;
   }
   return (
     <div className="flex flex-wrap gap-1.5">
@@ -264,7 +264,7 @@ function Chip({ label, icon, muted, title }: { label: string; icon?: ReactNode; 
     <span
       title={title}
       className={cn(
-        'inline-flex items-center gap-1 rounded-md border bg-background/60 px-1.5 py-0.5 text-[11px]',
+        'inline-flex items-center gap-1 rounded-md border bg-background/60 px-1.5 py-0.5 text-xs',
         muted && 'border-dashed text-muted-foreground line-through decoration-muted-foreground/40',
       )}
     >

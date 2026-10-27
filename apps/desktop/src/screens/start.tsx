@@ -62,7 +62,7 @@ export function StartScreen() {
               <div className="font-heading text-[13px] leading-none font-semibold tracking-[0.14em] uppercase">
                 DragonSword
               </div>
-              <div className="mt-1 text-[10px] leading-none tracking-[0.18em] text-muted-foreground uppercase">
+              <div className="mt-1 text-xs leading-none tracking-[0.18em] text-muted-foreground uppercase">
                 Save Editor
               </div>
             </div>
@@ -89,7 +89,7 @@ export function StartScreen() {
 
         <section className="grid items-center gap-10 py-10 lg:grid-cols-[1.15fr_0.85fr] lg:py-16">
           <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border bg-card/60 px-3 py-1 text-[11px] tracking-wide text-muted-foreground">
+            <div className="inline-flex items-center gap-2 rounded-full border bg-card/60 px-3 py-1 text-xs tracking-wide text-muted-foreground">
               <Wand2 className="size-3.5 text-brand" />
               SQLCipher v4 · typed editor · automatic backups
             </div>
@@ -192,7 +192,7 @@ export function StartScreen() {
           )}
         </section>
 
-        <footer className="mt-12 flex flex-wrap items-center justify-between gap-3 border-t pt-5 text-[11px] text-muted-foreground">
+        <footer className="mt-12 flex flex-wrap items-center justify-between gap-3 border-t pt-5 text-xs text-muted-foreground">
           <span>Unofficial fan tool. Not affiliated with the game's publisher.</span>
           <span className="font-mono">
             v{info?.version ?? '0.1.0'} · {info?.platform ?? 'web'}
@@ -207,8 +207,8 @@ function Feature({ icon, title, text }: { icon: ReactNode; title: string; text: 
   return (
     <div className="rounded-lg border bg-card/40 p-3">
       <div className="mb-1 flex items-center gap-1.5 text-foreground [&_svg]:size-3.5 [&_svg]:text-brand">{icon}</div>
-      <div className="text-[11px] font-medium text-foreground">{title}</div>
-      <div className="mt-0.5 text-[11px] leading-snug">{text}</div>
+      <div className="text-xs font-medium text-foreground">{title}</div>
+      <div className="mt-0.5 text-xs leading-snug">{text}</div>
     </div>
   );
 }
@@ -217,7 +217,7 @@ function Stat({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="rounded-lg border bg-background/40 px-2 py-2">
       <div className="numeric text-sm font-semibold">{value}</div>
-      <div className="text-[10px] tracking-wide text-muted-foreground uppercase">{label}</div>
+      <div className="text-xs text-muted-foreground">{label}</div>
     </div>
   );
 }
@@ -235,7 +235,7 @@ function SlotCard({ slot, onOpen }: { slot: SlotInfo; onOpen: () => void }) {
         ) : (
           <div className="flex size-full flex-col items-center justify-center gap-1.5 text-muted-foreground/70">
             <Swords className="size-7 text-brand/70" />
-            <span className="text-[10px] tracking-[0.16em] uppercase">No screenshot</span>
+            <span className="text-xs tracking-[0.16em] uppercase">No screenshot</span>
           </div>
         )}
         <Badge className="absolute top-2 left-2 border-black/20 bg-black/55 text-white backdrop-blur">
@@ -245,7 +245,7 @@ function SlotCard({ slot, onOpen }: { slot: SlotInfo; onOpen: () => void }) {
       <div className="flex items-center justify-between gap-3 p-3">
         <div className="min-w-0">
           <div className="text-sm font-medium">Account {slot.accountId}</div>
-          <div className="mt-0.5 text-[11px] text-muted-foreground">
+          <div className="mt-0.5 text-xs text-muted-foreground">
             {formatDate(slot.modifiedMs)} · {formatBytes(slot.size)}
           </div>
         </div>
