@@ -15,6 +15,11 @@ import {
   Users,
 } from 'lucide-react';
 import { type CSSProperties, useMemo, useState } from 'react';
+import skillDiscCircle from '@/assets/skill-disc-circle.webp';
+import skillDiscDiamond from '@/assets/skill-disc-diamond.webp';
+import skillRingGlow from '@/assets/skill-ring-glow.webp';
+import skillRingLine from '@/assets/skill-ring-line.webp';
+import skillRingSignal from '@/assets/skill-ring-signal.webp';
 import { ConfirmButton, EmptyPanel } from '@/components/common';
 import { NumberField } from '@/components/fields';
 import { ItemIcon } from '@/components/item-icon';
@@ -350,31 +355,21 @@ function HeroInformation({ character, busy }: { character: Character; busy: bool
 }
 
 /**
- * The disc behind a skill's glyph, in the game's colour for the skill (its
- * effect's, or the khaki ATTACK colour for a plain skill). Like the game's, it
- * stays dark nearly to the edge, so the bright glyph stands out, and carries
- * the colour in a vivid band along the edge.
+ * One effect ring of a skill slot: one of the game's ring textures, baked to a
+ * white mask by scripts/gen-icons.mjs, filled with the skill's colour the way
+ * the game multiplies the texture by it. `additive` rings add light like the
+ * game's additive materials; `opacity` is the material's own strength.
  */
-function disc(skill: Skill, size: number): CSSProperties {
-  const color = skill.color;
-  // The band's width follows the icon's size, so small icons stay dark inside.
-  const band = `inset 0 0 ${Math.round(size * 0.12)}px ${Math.round(size * 0.05)}px ${color}`;
-  const middle = `color-mix(in oklab, ${color} 25%, #18181b)`;
-  const inner = `color-mix(in oklab, ${color} 40%, #27272a)`;
+function ringStyle(mask: string, color: string, opacity: number, additive: boolean): CSSProperties {
+  const image = `url(${mask})`;
   return {
-    // The gradient only shades the dark interior. The coloured band and the
-    // light highlight are inset shadows, so they follow the frame's shape,
-    // circle or diamond (a radial gradient would leave a diamond's corners
-    // fully coloured). The faint dark outline holds the edge on a light page
-    // as on the game's teal one.
-    backgroundImage: `radial-gradient(circle farthest-side, ${middle} 0%, ${inner} 100%)`,
-    borderColor: color,
-    boxShadow: [
-      `inset 0 0 0 2px color-mix(in oklab, ${color} 50%, white)`,
-      band,
-      '0 0 0 1px rgb(0 0 0 / 0.3)',
-      `0 0 8px color-mix(in oklab, ${color} 70%, transparent)`,
-    ].join(', '),
+    backgroundColor: color,
+    maskImage: image,
+    WebkitMaskImage: image,
+    maskSize: '100% 100%',
+    WebkitMaskSize: '100% 100%',
+    opacity,
+    mixBlendMode: additive ? 'plus-lighter' : 'normal',
   };
 }
 
@@ -388,10 +383,20 @@ function effectName(skill: Skill, language: string): string | null {
   return language === 'fr' ? skill.effect.nameFr : skill.effect.nameEn;
 }
 
+/**
+ * A skill slot drawn from the game's own layers, in the order its
+ * DUWG_CharacterSkill_Def (circle) and _Tag (diamond) widgets stack them: the
+ * dark disc, the glyph filling the same box (so a tip can reach past the
+ * disc's edge), then the effect rings tinted with the skill's colour
+ * (MesmerizedUIColor): a translucent glow (FXT_ring13_UI_ad01) and an additive
+ * line (_ad02) on a circle, the additive signal ring on a diamond. The game
+ * also scrolls and distorts the rings; the editor keeps them still.
+ */
 function SkillIcon({ skill, size }: { skill: Skill; size: number }) {
   const badge = Math.round(size * 0.4);
-  // The game draws the glyph nearly as large as the disc and brighter than its
-  // grey texture; it is its own layer so only the glyph is brightened.
+  const signal = skill.info?.signal ?? false;
+  // The game's glyph texture fills its box with less margin than the sprite
+  // cell keeps, so it is drawn a little larger, centred on the disc.
   const glyphSize = Math.round(size * 1.15);
   const glyph = {
     nameEn: skill.info?.nameEn ?? '?',
@@ -401,25 +406,27 @@ function SkillIcon({ skill, size }: { skill: Skill; size: number }) {
     icon: Boolean(skill.info && (skill.info.iconX || skill.info.iconY)),
   };
   return (
-    // A block box: the disc and the glyph take their size from this one.
-    <span className="relative block shrink-0" style={{ width: size, height: size }}>
+    // A block box: every layer fills it, as in the game's slot.
+    <span className="relative block shrink-0 isolate" style={{ width: size, height: size }}>
       <span
         aria-hidden
-        className={cn(
-          'absolute border-2',
-          // A signal skill sits on a diamond: the frame turns, the glyph does not.
-          skill.info?.signal ? 'inset-[12%] rotate-45 rounded-[18%]' : 'inset-0 rounded-full',
-        )}
-        style={disc(skill, size)}
+        className="absolute inset-0 bg-contain bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${signal ? skillDiscDiamond : skillDiscCircle})` }}
       />
-      {/* Like the game's, the glyph is about as large as its frame, so a tip
-          (a sword's point, a wing) can reach past the edge. */}
       <ItemIcon
         item={glyph}
         size={glyphSize}
-        className="absolute rounded-none border-0 bg-transparent brightness-125 contrast-110"
+        className="absolute rounded-none border-0 bg-transparent"
         style={{ left: (size - glyphSize) / 2, top: (size - glyphSize) / 2 }}
       />
+      {signal ? (
+        <span aria-hidden className="absolute inset-0" style={ringStyle(skillRingSignal, skill.color, 0.8, true)} />
+      ) : (
+        <>
+          <span aria-hidden className="absolute inset-0" style={ringStyle(skillRingGlow, skill.color, 0.5, false)} />
+          <span aria-hidden className="absolute inset-0" style={ringStyle(skillRingLine, skill.color, 0.6, true)} />
+        </>
+      )}
       {skill.effect && (
         <ItemIcon
           item={{ ...skill.effect, category: 'skill', icon: true }}

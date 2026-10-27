@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Build the editor's icon sprite from the game's own textures.
 //
-// Usage: node scripts/gen-icons.mjs <assets-dir> <extract-dir>
+// Usage: node scripts/gen-icons.mjs <assets-dir> <extract-dir> <fx-dir>
 //
 // <assets-dir> is the 2D-art export described in docs/game-assets.md (PNGs
 // laid out by game path, e.g. Art/UI/InGame/Icon_Item/Common/Icon_Item_Common_Gold.png).
@@ -26,6 +26,15 @@
 // tile background (Frame/Frame_Item_Grade_0N) as grade-tile-<grade>.webp and
 // the item card header (Frame/Frame_Grade_0N) as grade-card-<grade>.webp, for
 // N = 1..5 from normal to legendary.
+//
+// And the layers of a skill slot, as the game's DUWG_CharacterSkill_Def
+// (circle) and _Tag (diamond) widgets stack them (docs/game-assets.md): the
+// discs Btn/Btn_Skill_Info_Bg_02 and _05, and the effect rings as white masks
+// whose alpha is the texture's strength, for the editor to
+// tint with the effect colour as the game does: FXT_ring13_UI_ad01 (ring13b
+// masked by flare11), FXT_ring13_UI_ad02 (ring13c), and the diamond's
+// Mask_Fx_Skill_SignalOutGame (Mask/Mask_Fx_Skill_Signal). <fx-dir> is the
+// png/ folder of the skill-screen export, which holds the FX textures.
 // It packs them into apps/desktop/src/assets/sprite.webp and rewrites the
 // cell offsets in crates/core/data/items.json, items_extra.json (the game's
 // items that items.json lacks) and skills.json, the last two written by
@@ -36,9 +45,9 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';
 
-const [assetsDir, extractDir] = process.argv.slice(2);
-if (!assetsDir || !extractDir) {
-  console.error('usage: node scripts/gen-icons.mjs <assets-dir> <extract-dir>');
+const [assetsDir, extractDir, fxDir] = process.argv.slice(2);
+if (!assetsDir || !extractDir || !fxDir) {
+  console.error('usage: node scripts/gen-icons.mjs <assets-dir> <extract-dir> <fx-dir>');
   process.exit(2);
 }
 
@@ -197,6 +206,43 @@ for (const [index, grade] of GRADES.entries()) {
       .toBuffer();
     writeFileSync(new URL(`grade-${kind}-${grade}.webp`, assetsOut), out);
   }
+}
+
+/** A white mask whose alpha is a texture's strength, times an optional mask texture. */
+// An additive ring adds its brightness times its alpha; a translucent one
+// covers by its alpha alone.
+async function ringMask(path, maskPath, additive, gain = 1) {
+  const load = (file) => {
+    if (!existsSync(file)) fail(`texture ${file} is not in the export`);
+    return sharp(file).resize(256, 256).ensureAlpha().raw().toBuffer();
+  };
+  const ring = await load(path);
+  const mask = maskPath ? await load(maskPath) : null;
+  const out = Buffer.alloc(ring.length);
+  for (let index = 0; index < ring.length; index += 4) {
+    const strength = additive ? Math.max(ring[index], ring[index + 1], ring[index + 2]) / 255 : 1;
+    const masked = mask ? mask[index + 3] / 255 : 1;
+    out.fill(255, index, index + 3);
+    out[index + 3] = Math.min(255, Math.round(strength * ring[index + 3] * masked * gain));
+  }
+  return sharp(out, { raw: { width: 256, height: 256, channels: 4 } });
+}
+const skillLayers = {
+  'skill-disc-circle': sharp(join(assetsDir, 'Art/UI/InGame/Btn/Btn_Skill_Info_Bg_02.png')),
+  'skill-disc-diamond': sharp(join(assetsDir, 'Art/UI/InGame/Btn/Btn_Skill_Info_Bg_05.png')),
+  'skill-ring-glow': await ringMask(
+    join(fxDir, 'Art/FX/textures/ring/fxt_ring13b.png'),
+    join(fxDir, 'Art/FX/textures/glow/fxt_flare11.png'),
+    false,
+  ),
+  'skill-ring-line': await ringMask(join(fxDir, 'Art/FX/textures/ring/fxt_ring13c.png'), null, true),
+  // The signal ring's strength comes from its base material, whose defaults
+  // the export could not read; 2 comes close to the game's screenshots.
+  'skill-ring-signal': await ringMask(join(assetsDir, 'Art/UI/InGame/Mask/Mask_Fx_Skill_Signal.png'), null, true, 2),
+};
+for (const [name, image] of Object.entries(skillLayers)) {
+  const out = await image.webp({ quality: 90, alphaQuality: 100, effort: 6 }).toBuffer();
+  writeFileSync(new URL(`${name}.webp`, assetsOut), out);
 }
 
 console.log(
