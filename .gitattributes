@@ -1,0 +1,4 @@
+# Game art the editor bundles (the icon sprite and anything packed from the
+# game's textures) is stored with Git LFS. See docs/game-assets.md.
+apps/desktop/src/assets/*.webp filter=lfs diff=lfs merge=lfs -text
+apps/desktop/src/assets/*.png filter=lfs diff=lfs merge=lfs -text

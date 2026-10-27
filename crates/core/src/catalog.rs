@@ -1,7 +1,8 @@
 //! Bilingual item/recipe/title catalog bundled with the app.
 //!
-//! Names, grades and icons are derived from DragonSword Awakening's own data tables.
-//! The sprite sheet lives in the desktop app; this module only carries the cell offsets.
+//! Names and grades are derived from DragonSword Awakening's own data tables. Icons are
+//! the game's own textures, packed into the desktop app's sprite sheet by
+//! `scripts/gen-icons.mjs`; this module only carries the cell offsets.
 
 use std::collections::HashMap;
 use std::sync::OnceLock;
@@ -419,7 +420,7 @@ mod tests {
     #[test]
     fn catalog_loads_and_resolves_names() {
         let catalog = Catalog::shared();
-        assert_eq!(catalog.icon_size(), 64);
+        assert_eq!(catalog.icon_size(), 128);
         assert!(catalog.len() > 1200);
         assert_eq!(catalog.lookup(1_000_001).name_en, "Gold");
         assert_eq!(catalog.lookup(10_001).category, "character");

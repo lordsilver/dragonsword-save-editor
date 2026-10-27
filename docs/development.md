@@ -120,7 +120,7 @@ The supported route is the game's own shop. Add Fate's Invitation (`ITEM_CID` 1,
 
 ## Catalog data
 
-The JSON files in `crates/core/data` are embedded at compile time with `include_str!`. The sprite sheet is `apps/desktop/src/assets/sprite.webp`; catalog entries carry pixel offsets into its 64-pixel cells.
+The JSON files in `crates/core/data` are embedded at compile time with `include_str!`. The sprite sheet is `apps/desktop/src/assets/sprite.webp` (Git LFS), packed from the game's own textures by `scripts/gen-icons.mjs`; catalog entries carry pixel offsets into its 128-pixel cells. [Game assets](game-assets.md) describes the extraction and how to repeat it.
 
 `growth.json` holds the game's growth rules: level and EXP tables, skill caps per breakthrough, Mercenary Corps grades, and each region's live limits. `scripts/gen-growth.mjs` generates it from the XML tables extracted from the game's paks; [Game rules](game-rules.md) covers the extraction and what each table gives. Never commit the extracted files. After regenerating, run `cargo test -p dsa-core --lib growth`: its tests pin key rows, so a changed rule fails until it is looked at.
 

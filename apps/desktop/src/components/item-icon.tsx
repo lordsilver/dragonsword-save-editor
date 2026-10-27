@@ -2,6 +2,9 @@ import sprite from '@/assets/sprite.webp';
 import type { Item } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
+/** Pixels per sprite cell: `iconSize` in items.json, written by scripts/gen-icons.mjs. */
+export const SPRITE_CELL = 128;
+
 const CATEGORY_COLORS: Record<string, string> = {
   character: 'from-sky-500/25 to-sky-900/10 text-sky-300',
   gear: 'from-amber-500/25 to-amber-900/10 text-amber-300',
@@ -39,7 +42,7 @@ export function ItemIcon({
     );
   }
 
-  const scale = size / 64;
+  const scale = size / SPRITE_CELL;
   return (
     <div
       aria-hidden
@@ -48,8 +51,8 @@ export function ItemIcon({
     >
       <div
         style={{
-          width: 64,
-          height: 64,
+          width: SPRITE_CELL,
+          height: SPRITE_CELL,
           backgroundImage: `url(${sprite})`,
           backgroundPosition: `${item.iconX}px ${item.iconY}px`,
           backgroundRepeat: 'no-repeat',
