@@ -804,14 +804,14 @@ fn only_heroes_the_game_hands_out_can_be_recruited() {
     assert_eq!(heroes.len(), 19);
     assert!(heroes.iter().any(|hero| hero.cid == 10_004 && hero.owned));
     assert!(heroes.iter().any(|hero| hero.cid == 10_003 && hero.owned));
-    // The story's heroes in the order their quests come, then the shop's,
-    // whether or not they are on the roster.
+    // The story's heroes in the order their quests come, then the shop's by
+    // name, whether or not they are on the roster.
     let order: Vec<i64> = heroes.iter().map(|hero| hero.cid).collect();
     assert_eq!(
         order,
         [
-            10_003, 10_006, 10_007, 10_008, 10_029, 10_011, 10_014, 10_017, 10_001, 10_004, 10_005,
-            10_016, 10_020, 10_022, 10_028, 10_030, 10_032, 10_036, 10_037,
+            10_003, 10_006, 10_007, 10_008, 10_029, 10_011, 10_014, 10_017, 10_020, 10_032, 10_016,
+            10_036, 10_001, 10_037, 10_004, 10_005, 10_030, 10_028, 10_022,
         ]
     );
 }

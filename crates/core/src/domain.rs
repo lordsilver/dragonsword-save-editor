@@ -1319,8 +1319,17 @@ impl<'a> Game<'a> {
             })
             .collect();
         // One fixed order, recruited or not, so recruiting never reshuffles the
-        // list: the story's heroes in the order their quests come, then the shop's.
-        heroes.sort_by_key(|hero| (story_position(growth, hero), hero.cid));
+        // list: the story's heroes in the order their quests come, then the
+        // shop's by name (hero names are the same in English and French).
+        heroes.sort_by_cached_key(|hero| {
+            let position = story_position(growth, hero);
+            let name = if position.0 == 2 {
+                hero.item.name_en.to_lowercase()
+            } else {
+                String::new()
+            };
+            (position, name, hero.cid)
+        });
         Ok(heroes)
     }
 
