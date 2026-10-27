@@ -396,7 +396,8 @@ function SkillIcon({ skill, size }: { skill: Skill; size: number }) {
   const badge = Math.round(size * 0.4);
   const signal = skill.info?.signal ?? false;
   // The game's glyph texture fills its box with less margin than the sprite
-  // cell keeps, so it is drawn a little larger, centred on the disc.
+  // cell keeps, so it is drawn a little larger, centred on the disc, and the
+  // game shows its grey texture as near white, so it is brightened.
   const glyphSize = Math.round(size * 1.15);
   const glyph = {
     nameEn: skill.info?.nameEn ?? '?',
@@ -416,14 +417,14 @@ function SkillIcon({ skill, size }: { skill: Skill; size: number }) {
       <ItemIcon
         item={glyph}
         size={glyphSize}
-        className="absolute rounded-none border-0 bg-transparent"
+        className="absolute rounded-none border-0 bg-transparent brightness-125 contrast-110"
         style={{ left: (size - glyphSize) / 2, top: (size - glyphSize) / 2 }}
       />
       {signal ? (
-        <span aria-hidden className="absolute inset-0" style={ringStyle(skillRingSignal, skill.color, 0.8, true)} />
+        <span aria-hidden className="absolute inset-0" style={ringStyle(skillRingSignal, skill.color, 0.6, true)} />
       ) : (
         <>
-          <span aria-hidden className="absolute inset-0" style={ringStyle(skillRingGlow, skill.color, 0.5, false)} />
+          <span aria-hidden className="absolute inset-0" style={ringStyle(skillRingGlow, skill.color, 0.8, false)} />
           <span aria-hidden className="absolute inset-0" style={ringStyle(skillRingLine, skill.color, 0.6, true)} />
         </>
       )}
