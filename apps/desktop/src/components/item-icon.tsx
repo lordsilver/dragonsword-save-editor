@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import sprite from '@/assets/sprite.webp';
 import type { Item } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -20,10 +21,13 @@ export function ItemIcon({
   item,
   size = 40,
   className,
+  style,
 }: {
   item: Pick<Item, 'nameEn' | 'iconX' | 'iconY' | 'category' | 'icon'>;
   size?: number;
   className?: string;
+  /** Extra styles for the icon's frame, such as a computed background. */
+  style?: CSSProperties;
 }) {
   if (!item.icon) {
     const tone = CATEGORY_COLORS[item.category] ?? 'from-muted to-muted/40 text-muted-foreground';
@@ -47,7 +51,7 @@ export function ItemIcon({
     <div
       aria-hidden
       className={cn('relative shrink-0 overflow-hidden rounded-md border border-white/5 bg-black/20', className)}
-      style={{ width: size, height: size }}
+      style={{ ...style, width: size, height: size }}
     >
       <div
         style={{

@@ -6,63 +6,72 @@
       "nameFr": "Étourdissement",
       "iconPath": "Art/UI/InGame/Common/State/State_Mark_STUN",
       "x": -1152,
-      "y": 0
+      "y": 0,
+      "color": "#ffda59"
     },
     "AIR": {
       "nameEn": "Airborne",
       "nameFr": "En l'air",
       "iconPath": "Art/UI/InGame/Common/State/State_Mark_AIR",
       "x": -128,
-      "y": 0
+      "y": 0,
+      "color": "#47d1f8"
     },
     "DOWN": {
       "nameEn": "Knockdown",
       "nameFr": "À terre",
       "iconPath": "Art/UI/InGame/Common/State/State_Mark_DOWN",
       "x": -384,
-      "y": 0
+      "y": 0,
+      "color": "#7d5bf1"
     },
     "BLEED": {
       "nameEn": "Bleed",
       "nameFr": "Hémorragie",
       "iconPath": "Art/UI/InGame/Common/State/State_Mark_BLEEDING",
       "x": -256,
-      "y": 0
+      "y": 0,
+      "color": "#f20055"
     },
     "SHOCK": {
       "nameEn": "Shock",
       "nameFr": "Électrocution",
       "iconPath": "Art/UI/InGame/Common/State/State_Mark_SHOCK",
       "x": -1024,
-      "y": 0
+      "y": 0,
+      "color": "#c465ff"
     },
     "FIRE": {
       "nameEn": "Burn",
       "nameFr": "Brûlure",
       "iconPath": "Art/UI/InGame/Common/State/State_Mark_FIRE",
       "x": -512,
-      "y": 0
+      "y": 0,
+      "color": "#ff0000"
     },
     "POISON": {
       "nameEn": "Poison",
       "nameFr": "Intoxication",
       "iconPath": "Art/UI/InGame/Common/State/State_Mark_POISON",
       "x": -896,
-      "y": 0
+      "y": 0,
+      "color": "#3dc32e"
     },
     "ICE": {
       "nameEn": "Frost",
       "nameFr": "Froid",
       "iconPath": "Art/UI/InGame/Common/State/State_Mark_ICE",
       "x": -768,
-      "y": 0
+      "y": 0,
+      "color": "#55ddff"
     },
     "HEAL": {
       "nameEn": "Recovery",
       "nameFr": "Récupération",
       "iconPath": "Art/UI/InGame/Common/State/State_Mark_HEAL",
       "x": -640,
-      "y": 0
+      "y": 0,
+      "color": "#ed7f9b"
     }
   },
   "heroes": {

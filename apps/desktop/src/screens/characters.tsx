@@ -14,7 +14,7 @@ import {
   UserPlus,
   Users,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { type CSSProperties, useMemo, useState } from 'react';
 import { ConfirmButton, EmptyPanel } from '@/components/common';
 import { NumberField } from '@/components/fields';
 import { ItemIcon } from '@/components/item-icon';
@@ -350,21 +350,18 @@ function HeroInformation({ character, busy }: { character: Character; busy: bool
 }
 
 /**
- * The disc behind a skill's glyph, tinted by the effect it applies the way
- * the game tints it; a plain attack keeps the grey metal disc.
+ * The disc behind a skill's glyph. The game tints it with the colour of the
+ * effect's badge, so the disc is shaded from that colour; a plain attack keeps
+ * the grey metal disc.
  */
-const EFFECT_DISC: Record<string, string> = {
-  AIR: 'from-sky-400 to-sky-800 border-sky-200/60',
-  BLEED: 'from-rose-400 to-rose-800 border-rose-200/60',
-  DOWN: 'from-violet-400 to-violet-800 border-violet-200/60',
-  FIRE: 'from-orange-400 to-red-800 border-orange-200/60',
-  HEAL: 'from-pink-300 to-pink-700 border-pink-100/60',
-  ICE: 'from-cyan-300 to-cyan-700 border-cyan-100/60',
-  POISON: 'from-green-400 to-green-800 border-green-200/60',
-  SHOCK: 'from-purple-400 to-purple-800 border-purple-200/60',
-  STUN: 'from-amber-300 to-amber-700 border-amber-100/70',
-};
-const PLAIN_DISC = 'from-zinc-500 to-zinc-800 border-white/25';
+function discStyle(skill: Skill): CSSProperties | undefined {
+  const color = skill.effect?.color;
+  if (!color) return undefined;
+  return {
+    backgroundImage: `radial-gradient(circle, ${color}, color-mix(in oklab, ${color} 65%, black))`,
+    borderColor: `color-mix(in oklab, ${color} 50%, white)`,
+  };
+}
 
 function skillName(skill: Skill, language: string): string {
   if (skill.info) return language === 'fr' ? skill.info.nameFr : skill.info.nameEn;
@@ -389,7 +386,8 @@ function SkillIcon({ skill, size }: { skill: Skill; size: number }) {
           icon: Boolean(skill.info && (skill.info.iconX || skill.info.iconY)),
         }}
         size={size}
-        className={cn('rounded-full border-2 bg-radial', (skill.effect && EFFECT_DISC[skill.effect.key]) ?? PLAIN_DISC)}
+        className="rounded-full border-2 border-white/25 bg-radial from-zinc-500 to-zinc-800"
+        style={discStyle(skill)}
       />
       {skill.effect && (
         <ItemIcon
@@ -441,7 +439,11 @@ function HeroSkills({ character, language, busy }: { character: Character; langu
             <div className="space-y-1">{left.map(node)}</div>
             <div className="space-y-1">{right.map(node)}</div>
           </div>
-          {rest.length > 0 && <div className="grid grid-cols-2 gap-x-3 border-t pt-4">{rest.map(node)}</div>}
+          {rest.length > 0 && (
+            <div className="flex justify-center border-t pt-4">
+              <div className="w-1/2 space-y-1">{rest.map(node)}</div>
+            </div>
+          )}
         </div>
         <SkillDetail key={selected.typeValue} skill={selected} character={character} language={language} busy={busy} />
       </div>

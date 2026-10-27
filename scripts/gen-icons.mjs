@@ -20,7 +20,9 @@
 // - a familiar without an item icon: the icon of the familiar whose
 //   VehicleCharacterData row names the same image.
 // It also packs each hero skill's icon and each skill effect's badge from
-// crates/core/data/skills.json.
+// crates/core/data/skills.json, and records each badge's colour (the average
+// of its opaque pixels), which the editor uses to tint the effect's skill
+// disc: the game tints it in a material the export does not include.
 // It packs them into apps/desktop/src/assets/sprite.webp and rewrites the
 // cell offsets in crates/core/data/items.json, items_extra.json (the game's
 // items that items.json lacks) and skills.json, the last two written by
@@ -165,6 +167,30 @@ for (const [cid, item] of [...Object.entries(catalog.items), ...Object.entries(e
   item.x = -(cell % COLUMNS) * CELL;
   item.y = -Math.floor(cell / COLUMNS) * CELL;
 }
+/** The average colour of a texture's opaque pixels, as #rrggbb. */
+async function badgeColor(path) {
+  const { data } = await sharp(join(assetsDir, `${path}.png`))
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const sum = [0, 0, 0];
+  let count = 0;
+  for (let index = 0; index < data.length; index += 4) {
+    if (data[index + 3] < 200) continue;
+    for (const channel of [0, 1, 2]) sum[channel] += data[index + channel];
+    count += 1;
+  }
+  if (count === 0) fail(`badge ${path} has no opaque pixels`);
+  return `#${sum
+    .map((total) =>
+      Math.round(total / count)
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')}`;
+}
+for (const effect of Object.values(skills.effects)) effect.color = await badgeColor(effect.iconPath);
+
 for (const slot of skillSlots) {
   const cell = sources.get(`${slot.iconPath}|false`).cell;
   slot.x = -(cell % COLUMNS) * CELL;

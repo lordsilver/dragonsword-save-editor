@@ -267,6 +267,8 @@ export interface SkillEffect {
   key: string;
   nameEn: string;
   nameFr: string;
+  /** The badge's colour, #rrggbb, which tints the skill's disc. */
+  color: string;
   iconX: number;
   iconY: number;
 }
