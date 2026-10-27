@@ -8,13 +8,18 @@ The editor uses two things taken from DragonSword Awakening's own files: the rul
 - each item's icon, found by the game path the catalog records for it (`iconPath` in `crates/core/data/items.json`, for example `Art/UI/InGame/Icon_Item/Common/Icon_Item_Common_Gold`);
 - each hero's square portrait, `Art/UI/InGame/Icon_Character/Icon_Character_<ImageType>`, where `ImageType` comes from the game's `PCCharacterData` table (hero 10007 is `Johnny`; Kalsion's art is named `Cassius`, Ornette's `Onette`).
 
-It scales them to 128-pixel cells, packs them into one WebP sheet, and writes each item's cell offset and `iconSize` back into `items.json`. Cell 0 stays empty: an item at offset 0,0 has no icon. The 2026-10-27 run packed 564 images for 1,241 of the 1,250 catalog items. The nine without an icon are Viola, whose portrait is not in the game files, seven costumes whose recorded icon path does not exist in the game, and one item without a path.
+Where the game ships no such texture (see [Textures the game does not ship](#textures-the-game-does-not-ship)), it uses what the game's own tables use instead:
+- a costume item: its `CostumeData` card, `Art/UI/InGame/Img_Item/Costume/` or `Costume_Weapon/Img_Item_Costume_<same name>`, cropped to its top square (the cards are 322×862);
+- a hero without a portrait (Viola): the hero's `Img_Character/Mini/Img_Character_Mini_<ImageType>` bust, cropped the same way;
+- a familiar without an item icon (1320033): the icon of the familiar whose `VehicleCharacterData.IconName` is the same image (1320032).
+
+It scales everything to 128-pixel cells, packs them into one WebP sheet, and writes each item's cell offset and `iconSize` back into `items.json`. Cell 0 stays empty: an item at offset 0,0 has no icon. The 2026-10-27 run packed 569 images for 1,249 of the 1,250 catalog items; the one left is Kalien's "Great Spirit's Vestment Weapon" costume (9990023), for which the game has no art at all.
 
 ```bash
 node scripts/gen-icons.mjs <assets-dir> <extract-dir>
 ```
 
-`<assets-dir>` is the export below, unzipped. `<extract-dir>` is the folder of XML tables used by `scripts/gen-growth.mjs`; only `PCCharacterData.xml` is read. The script is deterministic for a given export. `apps/desktop/test/icons.test.ts` checks that the frontend's cell size matches `iconSize`.
+`<assets-dir>` is the export below, unzipped. `<extract-dir>` is the folder of XML tables used by `scripts/gen-growth.mjs`; only `PCCharacterData.xml` and `VehicleCharacterData.xml` are read. The script is deterministic for a given export. `apps/desktop/test/icons.test.ts` checks that the frontend's cell size matches `iconSize`.
 
 ## Git LFS
 
@@ -84,6 +89,27 @@ The game was only read: nothing under the install folder was created or changed,
 By folder under `/Game/Art/UI/InGame/`: Common 860, Icon_Item 613, 03_System 574, Icon_Skill 319, Img_Item 301, Btn 222, Img_Character 195, Frame 172, Img_Guide 111, Mask 93, Img_Summon 60, Icon_Character 53, Img_Vehicle 34, BackGround 28, Img_Monster 10, StillCut 9, 02_Main 4. Eighteen more come from outside `/Game/Art/UI` (engine and editor icons, which can be ignored).
 
 Not used yet but useful for the UI: skill icons (`Icon_Skill`), hero busts and key art (`Img_Character/Mini`, `Key`, `keyHalf`), the Mercenary Crew grade emblems and other menu sprites in the atlases (`03_System`).
+
+### Textures the game does not ship
+
+A second run the same day searched for the 17 textures the game's tables name but the export lacked, plus an icon for familiar 1320033. None exists in this build, so the export is complete:
+- All 50 paks mounted and decrypted; an exact, case-insensitive search of all 328,178 mounted paths (any extension, any root, `/Engine` and plugin content included) found none of the names.
+- The game's cook manifest, `DS/AssetRegistry.bin` (pakchunk9), lists none of them, while existing near-misses such as `Img_Item_Costume_Cassius_Unique_01` and `Img_Character_Mini_Viola` are found in it.
+- The only other `.pak` under the install is the crash reporter's, with no game content. `DeluxePack` holds an artbook PDF and soundtrack MP3s. There is no Steam copy of the game.
+
+| Named by the tables                                                                                                                            | What the game has instead                                                                                                                                  |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 12 costume icons, `Icon_Item/Costume/Icon_Item_Costume_*` (Astria, Cassius, Cerese `_02`, Eileen and Reina Epic, Othello, Reina Unique weapon) | the same name as a tall card in `Img_Item/Costume` or `Costume_Weapon`, which `CostumeData.CosImgPath` uses. Only 9 textures exist in `Icon_Item/Costume/` |
+| `Img_Item_Costume_Kalien_Unique_Weapon_01` (item 9990023)                                                                                      | nothing; no Kalien costume weapon art exists, and `CostumeData` names none                                                                                 |
+| `Icon_Character_Viola`                                                                                                                         | only `Img_Character_Mini_Viola`; Viola ships as a full character (model, voice, effects) without other UI art                                              |
+| `Icon_Character_Kalien_GreatSpirit` (hero row 1037)                                                                                            | `Icon_Character_Kalien_Unique_01`, the costume's `CostumeData.SwitchIconChrPath`                                                                           |
+| `Icon_Character_Othello_Bard` (1511)                                                                                                           | `Icon_Character_Othello_Unique_01`, the same way                                                                                                           |
+| `Icon_Character_Onette_PhantomThief` (1070)                                                                                                    | probably `Icon_Character_Onette_Unique_01`, the portrait of Onette's only costume; the row does not point at it directly                                   |
+| an icon for familiar 1320033 (Vicious Baby Dragon)                                                                                             | its `VehicleCharacterData` row reuses 1320032's image, `Img_Vehicle_Collection_BraveBabyDragon`; it has no `GameItemData` row                              |
+
+The hero rows 1037, 1070 and 1511 are costume variants, not catalog heroes, so the editor needs none of their portraits yet. Six `Icon_Item_Vehicle_*` and five `Img_Vehicle_Collection_*` images (goats, a magpie, a sky wolf) are named by no table.
+
+The pak layout, as mounted: 50 files, 20,973,032,163 bytes. UI textures are in `pakchunk0_s25` (mount `DS/Content/Art/UI/InGame/`) and `pakchunk0_s26` (root); the XML tables in `pakchunk109` (`DS/Content/__GeneratedGameData__/Server/XML/GameData/`); the asset registry in `pakchunk9`; character art in `pakchunk0_s1`–`s7`; localisation in `pakchunk200`–`202` (en, ja-JP, ko-KR).
 
 ### Known issues
 

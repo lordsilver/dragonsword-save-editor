@@ -223,8 +223,8 @@
       "fr": "Viola",
       "en": "Viola",
       "category": "character",
-      "x": 0,
-      "y": 0
+      "x": -2560,
+      "y": -2176
     },
     "10036": {
       "fr": "Dana",
@@ -324,7 +324,7 @@
       "grade": "legendary",
       "group": "unsorted",
       "iconPath": "Art/UI/InGame/Icon_Item/Common/Icon_Item_Common_PlayPoint",
-      "x": -2176,
+      "x": -2560,
       "y": -640
     },
     "1000102": {
@@ -335,7 +335,7 @@
       "grade": "rare",
       "group": "unsorted",
       "iconPath": "Art/UI/InGame/Icon_Item/Common/Icon_Item_Common_PlayPoint_Sub",
-      "x": -2560,
+      "x": -2432,
       "y": -640
     },
     "1000103": {
@@ -346,7 +346,7 @@
       "grade": "rare",
       "group": "unsorted",
       "iconPath": "Art/UI/InGame/Icon_Item/Common/Icon_Item_Common_PlayPoint_Keep",
-      "x": -2304,
+      "x": -2176,
       "y": -640
     },
     "1000104": {
@@ -357,7 +357,7 @@
       "grade": "epic",
       "group": "unsorted",
       "iconPath": "Art/UI/InGame/Icon_Item/Common/Icon_Item_Common_PlayPoint_Recharge",
-      "x": -2432,
+      "x": -2304,
       "y": -640
     },
     "1000201": {
@@ -1986,8 +1986,8 @@
       "fr": "흉악한 새끼 용",
       "en": "흉악한 새끼 용",
       "category": "mount",
-      "x": 0,
-      "y": 0
+      "x": -2944,
+      "y": -2048
     },
     "1360001": {
       "fr": "Casque d'élève de l'Académie de magie",
@@ -4529,7 +4529,7 @@
       "grade": "normal",
       "group": "1200",
       "iconPath": "Art/UI/InGame/Icon_Item/Cooking/Icon_Item_Cooking_RoastedMeat",
-      "x": -1152,
+      "x": -1280,
       "y": -1280
     },
     "1420102": {
@@ -4573,7 +4573,7 @@
       "grade": "normal",
       "group": "1200",
       "iconPath": "Art/UI/InGame/Icon_Item/Cooking/Icon_Item_Cooking_RoastedMushroom",
-      "x": -1408,
+      "x": -1536,
       "y": -1280
     },
     "1420106": {
@@ -4771,7 +4771,7 @@
       "grade": "normal",
       "group": "1200",
       "iconPath": "Art/UI/InGame/Icon_Item/Cooking/Icon_Item_Cooking_RoastedMeatDumplings",
-      "x": -1280,
+      "x": -1152,
       "y": -1280
     },
     "1420124": {
@@ -4848,7 +4848,7 @@
       "grade": "superior",
       "group": "1200",
       "iconPath": "Art/UI/InGame/Icon_Item/Cooking/Icon_Item_Cooking_RoastedMeat",
-      "x": -1152,
+      "x": -1280,
       "y": -1280
     },
     "1420202": {
@@ -4892,7 +4892,7 @@
       "grade": "superior",
       "group": "1200",
       "iconPath": "Art/UI/InGame/Icon_Item/Cooking/Icon_Item_Cooking_RoastedMushroom",
-      "x": -1408,
+      "x": -1536,
       "y": -1280
     },
     "1420206": {
@@ -5090,7 +5090,7 @@
       "grade": "superior",
       "group": "1200",
       "iconPath": "Art/UI/InGame/Icon_Item/Cooking/Icon_Item_Cooking_RoastedMeatDumplings",
-      "x": -1280,
+      "x": -1152,
       "y": -1280
     },
     "1420224": {
@@ -5167,7 +5167,7 @@
       "grade": "rare",
       "group": "1200",
       "iconPath": "Art/UI/InGame/Icon_Item/Cooking/Icon_Item_Cooking_RoastedMeat",
-      "x": -1152,
+      "x": -1280,
       "y": -1280
     },
     "1420302": {
@@ -5211,7 +5211,7 @@
       "grade": "rare",
       "group": "1200",
       "iconPath": "Art/UI/InGame/Icon_Item/Cooking/Icon_Item_Cooking_RoastedMushroom",
-      "x": -1408,
+      "x": -1536,
       "y": -1280
     },
     "1420306": {
@@ -5409,7 +5409,7 @@
       "grade": "rare",
       "group": "1200",
       "iconPath": "Art/UI/InGame/Icon_Item/Cooking/Icon_Item_Cooking_RoastedMeatDumplings",
-      "x": -1280,
+      "x": -1152,
       "y": -1280
     },
     "1420324": {
@@ -5486,7 +5486,7 @@
       "grade": "epic",
       "group": "1200",
       "iconPath": "Art/UI/InGame/Icon_Item/Cooking/Icon_Item_Cooking_RoastedMeat",
-      "x": -1152,
+      "x": -1280,
       "y": -1280
     },
     "1420402": {
@@ -5530,7 +5530,7 @@
       "grade": "epic",
       "group": "1200",
       "iconPath": "Art/UI/InGame/Icon_Item/Cooking/Icon_Item_Cooking_RoastedMushroom",
-      "x": -1408,
+      "x": -1536,
       "y": -1280
     },
     "1420406": {
@@ -5728,7 +5728,7 @@
       "grade": "epic",
       "group": "1200",
       "iconPath": "Art/UI/InGame/Icon_Item/Cooking/Icon_Item_Cooking_RoastedMeatDumplings",
-      "x": -1280,
+      "x": -1152,
       "y": -1280
     },
     "1420424": {
@@ -5805,7 +5805,7 @@
       "grade": "legendary",
       "group": "1200",
       "iconPath": "Art/UI/InGame/Icon_Item/Cooking/Icon_Item_Cooking_RoastedMeat",
-      "x": -1152,
+      "x": -1280,
       "y": -1280
     },
     "1420502": {
@@ -5849,7 +5849,7 @@
       "grade": "legendary",
       "group": "1200",
       "iconPath": "Art/UI/InGame/Icon_Item/Cooking/Icon_Item_Cooking_RoastedMushroom",
-      "x": -1408,
+      "x": -1536,
       "y": -1280
     },
     "1420506": {
@@ -6047,7 +6047,7 @@
       "grade": "legendary",
       "group": "1200",
       "iconPath": "Art/UI/InGame/Icon_Item/Cooking/Icon_Item_Cooking_RoastedMeatDumplings",
-      "x": -1280,
+      "x": -1152,
       "y": -1280
     },
     "1420524": {
@@ -8973,7 +8973,7 @@
       "grade": "rare",
       "group": "1704",
       "iconPath": "Art/UI/InGame/Icon_Item/Cooking_Ingredient/Icon_Item_Cooking_Ingredient_Eggplant",
-      "x": -1664,
+      "x": -1536,
       "y": -1408
     },
     "1430503": {
@@ -9248,7 +9248,7 @@
       "grade": "superior",
       "group": "1703",
       "iconPath": "Art/UI/InGame/Icon_Item/Cooking_Ingredient/Icon_Item_Cooking_Ingredient_Egg",
-      "x": -1536,
+      "x": -1664,
       "y": -1408
     },
     "1430902": {
@@ -9270,7 +9270,7 @@
       "grade": "rare",
       "group": "1200",
       "iconPath": "Art/UI/InGame/Icon_Item/Cooking/Icon_Item_Cooking_RoastedMushroom_02",
-      "x": -1536,
+      "x": -1408,
       "y": -1280
     },
     "1440802": {
@@ -10018,8 +10018,8 @@
       "grade": "legendary",
       "group": "1802",
       "iconPath": "Art/UI/InGame/Icon_Item/Common/Icon_Item_Common_MemoryPiece",
-      "x": -3968,
-      "y": -512
+      "x": 0,
+      "y": -640
     },
     "1450408": {
       "fr": "Outils de travail de l'artisan anonyme",
@@ -10062,8 +10062,8 @@
       "grade": "legendary",
       "group": "1802",
       "iconPath": "Art/UI/InGame/Icon_Item/Common/Icon_Item_Common_MemoryPiece_02",
-      "x": 0,
-      "y": -640
+      "x": -3968,
+      "y": -512
     },
     "1450501": {
       "fr": "Fruit de la vitalité",
@@ -10766,7 +10766,7 @@
       "grade": "normal",
       "group": "unsorted",
       "iconPath": "Art/UI/InGame/Img_Item/Quest/Img_Item_Quest_MercenaryContract",
-      "x": -2560,
+      "x": -3200,
       "y": -2176
     },
     "1510006": {
@@ -13211,8 +13211,8 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Cassius_Unique_01",
-      "x": 0,
-      "y": 0
+      "x": -2688,
+      "y": -2176
     },
     "9990027": {
       "fr": "Serment gravé",
@@ -13221,8 +13221,8 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Cassius_Unique_Weapon_01",
-      "x": 0,
-      "y": 0
+      "x": -2944,
+      "y": -2176
     },
     "9990028": {
       "fr": "Espièglerie d'été couleur corail",
@@ -13231,8 +13231,8 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Astria_Unique_Weapon_01",
-      "x": 0,
-      "y": 0
+      "x": -2816,
+      "y": -2176
     },
     "9990029": {
       "fr": "Tir au cœur ensoleillé",
@@ -13241,8 +13241,8 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Astria_Unique_Weapon_01",
-      "x": 0,
-      "y": 0
+      "x": -2816,
+      "y": -2176
     },
     "9990030": {
       "fr": "Fleur blanche des vagues bleues",
@@ -13251,8 +13251,8 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Reina_Unique_Weapon_01",
-      "x": 0,
-      "y": 0
+      "x": -3072,
+      "y": -2176
     },
     "9990031": {
       "fr": "Pétales à la crête des vagues",
@@ -13261,8 +13261,8 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Reina_Unique_Weapon_01",
-      "x": 0,
-      "y": 0
+      "x": -3072,
+      "y": -2176
     }
   }
 }

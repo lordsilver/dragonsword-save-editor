@@ -11,6 +11,14 @@
 //
 // The script takes only the icons the catalog uses: each item's own icon by
 // its game path, and each hero's square portrait (Icon_Character_<ImageType>).
+// Where the game ships no such texture (docs/game-assets.md lists them), it
+// falls back to what the game's own tables use instead:
+// - a costume item: its tall CostumeData card (Img_Item/Costume or
+//   Costume_Weapon, same name), cropped to the top square;
+// - a hero without a portrait (Viola): the hero's Img_Character_Mini bust,
+//   cropped the same way;
+// - a familiar without an item icon: the icon of the familiar whose
+//   VehicleCharacterData row names the same image.
 // It packs them into apps/desktop/src/assets/sprite.webp and rewrites the
 // cell offsets in crates/core/data/items.json. Cell 0 stays empty, because an
 // item at offset 0,0 means "no icon" to the catalog.
@@ -37,41 +45,88 @@ function fail(message) {
   process.exit(1);
 }
 
-// Hero portraits: PCCharacterData names each hero's art set in ImageType.
-const portraits = new Map();
-const characters = readFileSync(join(extractDir, 'PCCharacterData.xml'), 'utf8');
-for (const element of characters.matchAll(/<[\w-]+:\w+\s([^<>]*?)\/>/g)) {
-  const id = element[1].match(/[\w-]+:ID="(\d+)"/)?.[1];
-  const image = element[1].match(/[\w-]+:ImageType="([^"]*)"/)?.[1];
-  if (id && image) portraits.set(id, `Art/UI/InGame/Icon_Character/Icon_Character_${image}`);
+/** Rows of a table as attribute maps, the way gen-growth.mjs reads them. */
+function rows(table) {
+  const text = readFileSync(join(extractDir, `${table}.xml`), 'utf8');
+  const out = [];
+  for (const element of text.matchAll(/<[\w-]+:\w+\s([^<>]*?)\/>/g)) {
+    const row = {};
+    for (const attribute of element[1].matchAll(/[\w-]+:(\w+)="([^"]*)"/g)) row[attribute[1]] = attribute[2];
+    out.push(row);
+  }
+  if (out.length === 0) fail(`${table} has no rows`);
+  return out;
 }
-if (portraits.size === 0) fail('PCCharacterData has no ImageType rows');
+
+const exists = (path) => existsSync(join(assetsDir, `${path}.png`));
+
+// Hero art: PCCharacterData names each hero's art set in ImageType.
+const heroImages = new Map();
+for (const row of rows('PCCharacterData')) if (row.ImageType) heroImages.set(row.ID, row.ImageType);
+
+// Familiars: VehicleCharacterData names one collection image per familiar,
+// and two familiars can share it.
+const vehicleImages = new Map();
+for (const row of rows('VehicleCharacterData')) if (row.IconName) vehicleImages.set(row.ID, row.IconName);
+
+/** Where an item's icon comes from: a game path, and whether to crop it to its top square. */
+function iconSource(cid, item) {
+  if (item.iconPath && exists(item.iconPath)) return { path: item.iconPath, crop: false };
+  const costume = item.iconPath?.match(/\/Icon_Item\/Costume\/(?:Icon|Img)_Item_Costume_(\w+)$/)?.[1];
+  if (costume) {
+    for (const folder of ['Costume', 'Costume_Weapon']) {
+      const card = `Art/UI/InGame/Img_Item/${folder}/Img_Item_Costume_${costume}`;
+      if (exists(card)) return { path: card, crop: true };
+    }
+  }
+  const hero = item.category === 'character' ? heroImages.get(cid) : undefined;
+  if (hero) {
+    const portrait = `Art/UI/InGame/Icon_Character/Icon_Character_${hero}`;
+    if (exists(portrait)) return { path: portrait, crop: false };
+    const bust = `Art/UI/InGame/Img_Character/Mini/Img_Character_Mini_${hero}`;
+    if (exists(bust)) return { path: bust, crop: true };
+  }
+  if (item.category === 'mount' && !item.iconPath && vehicleImages.has(cid)) {
+    for (const [other, image] of vehicleImages) {
+      const sibling = catalog.items[other];
+      if (other !== cid && image === vehicleImages.get(cid) && sibling?.iconPath && exists(sibling.iconPath)) {
+        return { path: sibling.iconPath, crop: false };
+      }
+    }
+  }
+  return null;
+}
 
 const catalog = JSON.parse(readFileSync(catalogPath, 'utf8'));
-const sources = new Map(); // game path -> cell index
-const placed = new Map(); // item CID -> game path
+const sources = new Map(); // "path|crop" -> { path, crop, cell }
+const placed = new Map(); // item CID -> source key
 const missing = [];
 for (const [cid, item] of Object.entries(catalog.items)) {
-  const candidates = [item.iconPath, item.category === 'character' ? portraits.get(cid) : undefined];
-  const path = candidates.find((candidate) => candidate && existsSync(join(assetsDir, `${candidate}.png`)));
-  if (!path) {
-    if (item.iconPath || portraits.has(cid)) missing.push(`${cid} ${item.en}: ${item.iconPath ?? portraits.get(cid)}`);
+  const source = iconSource(cid, item);
+  if (!source) {
+    missing.push(`${cid} ${item.en}: ${item.iconPath ?? (heroImages.get(cid) || 'no icon in the game tables')}`);
     continue;
   }
-  placed.set(cid, path);
-  sources.set(path, 0);
+  const key = `${source.path}|${source.crop}`;
+  placed.set(cid, key);
+  sources.set(key, { ...source, cell: 0 });
 }
 
 // Cells in game-path order, so a rerun on the same export gives the same sheet.
 const ordered = [...sources.keys()].sort();
-for (const [index, path] of ordered.entries()) sources.set(path, index + 1);
-const rows = Math.ceil((ordered.length + 1) / COLUMNS);
+for (const [index, key] of ordered.entries()) sources.get(key).cell = index + 1;
+const sheetRows = Math.ceil((ordered.length + 1) / COLUMNS);
 
 const tiles = await Promise.all(
-  ordered.map(async (path) => {
-    const cell = sources.get(path);
+  ordered.map(async (key) => {
+    const { path, crop, cell } = sources.get(key);
     const input = await sharp(join(assetsDir, `${path}.png`))
-      .resize(CELL, CELL, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 }, kernel: 'lanczos3' })
+      .resize(CELL, CELL, {
+        fit: crop ? 'cover' : 'contain',
+        position: 'top',
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+        kernel: 'lanczos3',
+      })
       .png()
       .toBuffer();
     return { input, left: (cell % COLUMNS) * CELL, top: Math.floor(cell / COLUMNS) * CELL };
@@ -79,7 +134,7 @@ const tiles = await Promise.all(
 );
 
 const sheet = await sharp({
-  create: { width: COLUMNS * CELL, height: rows * CELL, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+  create: { width: COLUMNS * CELL, height: sheetRows * CELL, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
 })
   .composite(tiles)
   .webp({ quality: 90, alphaQuality: 100, effort: 6 })
@@ -87,8 +142,8 @@ const sheet = await sharp({
 writeFileSync(spritePath, sheet);
 
 for (const [cid, item] of Object.entries(catalog.items)) {
-  const path = placed.get(cid);
-  const cell = path ? sources.get(path) : 0;
+  const key = placed.get(cid);
+  const cell = key ? sources.get(key).cell : 0;
   item.x = -(cell % COLUMNS) * CELL;
   item.y = -Math.floor(cell / COLUMNS) * CELL;
 }
@@ -98,9 +153,9 @@ catalog._source =
 writeFileSync(catalogPath, `${JSON.stringify(catalog, null, 2)}\n`);
 
 console.log(
-  `packed ${ordered.length} icons for ${placed.size} of ${Object.keys(catalog.items).length} items into ${COLUMNS}x${rows} cells of ${CELL}px (${(sheet.length / 1048576).toFixed(1)} MB)`,
+  `packed ${ordered.length} icons for ${placed.size} of ${Object.keys(catalog.items).length} items into ${COLUMNS}x${sheetRows} cells of ${CELL}px (${(sheet.length / 1048576).toFixed(1)} MB)`,
 );
 if (missing.length > 0) {
-  console.log(`${missing.length} items name an icon the export does not have:`);
+  console.log(`${missing.length} items have no icon in the export:`);
   for (const line of missing) console.log(`  ${line}`);
 }

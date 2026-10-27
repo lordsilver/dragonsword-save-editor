@@ -84,12 +84,12 @@ export function CostumesScreen() {
           icon={<Shirt />}
           label="Owned"
           value={formatNumber(costumes.length)}
-          detail={`of ${catalog.length} catalog costumes`}
+          detail={`${formatNumber(catalog.filter((entry) => entry.owned).length)} of ${formatNumber(catalog.length)} catalog costumes`}
         />
         <StatTile
           icon={<Lock />}
           label="Missing"
-          value={formatNumber(catalog.length - costumes.length)}
+          value={formatNumber(catalog.filter((entry) => !entry.owned).length)}
           detail="Can be unlocked here"
         />
         <StatTile
