@@ -17,10 +17,6 @@ import {
 import { type CSSProperties, useMemo, useState } from 'react';
 import skillDiscCircle from '@/assets/skill-disc-circle.webp';
 import skillDiscDiamond from '@/assets/skill-disc-diamond.webp';
-import skillRingGlow from '@/assets/skill-ring-glow.webp';
-import skillRingGlowShade from '@/assets/skill-ring-glow-shade.webp';
-import skillRingLine from '@/assets/skill-ring-line.webp';
-import skillRingSignal from '@/assets/skill-ring-signal.webp';
 import { ConfirmButton, EmptyPanel } from '@/components/common';
 import { NumberField } from '@/components/fields';
 import { ItemIcon } from '@/components/item-icon';
@@ -355,26 +351,17 @@ function HeroInformation({ character, busy }: { character: Character; busy: bool
   );
 }
 
-/**
- * One effect ring of a skill slot: one of the game's ring textures, baked by
- * scripts/gen-icons.mjs into a mask whose alpha is the ring's fitted strength,
- * filled with the skill's colour the way the game multiplies the texture by
- * it. `shade` is a greyscale image multiplied into the colour (the texture's
- * own brightness); `additive` rings add light like the game's additive
- * materials.
- */
-function ringStyle(mask: string, color: string, additive: boolean, shade?: string): CSSProperties {
-  const image = `url(${mask})`;
+/** The effect rings per effect, baked by scripts/gen-icons.mjs: skill-ring-<ring>-<effect>.webp. */
+const RING_LAYERS = import.meta.glob<string>('../assets/skill-ring-*.webp', { eager: true, import: 'default' });
+
+/** One effect ring of a skill slot, already in the effect's colour, over the slot's whole box. */
+function ringStyle(ring: 'glow' | 'line' | 'signal', skill: Skill): CSSProperties {
+  const effect = (skill.effect?.key ?? 'ATTACK').toLowerCase();
+  const image = RING_LAYERS[`../assets/skill-ring-${ring}-${effect}.webp`];
   return {
-    backgroundColor: color,
-    ...(shade
-      ? { backgroundImage: `url(${shade})`, backgroundSize: '100% 100%', backgroundBlendMode: 'multiply' }
-      : {}),
-    maskImage: image,
-    WebkitMaskImage: image,
-    maskSize: '100% 100%',
-    WebkitMaskSize: '100% 100%',
-    mixBlendMode: additive ? 'plus-lighter' : 'normal',
+    backgroundImage: image ? `url(${image})` : undefined,
+    backgroundSize: '100% 100%',
+    mixBlendMode: ring === 'glow' ? 'normal' : 'plus-lighter',
   };
 }
 
@@ -392,12 +379,11 @@ function effectName(skill: Skill, language: string): string | null {
  * A skill slot drawn from the game's own layers, in the order its
  * DUWG_CharacterSkill_Def (circle) and _Tag (diamond) widgets stack them: the
  * dark disc, the glyph filling the same box (so a tip can reach past the
- * disc's edge), then the effect rings tinted with the skill's colour
- * (MesmerizedUIColor): a translucent glow (FXT_ring13_UI_ad01) and an additive
- * line (_ad02) on a circle, the additive signal ring on a diamond. The rings'
- * strengths are fitted to in-game screenshots (docs/game-assets.md), which
- * also show the glyph drawn as is, at the slot's own size. The game also
- * scrolls and distorts the rings; the editor keeps them still.
+ * disc's edge), then the effect rings in the skill's colour (MesmerizedUIColor):
+ * a translucent glow (FXT_ring13_UI_ad01) and an additive line (_ad02) on a
+ * circle, the additive signal ring on a diamond. The rings are the game's own
+ * shader maths averaged over their motion (docs/game-assets.md); the game
+ * rotates their noise, the editor keeps them still.
  */
 function SkillIcon({ skill, size }: { skill: Skill; size: number }) {
   const badge = Math.round(size * 0.4);
@@ -419,15 +405,11 @@ function SkillIcon({ skill, size }: { skill: Skill; size: number }) {
       />
       <ItemIcon item={glyph} size={size} className="absolute inset-0 rounded-none border-0 bg-transparent" />
       {signal ? (
-        <span aria-hidden className="absolute inset-0" style={ringStyle(skillRingSignal, skill.color, true)} />
+        <span aria-hidden className="absolute inset-0" style={ringStyle('signal', skill)} />
       ) : (
         <>
-          <span
-            aria-hidden
-            className="absolute inset-0"
-            style={ringStyle(skillRingGlow, skill.color, false, skillRingGlowShade)}
-          />
-          <span aria-hidden className="absolute inset-0" style={ringStyle(skillRingLine, skill.color, true)} />
+          <span aria-hidden className="absolute inset-0" style={ringStyle('glow', skill)} />
+          <span aria-hidden className="absolute inset-0" style={ringStyle('line', skill)} />
         </>
       )}
       {skill.effect && (
