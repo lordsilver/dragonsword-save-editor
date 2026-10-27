@@ -132,7 +132,8 @@ pub struct RecipeSeed {
 pub struct TitleStat {
     #[serde(rename = "type")]
     pub kind: String,
-    pub value: i64,
+    /// A flat amount, or a fraction for `*_Per` stats (0.023 is 2.3%).
+    pub value: f64,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -428,7 +429,7 @@ mod tests {
         assert_eq!(catalog.lookup(9_990_008).category, "costume");
         assert_eq!(catalog.lookup(1_420_101).category, "food");
         assert_eq!(catalog.recipes().len(), 1025);
-        assert_eq!(catalog.titles().len(), 108);
+        assert_eq!(catalog.titles().len(), 109);
         assert_eq!(catalog.categories().len(), 51);
     }
 

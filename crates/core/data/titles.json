@@ -1,5 +1,5 @@
 {
-  "_source": "Titles datamined from the game's own AccountTitleData/StringData (paks). id/64 = tb_title CATEGORY, id%64 = bit. Regenerate with `go run ./cmd/pak-titles`.",
+  "_source": "Titles from the game's own AccountTitleData/StringData, written by scripts/gen-catalog-extras.mjs. id/64 = tb_title CATEGORY, id%64 = bit.",
   "titles": [
     {
       "id": 2100000,
@@ -101,49 +101,97 @@
       "id": 2100008,
       "nameFr": "Challenger de marmottes",
       "nameEn": "Marmot Challenger",
-      "color": "BLUE"
+      "color": "BLUE",
+      "stats": [
+        {
+          "type": "Critical_Per",
+          "value": 0.02
+        }
+      ]
     },
     {
       "id": 2100009,
       "nameFr": "Maître de la pression",
       "nameEn": "Master of Pressing",
-      "color": "BLUE"
+      "color": "BLUE",
+      "stats": [
+        {
+          "type": "Critical_Per",
+          "value": 0.02
+        }
+      ]
     },
     {
       "id": 2100010,
       "nameFr": "Casse-tête résolu en poussant",
       "nameEn": "Puzzle Solved by Pushing",
-      "color": "BLUE"
+      "color": "BLUE",
+      "stats": [
+        {
+          "type": "Critical_Per",
+          "value": 0.02
+        }
+      ]
     },
     {
       "id": 2100011,
       "nameFr": "Brigade anti-fruits à coque",
       "nameEn": "Nut Patrol",
-      "color": "BROWN"
+      "color": "BROWN",
+      "stats": [
+        {
+          "type": "CriticalDmg_Per",
+          "value": 0.015
+        }
+      ]
     },
     {
       "id": 2100012,
       "nameFr": "Traqueur de queues",
       "nameEn": "Tail Tracker",
-      "color": "BLUE"
+      "color": "BLUE",
+      "stats": [
+        {
+          "type": "CriticalDmg_Per",
+          "value": 0.022
+        }
+      ]
     },
     {
       "id": 2100013,
       "nameFr": "Victime et coupable",
       "nameEn": "Victim and Perpetrator",
-      "color": "GREEN"
+      "color": "GREEN",
+      "stats": [
+        {
+          "type": "CriticalDmg_Per",
+          "value": 0.029
+        }
+      ]
     },
     {
       "id": 2100014,
       "nameFr": "Un petit remords tout blanc",
       "nameEn": "A Small White Pang of Conscience",
-      "color": "VIOLET"
+      "color": "VIOLET",
+      "stats": [
+        {
+          "type": "CriticalDmg_Per",
+          "value": 0.007
+        }
+      ]
     },
     {
       "id": 2100015,
       "nameFr": "Visiteur indésirable du nid",
       "nameEn": "Uninvited Guest of the Nest",
-      "color": "BROWN"
+      "color": "BROWN",
+      "stats": [
+        {
+          "type": "CriticalDmg_Per",
+          "value": 0.015
+        }
+      ]
     },
     {
       "id": 2100016,
@@ -257,7 +305,17 @@
       "id": 2101005,
       "nameFr": "Parent gâteux",
       "nameEn": "Doting Parent",
-      "color": "GREEN"
+      "color": "GREEN",
+      "stats": [
+        {
+          "type": "Critical_Per",
+          "value": 0.013
+        },
+        {
+          "type": "CriticalDmg_Per",
+          "value": 0.01
+        }
+      ]
     },
     {
       "id": 2101006,
@@ -274,7 +332,7 @@
     {
       "id": 2101007,
       "nameFr": "Alchimiste des Neiges",
-      "nameEn": "Synthesizer of Snow",
+      "nameEn": "Snow Alchemist",
       "color": "BLUE",
       "stats": [
         {
@@ -298,7 +356,7 @@
     {
       "id": 2101009,
       "nameFr": "La Sainte Dame de l'Aube",
-      "nameEn": "Saintess of Dawn",
+      "nameEn": "Saintess of the Dawn",
       "color": "BLUE",
       "stats": [
         {
@@ -407,43 +465,85 @@
       "id": 2102004,
       "nameFr": "Pêcheur de rivière",
       "nameEn": "Riverside Angler",
-      "color": "BROWN"
+      "color": "BROWN",
+      "stats": [
+        {
+          "type": "Critical_Per",
+          "value": 0.013
+        }
+      ]
     },
     {
       "id": 2102005,
       "nameFr": "Pêcheur d'argent",
       "nameEn": "Silver Angler",
-      "color": "BLUE"
+      "color": "BLUE",
+      "stats": [
+        {
+          "type": "Critical_Per",
+          "value": 0.02
+        }
+      ]
     },
     {
       "id": 2102006,
       "nameFr": "Pêcheur d'amont",
       "nameEn": "Upstream Angler",
-      "color": "GREEN"
+      "color": "GREEN",
+      "stats": [
+        {
+          "type": "Critical_Per",
+          "value": 0.026
+        }
+      ]
     },
     {
       "id": 2102007,
       "nameFr": "Cueilleur des sables",
       "nameEn": "Sand Gatherer",
-      "color": "VIOLET"
+      "color": "VIOLET",
+      "stats": [
+        {
+          "type": "CriticalDmg_Per",
+          "value": 0.007
+        }
+      ]
     },
     {
       "id": 2102008,
       "nameFr": "Cueilleur des rives",
       "nameEn": "Waterside Gatherer",
-      "color": "BROWN"
+      "color": "BROWN",
+      "stats": [
+        {
+          "type": "CriticalDmg_Per",
+          "value": 0.015
+        }
+      ]
     },
     {
       "id": 2102009,
       "nameFr": "Cueilleur de la plage",
       "nameEn": "Beach Gatherer",
-      "color": "VIOLET"
+      "color": "VIOLET",
+      "stats": [
+        {
+          "type": "CriticalDmg_Per",
+          "value": 0.007
+        }
+      ]
     },
     {
       "id": 2102010,
       "nameFr": "Cueilleur des vagues",
       "nameEn": "Wave Gatherer",
-      "color": "BLUE"
+      "color": "BLUE",
+      "stats": [
+        {
+          "type": "CriticalDmg_Per",
+          "value": 0.022
+        }
+      ]
     },
     {
       "id": 2102011,
@@ -761,31 +861,61 @@
       "id": 2103002,
       "nameFr": "Agent d'entretien",
       "nameEn": "Environmental Cleaner",
-      "color": "BROWN"
+      "color": "BROWN",
+      "stats": [
+        {
+          "type": "Critical_Per",
+          "value": 0.013
+        }
+      ]
     },
     {
       "id": 2103003,
       "nameFr": "Celui qui efface les noms",
       "nameEn": "One Who Erases Names",
-      "color": "BROWN"
+      "color": "BROWN",
+      "stats": [
+        {
+          "type": "CriticalDmg_Per",
+          "value": 0.015
+        }
+      ]
     },
     {
       "id": 2103004,
       "nameFr": "Conquérant de Furcas",
       "nameEn": "Conqueror of Furcas",
-      "color": "GREEN"
+      "color": "GREEN",
+      "stats": [
+        {
+          "type": "Attack_Per",
+          "value": 0.023
+        }
+      ]
     },
     {
       "id": 2103005,
       "nameFr": "Conquérant de Vanak",
       "nameEn": "Conqueror of Vanak",
-      "color": "GREEN"
+      "color": "GREEN",
+      "stats": [
+        {
+          "type": "Critical_Per",
+          "value": 0.026
+        }
+      ]
     },
     {
       "id": 2103006,
       "nameFr": "Conquérant de Gallore de l'Effondrement",
       "nameEn": "Conqueror of Gallore the Collapse",
-      "color": "GREEN"
+      "color": "GREEN",
+      "stats": [
+        {
+          "type": "CriticalDmg_Per",
+          "value": 0.029
+        }
+      ]
     },
     {
       "id": 2103007,
@@ -803,12 +933,18 @@
       "id": 2103008,
       "nameFr": "Conquérant de l'Earthlander",
       "nameEn": "Conqueror of the Earthlander",
-      "color": "GREEN"
+      "color": "GREEN",
+      "stats": [
+        {
+          "type": "Defence_Negation_Per",
+          "value": 0.027
+        }
+      ]
     },
     {
       "id": 2103009,
       "nameFr": "l'Errant",
-      "nameEn": "the Roamer",
+      "nameEn": "The Roamer",
       "color": "BROWN",
       "stats": [
         {
@@ -820,14 +956,26 @@
     {
       "id": 2103010,
       "nameFr": "le Prédateur",
-      "nameEn": "the Predator",
-      "color": "BROWN"
+      "nameEn": "The Predator",
+      "color": "BROWN",
+      "stats": [
+        {
+          "type": "Critical_Per",
+          "value": 0.013
+        }
+      ]
     },
     {
       "id": 2103011,
       "nameFr": "de la Soif",
       "nameEn": "Specter of Thirst",
-      "color": "BROWN"
+      "color": "BROWN",
+      "stats": [
+        {
+          "type": "CriticalDmg_Per",
+          "value": 0.015
+        }
+      ]
     },
     {
       "id": 2103012,
@@ -845,13 +993,25 @@
       "id": 2103013,
       "nameFr": "des Ténèbres",
       "nameEn": "Dark Necromancer",
-      "color": "BLUE"
+      "color": "BLUE",
+      "stats": [
+        {
+          "type": "Critical_Per",
+          "value": 0.02
+        }
+      ]
     },
     {
       "id": 2103014,
       "nameFr": "le Tyran",
       "nameEn": "Tyrant",
-      "color": "BLUE"
+      "color": "BLUE",
+      "stats": [
+        {
+          "type": "CriticalDmg_Per",
+          "value": 0.022
+        }
+      ]
     },
     {
       "id": 2103015,
@@ -869,114 +1029,242 @@
       "id": 2103016,
       "nameFr": "l'Affamé",
       "nameEn": "Hungry Eye",
-      "color": "GREEN"
+      "color": "GREEN",
+      "stats": [
+        {
+          "type": "Critical_Per",
+          "value": 0.026
+        }
+      ]
     },
     {
       "id": 2103017,
       "nameFr": "l'Écrasant",
       "nameEn": "Crushing Darkness",
-      "color": "GREEN"
+      "color": "GREEN",
+      "stats": [
+        {
+          "type": "CriticalDmg_Per",
+          "value": 0.029
+        }
+      ]
     },
     {
       "id": 2103018,
       "nameFr": "Celui qui a brisé la Corne du dragon",
       "nameEn": "One Who Broke the Dragon Horn",
-      "color": "RED"
+      "color": "RED",
+      "stats": [
+        {
+          "type": "Attack_Per",
+          "value": 0.023
+        },
+        {
+          "type": "Critical_Per",
+          "value": 0.02
+        }
+      ]
     },
     {
       "id": 2103019,
       "nameFr": "Celui qui a brisé la Foudre",
       "nameEn": "One Who Broke the Thunderbolt",
-      "color": "RED"
+      "color": "RED",
+      "stats": [
+        {
+          "type": "Attack_Per",
+          "value": 0.023
+        },
+        {
+          "type": "CriticalDmg_Per",
+          "value": 0.02
+        }
+      ]
+    },
+    {
+      "id": 2103020,
+      "nameFr": "Conquérant de Barduk",
+      "nameEn": "Conqueror of Barduk",
+      "color": "GREEN",
+      "stats": [
+        {
+          "type": "Defence_Penetrate",
+          "value": 10
+        }
+      ]
     },
     {
       "id": 2104000,
       "nameFr": "Diviser pour mieux régner",
       "nameEn": "Turning the Enemy Against Itself",
-      "color": "BROWN"
+      "color": "BROWN",
+      "stats": [
+        {
+          "type": "MaxHP_Per",
+          "value": 0.016
+        }
+      ]
     },
     {
       "id": 2104001,
       "nameFr": "Destructeur",
       "nameEn": "Destroyer",
-      "color": "BROWN"
+      "color": "BROWN",
+      "stats": [
+        {
+          "type": "MaxHP_Per",
+          "value": 0.016
+        }
+      ]
     },
     {
       "id": 2104002,
       "nameFr": "Maître de l'embuscade",
       "nameEn": "Master of Ambush",
-      "color": "BLUE"
+      "color": "BLUE",
+      "stats": [
+        {
+          "type": "MaxHP_Per",
+          "value": 0.025
+        }
+      ]
     },
     {
       "id": 2104003,
       "nameFr": "Maître des altérations d'état",
-      "nameEn": "Status Ailment Master",
-      "color": "GREEN"
+      "nameEn": "Status Effect Master",
+      "color": "GREEN",
+      "stats": [
+        {
+          "type": "MaxHP_Per",
+          "value": 0.032
+        }
+      ]
     },
     {
       "id": 2104005,
       "nameFr": "En chute libre",
       "nameEn": "Falling",
-      "color": "BROWN"
+      "color": "BROWN",
+      "stats": [
+        {
+          "type": "Defence_Per",
+          "value": 0.015
+        }
+      ]
     },
     {
       "id": 2104006,
       "nameFr": "Architecte",
       "nameEn": "Architect",
-      "color": "BLUE"
+      "color": "BLUE",
+      "stats": [
+        {
+          "type": "Defence_Per",
+          "value": 0.023
+        }
+      ]
     },
     {
       "id": 2104007,
       "nameFr": "【 777 】",
       "nameEn": "【 777 】",
-      "color": "BROWN"
+      "color": "BROWN",
+      "stats": [
+        {
+          "type": "Defence_Per",
+          "value": 0.015
+        }
+      ]
     },
     {
       "id": 2104008,
       "nameFr": "Instasaisie",
       "nameEn": "Instagrab",
-      "color": "BLUE"
+      "color": "BLUE",
+      "stats": [
+        {
+          "type": "MaxHP_Per",
+          "value": 0.025
+        }
+      ]
     },
     {
       "id": 2104009,
       "nameFr": "État d'agonie",
       "nameEn": "Near-Death State",
-      "color": "BLUE"
+      "color": "BLUE",
+      "stats": [
+        {
+          "type": "MaxHP_Per",
+          "value": 0.025
+        }
+      ]
     },
     {
       "id": 2104010,
       "nameFr": "Celui dont le passe-temps est de piétiner",
       "nameEn": "One Whose Hobby Is Stomping",
-      "color": "BLUE"
+      "color": "BLUE",
+      "stats": [
+        {
+          "type": "CriticalDmg_Per",
+          "value": 0.022
+        }
+      ]
     },
     {
       "id": 2104011,
       "nameFr": "Celui qui défie la gravité",
       "nameEn": "One Who Defies Gravity",
-      "color": "BLUE"
+      "color": "BLUE",
+      "stats": [
+        {
+          "type": "Critical_Per",
+          "value": 0.02
+        }
+      ]
     },
     {
       "id": 2104012,
       "nameFr": "Manège",
       "nameEn": "Carousel",
-      "color": "BLUE"
+      "color": "BLUE",
+      "stats": [
+        {
+          "type": "CriticalDmg_Per",
+          "value": 0.022
+        }
+      ]
     },
     {
       "id": 2104013,
       "nameFr": "Magnat",
       "nameEn": "Tycoon",
-      "color": "BLUE"
+      "color": "BLUE",
+      "stats": [
+        {
+          "type": "Defence_Per",
+          "value": 0.023
+        }
+      ]
     },
     {
       "id": 2104014,
       "nameFr": "Dragon's Word",
       "nameEn": "Dragon's Word",
-      "color": "RED"
+      "color": "RED",
+      "stats": [
+        {
+          "type": "Attack_Per",
+          "value": 0.047
+        }
+      ]
     },
     {
       "id": 2104100,
       "nameFr": "Corps de mercenaires de niveau inférieur",
-      "nameEn": "Novice Mercenary Corps",
+      "nameEn": "Novice Mercenary Crew",
       "color": "VIOLET",
       "stats": [
         {
@@ -988,7 +1276,7 @@
     {
       "id": 2104101,
       "nameFr": "Corps de mercenaires de niveau intermédiaire",
-      "nameEn": "Intermediate Mercenary Corps",
+      "nameEn": "Intermediate Mercenary Crew",
       "color": "BROWN",
       "stats": [
         {
@@ -1000,7 +1288,7 @@
     {
       "id": 2104102,
       "nameFr": "Corps de mercenaires de haut niveau",
-      "nameEn": "High-Ranking Mercenary Corps",
+      "nameEn": "High-Ranking Mercenary Crew",
       "color": "BLUE",
       "stats": [
         {
@@ -1012,7 +1300,7 @@
     {
       "id": 2104103,
       "nameFr": "Corps de mercenaires d'élite",
-      "nameEn": "Elite Mercenary Corps",
+      "nameEn": "Elite Mercenary Crew",
       "color": "GREEN",
       "stats": [
         {
@@ -1024,7 +1312,7 @@
     {
       "id": 2104104,
       "nameFr": "Corps de mercenaires vétérans",
-      "nameEn": "Veteran Mercenary Corps",
+      "nameEn": "Veteran Mercenary Crew",
       "color": "RED",
       "stats": [
         {

@@ -20,7 +20,8 @@
 // - a familiar without an item icon: the icon of the familiar whose
 //   VehicleCharacterData row names the same image.
 // It packs them into apps/desktop/src/assets/sprite.webp and rewrites the
-// cell offsets in crates/core/data/items.json. Cell 0 stays empty, because an
+// cell offsets in crates/core/data/items.json and items_extra.json (the game's
+// items that items.json lacks, from scripts/gen-catalog-extras.mjs). Cell 0 stays empty, because an
 // item at offset 0,0 means "no icon" to the catalog.
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
@@ -38,6 +39,7 @@ const CELL = 128;
 const COLUMNS = 32;
 
 const catalogPath = new URL('../crates/core/data/items.json', import.meta.url);
+const extraPath = new URL('../crates/core/data/items_extra.json', import.meta.url);
 const spritePath = new URL('../apps/desktop/src/assets/sprite.webp', import.meta.url);
 
 function fail(message) {
@@ -88,7 +90,7 @@ function iconSource(cid, item) {
   }
   if (item.category === 'mount' && !item.iconPath && vehicleImages.has(cid)) {
     for (const [other, image] of vehicleImages) {
-      const sibling = catalog.items[other];
+      const sibling = allItems[other];
       if (other !== cid && image === vehicleImages.get(cid) && sibling?.iconPath && exists(sibling.iconPath)) {
         return { path: sibling.iconPath, crop: false };
       }
@@ -98,10 +100,13 @@ function iconSource(cid, item) {
 }
 
 const catalog = JSON.parse(readFileSync(catalogPath, 'utf8'));
+const extra = JSON.parse(readFileSync(extraPath, 'utf8'));
+// items.json wins for a CID in both files, as in the catalog loader.
+const allItems = { ...extra.items, ...catalog.items };
 const sources = new Map(); // "path|crop" -> { path, crop, cell }
 const placed = new Map(); // item CID -> source key
 const missing = [];
-for (const [cid, item] of Object.entries(catalog.items)) {
+for (const [cid, item] of Object.entries(allItems)) {
   const source = iconSource(cid, item);
   if (!source) {
     missing.push(`${cid} ${item.en}: ${item.iconPath ?? (heroImages.get(cid) || 'no icon in the game tables')}`);
@@ -141,7 +146,7 @@ const sheet = await sharp({
   .toBuffer();
 writeFileSync(spritePath, sheet);
 
-for (const [cid, item] of Object.entries(catalog.items)) {
+for (const [cid, item] of [...Object.entries(catalog.items), ...Object.entries(extra.items)]) {
   const key = placed.get(cid);
   const cell = key ? sources.get(key).cell : 0;
   item.x = -(cell % COLUMNS) * CELL;
@@ -151,9 +156,10 @@ catalog.iconSize = CELL;
 catalog._source =
   "Item names datamined from the game's own GameItemData/StringData (paks). Icons are the game's own textures, packed by scripts/gen-icons.mjs from the export described in docs/game-assets.md.";
 writeFileSync(catalogPath, `${JSON.stringify(catalog, null, 2)}\n`);
+writeFileSync(extraPath, `${JSON.stringify(extra, null, 2)}\n`);
 
 console.log(
-  `packed ${ordered.length} icons for ${placed.size} of ${Object.keys(catalog.items).length} items into ${COLUMNS}x${sheetRows} cells of ${CELL}px (${(sheet.length / 1048576).toFixed(1)} MB)`,
+  `packed ${ordered.length} icons for ${placed.size} of ${Object.keys(allItems).length} items into ${COLUMNS}x${sheetRows} cells of ${CELL}px (${(sheet.length / 1048576).toFixed(1)} MB)`,
 );
 if (missing.length > 0) {
   console.log(`${missing.length} items have no icon in the export:`);

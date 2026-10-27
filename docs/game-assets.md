@@ -13,13 +13,24 @@ Where the game ships no such texture (see [Textures the game does not ship](#tex
 - a hero without a portrait (Viola): the hero's `Img_Character/Mini/Img_Character_Mini_<ImageType>` bust, cropped the same way;
 - a familiar without an item icon (1320033): the icon of the familiar whose `VehicleCharacterData.IconName` is the same image (1320032).
 
-It scales everything to 128-pixel cells, packs them into one WebP sheet, and writes each item's cell offset and `iconSize` back into `items.json`. Cell 0 stays empty: an item at offset 0,0 has no icon. The 2026-10-27 run packed 569 images for 1,249 of the 1,250 catalog items; the one left is Kalien's "Great Spirit's Vestment Weapon" costume (9990023), for which the game has no art at all.
+It scales everything to 128-pixel cells, packs them into one WebP sheet, and writes each item's cell offset and `iconSize` back into `items.json`. Cell 0 stays empty: an item at offset 0,0 has no icon. The 2026-10-27 run packed 577 images for 1,258 of the 1,259 catalog items (with the additions below); the one left is Kalien's "Great Spirit's Vestment Weapon" costume (9990023), for which the game has no art at all.
 
 ```bash
 node scripts/gen-icons.mjs <assets-dir> <extract-dir>
 ```
 
 `<assets-dir>` is the export below, unzipped. `<extract-dir>` is the folder of XML tables used by `scripts/gen-growth.mjs`; only `PCCharacterData.xml` and `VehicleCharacterData.xml` are read. The script is deterministic for a given export. `apps/desktop/test/icons.test.ts` checks that the frontend's cell size matches `iconSize`.
+
+## Items and titles items.json lacks
+
+`crates/core/data/items.json` stops at 16 of the game's 24 costumes and misses one title. `scripts/gen-catalog-extras.mjs <extract-dir>` adds every `GameItemData` row that `items.json` lacks to `items_extra.json`, named in English and French from `StringData`, and rebuilds `titles.json` whole from `AccountTitleData`: all 109 titles with their colour and every stat bonus (a `*_Per` value is a fraction, 0.023 is +2.3%; the earlier file had dropped them, so 44 titles showed none). On 2026-10-27 that added costumes 9990032–9990039 and title 2103020, and took ten title names from the game's current strings (for example "Veteran Mercenary Crew", as the game's menus say). A new item type stops the script until its catalog category is chosen.
+
+Run it before `gen-icons.mjs`, which gives the new items their icons:
+
+```bash
+node scripts/gen-catalog-extras.mjs <extract-dir>
+node scripts/gen-icons.mjs <assets-dir> <extract-dir>
+```
 
 ## Git LFS
 

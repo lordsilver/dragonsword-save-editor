@@ -10766,8 +10766,8 @@
       "grade": "normal",
       "group": "unsorted",
       "iconPath": "Art/UI/InGame/Img_Item/Quest/Img_Item_Quest_MercenaryContract",
-      "x": -3200,
-      "y": -2176
+      "x": -128,
+      "y": -2304
     },
     "1510006": {
       "fr": "Minerai de fer utilisable",
@@ -13221,7 +13221,7 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Cassius_Unique_Weapon_01",
-      "x": -2944,
+      "x": -3456,
       "y": -2176
     },
     "9990028": {
@@ -13231,7 +13231,7 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Astria_Unique_Weapon_01",
-      "x": -2816,
+      "x": -3328,
       "y": -2176
     },
     "9990029": {
@@ -13241,7 +13241,7 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Astria_Unique_Weapon_01",
-      "x": -2816,
+      "x": -3328,
       "y": -2176
     },
     "9990030": {
@@ -13251,8 +13251,8 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Reina_Unique_Weapon_01",
-      "x": -3072,
-      "y": -2176
+      "x": 0,
+      "y": -2304
     },
     "9990031": {
       "fr": "Pétales à la crête des vagues",
@@ -13261,8 +13261,8 @@
       "type": "COSTUME",
       "grade": "legendary",
       "iconPath": "Art/UI/InGame/Icon_Item/Costume/Icon_Item_Costume_Reina_Unique_Weapon_01",
-      "x": -3072,
-      "y": -2176
+      "x": 0,
+      "y": -2304
     }
   }
 }

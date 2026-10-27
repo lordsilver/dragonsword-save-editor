@@ -212,10 +212,10 @@ function TitleCard({
               className="inline-flex items-center gap-1 rounded border bg-muted/40 px-1.5 py-px text-[9px] text-muted-foreground"
             >
               <Heart className="size-2.5 text-brand" />
-              {stat.type} +{formatNumber(stat.value)}
+              {statLabel(stat.type, stat.value)}
             </span>
           ))}
-          {title.stats.length === 0 && <span className="text-[9px] text-muted-foreground/70">no stat bonus</span>}
+          {title.stats.length === 0 && <span className="text-xs text-muted-foreground/70">no stat bonus</span>}
         </div>
       </div>
       <div className="flex flex-col items-end gap-1">
@@ -231,4 +231,10 @@ function TitleCard({
       </div>
     </div>
   );
+}
+
+/** A title's bonus as the game shows it: a *_Per stat is a fraction, 0.023 = +2.3%. */
+function statLabel(type: string, value: number): string {
+  if (type.endsWith('_Per')) return `${type.slice(0, -4)} +${Number((value * 100).toFixed(2))}%`;
+  return `${type} +${formatNumber(value)}`;
 }
