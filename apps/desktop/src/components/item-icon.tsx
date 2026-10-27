@@ -82,6 +82,7 @@ export function gradeTone(grade: string): string {
       return 'text-fuchsia-700 dark:text-fuchsia-300 border-fuchsia-400/40 bg-fuchsia-400/10';
     case 'rare':
       return 'text-sky-700 dark:text-sky-300 border-sky-400/40 bg-sky-400/10';
+    case 'superior':
     case 'uncommon':
       return 'text-emerald-700 dark:text-emerald-300 border-emerald-400/40 bg-emerald-400/10';
     default:
