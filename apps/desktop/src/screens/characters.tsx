@@ -414,6 +414,15 @@ function SkillIcon({ skill, size }: { skill: Skill; size: number }) {
         className="absolute inset-0 bg-contain bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${signal ? skillDiscDiamond : skillDiscCircle})` }}
       />
+      {/* The game's disc interior carries the effect's colour too, from the
+          part of the ring material the export could not read. A fill shaped
+          by the disc itself stands in for it, under the glyph so the white
+          glyph stays clear. */}
+      <span
+        aria-hidden
+        className="absolute inset-0"
+        style={ringStyle(signal ? skillDiscDiamond : skillDiscCircle, skill.color, 0.3, false)}
+      />
       <ItemIcon
         item={glyph}
         size={glyphSize}
