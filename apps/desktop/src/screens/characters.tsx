@@ -349,19 +349,32 @@ function HeroInformation({ character, busy }: { character: Character; busy: bool
   );
 }
 
+/** The grey metal disc of a plain skill: dark in the middle, glowing at the rim. */
+const DISC = ['#3f3f46', '#52525b', '#a1a1aa'];
+
 /**
- * The disc behind a skill's glyph. The game tints it with the colour of the
- * effect's badge, so the disc is shaded from that colour; a plain attack keeps
- * the grey metal disc.
+ * The disc behind a skill's glyph. Like the game's, it is dark in the middle
+ * and brightens to a glowing rim, and an effect blends its colour (the
+ * badge's) into the grey metal rather than replacing it, which keeps the
+ * white glyph readable. A plain attack keeps the grey disc.
  */
 function disc(skill: Skill): { underlay: string; style: CSSProperties } {
   const color = skill.effect?.color;
-  if (!color) {
-    return { underlay: 'radial-gradient(circle, #71717a, #27272a)', style: { borderColor: 'rgb(255 255 255 / 0.25)' } };
-  }
+  const [middle, ring, rim] = color
+    ? [
+        `color-mix(in oklab, ${color} 40%, ${DISC[0]})`,
+        `color-mix(in oklab, ${color} 60%, ${DISC[1]})`,
+        `color-mix(in oklab, ${color} 90%, white)`,
+      ]
+    : DISC;
   return {
-    underlay: `radial-gradient(circle, ${color}, color-mix(in oklab, ${color} 65%, black))`,
-    style: { borderColor: `color-mix(in oklab, ${color} 50%, white)` },
+    underlay: `radial-gradient(circle closest-side, ${middle} 35%, ${ring} 80%, ${rim} 100%)`,
+    style: color
+      ? {
+          borderColor: `color-mix(in oklab, ${color} 55%, white)`,
+          boxShadow: `0 0 6px color-mix(in oklab, ${color} 60%, transparent)`,
+        }
+      : { borderColor: '#d4d4d8' },
   };
 }
 
