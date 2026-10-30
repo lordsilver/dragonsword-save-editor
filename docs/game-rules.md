@@ -11,7 +11,7 @@ The editor's limits fall into three groups:
 
 ## Where the rules come from
 
-The game ships its rule tables as XML, one file per table, under `DS/Content/__GeneratedGameData__/Server/XML/GameData/` in its paks. They were extracted on 2026-10-26 from an install whose only version marker is a `v1.1.1.xxh128` checksum file, so the game version is unconfirmed.
+The game ships its rule tables as XML, one file per table, under `DS/Content/__GeneratedGameData__/Server/XML/GameData/` in its paks. They were extracted on 2026-10-26 from an install whose only version marker is a `v1.1.1.xxh128` checksum file, so the game version is unconfirmed, and again on 2026-10-30 with their folders kept: 810 files, of which the 506 the first extraction held (flat, one file per name) are byte-identical, so the data has not changed. `docs/exports/xml/README.txt` is the second extraction's record.
 
 `scripts/gen-growth.mjs` reads the tables and writes only the numbers the editor needs to `growth.json`. The extracted XML is never committed. To regenerate after a game update:
 

@@ -17,7 +17,7 @@ export interface Category {
   key: string;
   labelFr: string;
   labelEn: string;
-  color: string;
+  /** The category's CategoryType, which is also the game's inventory tab. */
   group: string;
 }
 

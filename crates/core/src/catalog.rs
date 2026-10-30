@@ -12,7 +12,6 @@ use serde::{Deserialize, Serialize};
 use crate::error::Result;
 
 const ITEMS_JSON: &str = include_str!("../data/items.json");
-const ITEMS_EXTRA_JSON: &str = include_str!("../data/items_extra.json");
 const CATEGORIES_JSON: &str = include_str!("../data/item_categories.json");
 const RECIPES_JSON: &str = include_str!("../data/recipes.json");
 const TITLES_JSON: &str = include_str!("../data/titles.json");
@@ -96,7 +95,7 @@ pub struct Category {
     pub key: String,
     pub label_fr: String,
     pub label_en: String,
-    pub color: String,
+    /// The category's `CategoryType`, which is also the game's inventory tab.
     pub group: String,
 }
 
@@ -269,18 +268,11 @@ pub struct Catalog {
 impl Catalog {
     pub fn load() -> Result<Self> {
         let seed: SeedFile = serde_json::from_str(ITEMS_JSON)?;
-        let mut items: HashMap<i64, SeedItem> = seed
+        let items: HashMap<i64, SeedItem> = seed
             .items
             .into_iter()
             .filter_map(|(cid, entry)| cid.parse::<i64>().ok().map(|cid| (cid, entry)))
             .collect();
-        if let Ok(extra) = serde_json::from_str::<SeedFile>(ITEMS_EXTRA_JSON) {
-            for (cid, entry) in extra.items {
-                if let Ok(cid) = cid.parse::<i64>() {
-                    items.entry(cid).or_insert(entry);
-                }
-            }
-        }
         let categories: CategoryFile = serde_json::from_str(CATEGORIES_JSON)?;
         let recipes: RecipeFile = serde_json::from_str(RECIPES_JSON)?;
         let titles: TitleFile = serde_json::from_str(TITLES_JSON)?;
@@ -519,7 +511,7 @@ mod tests {
         assert_eq!(catalog.lookup(1_420_101).category, "food");
         assert_eq!(catalog.recipes().len(), 1025);
         assert_eq!(catalog.titles().len(), 109);
-        assert_eq!(catalog.categories().len(), 51);
+        assert_eq!(catalog.categories().len(), 74);
     }
 
     #[test]

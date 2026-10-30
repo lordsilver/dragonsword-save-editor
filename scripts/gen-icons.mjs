@@ -37,10 +37,10 @@
 // <fx-dir> is the png/ folder of the skill-screen export, which holds the FX
 // textures.
 // It packs them into apps/desktop/src/assets/sprite.webp and rewrites the
-// cell offsets in crates/core/data/items.json, items_extra.json (the game's
-// items that items.json lacks) and skills.json, the last two written by
-// scripts/gen-catalog-extras.mjs. Cell 0 stays empty, because an item at
-// offset 0,0 means "no icon" to the catalog.
+// cell offsets in crates/core/data/items.json (scripts/gen-catalog.mjs),
+// skills.json (scripts/gen-catalog-extras.mjs) and game.json
+// (scripts/gen-game-data.mjs). Cell 0 stays empty, because an item at offset
+// 0,0 means "no icon" to the catalog.
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -57,7 +57,6 @@ const CELL = 128;
 const COLUMNS = 32;
 
 const catalogPath = new URL('../crates/core/data/items.json', import.meta.url);
-const extraPath = new URL('../crates/core/data/items_extra.json', import.meta.url);
 const skillsPath = new URL('../crates/core/data/skills.json', import.meta.url);
 const spritePath = new URL('../apps/desktop/src/assets/sprite.webp', import.meta.url);
 
@@ -119,9 +118,7 @@ function iconSource(cid, item) {
 }
 
 const catalog = JSON.parse(readFileSync(catalogPath, 'utf8'));
-const extra = JSON.parse(readFileSync(extraPath, 'utf8'));
-// items.json wins for a CID in both files, as in the catalog loader.
-const allItems = { ...extra.items, ...catalog.items };
+const allItems = catalog.items;
 const sources = new Map(); // "path|crop" -> { path, crop, cell }
 const placed = new Map(); // item CID -> source key
 const missing = [];
@@ -189,7 +186,7 @@ const sheet = await sharp({
   .toBuffer();
 writeFileSync(spritePath, sheet);
 
-for (const [cid, item] of [...Object.entries(catalog.items), ...Object.entries(extra.items)]) {
+for (const [cid, item] of Object.entries(catalog.items)) {
   const key = placed.get(cid);
   const cell = key ? sources.get(key).cell : 0;
   item.x = -(cell % COLUMNS) * CELL;
@@ -208,10 +205,7 @@ for (const slot of skillSlots) {
 }
 writeFileSync(skillsPath, `${JSON.stringify(skills, null, 2)}\n`);
 catalog.iconSize = CELL;
-catalog._source =
-  "Item names datamined from the game's own GameItemData/StringData (paks). Icons are the game's own textures, packed by scripts/gen-icons.mjs from the export described in docs/game-assets.md.";
 writeFileSync(catalogPath, `${JSON.stringify(catalog, null, 2)}\n`);
-writeFileSync(extraPath, `${JSON.stringify(extra, null, 2)}\n`);
 
 const GRADES = ['normal', 'superior', 'rare', 'epic', 'legendary'];
 const assetsOut = new URL('../apps/desktop/src/assets/', import.meta.url);

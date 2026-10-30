@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Add the game's items that the bundled catalog lacks to
-// crates/core/data/items_extra.json, named from the game's own tables, and
-// write crates/core/data/titles.json from the game's title table.
+// Write crates/core/data/titles.json and skills.json from the game's own
+// tables. (items.json, item_categories.json and recipes.json come from
+// scripts/gen-catalog.mjs.)
 //
 // Usage: node scripts/gen-catalog-extras.mjs <extract-dir> <root-maps.json>
 //
@@ -9,11 +9,6 @@
 // <root-maps.json> is the skill-screen colour map decoded from the game's
 // /Game/UI/Root/DRootIngame by tools/asset-export/decode_root.py (see
 // docs/game-assets.md).
-// GameItemData lists every item; StringData has its names. items.json is
-// left alone apart from icon offsets; every
-// GameItemData row it does not have is written here instead, and the catalog
-// merges these entries for CIDs items.json lacks. Run scripts/gen-icons.mjs
-// afterwards to give them icons.
 //
 // titles.json is rebuilt whole from AccountTitleData: every title with its
 // name, colour and stat bonuses (a *_Per value is a fraction, 0.023 = 2.3%).
@@ -72,46 +67,7 @@ function rows(table) {
   return out;
 }
 
-// The catalog's category for each item type this script knows. A new type
-// stops the script, so its category is chosen on purpose.
-const CATEGORIES = {
-  COSTUME: 'costume',
-  // items.json files title items under material.
-  ACCOUNT_TITLE: 'material',
-};
-
-const catalogPath = new URL('../crates/core/data/items.json', import.meta.url);
-const extraPath = new URL('../crates/core/data/items_extra.json', import.meta.url);
-const known = new Set(Object.keys(JSON.parse(readFileSync(catalogPath, 'utf8')).items));
 const strings = new Map(rows('StringData').map((row) => [row.ID, row]));
-
-const items = {};
-for (const row of rows('GameItemData')) {
-  if (known.has(row.ID)) continue;
-  const category = CATEGORIES[row.ItemType];
-  if (!category) fail(`item ${row.ID} has type ${row.ItemType}, which has no catalog category yet`);
-  const name = strings.get(row.Name);
-  if (!name?.En) fail(`item ${row.ID} has no English name (string ${row.Name})`);
-  // IconName looks like /Script/Engine.Texture2D'/Game/Art/X/Y.Y'.
-  const icon = row.IconName.match(/'\/Game\/([^.']+)/)?.[1];
-  items[row.ID] = {
-    fr: name.Fr || name.En,
-    en: name.En.trim(),
-    category,
-    type: row.ItemType,
-    grade: row.Grade.toLowerCase(),
-    ...(icon && { iconPath: icon }),
-    x: 0,
-    y: 0,
-  };
-}
-
-const extra = JSON.parse(readFileSync(extraPath, 'utf8'));
-extra._note =
-  "Items GameItemData has and items.json lacks, named from the game's StringData by scripts/gen-catalog-extras.mjs; icon offsets come from scripts/gen-icons.mjs. Merged into the catalog only for CIDs absent from items.json.";
-extra.items = items;
-writeFileSync(extraPath, `${JSON.stringify(extra, null, 2)}\n`);
-console.log(`wrote ${Object.keys(items).length} items the catalog lacks: ${Object.keys(items).join(', ')}`);
 
 const titles = rows('AccountTitleData')
   .map((row) => {
