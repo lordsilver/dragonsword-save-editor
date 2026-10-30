@@ -9,8 +9,8 @@ import {
   Gem,
   LayoutDashboard,
   PawPrint,
-  Settings,
   Shirt,
+  SlidersHorizontal,
   Sword,
   Users,
 } from 'lucide-react';
@@ -18,11 +18,14 @@ import type { Counts, Section } from './types';
 
 export const NAV_GROUPS = ['Save', 'Heroes', 'Collection', 'Advanced'] as const;
 
+/** The app's own screens, pinned below the save's: they change the editor, not the save. */
+export const APP_GROUP = 'App';
+
 export interface NavItem {
   id: Section;
   label: string;
   icon: LucideIcon;
-  group: (typeof NAV_GROUPS)[number];
+  group: (typeof NAV_GROUPS)[number] | typeof APP_GROUP;
   /** The overview count shown beside the label. */
   count?: (counts: Counts) => number;
 }
@@ -40,7 +43,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: 'titles', label: 'Titles', icon: Crown, group: 'Collection', count: (c) => c.titlesUnlocked },
   { id: 'cooking', label: 'Cooking', icon: CookingPot, group: 'Collection', count: (c) => c.recipesKnown },
   { id: 'raw', label: 'Raw database', icon: Database, group: 'Advanced' },
-  { id: 'settings', label: 'Settings', icon: Settings, group: 'Advanced' },
+  { id: 'settings', label: 'Settings', icon: SlidersHorizontal, group: APP_GROUP },
 ];
 
 export const SECTION_LABELS: Record<Section, string> = Object.fromEntries(

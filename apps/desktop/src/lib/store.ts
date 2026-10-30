@@ -56,6 +56,8 @@ export interface AppState {
   dirty: boolean;
   /// Number of number fields currently holding an uncommitted draft.
   draftCount: number;
+  /** Edits since the last save or open, counted by the screen they were made on. */
+  changes: Partial<Record<Section, number>>;
   section: Section;
   loading: boolean;
   pending: string | null;
@@ -85,7 +87,8 @@ export interface AppState {
 
 export interface AppActions {
   boot(): Promise<void>;
-  refreshScan(path?: string): Promise<void>;
+  /** Rescan for slots; `quiet` skips the notice when none are found. */
+  refreshScan(path?: string, quiet?: boolean): Promise<void>;
   openSave(path: string): Promise<boolean>;
   closeCurrent(): Promise<void>;
   /** Drop the session whatever its dirty state. */
@@ -179,6 +182,7 @@ function initialState(): AppState {
     save: null,
     dirty: false,
     draftCount: 0,
+    changes: {},
     section: 'overview',
     loading: false,
     pending: null,
@@ -235,7 +239,10 @@ export const useApp = create<Store>((set, get) => {
     try {
       return await enqueue(label, async () => {
         const result = await action();
-        set({ dirty: true });
+        set((state) => ({
+          dirty: true,
+          changes: { ...state.changes, [state.section]: (state.changes[state.section] ?? 0) + 1 },
+        }));
         if (after) await after();
         return result;
       });
@@ -275,13 +282,13 @@ export const useApp = create<Store>((set, get) => {
       }
     },
 
-    async refreshScan(path) {
+    async refreshScan(path, quiet = false) {
       if (!get().desktop) return;
       set({ scanning: true });
       try {
         const scan = await api.scanSlots(path);
         set({ scan });
-        if (scan.slots.length === 0) {
+        if (scan.slots.length === 0 && !quiet) {
           toast.info('No saves found there. Pick the folder that contains your DragonSword saves.');
         }
       } catch (error) {
@@ -300,6 +307,7 @@ export const useApp = create<Store>((set, get) => {
             save,
             dirty: false,
             draftCount: 0,
+            changes: {},
             section: 'overview',
             overview: null,
             currencies: [],
@@ -348,7 +356,7 @@ export const useApp = create<Store>((set, get) => {
       try {
         await enqueue('Closing save', async () => {
           await api.closeSave();
-          set({ save: null, dirty: false, draftCount: 0, overview: null, section: 'overview' });
+          set({ save: null, dirty: false, draftCount: 0, changes: {}, overview: null, section: 'overview' });
           if (refresh) await get().refreshScan(get().settings.lastFolder ?? undefined);
         });
       } catch (error) {
@@ -379,6 +387,7 @@ export const useApp = create<Store>((set, get) => {
           set({
             dirty: false,
             draftCount: 0,
+            changes: {},
             save: { ...current, dirty: false, consistency: report.consistency },
           });
           toast.success(report.backup ? `Save written. Backup kept at ${report.backup}` : 'Save written.', {

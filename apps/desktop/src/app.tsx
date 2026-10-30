@@ -4,6 +4,7 @@ import { type ReactElement, type ReactNode, useEffect, useRef, useState } from '
 import { toast } from 'sonner';
 import { Sidebar } from '@/components/sidebar';
 import { StatusBar } from '@/components/status-bar';
+import { TopBar } from '@/components/top-bar';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -158,6 +159,7 @@ export function App() {
 
   return (
     <div className="flex h-svh flex-col overflow-hidden">
+      <TopBar />
       <div className="flex min-h-0 flex-1">
         <Sidebar />
         <div className="relative min-w-0 flex-1 overflow-hidden">

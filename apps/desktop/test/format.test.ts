@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NAV_GROUPS, NAV_ITEMS, SECTION_LABELS } from '@/lib/nav';
+import { APP_GROUP, NAV_GROUPS, NAV_ITEMS, SECTION_LABELS } from '@/lib/nav';
 import { compareDbid, formatBytes, formatDate, formatNumber, itemName } from '@/lib/store';
 import type { Item } from '@/lib/types';
 
@@ -58,6 +58,10 @@ describe('navigation', () => {
   });
 
   it('keeps every section in a known group', () => {
-    for (const item of NAV_ITEMS) expect(NAV_GROUPS).toContain(item.group);
+    for (const item of NAV_ITEMS) expect([...NAV_GROUPS, APP_GROUP]).toContain(item.group);
+  });
+
+  it('keeps Settings apart from the screens that edit the save', () => {
+    expect(NAV_ITEMS.find((item) => item.id === 'settings')?.group).toBe(APP_GROUP);
   });
 });

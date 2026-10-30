@@ -1,20 +1,19 @@
-import { HardDriveDownload, LogOut, Monitor, Moon, Save, Sun, TriangleAlert } from 'lucide-react';
-import { useState } from 'react';
+import { Eye, EyeOff, Languages, Monitor, Moon, Rows3, Rows4, Sun, TriangleAlert } from 'lucide-react';
 import { type ThemePreference, useTheme } from '@/components/theme-provider';
-import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Spinner } from '@/components/ui/spinner';
+import { NAV_ITEMS } from '@/lib/nav';
 import { useApp } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
 const item = 'inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-xs';
+const toggle = cn(item, 'hover:bg-accent hover:text-foreground');
 
 const THEMES: Record<ThemePreference, { label: string; icon: typeof Sun; next: ThemePreference }> = {
   system: { label: 'System', icon: Monitor, next: 'light' },
@@ -22,45 +21,69 @@ const THEMES: Record<ThemePreference, { label: string; icon: typeof Sun; next: T
   dark: { label: 'Dark', icon: Moon, next: 'system' },
 };
 
-// The open save at a glance: whether it has unsaved changes, which file it
-// is, what is running, and the save, backup and close actions.
+// What is going on: unsaved edits and where they are, what is running, and
+// problems found in the save; then the view settings, each switched in place.
 export function StatusBar() {
   const save = useApp((state) => state.save);
   const dirty = useApp((state) => state.dirty);
   const draftCount = useApp((state) => state.draftCount);
+  const changes = useApp((state) => state.changes);
   const pending = useApp((state) => state.pending);
-  const saveNow = useApp((state) => state.saveNow);
-  const backupNow = useApp((state) => state.backupNow);
-  const closeCurrent = useApp((state) => state.closeCurrent);
-  const discardCurrent = useApp((state) => state.discardCurrent);
+  const settings = useApp((state) => state.settings);
+  const setSettings = useApp((state) => state.setSettings);
   const setSection = useApp((state) => state.setSection);
   const theme = useTheme();
-  const [closeOpen, setCloseOpen] = useState(false);
 
   if (!save) return null;
 
-  const hasChanges = dirty || draftCount > 0;
-  const writing = pending === 'Writing save';
   const { danglingGemLinks, duplicateGemLinks, teamIssues } = save.consistency;
   const issues = danglingGemLinks.length + duplicateGemLinks.length + teamIssues.length;
+  const where = NAV_ITEMS.filter((nav) => (changes[nav.id] ?? 0) > 0);
+  const total = where.reduce((sum, nav) => sum + (changes[nav.id] ?? 0), 0);
+  const hasChanges = dirty || draftCount > 0;
   const current = THEMES[theme.preference];
   const ThemeIcon = current.icon;
 
   return (
-    <footer className="flex shrink-0 items-center gap-1 border-t bg-sidebar px-3 py-1 text-xs text-muted-foreground">
-      <span className={cn(item, hasChanges && 'font-medium text-foreground')}>
-        <span
-          aria-hidden
-          className={cn('size-1.5 rounded-full', hasChanges ? 'bg-brand shadow-[0_0_6px_var(--brand)]' : 'bg-ok')}
-        />
-        {hasChanges ? 'Unsaved changes' : 'Saved'}
-      </span>
-      <span className={item}>
-        Account {save.accountId} · Slot {save.slot}
-      </span>
-      <span className={cn(item, 'min-w-0 font-mono')} title={save.path}>
-        <span className="truncate">{save.path.split(/[\\/]/).slice(-2).join('/')}</span>
-      </span>
+    <footer className="flex shrink-0 flex-wrap items-center gap-1 border-t bg-sidebar px-3 py-1 text-xs text-muted-foreground">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild disabled={where.length === 0}>
+          <button
+            type="button"
+            title={where.length > 0 ? 'Where the unsaved changes are' : undefined}
+            className={cn(item, hasChanges && 'font-medium text-foreground', where.length > 0 && 'hover:bg-accent')}
+          >
+            <span
+              aria-hidden
+              className={cn('size-1.5 rounded-full', hasChanges ? 'bg-brand shadow-[0_0_6px_var(--brand)]' : 'bg-ok')}
+            />
+            {!hasChanges
+              ? 'Saved'
+              : total > 0
+                ? `${total} unsaved ${total === 1 ? 'change' : 'changes'}`
+                : 'Unsaved changes'}
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="top" align="start" className="w-56">
+          <DropdownMenuLabel className="text-xs text-muted-foreground">Unsaved changes, by screen</DropdownMenuLabel>
+          {where.map((nav) => {
+            const Icon = nav.icon;
+            return (
+              <DropdownMenuItem key={nav.id} onSelect={() => setSection(nav.id)}>
+                <Icon />
+                {nav.label}
+                <span className="ml-auto text-xs text-muted-foreground tabular-nums">{changes[nav.id]}</span>
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {pending && (
+        <span className={item}>
+          <Spinner className="size-3.5" />
+          {pending}
+        </span>
+      )}
       {issues > 0 && (
         <button
           type="button"
@@ -72,96 +95,43 @@ export function StatusBar() {
           {issues} {issues === 1 ? 'issue' : 'issues'}
         </button>
       )}
-      {pending && (
-        <span className={item}>
-          <Spinner className="size-3.5" />
-          {pending}
-        </span>
-      )}
       <span className="flex-1" />
+      <button
+        type="button"
+        title="Catalog language (click to switch)"
+        onClick={() => void setSettings({ language: settings.language === 'en' ? 'fr' : 'en' })}
+        className={toggle}
+      >
+        <Languages aria-hidden className="size-3.5" />
+        {settings.language === 'en' ? 'English' : 'Français'}
+      </button>
+      <button
+        type="button"
+        title="Items the catalog does not know (click to switch)"
+        onClick={() => void setSettings({ showUnknown: !settings.showUnknown })}
+        className={toggle}
+      >
+        {settings.showUnknown ? <Eye aria-hidden className="size-3.5" /> : <EyeOff aria-hidden className="size-3.5" />}
+        {settings.showUnknown ? 'Unknown items shown' : 'Unknown items hidden'}
+      </button>
+      <button
+        type="button"
+        title="Row density (click to switch)"
+        onClick={() => void setSettings({ compactRows: !settings.compactRows })}
+        className={toggle}
+      >
+        {settings.compactRows ? <Rows4 aria-hidden className="size-3.5" /> : <Rows3 aria-hidden className="size-3.5" />}
+        {settings.compactRows ? 'Compact rows' : 'Comfortable rows'}
+      </button>
       <button
         type="button"
         title={`Theme: ${current.label} (click for ${THEMES[current.next].label})`}
         onClick={() => theme.setPreference(current.next)}
-        className={cn(item, 'hover:bg-accent hover:text-foreground')}
+        className={toggle}
       >
         <ThemeIcon aria-hidden className="size-3.5" />
         {current.label}
       </button>
-      <button
-        type="button"
-        title="Write a backup copy now (Ctrl+B)"
-        onClick={() => void backupNow()}
-        className={cn(item, 'hover:bg-accent hover:text-foreground')}
-      >
-        <HardDriveDownload aria-hidden className="size-3.5" />
-        Backup
-      </button>
-      <button
-        type="button"
-        title="Close this save"
-        onClick={() => {
-          const state = useApp.getState();
-          if (state.dirty || state.draftCount > 0 || (state.pending !== null && state.pending !== 'Copying backup')) {
-            setCloseOpen(true);
-          } else {
-            void closeCurrent();
-          }
-        }}
-        className={cn(item, 'hover:bg-accent hover:text-foreground')}
-      >
-        <LogOut aria-hidden className="size-3.5" />
-        Close
-      </button>
-      <Button
-        size="sm"
-        variant={hasChanges ? 'default' : 'outline'}
-        className={cn('ml-1 h-7', hasChanges && 'bg-brand text-brand-foreground hover:bg-brand/90')}
-        disabled={writing}
-        title="Write the save file (Ctrl+S)"
-        onClick={() => void saveNow()}
-      >
-        {writing ? <Spinner /> : <Save />}
-        {writing ? 'Writing…' : 'Save'}
-      </Button>
-
-      <Dialog open={closeOpen} onOpenChange={setCloseOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Close this save?</DialogTitle>
-            <DialogDescription>
-              You have unsaved changes. Saving writes the encrypted file and keeps a timestamped backup. Discarding
-              leaves the original file untouched.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:justify-between">
-            <Button variant="ghost" onClick={() => setCloseOpen(false)}>
-              Cancel
-            </Button>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setCloseOpen(false);
-                  void discardCurrent();
-                }}
-              >
-                Discard changes
-              </Button>
-              <Button
-                onClick={async () => {
-                  if (await saveNow()) {
-                    setCloseOpen(false);
-                    await closeCurrent();
-                  }
-                }}
-              >
-                Save and close
-              </Button>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </footer>
   );
 }
