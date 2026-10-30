@@ -13,6 +13,8 @@ Where the game ships no such texture (see [Textures the game does not ship](#tex
 - a hero without a portrait (Viola): the hero's `Img_Character/Mini/Img_Character_Mini_<ImageType>` bust, cropped the same way;
 - a familiar without an item icon (1320033): the icon of the familiar whose `VehicleCharacterData.IconName` is the same image (1320032).
 
+It also packs what `crates/core/data/game.json` names (see [Game maths and texts](#game-maths-and-texts)): the nine trait emblems `Common/Icon_CharacterAbility_<trait>`, the grade star `Common/Icon_Grade_Star_01`, and each costume's switched hero portrait, `CostumeData.SwitchIconChrPath` (`Icon_Character/Icon_Character_<hero>_Unique_01` and the like; all 23 costumes with a `CostumeData` row have one). The 2026-10-30 run packed 726 images.
+
 It scales everything to 128-pixel cells, packs them into one WebP sheet, and writes each item's cell offset and `iconSize` back into `items.json`. Cell 0 stays empty: an item at offset 0,0 has no icon. The 2026-10-27 run packed 577 images for 1,258 of the 1,259 catalog items (with the additions below); the one left is Kalien's "Great Spirit's Vestment Weapon" costume (9990023), for which the game has no art at all.
 
 ```bash
@@ -39,8 +41,29 @@ Run it before `gen-icons.mjs`, which gives the new items and the skills their ic
 
 ```bash
 node scripts/gen-catalog-extras.mjs <extract-dir> <root-maps.json>
+node scripts/gen-game-data.mjs <extract-dir>
 node scripts/gen-icons.mjs <assets-dir> <extract-dir> <fx-dir>
 ```
+
+The table readers decode the XML entities in the tables' attributes (`&quot;`, `&lt;`, `&#xA;` …); before 2026-10-30 `skills.json` carried 24 descriptions with them escaped.
+
+## Game maths and texts
+
+`scripts/gen-game-data.mjs <extract-dir>` writes `crates/core/data/game.json`, everything the editor needs to show a hero, a piece of equipment, a karma, a costume or an item the way the game does. [Game rules](game-rules.md) gives each formula, the table it comes from and the screenshots it was checked against (Hero stats, Skills on the Skill screen, Costumes and portraits, Items in the bag).
+
+| Key                                          | From                                                                                                                                                     | Holds                                                                                                                       |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `stats`                                      | `StatListData`, `StringData`                                                                                                                             | every stat's name (English, French), whether it is a percentage, and its point value                                        |
+| `traits`                                     | `KarmaData`, `GameItemData`, `GameItemCategoryData`                                                                                                      | each `CharacterAbilityType`'s name (the karma category of the same trait) and emblem                                        |
+| `levelRatio`, `heroes`                       | `PCCharacterLevelData`, `PCCharacterData`, `StatDefaultData`, `StatAscendData`, `TranscendData`                                                          | each playable hero's points, ratios, base rates, breakthrough points, quote and story, and its six Awaken steps             |
+| `statRolls`, `enchant`, `equipment`, `sets`  | `EquipmentMainStatData`, `EquipmentSubStatData`, `EquipmentLevelData`, `EquipmentSettingData`, `EquipmentData`, `EquipmentSetData`, `EquipmentSkillData` | what every stat roll is, the enchant ratios and caps per grade, each piece's default points and set, and each set's bonuses |
+| `karmaLevels`, `karma`                       | `KarmaLevelData`, `KarmaData`, `KarmaTranscendData`                                                                                                      | karma ratios per level, points, ratios, breakthrough points and trait effects                                               |
+| `costumes`                                   | `CostumeData`, `GameItemData`                                                                                                                            | each costume item's hero, slot (`CLOTH`, `WEAPON`), card and the portrait it switches to                                    |
+| `skills`                                     | `PCSkillGrowthData`, `PCComboLevelData`                                                                                                                  | each slot's four text lines and, per level, its damage, gold, materials and breakthrough                                    |
+| `tabs`, `categories`, `items`                | `GameItemCategoryData`, `GameItemData`, `StringData`                                                                                                     | the inventory tabs, each category's tab and name, and every item's description, second text and cooldown                    |
+| `ui`, `maxStamina`, `gradeStars`, `starIcon` | `StringData`, `GlobalControlData`                                                                                                                        | the screens' own labels ("+{0} needed", "Owned: {0}", "Trait Effect", "Not Applied" …), Max Stamina and the star            |
+
+The script stops when a table breaks an assumption (a stat no `StatListData` row names, a skill level missing, a trait in two karma categories, Max Stamina other than 240), so a game update fails loudly. Strings keep the game's rich-text tags (`<LightOrange>…</>`, `<Yellow>…</>`, `<br>`); the frontend draws them in the game's colours (`components/game-text.tsx`). `cargo test -p dsa-core --lib gamedata` pins the screenshot values.
 
 ## Skill colours
 
