@@ -3,7 +3,6 @@ import { AppWindow, FolderOpen, ShieldCheck, Terminal } from 'lucide-react';
 import { type ReactElement, type ReactNode, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Sidebar } from '@/components/sidebar';
-import { StatusBar } from '@/components/status-bar';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -173,7 +172,6 @@ export function App() {
           )}
         </div>
       </div>
-      <StatusBar />
 
       <Dialog
         open={closeRequestOpen}

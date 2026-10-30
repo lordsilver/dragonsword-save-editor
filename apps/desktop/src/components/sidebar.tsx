@@ -1,9 +1,10 @@
+import { SavePanel } from '@/components/save-panel';
 import { NAV_GROUPS, NAV_ITEMS } from '@/lib/nav';
 import { useApp } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
 // The screens, grouped the way the game's own menus split them, each with
-// how many rows of its kind the save holds.
+// how many rows of its kind the save holds, above the open save's panel.
 export function Sidebar() {
   const section = useApp((state) => state.section);
   const setSection = useApp((state) => state.setSection);
@@ -58,6 +59,8 @@ export function Sidebar() {
           </div>
         ))}
       </div>
+
+      <SavePanel />
     </nav>
   );
 }

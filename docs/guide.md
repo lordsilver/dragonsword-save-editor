@@ -41,7 +41,7 @@ Existing values above a cap stay editable, and every field uses `max(cap, curren
 
 ## Editing
 
-Every screen edits only the open temporary copy. The status bar at the bottom shows **Unsaved changes** until you save, and holds **Save** (Ctrl+S), **Backup** (Ctrl+B), **Close** and the theme switch. The sidebar shows how many rows of each kind the save holds.
+Every screen edits only the open temporary copy. The foot of the sidebar shows the open save and **Unsaved changes** until you save, with **Save** (Ctrl+S), **Backup** (Ctrl+B) and **Close** below it. The theme is in **Settings**. The sidebar shows how many rows of each kind the save holds.
 
 ### Overview
 
