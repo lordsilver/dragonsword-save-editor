@@ -1,0 +1,185 @@
+name: Release
+
+# Pushing a tag like v0.1.0 builds the Windows installers (NSIS setup and MSI)
+# and publishes them as a GitHub release with checksums (and build provenance
+# while the repository is public). Running it by hand builds the same files as
+# workflow artifacts, without a release; given an existing tag, it builds that
+# tag's source with this workflow and replaces the tag's release, so older
+# releases can follow the current file names and notes.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to build and release again (leave empty for a build without a release)
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}-${{ inputs.tag }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  # The tag being released; empty for a build without a release.
+  TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
+
+jobs:
+  desktop:
+    name: Windows installers
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+      # The installers take their version from Cargo.toml, so a tag that names
+      # another version would publish installers that say something else.
+      - name: Check the tag
+        if: env.TAG != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(sed -n '/^\[workspace.package\]/,/^\[/s/^version = "\(.*\)"/\1/p' Cargo.toml)
+          if [ "v$version" != "$TAG" ]; then
+            echo "::error::tag $TAG does not match the workspace version $version in Cargo.toml"
+            exit 1
+          fi
+      - name: Install Rust
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      # The pnpm version is package.json's packageManager.
+      - name: Install the UI's dependencies
+        shell: bash
+        run: |
+          npm install --global "$(node -p 'require("./package.json").packageManager')"
+          pnpm install --frozen-lockfile
+      # Tauri downloads NSIS and WiX itself; beforeBuildCommand builds the UI.
+      - name: Build
+        run: pnpm --filter @dsa/desktop tauri build --bundles nsis,msi
+      - name: Collect
+        shell: bash
+        env:
+          VERSION: ${{ env.TAG || github.sha }}
+        # Tauri names the installers after the product, the version and the
+        # MSI's language; the release names them after the repository.
+        run: |
+          set -euo pipefail
+          name="dragonsword-save-editor-${VERSION}-x86_64-pc-windows-msvc"
+          mkdir dist
+          exe=(target/release/bundle/nsis/*-setup.exe)
+          msi=(target/release/bundle/msi/*.msi)
+          if [ "${#exe[@]}" -ne 1 ] || [ "${#msi[@]}" -ne 1 ]; then
+            echo "::error::expected one NSIS and one MSI installer"
+            ls -R target/release/bundle
+            exit 1
+          fi
+          cp "${exe[0]}" "dist/$name-setup.exe"
+          cp "${msi[0]}" "dist/$name.msi"
+          ls -l dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows-installers
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    if: github.ref_type == 'tag' || inputs.tag
+    needs: [desktop]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      # The full history finds the previous tag for the changelog link.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        working-directory: dist
+        run: sha256sum -- * > SHA256SUMS
+      # Attestations need a public repository (or GitHub Enterprise).
+      - uses: actions/attest-build-provenance@v4
+        if: ${{ !github.event.repository.private }}
+        with:
+          subject-path: dist/*
+      - name: Release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PUBLIC: ${{ !github.event.repository.private }}
+        # The notes are the tag's message after its first line, without any
+        # signature, followed by the downloads and the changelog link. Tags are
+        # created with --cleanup=verbatim so Markdown headings survive. The API
+        # serves the message even though the checkout keeps no credentials and
+        # the repository may be private.
+        run: |
+          set -euo pipefail
+          ref=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq '.object.type + " " + .object.sha')
+          if [ "${ref%% *}" = tag ]; then
+            gh api "repos/$GITHUB_REPOSITORY/git/tags/${ref#* }" --jq .message |
+              sed '/^-----BEGIN \(SSH\|PGP\) SIGNATURE-----$/,$d' | sed '1d' | sed '/./,$!d' > changes.md
+          else
+            : > changes.md
+          fi
+          previous=$(git describe --tags --abbrev=0 --match 'v*' "$TAG^" 2>/dev/null || true)
+          repo="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          name="dragonsword-save-editor-$TAG-x86_64-pc-windows-msvc"
+          {
+            if [ -s changes.md ]; then
+              cat changes.md
+              echo
+            fi
+            echo "### Downloads"
+            echo
+            echo "| File | What it is |"
+            echo "| --- | --- |"
+            echo "| \`$name-setup.exe\` | Windows setup program, for the current user or all users |"
+            echo "| \`$name.msi\` | Windows MSI package, for all users and managed installs |"
+            echo "| \`SHA256SUMS\` | SHA-256 checksums of the files above |"
+            echo
+            echo "The installers are not code-signed, so Windows SmartScreen may warn before the first run."
+            echo
+            echo "Check a download with \`sha256sum --check --ignore-missing SHA256SUMS\`."
+            if [ "$PUBLIC" = true ]; then
+              echo "Check where it was built with \`gh attestation verify <file> --repo $GITHUB_REPOSITORY\`."
+            fi
+            echo
+            if [ -n "$previous" ]; then
+              echo "**Full changelog**: $repo/compare/$previous...$TAG"
+            else
+              echo "**Full changelog**: $repo/commits/$TAG"
+            fi
+          } > notes.md
+          cat notes.md
+          if [ ! -s changes.md ]; then
+            echo "::warning::tag $TAG has no release notes in its message"
+          fi
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # A rebuild replaces the tag's release and keeps the tag. Only the
+        # highest version is marked as the latest release.
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --yes
+          fi
+          highest=$(git tag --list 'v*' --sort=-v:refname | head -n 1)
+          latest=false
+          [ "$TAG" = "$highest" ] && latest=true
+          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --title "$TAG" \
+            --notes-file notes.md --latest="$latest" --verify-tag

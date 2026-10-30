@@ -1,77 +1,63 @@
 # DragonSword Save Editor
 
-A local desktop save editor for **DragonSword Awakening (2026)**. It opens the game's encrypted SQLCipher save, exposes the data as typed screens, and writes the file back in the format the game expects — with a timestamped backup before the first write.
+A desktop save editor for **DragonSword Awakening**. Open a save slot, change your heroes, gear, items, currencies and collections on screens laid out like the game's own menus, and write it back with a backup of the original.
 
-![Overview screen showing the Mercenary Corps rank, currencies, collection progress, and save file details](assets/preview.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/overview-dark.png">
+  <img alt="The Overview screen: Mercenary Corps rank, play time, currencies, collection progress and quick actions for one save slot" src="docs/images/overview-light.png">
+</picture>
 
 ## Features
 
-| Feature                     | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Save discovery**          | Scans a folder for `<account>_Slot<N>.db` saves, shows the slot screenshot, and opens a file directly.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| **Overview and rename**     | Account, player name, Mercenary Corps grade, level and EXP, play time, stamina, location, collection progress, and save file metadata. Rename the player.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| **Currencies**              | Edit gold and aether crystals, or set either to the highest balance seen in the reference save in one click.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| **Inventory**               | Edit stack counts, add a missing stackable from the catalog, or fill every safe material stack to a chosen count. Items sort into the game's own tabs, tiles carry its grade stars, and the item card shows the game's category, description and cooldown.                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| **Characters**              | Edit level, EXP, ascension, HP, transcendence, and soldier grade, remove characters, manage skills, and fill team slots. Growth caps follow each hero's own breakthrough stage, which the Mercenary Corps grade unlocks; recruit any of the 19 heroes the game hands out. Each hero shows the game's own stat block (Attack, Defense, Max HP, Critical Rate and Damage, Max Stamina) computed with the game's formulas from level, gear, sets and karma, plus its trait, quote, story and Awaken steps; the Skill tab shows each skill's damage, inflicted status, activation conditions and next-level cost as the game's Skill screen does. A hero wearing an outfit shows the outfit's portrait, as in the game. |
-| **Equipment**               | Edit enchant level, item EXP, lock state, the linked gem (by 64-bit instance id), and raw main/sub stat CIDs and values. Every roll is named and valued with the game's tables at the piece's enchant level, locked sub stats show the "+N needed" the game shows, and each piece shows its grade stars, set bonuses and the hero wearing it.                                                                                                                                                                                                                                                                                                                                                                       |
-| **Gems**                    | Edit each gem's raw stat CID and lock state.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| **Karma**                   | Edit EXP, ascension, and transcendence, and equip a spirit to a character; the previous owner's slot is cleared. Caps follow the game's own karma tables.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| **Costumes and familiars**  | Unlock catalog entries, equip them per character, and toggle costume parts and new-item flags.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| **Titles**                  | Browse all 109 titles with their colour and stat bonuses, unlock them individually or all at once, and keep existing favourites intact.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| **Cooking**                 | Browse all 1,025 recipes with ingredients and effects, toggle known state, or learn every recipe.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| **Raw database**            | Browse every table, search every column, page through rows, inspect the schema, and edit one type-checked cell at a time. Key and link columns stay locked until advanced editing is turned on.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| **Preferences**             | Light, dark, or system theme; English or French catalog; compact rows; show or hide unknown items; save folder and backups.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| **Safe writes**             | Nothing is written until you save. A write is refused if the file changed on disk since the editor opened or last wrote it, if the game left a journal or WAL beside the slot, if the save's schema is newer than this build supports, or if the edit would add a broken gem link; otherwise the on-disk file is backed up, re-encrypted, checked with SQLite's integrity check, read back byte-for-byte, and atomically replaced.                                                                                                                                                                                                                                                                                  |
-| **Offline and local-first** | No network, accounts, telemetry, or updates. Everything happens on your computer.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+- **Heroes**: level, EXP, breakthrough, transcendence and skills within the game's own caps, with the stats, skill damage and outfit portraits the game shows. Recruit any of the 19 heroes the game hands out.
+- **Gear**: enchant level, stat rolls, gems, karma and familiars, each named and valued with the game's tables, with set bonuses and the hero wearing it.
+- **Inventory**: the game's bag tabs, grades and item cards; edit counts, add items, or fill every material stack at once.
+- **Currencies and collections**: gold and aether crystals, costumes, familiars, all 109 titles and all 1,025 cooking recipes.
+- **Raw database**: every table and column of the save, one type-checked cell at a time, for anything the screens don't cover.
+- **Safe writes**: nothing is written until you save, the original is backed up first, and a write is refused if the game changed the file or left it half-saved.
+- **Offline**: no network, accounts, telemetry or updates.
 
-## How it works
+<table>
+  <tr>
+    <td width="33%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/images/hero-dark.png">
+        <img alt="A hero's Information tab: portrait, level bar and the game's stat block" src="docs/images/hero-light.png">
+      </picture>
+    </td>
+    <td width="33%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/images/skills-dark.png">
+        <img alt="A hero's Skills tab: the skill tree with effect badges and the selected skill's damage and cost" src="docs/images/skills-light.png">
+      </picture>
+    </td>
+    <td width="33%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/images/inventory-dark.png">
+        <img alt="The Inventory: grade-coloured item tiles with counts and the selected item's card" src="docs/images/inventory-light.png">
+      </picture>
+    </td>
+  </tr>
+</table>
 
-1. Point the editor at the folder that contains your save, or open a `.db` file directly.
-2. Edit the data you care about. Changes stay in a private temporary database and the encrypted file is untouched.
-3. Choose **Save changes** (or press <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>S</kbd>). The editor first checks that the file on disk is still the one it opened or last wrote, then backs it up, re-encrypts the database, verifies the round trip, and atomically replaces the original file.
-4. Start the game and load the slot.
+## Install
 
-The editor never auto-saves and never modifies the sibling `SPack_SlotN.sav` or screenshot. Close the game before writing: a running game keeps the database open and can overwrite your changes. The [user guide](docs/guide.md) walks through each screen, backups, recovery, and troubleshooting.
+Download `dragonsword-save-editor-v<version>-x86_64-pc-windows-msvc-setup.exe` from the [latest release](https://github.com/lordsilver/dragonsword-save-editor/releases/latest) and run it. It installs for you alone or for everyone on the PC; the `.msi` from the same release installs for everyone. The installers are not code-signed, so SmartScreen asks once: **More info**, then **Run anyway**.
 
-## Save files
+## How to use
 
-DragonSword Awakening stores each slot under the account folder:
+1. Close the game. A running game keeps the save open and can overwrite your changes.
+2. Start the editor, choose **Scan a folder** and pick your `SaveGames` folder, then open a slot. Saves live in `%LOCALAPPDATA%\DragonSword Awakening\DS\Saved\SaveGames\<account>\<account>_Slot<N>.db`.
+3. Make your changes. They stay in the editor until you save.
+4. Press **Save** (<kbd>Ctrl</kbd>+<kbd>S</kbd>). The first save backs up the original beside it as `<save>.<timestamp>.bak`.
+5. Start the game and load the slot.
 
-```
-.../DragonSword Awakening/DS/Saved/SaveGames/<accountId>/<accountId>_Slot<N>.db
-```
+To undo everything, close the editor and copy the `.bak` back over the save.
 
-Backups are written beside the save as `<save>.<timestamp>.bak`. To recover, close the editor, rename the backup over the save (or copy it back), and reopen the slot in the game.
+## Documentation
 
-## Requirements
-
-- Windows 10/11, macOS 12 or newer, or Linux with WebKitGTK 4.1.
-- To build from source: Node.js 24, pnpm 12, Rust 1.96 or newer, and the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for your platform.
-
-## Development
-
-```bash
-pnpm install
-pnpm desktop        # Vite + Tauri development window
-pnpm check          # Biome, TypeScript, frontend tests, production build, Rust fmt/clippy/tests
-pnpm desktop:build  # installers and bundles
-```
-
-The Rust workspace is split into `crates/core` (save format, catalog, and editing engine) and `apps/desktop/src-tauri` (Tauri commands and window). The React frontend lives in `apps/desktop/src`.
-
-See [development](docs/development.md) for the repository layout, testing, and packaging notes.
-
-## Save format
-
-The save is an SQLCipher v4 database: AES-256-CBC, 4096-byte pages, PBKDF2-HMAC-SHA512 with 256,000 iterations, and a per-page HMAC-SHA512. The game uses one shared passphrase, so the editor can open any save without asking for a key.
-
-The [save format reference](docs/save-format.md) documents the page layout, key derivation, schema, title and recipe bitmasks, 64-bit instance IDs, and the write pipeline.
-
-## Limitations
-
-- The editor never inserts character rows. To recruit one of the 11 shop characters, add **Fate's Invitation** (CID 1,000,500) on the Inventory screen, save, then buy the character in the game's shop. The game writes the level-1 character row and purchase record. Story characters still arrive by playing.
-- A save whose `USER_DB_VERSION` is newer than 2 opens with a warning and cannot be written, because the editor cannot know what changed in the schema.
-- Equipment stat rolls are named and valued from the game's tables, but they are still edited as raw roll CIDs; copy a CID from an item that already has the effect you want. Gem stat CIDs are shown raw.
-- New costume and familiar instances are minted with random nonzero 32-bit IDs stored in the 64-bit columns, as the game does: a new-game snapshot shows a claimed familiar getting a random 32-bit ID and a local-time creation date.
-- The editor is tested against saves from the current game build. A game update can change the schema; unknown columns are preserved, and the raw database browser is there when a typed screen does not cover a field and the schema version is still supported.
-- This is an unofficial fan tool, not affiliated with the game's developer or publisher. Editing saves can break progress; keep the backups.
+- [User guide](docs/guide.md): every screen, value limits, backups and recovery, troubleshooting and limitations.
+- [Save format](docs/save-format.md): the encryption, schema and write pipeline.
+- [Game rules](docs/game-rules.md): the game's formulas and caps the editor follows, and how each was checked.
+- [Game assets](docs/game-assets.md): how the icons and tables were extracted from the game.
+- [Development](docs/development.md): building from source, checks, CI and releases.

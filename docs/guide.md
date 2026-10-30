@@ -146,6 +146,13 @@ Backups look like `1000_Slot5.db.20261025-015501.bak`. To recover, close the edi
 | "failed SQLite integrity_check"                     | The edited database is structurally corrupt. The file was not written. Reopen the slot and reapply the edit, or restore a backup.                         |
 | A typed screen shows an unknown item                | Turn on **Show unknown items**, or inspect the CID in the raw browser.                                                                                    |
 
+## Limitations
+
+- Equipment stat rolls are named and valued from the game's tables, but they are still edited as raw roll CIDs; copy a CID from an item that already has the effect you want. Gem stat CIDs are shown raw.
+- New costume and familiar instances get random nonzero 32-bit IDs stored in the 64-bit columns, as the game does: a new-game snapshot shows a claimed familiar getting a random 32-bit ID and a local-time creation date.
+- The editor is tested against saves from the current game build. A game update can change the schema; unknown columns are preserved, and the raw database browser is there when a typed screen does not cover a field and the schema version is still supported.
+- This is an unofficial fan tool, not affiliated with the game's developer or publisher. Editing saves can break progress; keep the backups.
+
 ## Keyboard shortcuts
 
 | Shortcut                                    | Action            |

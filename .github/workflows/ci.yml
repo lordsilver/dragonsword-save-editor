@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+  # Incremental state is never reused on fresh runners; leaving it out keeps
+  # the cached target lean.
+  CARGO_INCREMENTAL: "0"
+
+jobs:
+  check:
+    name: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      # Fails when actions.lock drifts from the workflows or a locked commit no
+      # longer verifies upstream.
+      - name: Verify workflow lockfile
+        if: runner.os == 'Linux'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh extension install github/gh-actions-lock --pin v0.4.0
+          gh actions-lock --verify
+      - name: Install Rust
+        shell: bash
+        run: |
+          rustup toolchain install stable --profile minimal --component clippy,rustfmt && rustup default stable
+      - name: Install WebKitGTK
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev
+      # Caches the Cargo registry and the dependencies' build output, keyed on
+      # the Rust version and Cargo.lock. mbx, which haul uses, dropped the tauri
+      # crate's core-plugin permission paths on Linux, so the desktop crate's
+      # build script failed with "Permission core:event:default not found".
+      - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      # The pnpm version is package.json's packageManager.
+      - name: Install the UI's dependencies
+        shell: bash
+        run: |
+          npm install --global "$(node -p 'require("./package.json").packageManager')"
+          pnpm install --frozen-lockfile
+      - name: Lint
+        if: runner.os == 'Linux'
+        run: pnpm lint
+      - name: Typecheck
+        if: runner.os == 'Linux'
+        run: pnpm typecheck
+      - name: Test the UI
+        if: runner.os == 'Linux'
+        run: pnpm test
+      # The desktop crate embeds apps/desktop/dist at compile time, so the UI
+      # is built before Clippy and the tests on both systems.
+      - name: Build the UI
+        run: pnpm build
+      - name: Format
+        if: runner.os == 'Linux'
+        run: cargo fmt --all --check
+      - name: Clippy
+        run: cargo clippy --locked --workspace --all-targets
+      - name: Test
+        run: cargo test --locked --workspace
