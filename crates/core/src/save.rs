@@ -1,6 +1,6 @@
 //! Opening, editing, and writing back a save database.
 
-use std::fs::{self, File, OpenOptions};
+use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -585,7 +585,7 @@ fn atomic_write(path: &Path, bytes: &[u8]) -> Result<()> {
     }
     // Flush the directory entry where the platform supports it.
     #[cfg(unix)]
-    if let Ok(directory) = File::open(directory) {
+    if let Ok(directory) = fs::File::open(directory) {
         let _ = directory.sync_all();
     }
     Ok(())
