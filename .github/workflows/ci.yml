@@ -28,8 +28,10 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
+      # The game's art is stored with Git LFS; the build refuses pointer files.
       - uses: actions/checkout@v7
         with:
+          lfs: true
           persist-credentials: false
       # Fails when actions.lock drifts from the workflows or a locked commit no
       # longer verifies upstream.

@@ -142,7 +142,7 @@ Screenshots of the game's Hero > Skill and Inventory screens (2026-10-27) were c
 
 ## Git LFS
 
-`.gitattributes` stores `apps/desktop/src/assets/*.webp` and `*.png` with Git LFS. A fresh clone needs `git lfs install` (once per machine) before checkout, or the sprite is a small pointer file and every icon is blank. `git lfs install --local` was run in this repository; the tool comes from mise (`git-lfs` in `~/.config/mise/config.toml`).
+`.gitattributes` stores `apps/desktop/src/assets/*.webp` and `*.png` with Git LFS. A fresh clone needs `git lfs install` (once per machine) before checkout, or the sprite is a small pointer file and every icon is blank. The UI build stops with an error when it finds pointer files in `apps/desktop/src/assets` (`apps/desktop/vite.config.ts`), and CI and the release workflow check out with `lfs: true`; v0.1.0 was built without it and shipped with every image blank. `git lfs install --local` was run in this repository; the tool comes from mise (`git-lfs` in `~/.config/mise/config.toml`).
 
 ## The export
 

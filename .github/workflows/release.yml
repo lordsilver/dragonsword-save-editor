@@ -34,9 +34,13 @@ jobs:
     name: Windows installers
     runs-on: windows-latest
     steps:
+      # The game's art is stored with Git LFS. Without lfs: true the checkout
+      # holds pointer files, and v0.1.0 shipped with every icon blank; the UI
+      # build now refuses pointers.
       - uses: actions/checkout@v7
         with:
           ref: ${{ env.TAG }}
+          lfs: true
           persist-credentials: false
       # The installers take their version from Cargo.toml, so a tag that names
       # another version would publish installers that say something else.
