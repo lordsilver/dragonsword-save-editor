@@ -62,7 +62,10 @@ jobs:
           npm install --global "$(node -p 'require("./package.json").packageManager')"
           pnpm install --frozen-lockfile
       # Tauri downloads NSIS and WiX itself; beforeBuildCommand builds the UI.
+      # Bash, because PowerShell reads nsis,msi as an array and passes pnpm
+      # "nsis msi".
       - name: Build
+        shell: bash
         run: pnpm --filter @dsa/desktop tauri build --bundles nsis,msi
       - name: Collect
         shell: bash
