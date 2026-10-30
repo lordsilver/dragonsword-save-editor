@@ -42,7 +42,7 @@ A desktop save editor for **DragonSword Awakening**. Open a save slot, change yo
 
 ## Install
 
-Download `dragonsword-save-editor-v<version>-x86_64-pc-windows-msvc-setup.exe` from the [latest release](https://github.com/lordsilver/dragonsword-save-editor/releases/latest) and run it. It installs for you alone or for everyone on the PC; the `.msi` from the same release installs for everyone. The installers are not code-signed, so SmartScreen asks once: **More info**, then **Run anyway**.
+Download `dragonsword-save-editor-v<version>-windows-x64-setup.exe` from the [latest release](https://github.com/lordsilver/dragonsword-save-editor/releases/latest) and run it. It installs for you alone or for everyone on the PC; the `.msi` from the same release installs for everyone, and the `.zip` holds the app on its own, to run without installing (Windows 10 and 11 already have the WebView2 runtime it needs). With [mise](https://mise.jdx.dev), `mise use github:lordsilver/dragonsword-save-editor` installs the portable build. The installers are not code-signed, so SmartScreen asks once: **More info**, then **Run anyway**.
 
 ## How to use
 

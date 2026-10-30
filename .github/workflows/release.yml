@@ -76,24 +76,31 @@ jobs:
         env:
           VERSION: ${{ env.TAG || github.sha }}
         # Tauri names the installers after the product, the version and the
-        # MSI's language; the release names them after the repository.
+        # MSI's language; the release names them after the repository, the
+        # version and the platform. The zip is the portable build: the app's
+        # single exe, which runs without installing on Windows 10 and 11 (they
+        # ship the WebView2 runtime). It is also what mise's github backend
+        # installs, since it skips installers; the word "windows" in the name
+        # is how it tells the zip's platform.
         run: |
           set -euo pipefail
-          name="dragonsword-save-editor-${VERSION}-x86_64-pc-windows-msvc"
+          name="dragonsword-save-editor-${VERSION}-windows-x64"
           mkdir dist
           exe=(target/release/bundle/nsis/*-setup.exe)
           msi=(target/release/bundle/msi/*.msi)
-          if [ "${#exe[@]}" -ne 1 ] || [ "${#msi[@]}" -ne 1 ]; then
-            echo "::error::expected one NSIS and one MSI installer"
+          app=target/release/dragonsword-save-editor.exe
+          if [ "${#exe[@]}" -ne 1 ] || [ "${#msi[@]}" -ne 1 ] || [ ! -f "$app" ]; then
+            echo "::error::expected one NSIS installer, one MSI and the app's exe"
             ls -R target/release/bundle
             exit 1
           fi
           cp "${exe[0]}" "dist/$name-setup.exe"
           cp "${msi[0]}" "dist/$name.msi"
+          pwsh -NoProfile -Command "Compress-Archive -Path '$app' -DestinationPath 'dist/$name.zip'"
           ls -l dist
       - uses: actions/upload-artifact@v7
         with:
-          name: windows-installers
+          name: windows-downloads
           path: dist/*
           if-no-files-found: error
 
@@ -144,7 +151,7 @@ jobs:
           fi
           previous=$(git describe --tags --abbrev=0 --match 'v*' "$TAG^" 2>/dev/null || true)
           repo="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
-          name="dragonsword-save-editor-$TAG-x86_64-pc-windows-msvc"
+          name="dragonsword-save-editor-$TAG-windows-x64"
           {
             if [ -s changes.md ]; then
               cat changes.md
@@ -156,6 +163,7 @@ jobs:
             echo "| --- | --- |"
             echo "| \`$name-setup.exe\` | Windows setup program, for the current user or all users |"
             echo "| \`$name.msi\` | Windows MSI package, for all users and managed installs |"
+            echo "| \`$name.zip\` | Portable: the app on its own, to run without installing |"
             echo "| \`SHA256SUMS\` | SHA-256 checksums of the files above |"
             echo
             echo "The installers are not code-signed, so Windows SmartScreen may warn before the first run."
