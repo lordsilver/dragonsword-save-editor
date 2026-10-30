@@ -9,6 +9,7 @@ pub mod catalog;
 pub mod consistency;
 pub mod domain;
 pub mod error;
+pub mod gamedata;
 pub mod growth;
 pub mod raw;
 pub mod save;

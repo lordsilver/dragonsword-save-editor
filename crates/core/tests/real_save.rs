@@ -11,7 +11,10 @@ use dsa_core::raw::RawValue;
 
 fn copy_fixture() -> (PathBuf, PathBuf) {
     let source = PathBuf::from(std::env::var("DSA_SAVE").expect("set DSA_SAVE"));
-    let directory = std::env::temp_dir().join(format!("dsa-real-{}", std::process::id()));
+    // One folder per test thread: the tests run in parallel and each removes its own.
+    let thread = format!("{:?}", std::thread::current().id())
+        .replace(|c: char| !c.is_ascii_alphanumeric(), "");
+    let directory = std::env::temp_dir().join(format!("dsa-real-{}-{thread}", std::process::id()));
     fs::create_dir_all(&directory).expect("mkdir");
     let target = directory.join(
         source
@@ -151,4 +154,45 @@ fn reads_and_writes_a_real_save() {
     drop(reopened);
 
     fs::remove_dir_all(directory).expect("cleanup");
+}
+
+/// A hero's `HP` column is its current health, so it can never exceed the Max
+/// HP the game's formulas give it with what it wears. In the 2026-10-27 save
+/// every hero was at full health and the two matched exactly, gear, sets and
+/// karma included (docs/game-rules.md, Hero stats).
+#[test]
+#[ignore = "needs DSA_SAVE pointing at a copy of a real save"]
+fn current_health_never_exceeds_the_computed_max_hp() {
+    let (directory, path) = copy_fixture();
+    let mut session = SaveSession::open(&path).expect("open save");
+    {
+        let game = session.catalog_game(Catalog::shared());
+        for character in game.characters().expect("characters") {
+            if !character.joined {
+                continue;
+            }
+            let Some(stats) = &character.stats else {
+                continue;
+            };
+            println!(
+                "{} Lv {}: HP {} / max {} · attack {} · defence {} · critical {:.4}",
+                character.item.name_en,
+                character.level,
+                character.hp,
+                stats.max_hp,
+                stats.attack,
+                stats.defence,
+                stats.critical
+            );
+            assert!(
+                character.hp <= stats.max_hp,
+                "{} has HP {} above its computed max {}",
+                character.item.name_en,
+                character.hp,
+                stats.max_hp
+            );
+        }
+    }
+    session.close();
+    fs::remove_dir_all(directory).ok();
 }

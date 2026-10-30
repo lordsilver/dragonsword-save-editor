@@ -9,6 +9,10 @@ use serde::Serialize;
 
 use crate::catalog::{Catalog, EffectText, Item, SkillEffect, SkillSeed, TitleStat};
 use crate::error::{Error, Result};
+use crate::gamedata::{
+    self, AwakenStep, CoreStats, EquipmentStats, GameData, HeroInput, HeroStats, IconRef, ItemCard,
+    SetView, Text, TraitInfo, WornKarma, WornPiece,
+};
 use crate::growth::{self, Growth, REGION};
 use crate::save::SaveSession;
 
@@ -1022,6 +1026,7 @@ impl<'a> Game<'a> {
                     kind: "stackable".into(),
                     id: cid.to_string(),
                     count,
+                    card: ItemCard::default(),
                 });
             }
         }
@@ -1044,8 +1049,12 @@ impl<'a> Game<'a> {
                     kind: "cook".into(),
                     id: dbid.to_string(),
                     count,
+                    card: ItemCard::default(),
                 });
             }
+        }
+        for stack in &mut out {
+            stack.card = gamedata::item_card(stack.item.cid, &stack.item.grade);
         }
         out.sort_by(|left, right| {
             left.item
@@ -1205,12 +1214,41 @@ impl<'a> Game<'a> {
                 created_at: row.get(9)?,
                 joined: row.get::<_, i64>(4)? != UNJOINED_HP,
                 limits: hero_limits(row.get(1)?, row.get(2)?, row.get(3)?, grade),
+                trait_info: None,
+                stats: None,
+                quote: None,
+                bio: None,
+                awaken: Vec::new(),
+                costume_cid: None,
             })
         })?;
+        let rows = rows.collect::<std::result::Result<Vec<_>, _>>()?;
+        let cloth = self.worn_cloth()?;
+        let reward_max_stamina = self.reward_max_stamina()?;
+        let data = GameData::shared();
         let mut out = Vec::new();
-        for row in rows {
-            let mut character = row?;
-            character.item = self.catalog.lookup_hint(character.cid, "character");
+        for mut character in rows {
+            character.item = self.hero_item(character.cid, &cloth);
+            character.costume_cid = cloth.get(&character.cid).copied();
+            if let Some(hero) = data.hero(character.cid) {
+                character.trait_info = data.trait_info(hero.trait_key.as_deref());
+                character.quote = text_of(&hero.quote_en, &hero.quote_fr);
+                character.bio = text_of(&hero.bio_en, &hero.bio_fr);
+                character.awaken = hero.awaken.clone();
+            }
+            let (pieces, karma) = self.worn(character.cid)?;
+            character.stats = gamedata::hero_stats(
+                data,
+                &HeroInput {
+                    cid: character.cid,
+                    level: character.level,
+                    ascend: character.ascend,
+                    transcend: character.transcend,
+                    pieces,
+                    karma,
+                    reward_max_stamina,
+                },
+            );
             out.push(character);
         }
         Ok(out)
@@ -1476,6 +1514,7 @@ impl<'a> Game<'a> {
         let mut levels = rows.collect::<std::result::Result<Vec<_>, _>>()?;
         let mut skills = Vec::new();
         let catalog = Catalog::shared();
+        let data = GameData::shared();
         for seed in catalog.hero_skills(cid) {
             let saved = levels.iter().position(|(kind, _)| *kind == seed.type_value);
             let level = saved.map(|index| levels.remove(index).1);
@@ -1484,11 +1523,22 @@ impl<'a> Game<'a> {
                 .effect
                 .as_deref()
                 .and_then(|key| catalog.skill_effect(key));
+            // The game keeps no row for Dodge, its one single-level slot
+            // outside the editable types, which is always at level 1.
+            let shown = level.unwrap_or(if editable { 0 } else { 1 });
             skills.push(Skill {
                 type_value: seed.type_value,
-                // The game keeps no row for Dodge, its one single-level slot
-                // outside the editable types, which is always at level 1.
-                level: level.unwrap_or(if editable { 0 } else { 1 }),
+                level: shown,
+                label: gamedata::skill_label(data, seed.order, seed.master),
+                lines: gamedata::skill_lines(data, cid, seed.type_value, shown.max(1))
+                    .into_iter()
+                    .map(|(kind, text)| SkillLine { kind, text })
+                    .collect(),
+                next: if editable {
+                    self.skill_cost(cid, seed.type_value, shown + 1)?
+                } else {
+                    None
+                },
                 saved: level.is_some(),
                 editable,
                 info: Some(seed.clone()),
@@ -1501,6 +1551,9 @@ impl<'a> Game<'a> {
         skills.extend(levels.into_iter().map(|(type_value, level)| Skill {
             type_value,
             level,
+            label: None,
+            lines: Vec::new(),
+            next: None,
             saved: true,
             editable: SKILL_TYPES.contains(&type_value),
             info: None,
@@ -1557,6 +1610,7 @@ impl<'a> Game<'a> {
             .map(|character| (character.cid, character.level))
             .collect();
         let selected_page = selected_team(self.conn(), self.user_id)?.map(|(page, _)| page);
+        let cloth = self.worn_cloth()?;
         let mut statement = self.conn().prepare(
             "SELECT PAGE_ID, SLOT1_CHARACTER_CID, SLOT2_CHARACTER_CID, SLOT3_CHARACTER_CID
                FROM tb_team WHERE USER_DBID=? ORDER BY PAGE_ID",
@@ -1583,7 +1637,7 @@ impl<'a> Game<'a> {
                         }
                     } else {
                         TeamSlot {
-                            item: Some(self.catalog.lookup_hint(cid, "character")),
+                            item: Some(self.hero_item(cid, &cloth)),
                             cid,
                             level: levels.get(&cid).copied().unwrap_or(0),
                         }
@@ -1794,13 +1848,51 @@ impl<'a> Game<'a> {
                     row.get(17)?,
                 ],
                 has_stat_values: has_values,
+                stats: None,
+                set: None,
+                equipped_by: None,
+                equipped_item: None,
             })
         })?;
+        let rows = rows.collect::<std::result::Result<Vec<_>, _>>()?;
+        let wearers = self.equipment_wearers()?;
+        let cloth = self.worn_cloth()?;
+        let data = GameData::shared();
         let mut out = Vec::new();
-        for row in rows {
-            let mut equipment = row?;
+        for mut equipment in rows {
             equipment.item = self.catalog.lookup_hint(equipment.cid, "gear");
+            equipment.stats = gamedata::equipment_stats(
+                data,
+                equipment.cid,
+                equipment.enchant_level,
+                equipment.main_stat_cid,
+                &equipment.sub_stat_cids,
+            );
+            let dbid = equipment.dbid.parse::<i64>().unwrap_or(0);
+            equipment.equipped_by = wearers.get(&dbid).copied();
+            equipment.equipped_item = equipment
+                .equipped_by
+                .map(|hero| self.hero_item(hero, &cloth));
             out.push(equipment);
+        }
+        // A set's bonuses count the pieces its wearer has on; a spare piece
+        // shows them all off.
+        let mut pieces: HashMap<(i64, i64), i64> = HashMap::new();
+        for equipment in &out {
+            if let (Some(hero), Some(set)) = (
+                equipment.equipped_by,
+                equipment.stats.as_ref().and_then(|stats| stats.set_id),
+            ) {
+                *pieces.entry((hero, set)).or_default() += 1;
+            }
+        }
+        for equipment in &mut out {
+            if let Some(set) = equipment.stats.as_ref().and_then(|stats| stats.set_id) {
+                let worn = equipment
+                    .equipped_by
+                    .map_or(0, |hero| pieces.get(&(hero, set)).copied().unwrap_or(0));
+                equipment.set = gamedata::set_view(data, set, worn);
+            }
         }
         Ok(out)
     }
@@ -1987,6 +2079,10 @@ impl<'a> Game<'a> {
                 equipped_by: row.get(6)?,
                 level: 0,
                 limits: karma_limits(row.get(1)?, row.get(3)?, row.get(4)?, grade),
+                stats: None,
+                trait_info: None,
+                trait_effect: None,
+                trait_applied: None,
             })
         })?;
         let mut out = Vec::new();
@@ -1994,6 +2090,21 @@ impl<'a> Game<'a> {
             let mut karma = row?;
             karma.item = self.catalog.lookup_hint(karma.cid, "material");
             karma.level = growth::level_for_exp(Growth::shared().karma_exp(karma.cid), karma.exp);
+            let data = GameData::shared();
+            karma.stats = gamedata::karma_stats(data, karma.cid, karma.level, karma.ascend);
+            if let Some(info) = data.karma.get(&karma.cid.to_string()) {
+                karma.trait_info = data.trait_info(info.trait_key.as_deref());
+                karma.trait_effect =
+                    gamedata::karma_trait(data, karma.cid, karma.transcend).map(|effect| Text {
+                        en: effect.desc_en.clone(),
+                        fr: effect.desc_fr.clone(),
+                    });
+                karma.trait_applied = karma.equipped_by.map(|hero| {
+                    info.trait_key.is_some()
+                        && data.hero(hero).and_then(|hero| hero.trait_key.as_deref())
+                            == info.trait_key.as_deref()
+                });
+            }
             out.push(karma);
         }
         Ok(out)
@@ -2103,12 +2214,25 @@ impl<'a> Game<'a> {
                 equip_character_cid: row.get(2)?,
                 parts_on: row.get(3)?,
                 is_new: row.get::<_, i64>(4)? != 0,
+                hero: None,
+                hero_item: None,
+                slot: None,
+                portrait: None,
             })
         })?;
         let mut out = Vec::new();
         for row in rows {
             let mut costume = row?;
             costume.item = self.catalog.lookup_hint(costume.cid, "costume");
+            if let Some(info) = GameData::shared().costume(costume.cid) {
+                costume.hero = Some(info.hero);
+                costume.hero_item = Some(self.catalog.lookup_hint(info.hero, "character"));
+                costume.slot = Some(info.slot.clone());
+                costume.portrait = (info.x != 0 || info.y != 0).then_some(IconRef {
+                    x: info.x,
+                    y: info.y,
+                });
+            }
             out.push(costume);
         }
         Ok(out)
@@ -2963,6 +3087,8 @@ pub struct Stack {
     pub kind: String,
     pub id: String,
     pub count: i64,
+    /// The inventory tab, category, texts and stars the game's bag shows.
+    pub card: ItemCard,
 }
 
 #[derive(Debug, Serialize)]
@@ -2983,6 +3109,18 @@ pub struct Character {
     /// joined the team yet.
     pub joined: bool,
     pub limits: GrowthLimits,
+    /// The hero's trait (`CharacterAbilityType`), named and with its emblem.
+    pub trait_info: Option<TraitInfo>,
+    /// The hero screen's stats, from the game's own formulas and what the
+    /// hero wears.
+    pub stats: Option<HeroStats>,
+    /// The Information screen's quote and story.
+    pub quote: Option<Text>,
+    pub bio: Option<Text>,
+    /// The six Awaken steps.
+    pub awaken: Vec<AwakenStep>,
+    /// The CLOTH costume the hero wears; `item` then carries its portrait.
+    pub costume_cid: Option<i64>,
 }
 
 #[derive(Debug, Serialize)]
@@ -3000,6 +3138,267 @@ pub struct Skill {
     pub effect: Option<SkillEffect>,
     /// The disc colour (`#rrggbb`): the effect's, or the game's ATTACK colour.
     pub color: String,
+    /// The slot's label on the Skill screen: Active 1, Signal A, Master …
+    pub label: Option<Text>,
+    /// The Skill screen's lines at this level (at level 1 for a slot the save
+    /// lacks): SkillDesc 1 the description, 2 the damage, 3 the status effect
+    /// inflicted, 4 the notes such as Activation Conditions.
+    pub lines: Vec<SkillLine>,
+    /// What raising the skill one level costs, as the Skill screen lists it.
+    pub next: Option<SkillCost>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SkillLine {
+    /// The SkillDesc column, 1 to 4.
+    pub kind: String,
+    pub text: Text,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SkillCost {
+    pub level: i64,
+    pub gold: i64,
+    pub gold_owned: i64,
+    /// The breakthrough the level needs.
+    pub ascend: Option<i64>,
+    pub items: Vec<CostItem>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CostItem {
+    pub item: Item,
+    pub count: i64,
+    pub owned: i64,
+}
+
+/// A game text, or none when the game has none.
+fn text_of(en: &str, fr: &str) -> Option<Text> {
+    (!en.is_empty()).then(|| Text {
+        en: en.to_string(),
+        fr: fr.to_string(),
+    })
+}
+
+impl Game<'_> {
+    /// The CLOTH costume each hero wears; wearing one switches the hero's
+    /// portrait to the costume's (`CostumeData.SwitchIconChrPath`).
+    fn worn_cloth(&self) -> Result<HashMap<i64, i64>> {
+        if !table_columns(self.conn(), "tb_costume")?.contains("COSTUME_CID") {
+            return Ok(HashMap::new());
+        }
+        let mut statement = self.conn().prepare(
+            "SELECT EQUIP_CHARACTER_CID, COSTUME_CID FROM tb_costume
+              WHERE USER_DBID=? AND EQUIP_CHARACTER_CID<>0 ORDER BY COSTUME_DBID",
+        )?;
+        let rows = statement.query_map(params![self.user_id], |row| {
+            Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?))
+        })?;
+        let data = GameData::shared();
+        let mut out = HashMap::new();
+        for row in rows {
+            let (hero, cid) = row?;
+            if data
+                .costume(cid)
+                .is_some_and(|costume| costume.slot == "CLOTH")
+            {
+                out.insert(hero, cid);
+            }
+        }
+        Ok(out)
+    }
+
+    /// The hero's catalog entry, with the portrait of the costume it wears.
+    fn hero_item(&self, cid: i64, cloth: &HashMap<i64, i64>) -> Item {
+        let mut item = self.catalog.lookup_hint(cid, "character");
+        let costume = cloth
+            .get(&cid)
+            .and_then(|costume| GameData::shared().costume(*costume));
+        if let Some(costume) = costume
+            && (costume.x != 0 || costume.y != 0)
+        {
+            item.icon_x = costume.x;
+            item.icon_y = costume.y;
+            item.icon = true;
+        }
+        item
+    }
+
+    fn reward_max_stamina(&self) -> Result<i64> {
+        if !table_columns(self.conn(), "tb_user")?.contains("REWARD_MAX_STAMINA") {
+            return Ok(0);
+        }
+        Ok(self
+            .conn()
+            .query_row(
+                "SELECT REWARD_MAX_STAMINA FROM tb_user WHERE USER_DBID=?",
+                params![self.user_id],
+                |row| row.get::<_, Option<i64>>(0),
+            )
+            .optional()?
+            .flatten()
+            .unwrap_or(0))
+    }
+
+    /// Which hero wears each equipment instance.
+    fn equipment_wearers(&self) -> Result<HashMap<i64, i64>> {
+        if !table_columns(self.conn(), "tb_equip_mount")?.contains("ACC_HEAD") {
+            return Ok(HashMap::new());
+        }
+        let mut statement = self.conn().prepare(
+            "SELECT CHARACTER_CID, ACC_HEAD, ACC_CHEST, ACC_LEG, ACC_HAND, ACC_FOOT
+               FROM tb_equip_mount WHERE USER_DBID=?",
+        )?;
+        let rows = statement.query_map(params![self.user_id], |row| {
+            Ok((
+                row.get::<_, i64>(0)?,
+                [
+                    row.get::<_, i64>(1)?,
+                    row.get::<_, i64>(2)?,
+                    row.get::<_, i64>(3)?,
+                    row.get::<_, i64>(4)?,
+                    row.get::<_, i64>(5)?,
+                ],
+            ))
+        })?;
+        let mut out = HashMap::new();
+        for row in rows {
+            let (hero, pieces) = row?;
+            for dbid in pieces.into_iter().filter(|dbid| *dbid != 0) {
+                out.insert(dbid, hero);
+            }
+        }
+        Ok(out)
+    }
+
+    /// The equipment and karma a hero wears, as its stats need them.
+    fn worn(&self, cid: i64) -> Result<(Vec<WornPiece>, Option<WornKarma>)> {
+        // A save without the slot or roll columns (older schemas, the test
+        // fixture) wears nothing as far as the stats go.
+        if !table_columns(self.conn(), "tb_equip_mount")?.contains("ACC_HEAD")
+            || !table_columns(self.conn(), "tb_equipment")?.contains("MAIN_STAT_CID")
+        {
+            return Ok((Vec::new(), None));
+        }
+        let mount = self
+            .conn()
+            .query_row(
+                "SELECT ACC_HEAD, ACC_CHEST, ACC_LEG, ACC_HAND, ACC_FOOT, KARMA
+                   FROM tb_equip_mount WHERE USER_DBID=? AND CHARACTER_CID=?",
+                params![self.user_id, cid],
+                |row| {
+                    Ok([
+                        row.get::<_, i64>(0)?,
+                        row.get::<_, i64>(1)?,
+                        row.get::<_, i64>(2)?,
+                        row.get::<_, i64>(3)?,
+                        row.get::<_, i64>(4)?,
+                        row.get::<_, i64>(5)?,
+                    ])
+                },
+            )
+            .optional()?;
+        let Some(mount) = mount else {
+            return Ok((Vec::new(), None));
+        };
+        let mut pieces = Vec::new();
+        for dbid in mount[..5].iter().copied().filter(|dbid| *dbid != 0) {
+            let piece = self
+                .conn()
+                .query_row(
+                    "SELECT ITEM_CID, ENCHANT_LEVEL, MAIN_STAT_CID, SUB_STAT_CID1, SUB_STAT_CID2,
+                            SUB_STAT_CID3, SUB_STAT_CID4, SUB_STAT_CID5
+                       FROM tb_equipment WHERE USER_DBID=? AND ITEM_DBID=? AND DELETED_DATE=0",
+                    params![self.user_id, dbid],
+                    |row| {
+                        Ok(WornPiece {
+                            cid: row.get(0)?,
+                            enchant: row.get(1)?,
+                            main_cid: row.get(2)?,
+                            sub_cids: [
+                                row.get(3)?,
+                                row.get(4)?,
+                                row.get(5)?,
+                                row.get(6)?,
+                                row.get(7)?,
+                            ],
+                        })
+                    },
+                )
+                .optional()?;
+            pieces.extend(piece);
+        }
+        let karma = if mount[5] == 0 {
+            None
+        } else {
+            self.conn()
+                .query_row(
+                    "SELECT ITEM_CID, EXP, ASCEND, TRANSCEND FROM tb_karma
+                      WHERE USER_DBID=? AND ITEM_DBID=? AND DELETED_DATE=0",
+                    params![self.user_id, mount[5]],
+                    |row| {
+                        let cid: i64 = row.get(0)?;
+                        Ok(WornKarma {
+                            cid,
+                            level: growth::level_for_exp(
+                                Growth::shared().karma_exp(cid),
+                                row.get(1)?,
+                            ),
+                            ascend: row.get(2)?,
+                            transcend: row.get(3)?,
+                        })
+                    },
+                )
+                .optional()?
+        };
+        Ok((pieces, karma))
+    }
+
+    /// What raising a hero's skill to `level` costs, from `PCSkillGrowthData`,
+    /// with how much of each the save holds.
+    fn skill_cost(&self, cid: i64, type_value: i64, level: i64) -> Result<Option<SkillCost>> {
+        let Some(row) = GameData::shared()
+            .skill_tree(cid, type_value)
+            .and_then(|tree| tree.levels.get((level - 1).max(0) as usize))
+            .filter(|row| row.level == level)
+        else {
+            return Ok(None);
+        };
+        let owned = |item: i64| -> Result<i64> {
+            Ok(self
+                .conn()
+                .query_row(
+                    "SELECT STACK_CNT FROM tb_stackable_item WHERE USER_DBID=? AND ITEM_CID=?",
+                    params![self.user_id, item],
+                    |row| row.get::<_, i64>(0),
+                )
+                .optional()?
+                .unwrap_or(0))
+        };
+        let gold_owned = self
+            .currencies()?
+            .into_iter()
+            .find(|currency| currency.item.cid == GOLD_CID)
+            .map_or(0, |currency| currency.amount);
+        let mut items = Vec::new();
+        for (item, count) in &row.items {
+            items.push(CostItem {
+                item: self.catalog.lookup_hint(*item, "material"),
+                count: *count,
+                owned: owned(*item)?,
+            });
+        }
+        Ok(Some(SkillCost {
+            level,
+            gold: row.gold.unwrap_or(0),
+            gold_owned,
+            ascend: row.ascend,
+            items,
+        }))
+    }
 }
 
 fn team_rows(conn: &Connection, user_id: i64) -> Result<Vec<(i64, [i64; 3])>> {
@@ -3084,6 +3483,13 @@ pub struct Equipment {
     pub main_stat_value: i64,
     pub sub_stat_values: Vec<i64>,
     pub has_stat_values: bool,
+    /// The rolls named and valued at the enchant level, from the game's tables.
+    pub stats: Option<EquipmentStats>,
+    /// The piece's set, with the bonuses its wearer's pieces turn on.
+    pub set: Option<SetView>,
+    pub equipped_by: Option<i64>,
+    /// The wearer's portrait, for the card's "Equipped" badge.
+    pub equipped_item: Option<Item>,
 }
 
 #[derive(Debug, Serialize)]
@@ -3110,6 +3516,13 @@ pub struct Karma {
     /// The level the karma's EXP reaches in its rarity's table.
     pub level: i64,
     pub limits: GrowthLimits,
+    /// Attack, Defence and Max HP at its level and breakthrough.
+    pub stats: Option<CoreStats>,
+    pub trait_info: Option<TraitInfo>,
+    /// The trait effect at its transcendence.
+    pub trait_effect: Option<Text>,
+    /// For a worn karma, whether its trait matches its wearer's.
+    pub trait_applied: Option<bool>,
 }
 
 #[derive(Debug, Serialize)]
@@ -3121,6 +3534,13 @@ pub struct Costume {
     pub equip_character_cid: i64,
     pub parts_on: i64,
     pub is_new: bool,
+    /// The hero the costume belongs to.
+    pub hero: Option<i64>,
+    pub hero_item: Option<Item>,
+    /// `CLOTH` or `WEAPON`.
+    pub slot: Option<String>,
+    /// The hero portrait wearing it switches to.
+    pub portrait: Option<IconRef>,
 }
 
 #[derive(Debug, Serialize)]

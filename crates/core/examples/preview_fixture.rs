@@ -36,6 +36,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     fixture.insert("raw_tables", serde_json::to_value(session.raw_tables()?)?);
     fixture.insert(
+        "game_ui",
+        serde_json::to_value(dsa_core::gamedata::game_ui())?,
+    );
+    fixture.insert(
         "app_info",
         json!({
             "version": env!("CARGO_PKG_VERSION"),

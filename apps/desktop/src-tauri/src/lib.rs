@@ -178,6 +178,12 @@ struct AppInfo {
     stat_names: &'static [&'static str],
 }
 
+/// The game's own labels, inventory tabs and grade star, for the screens.
+#[tauri::command]
+fn game_ui() -> dsa_core::gamedata::GameUi {
+    dsa_core::gamedata::game_ui()
+}
+
 #[tauri::command]
 fn app_info(app: tauri::AppHandle) -> CommandResult<AppInfo> {
     let data_dir = app
@@ -693,6 +699,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             app_info,
+            game_ui,
             settings_get,
             settings_set,
             slots_scan,
