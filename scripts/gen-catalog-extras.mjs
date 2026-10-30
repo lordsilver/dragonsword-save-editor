@@ -48,13 +48,24 @@ function fail(message) {
   process.exit(1);
 }
 
-/** Rows of a table as attribute maps, the way gen-growth.mjs reads them. */
+const ENTITIES = { lt: '<', gt: '>', quot: '"', amp: '&', apos: "'" };
+/** An XML attribute value with its entities decoded, so a name reads "Hero's", not "Hero&apos;s". */
+function decode(value) {
+  return value.replace(/&(#x[0-9a-f]+|#\d+|\w+);/gi, (whole, entity) => {
+    if (entity[0] !== '#') return ENTITIES[entity] ?? whole;
+    const code =
+      entity[1] === 'x' || entity[1] === 'X' ? Number.parseInt(entity.slice(2), 16) : Number(entity.slice(1));
+    return String.fromCodePoint(code);
+  });
+}
+
+/** Rows of a table as attribute maps, the way gen-growth.mjs reads them, entities decoded. */
 function rows(table) {
   const text = readFileSync(join(extractDir, `${table}.xml`), 'utf8');
   const out = [];
   for (const element of text.matchAll(/<[\w-]+:\w+\s([^<>]*?)\/>/g)) {
     const row = {};
-    for (const attribute of element[1].matchAll(/[\w-]+:(\w+)="([^"]*)"/g)) row[attribute[1]] = attribute[2];
+    for (const attribute of element[1].matchAll(/[\w-]+:(\w+)="([^"]*)"/g)) row[attribute[1]] = decode(attribute[2]);
     out.push(row);
   }
   if (out.length === 0) fail(`${table} has no rows`);

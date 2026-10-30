@@ -145,6 +145,21 @@ for (const slot of skillSlots) {
   sources.set(`${slot.iconPath}|false`, { path: slot.iconPath, crop: false, cell: 0 });
 }
 
+// The trait emblems, the grade star and each costume's switched hero portrait
+// from crates/core/data/game.json (scripts/gen-game-data.mjs). A costume whose
+// portrait the game does not ship keeps no icon, and the hero's own shows.
+const gameDataPath = new URL('../crates/core/data/game.json', import.meta.url);
+const game = JSON.parse(readFileSync(gameDataPath, 'utf8'));
+const gameIcons = [...Object.values(game.traits), game.starIcon];
+for (const icon of gameIcons) {
+  if (!exists(icon.iconPath)) fail(`game icon ${icon.iconPath} is not in the export`);
+}
+for (const costume of Object.values(game.costumes)) {
+  if (costume.iconPath && exists(costume.iconPath)) gameIcons.push(costume);
+  else if (costume.iconPath) missing.push(`costume portrait ${costume.iconPath}`);
+}
+for (const icon of gameIcons) sources.set(`${icon.iconPath}|false`, { path: icon.iconPath, crop: false, cell: 0 });
+
 // Cells in game-path order, so a rerun on the same export gives the same sheet.
 const ordered = [...sources.keys()].sort();
 for (const [index, key] of ordered.entries()) sources.get(key).cell = index + 1;
@@ -180,6 +195,12 @@ for (const [cid, item] of [...Object.entries(catalog.items), ...Object.entries(e
   item.x = -(cell % COLUMNS) * CELL;
   item.y = -Math.floor(cell / COLUMNS) * CELL;
 }
+for (const icon of gameIcons) {
+  const cell = sources.get(`${icon.iconPath}|false`).cell;
+  icon.x = -(cell % COLUMNS) * CELL;
+  icon.y = -Math.floor(cell / COLUMNS) * CELL;
+}
+writeFileSync(gameDataPath, `${JSON.stringify(game)}\n`);
 for (const slot of skillSlots) {
   const cell = sources.get(`${slot.iconPath}|false`).cell;
   slot.x = -(cell % COLUMNS) * CELL;
