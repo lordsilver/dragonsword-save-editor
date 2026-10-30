@@ -2,6 +2,7 @@ import { Backpack, PackagePlus, Wand2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ConfirmButton, EmptyPanel } from '@/components/common';
 import { NumberField, SearchField } from '@/components/fields';
+import { GradeStars, RichText } from '@/components/game-text';
 import { gradeCard, gradeTile } from '@/components/grade-art';
 import { ItemIcon, gradeTone } from '@/components/item-icon';
 import { PageHeader, Toolbar } from '@/components/page';
@@ -19,12 +20,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { gameText, uiText, useGameUi } from '@/lib/game';
 import { MAX_DISH, MAX_STACK, isFillableStackKind } from '@/lib/limits';
 import { formatNumber, itemName, useApp } from '@/lib/store';
 import type { Item, Stack } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
-type Kind = 'all' | 'stackable' | 'cook';
+/** All items, or one of the game's inventory tabs (an item category's CategoryType). */
+type Kind = 'all' | string;
 type Sort = 'name' | 'count' | 'cid';
 
 export function InventoryScreen() {
@@ -42,11 +45,14 @@ export function InventoryScreen() {
   const [sort, setSort] = useState<Sort>('name');
   const [addOpen, setAddOpen] = useState(false);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const gameUi = useGameUi((state) => state.ui);
+  // The game's tabs, in its order, that hold something in this save.
+  const tabs = (gameUi?.tabs ?? []).filter((tab) => inventory.some((stack) => stack.card.tab === tab.key));
 
   const rows = useMemo(() => {
     const needle = query.trim().toLowerCase();
     const filtered = inventory.filter((stack) => {
-      if (kind !== 'all' && stack.kind !== kind) return false;
+      if (kind !== 'all' && stack.card.tab !== kind) return false;
       if (!showUnknown && !stack.item.known) return false;
       if (!needle) return true;
       return (
@@ -107,14 +113,11 @@ export function InventoryScreen() {
 
       <Toolbar>
         <SearchField value={query} onChange={setQuery} placeholder="Search by name, CID or instance id" />
-        <div className="flex gap-1 rounded-lg bg-muted/60 p-0.5">
-          {(
-            [
-              ['all', 'All'],
-              ['stackable', 'Materials'],
-              ['cook', 'Cooked'],
-            ] as const
-          ).map(([value, label]) => (
+        <div className="flex flex-wrap gap-1 rounded-lg bg-muted/60 p-0.5">
+          {[
+            ['all', 'All'] as const,
+            ...tabs.map((tab) => [tab.key, language === 'fr' ? tab.nameFr : tab.nameEn] as const),
+          ].map(([value, label]) => (
             <Button
               key={value}
               size="xs"
@@ -184,6 +187,7 @@ export function InventoryScreen() {
                         className="border-none bg-transparent bg-none text-white/90"
                       />
                     </div>
+                    <GradeStars count={stack.card.stars} size={15} className="-mb-1.5 z-10" />
                     <div
                       className={cn(
                         'mx-[4%] mb-[4%] self-stretch rounded-b-md bg-zinc-900/75 py-0.5 text-center text-sm font-semibold text-white tabular-nums',
@@ -243,6 +247,7 @@ function StackDetail({
   // limit and is always safe to Max.
   const showMax = stack.kind === 'cook' || isFillableStackKind(stack.item.kind);
   const name = itemName(stack.item, language);
+  const gameUi = useGameUi((state) => state.ui);
   return (
     <aside className="scroll-thin flex min-h-0 flex-col gap-5 overflow-y-auto border-l p-5">
       <div className="flex flex-col gap-3">
@@ -252,15 +257,35 @@ function StackDetail({
           className="relative flex aspect-[460/200] items-center overflow-hidden rounded-lg bg-cover bg-center p-3"
           style={{ backgroundImage: `url(${gradeCard(stack.item.grade)})` }}
         >
-          <h2 className="z-10 max-w-[60%] text-lg leading-tight font-semibold tracking-tight text-balance text-white drop-shadow-[0_1px_2px_rgb(0_0_0/0.6)]">
-            {name}
-          </h2>
+          <div className="z-10 flex max-w-[62%] flex-col gap-0.5 self-stretch">
+            <h2 className="text-lg leading-tight font-semibold tracking-tight text-balance text-white drop-shadow-[0_1px_2px_rgb(0_0_0/0.6)]">
+              {name}
+            </h2>
+            {stack.card.subtitle && (
+              <span className="text-xs text-white/70">{gameText(stack.card.subtitle, language)}</span>
+            )}
+            <span className="mt-auto text-xs text-white/75 tabular-nums">
+              {uiText(gameUi, 'owned', language, formatNumber(stack.count))}
+            </span>
+          </div>
           <ItemIcon
             item={stack.item}
             size={96}
             className="absolute right-2 border-none bg-transparent bg-none text-white/90"
           />
+          <GradeStars count={stack.card.stars} size={18} className="absolute right-4 bottom-2" />
         </div>
+        {stack.card.cooldown ? (
+          <p className="text-sm text-muted-foreground">
+            {language === 'fr' ? `Recharge ${stack.card.cooldown} s` : `Cooldown ${stack.card.cooldown} seconds`}
+          </p>
+        ) : null}
+        {(stack.card.desc || stack.card.sub) && (
+          <div className="space-y-2 text-sm leading-relaxed text-muted-foreground">
+            {stack.card.desc && <RichText text={gameText(stack.card.desc, language)} className="block" />}
+            {stack.card.sub && <RichText text={gameText(stack.card.sub, language)} className="block italic" />}
+          </div>
+        )}
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-1.5 text-xs">
             {stack.item.grade && (

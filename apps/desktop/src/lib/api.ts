@@ -8,6 +8,7 @@ import type {
   Costume,
   Currency,
   Equipment,
+  GameUi,
   Gem,
   HeroEntry,
   Karma,
@@ -73,6 +74,10 @@ async function invoke<T = void>(command: string, args?: Record<string, unknown>)
 
 export function isDesktop(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+}
+
+export async function gameUi(): Promise<GameUi> {
+  return invoke<GameUi>('game_ui');
 }
 
 export async function appInfo(): Promise<AppInfo> {

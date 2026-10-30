@@ -2,6 +2,7 @@ import { Gem, Lock, Settings2, Sparkles, Sword, Swords } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { EmptyPanel } from '@/components/common';
 import { BigNumberField, NumberField, SearchField } from '@/components/fields';
+import { GradeStars } from '@/components/game-text';
 import { ItemIcon } from '@/components/item-icon';
 import { PageHeader, Panel, Toolbar } from '@/components/page';
 import { FieldRow, InfoNote, StatTile } from '@/components/summary';
@@ -17,6 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
+import { formatStatValue, gameText, statName, uiText, useGameUi } from '@/lib/game';
 import { MAX_ENCHANT, MAX_EQUIP_EXP, MAX_STAT } from '@/lib/limits';
 import { formatNumber, itemName, useApp } from '@/lib/store';
 import type { Equipment } from '@/lib/types';
@@ -25,6 +27,7 @@ import { cn } from '@/lib/utils';
 type Filter = 'all' | 'locked' | 'stats';
 
 export function EquipmentScreen() {
+  const gameUi = useGameUi((state) => state.ui);
   const equipment = useApp((state) => state.equipment);
   const save = useApp((state) => state.save);
   const language = useApp((state) => state.settings.language);
@@ -69,7 +72,7 @@ export function EquipmentScreen() {
     <div className="space-y-5">
       <PageHeader
         title="Equipment"
-        description="Weapons and armor in tb_equipment. Enchantment and experience are ordinary columns; stat rolls are exposed as raw CIDs because their type table is not published."
+        description="Armor in tb_equipment. Stat rolls are named and valued with the game's own tables at each piece's enchant level; sub stats open every few enchant levels, as the game's item card shows."
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -128,7 +131,7 @@ export function EquipmentScreen() {
         <Panel title="Gear" description="Values are committed when a field loses focus." contentClassName="p-0">
           <div className="overflow-x-auto">
             <div className="min-w-[980px]">
-              <div className="grid grid-cols-[minmax(0,1.2fr)_6rem_7rem_5rem_10rem_minmax(0,0.8fr)_4rem] gap-3 border-b px-4 py-2 text-xs text-muted-foreground">
+              <div className="grid grid-cols-[minmax(0,1.1fr)_6rem_7rem_5rem_9rem_minmax(0,1.3fr)_4rem] gap-3 border-b px-4 py-2 text-xs text-muted-foreground">
                 <span>Item</span>
                 <span>Enchant</span>
                 <span>EXP</span>
@@ -142,7 +145,7 @@ export function EquipmentScreen() {
                   <div
                     key={piece.dbid}
                     className={cn(
-                      'grid grid-cols-[minmax(0,1.2fr)_6rem_7rem_5rem_10rem_minmax(0,0.8fr)_4rem] items-center gap-3 px-4',
+                      'grid grid-cols-[minmax(0,1.1fr)_6rem_7rem_5rem_9rem_minmax(0,1.3fr)_4rem] items-center gap-3 px-4',
                       compactRows ? 'py-1.5' : 'py-2.5',
                     )}
                   >
@@ -150,10 +153,18 @@ export function EquipmentScreen() {
                       <ItemIcon item={piece.item} size={compactRows ? 30 : 38} />
                       <div className="min-w-0">
                         <div className="truncate text-sm font-medium">{itemName(piece.item, language)}</div>
-                        <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                          <span className="font-mono">CID {piece.cid}</span>
-                          <span>·</span>
-                          <span className="font-mono">DBID {piece.dbid}</span>
+                        <div
+                          className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground"
+                          title={`CID ${piece.cid} · DBID ${piece.dbid}`}
+                        >
+                          {piece.stats && <GradeStars count={piece.stats.stars} size={13} />}
+                          {piece.set && <span>{language === 'fr' ? piece.set.nameFr : piece.set.nameEn}</span>}
+                          {piece.equippedItem && (
+                            <span className="flex items-center gap-1 rounded-full bg-brand/10 py-px pr-1.5 pl-px text-brand">
+                              <ItemIcon item={piece.equippedItem} size={16} className="rounded-full" />
+                              {uiText(gameUi, 'equippedBy', language, itemName(piece.equippedItem, language))}
+                            </span>
+                          )}
                           {!piece.item.known && <span className="text-warn-strong">unknown item</span>}
                         </div>
                       </div>
@@ -188,18 +199,58 @@ export function EquipmentScreen() {
                       ariaLabel="Socketed gem instance id"
                     />
                     <div className="min-w-0">
-                      {piece.mainStatCid ? (
-                        <div className="space-y-0.5">
-                          <div className="truncate font-mono text-xs text-muted-foreground">
-                            main {piece.mainStatCid}
-                            {piece.hasStatValues ? ` · value ${formatNumber(piece.mainStatValue)}` : ''}
+                      {piece.stats?.main ? (
+                        <div
+                          className="space-y-0.5 text-xs"
+                          title={`main ${piece.mainStatCid} · sub ${piece.subStatCids.filter(Boolean).join(', ') || 'none'}`}
+                        >
+                          <div className="flex justify-between gap-2 font-medium">
+                            <span className="truncate">{statName(piece.stats.main, language)}</span>
+                            <span className="tabular-nums">
+                              {formatStatValue(piece.stats.main.value, piece.stats.main.percent)}
+                            </span>
                           </div>
-                          <div
-                            className="truncate font-mono text-xs text-muted-foreground/80"
-                            title={piece.subStatCids.filter(Boolean).join(', ')}
-                          >
-                            sub {piece.subStatCids.filter(Boolean).join(', ') || 'none'}
-                          </div>
+                          {piece.stats.subs.map((sub) => (
+                            <div
+                              key={sub.unlockAt}
+                              className={cn('flex justify-between gap-2', !sub.active && 'text-muted-foreground/70')}
+                            >
+                              <span className="truncate">{sub.stat ? statName(sub.stat, language) : '—'}</span>
+                              <span className="shrink-0 tabular-nums">
+                                {sub.active && sub.stat
+                                  ? formatStatValue(sub.stat.value, sub.stat.percent)
+                                  : uiText(gameUi, 'needed', language, sub.unlockAt)}
+                              </span>
+                            </div>
+                          ))}
+                          {piece.set && (
+                            <div className="pt-0.5">
+                              {piece.set.bonuses.map((bonus) => (
+                                <div
+                                  key={bonus.count}
+                                  className={cn(
+                                    bonus.active
+                                      ? 'text-emerald-600 dark:text-emerald-400'
+                                      : 'text-muted-foreground/70',
+                                  )}
+                                >
+                                  {language === 'fr' ? bonus.labelFr : bonus.labelEn} :{' '}
+                                  {bonus.stats
+                                    .map(
+                                      (stat) =>
+                                        `${statName(stat, language)} +${formatStatValue(stat.value, stat.percent)}`,
+                                    )
+                                    .concat(bonus.skills.map((skill) => gameText(skill, language)))
+                                    .join(', ')}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ) : piece.mainStatCid ? (
+                        <div className="truncate font-mono text-xs text-muted-foreground">
+                          main {piece.mainStatCid}
+                          {piece.hasStatValues ? ` · value ${formatNumber(piece.mainStatValue)}` : ''}
                         </div>
                       ) : (
                         <span className="text-xs text-muted-foreground/70">No stat rolls</span>

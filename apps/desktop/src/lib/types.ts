@@ -204,6 +204,100 @@ export interface Stack {
   kind: 'stackable' | 'cook';
   id: string;
   count: number;
+  /** The tab, category, texts and stars the game's bag shows for the item. */
+  card: ItemCard;
+}
+
+/** A game string in both languages, with the game's rich-text tags. */
+export interface GameText {
+  en: string;
+  fr: string;
+}
+
+export interface ItemCard {
+  /** The game's inventory tab: COOK, EQUIP, KARMA, GEM, GROW_MATERIAL, NORMAL_MATERIAL, VALUABLE or QUEST. */
+  tab: string | null;
+  /** The category the card names under the title ("Grilling", "Meat" …). */
+  subtitle: GameText | null;
+  desc: GameText | null;
+  sub: GameText | null;
+  stars: number;
+  cooldown: number | null;
+}
+
+export interface GameUi {
+  tabs: Array<{ key: string; nameEn: string; nameFr: string }>;
+  strings: Record<string, GameText>;
+  starIcon: { iconX: number; iconY: number };
+  maxStamina: number;
+}
+
+/** One stat named as the game names it; a percentage is a fraction (0.0336 is 3.36%). */
+export interface StatValue {
+  key: string;
+  nameEn: string;
+  nameFr: string;
+  percent: boolean;
+  value: number;
+}
+
+export interface TraitInfo {
+  key: string;
+  nameEn: string;
+  nameFr: string;
+  iconX: number;
+  iconY: number;
+}
+
+export interface HeroStats {
+  attack: number;
+  defence: number;
+  maxHp: number;
+  critical: number;
+  criticalDamage: number;
+  maxStamina: number;
+  details: StatValue[];
+  karmaTraitApplied: boolean | null;
+}
+
+export interface AwakenStep {
+  step: number;
+  nameEn: string;
+  nameFr: string;
+  descEn: string;
+  descFr: string;
+  item: number;
+}
+
+export interface CoreStats {
+  attack: number;
+  defence: number;
+  maxHp: number;
+}
+
+export interface EquipmentStats {
+  part: string;
+  grade: string;
+  stars: number;
+  maxEnchant: number;
+  main: StatValue | null;
+  subs: Array<{ stat: StatValue | null; unlockAt: number; active: boolean }>;
+  setId: number | null;
+}
+
+export interface SetView {
+  id: number;
+  nameEn: string;
+  nameFr: string;
+  pieces: number;
+  bonuses: Array<{
+    count: number;
+    labelEn: string;
+    labelFr: string;
+    active: boolean;
+    stats: StatValue[];
+    skills: GameText[];
+  }>;
 }
 
 export interface Character {
@@ -221,6 +315,15 @@ export interface Character {
   /** False for a story hero the game seeded who has not joined yet. */
   joined: boolean;
   limits: GrowthLimits;
+  /** The hero's trait, named and with its emblem. */
+  traitInfo: TraitInfo | null;
+  /** The hero screen's stats, from the game's own formulas and what the hero wears. */
+  stats: HeroStats | null;
+  quote: GameText | null;
+  bio: GameText | null;
+  awaken: AwakenStep[];
+  /** The CLOTH costume the hero wears; `item` then shows its portrait. */
+  costumeCid: number | null;
 }
 
 /** A hero the game hands out, for the recruit list. */
@@ -264,6 +367,18 @@ export interface Skill {
   effect: SkillEffect | null;
   /** The disc colour, #rrggbb: the effect's, or the game's ATTACK colour. */
   color: string;
+  /** The slot's label on the Skill screen: Active 1, Signal A, Master … */
+  label: GameText | null;
+  /** SkillDesc 1 the description, 2 the damage, 3 the status effect inflicted, 4 the notes. */
+  lines: Array<{ kind: string; text: GameText }>;
+  /** What raising the skill one level costs. */
+  next: {
+    level: number;
+    gold: number;
+    goldOwned: number;
+    ascend: number | null;
+    items: Array<{ item: Item; count: number; owned: number }>;
+  } | null;
 }
 
 export interface SkillEffect {
@@ -319,6 +434,12 @@ export interface Equipment {
   mainStatValue: number;
   subStatValues: number[];
   hasStatValues: boolean;
+  /** The rolls named and valued at the enchant level, from the game's tables. */
+  stats: EquipmentStats | null;
+  set: SetView | null;
+  equippedBy: number | null;
+  /** The wearer's portrait. */
+  equippedItem: Item | null;
 }
 
 export interface Gem {
@@ -341,6 +462,11 @@ export interface Karma {
   /** The level the karma's EXP reaches in its rarity's table. */
   level: number;
   limits: GrowthLimits;
+  stats: CoreStats | null;
+  traitInfo: TraitInfo | null;
+  traitEffect: GameText | null;
+  /** For a worn karma, whether its trait matches its wearer's. */
+  traitApplied: boolean | null;
 }
 
 export interface Costume {
@@ -350,6 +476,13 @@ export interface Costume {
   equipCharacterCid: number;
   partsOn: number;
   isNew: boolean;
+  /** The hero the costume belongs to. */
+  hero: number | null;
+  heroItem: Item | null;
+  /** CLOTH or WEAPON. */
+  slot: string | null;
+  /** The hero portrait wearing it switches to. */
+  portrait: { iconX: number; iconY: number } | null;
 }
 
 /** The rewards one completed quest lists in the game's quest table. */
@@ -495,4 +628,4 @@ export type Section =
   | 'raw'
   | 'settings';
 
-export type HeroTab = 'info' | 'skills' | 'equipment';
+export type HeroTab = 'info' | 'skills' | 'equipment' | 'awaken';

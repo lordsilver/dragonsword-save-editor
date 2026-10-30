@@ -19,6 +19,7 @@ import skillDiscCircle from '@/assets/skill-disc-circle.webp';
 import skillDiscDiamond from '@/assets/skill-disc-diamond.webp';
 import { ConfirmButton, EmptyPanel } from '@/components/common';
 import { NumberField } from '@/components/fields';
+import { RichText } from '@/components/game-text';
 import { ItemIcon } from '@/components/item-icon';
 import { PageHeader } from '@/components/page';
 import { NativeSelect } from '@/components/select';
@@ -29,6 +30,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Spinner } from '@/components/ui/spinner';
+import { formatStatValue, gameText, statName, uiText, useGameUi } from '@/lib/game';
 import {
   MAX_CHARACTER_HP,
   MAX_POINTS,
@@ -38,7 +40,17 @@ import {
   skillLimit,
 } from '@/lib/limits';
 import { formatNumber, itemName, useApp } from '@/lib/store';
-import type { Character, HeroEntry, HeroSource, HeroTab, Loadout, LoadoutEntry, Skill, TeamPage } from '@/lib/types';
+import type {
+  Character,
+  HeroEntry,
+  HeroSource,
+  HeroTab,
+  Loadout,
+  LoadoutEntry,
+  Skill,
+  TeamPage,
+  TraitInfo,
+} from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 type SlotKey = keyof Omit<Loadout, 'characterCid'>;
@@ -55,6 +67,7 @@ const TABS: Array<[HeroTab, string]> = [
   ['info', 'Information'],
   ['skills', 'Skills'],
   ['equipment', 'Equipment'],
+  ['awaken', 'Awaken'],
 ];
 
 export function CharactersScreen() {
@@ -225,6 +238,7 @@ function HeroDetail({ character, language, busy }: { character: Character; langu
         <ItemIcon item={character.item} size={72} className="rounded-xl" />
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            {character.traitInfo && <TraitEmblem info={character.traitInfo} size={30} language={language} />}
             <h2 className="text-xl font-semibold tracking-tight">{name}</h2>
             <Stars count={character.ascend} max={limits.maxStage} />
             {!character.joined && (
@@ -283,15 +297,129 @@ function HeroDetail({ character, language, busy }: { character: Character; langu
       </div>
 
       <div className="scroll-thin min-h-0 flex-1 overflow-y-auto px-6 py-5">
-        {tab === 'info' && <HeroInformation character={character} busy={busy} />}
+        {tab === 'info' && <HeroInformation character={character} busy={busy} language={language} />}
         {tab === 'skills' && <HeroSkills character={character} language={language} busy={busy} />}
         {tab === 'equipment' && <HeroEquipment language={language} />}
+        {tab === 'awaken' && <HeroAwaken character={character} language={language} />}
       </div>
     </div>
   );
 }
 
-function HeroInformation({ character, busy }: { character: Character; busy: boolean }) {
+/** A trait's emblem, as the game draws it beside a hero's or karma's name. */
+export function TraitEmblem({ info, size, language }: { info: TraitInfo; size: number; language: string }) {
+  return (
+    <span title={language === 'fr' ? info.nameFr : info.nameEn} className="inline-flex shrink-0">
+      <ItemIcon
+        item={{ nameEn: info.nameEn, iconX: info.iconX, iconY: info.iconY, category: 'trait', icon: true }}
+        size={size}
+        className="rounded-none border-none bg-transparent"
+      />
+    </span>
+  );
+}
+
+/**
+ * The hero screen's stat block, computed from the game's own tables: the
+ * hero's level and breakthrough, worn equipment and its sets, and karma.
+ */
+function HeroStatBlock({ character, language }: { character: Character; language: string }) {
+  const gameUi = useGameUi((state) => state.ui);
+  const [detailed, setDetailed] = useState(false);
+  const stats = character.stats;
+  if (!stats) return null;
+  const label = (key: string, fallback: string) => uiText(gameUi, `stat.${key}`, language) || fallback;
+  const rows: Array<[string, string]> = [
+    [label('Attack', 'Attack'), formatStatValue(stats.attack, false)],
+    [label('Defence', 'Defense'), formatStatValue(stats.defence, false)],
+    [label('MAXHP', 'Max HP'), formatStatValue(stats.maxHp, false)],
+    [label('Critical_Per', 'Critical Rate'), formatStatValue(stats.critical, true)],
+    [label('CriticalDmg_Per', 'Critical Damage'), formatStatValue(stats.criticalDamage, true)],
+    [label('MaxStamina', 'Max Stamina'), formatStatValue(stats.maxStamina, false)],
+  ];
+  return (
+    <section className="space-y-3">
+      <div className="space-y-px">
+        {rows.map(([name, value]) => (
+          <div key={name} className="flex items-center justify-between rounded-md px-3 py-1 odd:bg-muted/50">
+            <span className="text-sm">{name}</span>
+            <span className="text-base font-semibold tabular-nums">{value}</span>
+          </div>
+        ))}
+      </div>
+      {stats.details.length > 0 && (
+        <div>
+          <button
+            type="button"
+            className="text-xs text-muted-foreground hover:text-foreground"
+            onClick={() => setDetailed(!detailed)}
+          >
+            {uiText(gameUi, 'detailedStats', language) || 'Detailed Stats'} ({stats.details.length})
+          </button>
+          {detailed && (
+            <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-0.5 text-xs">
+              {stats.details.map((stat) => (
+                <div key={stat.key} className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">{statName(stat, language)}</span>
+                  <span className="tabular-nums">{formatStatValue(stat.value, stat.percent)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      {stats.karmaTraitApplied === false && (
+        <p className="text-xs text-muted-foreground">
+          {uiText(gameUi, 'traitEffect', language)} ({uiText(gameUi, 'notApplied', language)}): the worn karma's trait
+          differs from the hero's.
+        </p>
+      )}
+      {(character.quote || character.bio) && (
+        <div className="space-y-2 border-t pt-3 text-sm text-muted-foreground italic">
+          {character.quote && <RichText text={gameText(character.quote, language)} className="block" />}
+          {character.bio && <RichText text={gameText(character.bio, language)} className="block" />}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/** The six Awaken steps, as the game's Awaken tab lists them. */
+function HeroAwaken({ character, language }: { character: Character; language: string }) {
+  if (character.awaken.length === 0) {
+    return <p className="text-sm text-muted-foreground">The game data names no Awaken steps for this hero.</p>;
+  }
+  return (
+    <div className="max-w-3xl space-y-2">
+      <p className="text-xs text-muted-foreground">
+        Awakened {character.transcend} of {character.awaken.length}; the Information tab edits the step.
+      </p>
+      {character.awaken.map((step) => {
+        const reached = step.step <= character.transcend;
+        return (
+          <div
+            key={step.step}
+            className={cn('rounded-lg border p-3', reached ? 'border-brand/50 bg-brand/5' : 'opacity-80')}
+          >
+            <div className="flex items-baseline gap-2">
+              <span className="flex size-5 items-center justify-center rounded-full border text-xs tabular-nums">
+                {step.step}
+              </span>
+              <h4 className="font-medium">{language === 'fr' ? step.nameFr : step.nameEn}</h4>
+              {reached && <Badge variant="outline">Awakened</Badge>}
+            </div>
+            <RichText
+              text={language === 'fr' ? step.descFr : step.descEn}
+              className="mt-1 block text-sm text-muted-foreground"
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function HeroInformation({ character, busy, language }: { character: Character; busy: boolean; language: string }) {
   const setCharacter = useApp((state) => state.setCharacter);
   const limits = character.limits;
   const change = (field: string) => (value: number) => void setCharacter(character.cid, field, value);
@@ -313,6 +441,7 @@ function HeroInformation({ character, busy }: { character: Character; busy: bool
 
   return (
     <div className="max-w-2xl space-y-5">
+      <HeroStatBlock character={character} language={language} />
       <div className="space-y-px">
         {rows.map((row) => {
           const top = formatNumber(Math.max(row.max, row.value));
@@ -537,15 +666,51 @@ function SkillDetail({
 
   return (
     <aside className="flex flex-col items-center gap-3 self-start rounded-lg border p-5 text-center">
+      {(skill.label || (effect && skill.effect)) && (
+        <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs">
+          {effect && skill.effect && (
+            <span className="flex items-center gap-1 rounded-full border bg-muted/40 py-0.5 pr-2 pl-0.5">
+              <ItemIcon
+                item={{ ...skill.effect, category: 'skill', icon: true }}
+                size={18}
+                className="rounded-full border-none bg-zinc-900"
+              />
+              {effect}
+            </span>
+          )}
+          {skill.label && (
+            <span className="rounded-full border bg-muted/40 px-2 py-0.5 text-muted-foreground">
+              {gameText(skill.label, language)}
+            </span>
+          )}
+        </div>
+      )}
       <SkillIcon skill={skill} size={88} />
       <div>
         <div className="text-sm text-muted-foreground tabular-nums">
           {skill.saved || !skill.editable ? `Lv. ${skill.level}` : 'Not in this save'}
         </div>
         <h3 className="font-heading text-lg font-semibold">{name}</h3>
-        {effect && <div className="text-xs text-muted-foreground">Applies {effect}</div>}
       </div>
-      {description && <p className="text-sm text-muted-foreground">{description}</p>}
+      {skill.lines.length > 0 ? (
+        <div className="w-full space-y-1.5 text-left text-sm">
+          {skill.lines.map((line) => (
+            <RichText
+              key={line.kind}
+              text={gameText(line.text, language)}
+              className={cn(
+                'block leading-relaxed',
+                // Damage and the inflicted status sit on the game's tinted rows.
+                line.kind === '2' || line.kind === '3' ? 'rounded-md bg-muted/60 px-2.5 py-1' : 'text-muted-foreground',
+                line.kind === '4' && 'pt-1',
+              )}
+            />
+          ))}
+        </div>
+      ) : (
+        description && <p className="text-sm text-muted-foreground">{description}</p>
+      )}
+      {skill.next && <SkillCostView cost={skill.next} language={language} />}
       <div className="mt-1 w-full border-t pt-4">
         {!skill.editable ? (
           <p className="text-xs text-muted-foreground">
@@ -586,6 +751,39 @@ function SkillDetail({
         )}
       </div>
     </aside>
+  );
+}
+
+/** The Skill screen's Required Materials and gold for the next level. */
+function SkillCostView({ cost, language }: { cost: NonNullable<Skill['next']>; language: string }) {
+  const gameUi = useGameUi((state) => state.ui);
+  return (
+    <div className="w-full space-y-2 border-t pt-3 text-left">
+      <div className="flex items-baseline justify-between text-xs text-muted-foreground">
+        <span>{uiText(gameUi, 'requiredMaterials', language) || 'Required Materials'}</span>
+        <span>Lv. {cost.level}</span>
+      </div>
+      {cost.items.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {cost.items.map(({ item, count, owned }) => (
+            <div key={item.cid} className="flex flex-col items-center gap-0.5" title={itemName(item, language)}>
+              <ItemIcon item={item} size={40} />
+              <span className="text-[11px] tabular-nums">
+                <span className={owned < count ? 'text-destructive' : undefined}>{formatNumber(owned)}</span>/
+                {formatNumber(count)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="flex items-baseline justify-between text-sm">
+        <span className="text-muted-foreground">{uiText(gameUi, 'required', language) || 'Required'}</span>
+        <span className={cn('font-medium tabular-nums', cost.goldOwned < cost.gold && 'text-destructive')}>
+          {formatNumber(cost.gold)} gold
+        </span>
+      </div>
+      {cost.ascend ? <p className="text-xs text-muted-foreground">Needs breakthrough {cost.ascend}.</p> : null}
+    </div>
   );
 }
 

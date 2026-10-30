@@ -236,6 +236,23 @@ function CostumeCard({
             <span>·</span>
             <span className="font-mono">DBID {costume.dbid}</span>
           </div>
+          {costume.slot && (
+            <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+              {costume.portrait && (
+                // The hero portrait the game shows while this costume is worn.
+                <ItemIcon
+                  item={{ nameEn: costume.item.nameEn, ...costume.portrait, category: 'character', icon: true }}
+                  size={22}
+                  className="rounded-full"
+                />
+              )}
+              <span>
+                {costume.slot === 'CLOTH' ? 'Outfit' : 'Weapon'}
+                {costume.heroItem ? ` for ${itemName(costume.heroItem, language)}` : ''}
+                {costume.slot === 'CLOTH' ? ' · switches the hero portrait when worn' : ''}
+              </span>
+            </div>
+          )}
           {costume.item.grade && (
             <span
               className={cn(

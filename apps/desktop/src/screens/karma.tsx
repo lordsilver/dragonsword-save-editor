@@ -2,6 +2,7 @@ import { Flame, Lock, Sparkles, UserCheck } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { EmptyPanel } from '@/components/common';
 import { NumberField, SearchField } from '@/components/fields';
+import { RichText } from '@/components/game-text';
 import { ItemIcon } from '@/components/item-icon';
 import { PageHeader, Panel, Toolbar } from '@/components/page';
 import { NativeSelect } from '@/components/select';
@@ -9,12 +10,15 @@ import { CountPill, InfoNote, StatTile } from '@/components/summary';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { gameText, uiText, useGameUi } from '@/lib/game';
 import { compareDbid, formatNumber, itemName, useApp } from '@/lib/store';
 import type { Karma } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 type Filter = 'all' | 'equipped' | 'idle';
 
 export function KarmaScreen() {
+  const gameUi = useGameUi((state) => state.ui);
   const karma = useApp((state) => state.karma);
   const characters = useApp((state) => state.characters);
   const save = useApp((state) => state.save);
@@ -142,6 +146,36 @@ export function KarmaScreen() {
                       Lv {entry.level} · breakthrough {entry.limits.stage} of {entry.limits.maxStage} · level cap{' '}
                       {entry.limits.level} · EXP cap {formatNumber(entry.limits.exp)}
                     </div>
+                    {entry.stats && (
+                      <div className="mt-1 flex flex-wrap gap-x-3 text-xs tabular-nums">
+                        <span>
+                          {uiText(gameUi, 'stat.Attack', language) || 'Attack'} {formatNumber(entry.stats.attack)}
+                        </span>
+                        <span>
+                          {uiText(gameUi, 'stat.Defence', language) || 'Defense'} {formatNumber(entry.stats.defence)}
+                        </span>
+                        <span>
+                          {uiText(gameUi, 'stat.MAXHP', language) || 'Max HP'} {formatNumber(entry.stats.maxHp)}
+                        </span>
+                      </div>
+                    )}
+                    {entry.traitEffect && (
+                      <div className="mt-1 text-xs">
+                        <span className="font-medium">
+                          {uiText(gameUi, 'traitEffect', language) || 'Trait Effect'}
+                          {entry.traitInfo
+                            ? ` · ${language === 'fr' ? entry.traitInfo.nameFr : entry.traitInfo.nameEn}`
+                            : ''}
+                        </span>
+                        {entry.traitApplied === false && (
+                          <span className="ml-1 text-destructive">({uiText(gameUi, 'notApplied', language)})</span>
+                        )}
+                        <RichText
+                          text={gameText(entry.traitEffect, language)}
+                          className={cn('block text-muted-foreground', entry.traitApplied === false && 'opacity-60')}
+                        />
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs text-muted-foreground">Lock</span>
