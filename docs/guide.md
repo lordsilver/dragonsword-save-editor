@@ -4,7 +4,7 @@
 
 - Close DragonSword Awakening. A running game keeps the save database open and may overwrite the file after the editor writes it.
 - Know where your saves live: `.../DragonSword Awakening/DS/Saved/SaveGames/<accountId>/<accountId>_Slot<N>.db`.
-- The first save of a session creates a timestamped `.bak` next to the file. You can also press **Backup** at any time without editing anything.
+- The first save of a session creates a timestamped `.bak` next to the file. For an extra copy at any time, use **Backup now** in **Settings** or Ctrl+B.
 
 ## Opening a save
 
@@ -41,7 +41,7 @@ Existing values above a cap stay editable, and every field uses `max(cap, curren
 
 ## Editing
 
-Every screen edits only the open temporary copy. The foot of the sidebar shows the open save and **Unsaved changes** until you save, with **Save** (Ctrl+S), **Backup** (Ctrl+B) and **Close** below it. The theme is in **Settings**. The sidebar shows how many rows of each kind the save holds.
+Every screen edits only the open temporary copy. The bar at the top names the open save and holds **Close** and **Save** (Ctrl+S); pick the save's name to switch to another slot from the save folder, open a file, or scan another folder. With unsaved changes, closing or switching asks whether to save or discard them first. Each screen with unsaved changes has a dot in the sidebar, and the status bar at the bottom counts them; pick the count to see which screens they are on. The status bar's right end switches the catalog language, unknown items, row density and the theme. The sidebar shows how many rows of each kind the save holds.
 
 ### Overview
 
@@ -107,7 +107,7 @@ The escape hatch. Pick a table, search every column, page through rows, and clic
 ## Saving, backups, and recovery
 
 - **Save changes** or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>S</kbd>: checks that the file on disk is still the one the editor opened or last wrote, runs SQLite's integrity check, refuses any gem link the edit would break, backs it up when it is not the editor's own output, re-encrypts, reads the temporary file back, and atomically replaces the save.
-- **Backup** or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>B</kbd>: copies the current on-disk save to a timestamped `.bak` without writing edits.
+- **Backup now** in **Settings**, or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>B</kbd>: copies the current on-disk save to a timestamped `.bak` without writing edits.
 - **Open another save** or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>O</kbd>: blocked while there are unsaved changes.
 - **Close save** asks before discarding unsaved changes.
 - **Close the window**: asks to save and close, discard and close, or cancel when the save has unsaved changes or a value is still being typed. A clean save closes immediately.
