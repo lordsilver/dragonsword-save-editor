@@ -3,8 +3,9 @@
 // nothing. Served only by `pnpm preview:ui`, never built into the app.
 //
 // Query parameters set the starting view: `fixture` (a recording's name when
-// several are served), `section`, `hero` (a CID), `tab` (the hero tab), `theme`, and `trace` to list
-// commands the recording does not answer.
+// several are served), `section`, `hero` (a CID), `tab` (the hero tab), `theme`, `rewards=off` and
+// `undo` for the two world-progress settings, and `trace` to list commands the recording does not
+// answer.
 import { mockIPC, mockWindows } from '@tauri-apps/api/mocks';
 import type { HeroTab, Section, Settings } from '@/lib/types';
 
@@ -29,7 +30,15 @@ const PER_ID = new Set(['chest_loot_get']);
 
 const params = new URLSearchParams(window.location.search);
 const theme = (params.get('theme') ?? 'dark') as Settings['theme'];
-const settings: Settings = { language: 'en', theme, compactRows: false, showUnknown: false, lastFolder: null };
+const settings: Settings = {
+  language: 'en',
+  theme,
+  compactRows: false,
+  showUnknown: false,
+  lastFolder: null,
+  grantRewards: params.get('rewards') !== 'off',
+  allowUndo: params.has('undo'),
+};
 
 const fixture: Fixture = await fetch(
   `/__preview/fixture.json?name=${encodeURIComponent(params.get('fixture') ?? 'fixture')}`,

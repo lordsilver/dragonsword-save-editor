@@ -2,6 +2,7 @@ import {
   BookOpen,
   Database,
   FolderOpen,
+  Gift,
   HardDriveDownload,
   Info,
   Keyboard,
@@ -15,6 +16,7 @@ import {
   ShieldCheck,
   Sun,
   Type,
+  Undo2,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { toast } from 'sonner';
@@ -194,6 +196,28 @@ export function SettingsScreen() {
                 onCheckedChange={(checked) => update({ showUnknown: checked })}
               />
             </div>
+          </div>
+        </Panel>
+
+        <Panel
+          title="Rewards and progress"
+          description="How completing quests and the World map's places changes the save."
+        >
+          <div className="space-y-2">
+            <ToggleRow
+              icon={<Gift />}
+              label="Hand out rewards"
+              description="Completing a quest, opening a chest or activating a warp point adds what it gives, as the game does. Turn off to change progress without adding anything."
+              checked={settings.grantRewards}
+              onCheckedChange={(checked) => update({ grantRewards: checked })}
+            />
+            <ToggleRow
+              icon={<Undo2 />}
+              label="Allow undoing progress"
+              description="Lets chests be marked not opened, and warp points, Eona's Legacy, statues and dungeons be switched off again. Off by default: the game never undoes them, and doing one again hands out its reward again."
+              checked={settings.allowUndo}
+              onCheckedChange={(checked) => update({ allowUndo: checked })}
+            />
           </div>
         </Panel>
 

@@ -23,7 +23,9 @@
 //   (WarpPositionData): warp points (WAYPOINT), Statues of Organa (STATUE),
 //   Eona's Legacy (WINDMILL) and the Tower of Trials (TRIALTOWER). `switch` is
 //   the row's SwitchID, the tb_switch bit set once it is activated (category
-//   = switch / 64, bit = switch % 64), as the cookbook's recipes are;
+//   = switch / 64, bit = switch % 64), as the cookbook's recipes are.
+//   `reward` is what activating it gives, from its RewardID (a STATIC_REWARD
+//   bundle): `[item, count]` pairs, 100 corps EXP for every warp point;
 // - statues: the FieldStatueData rows on a waypoint. A statue is restored
 //   piece by piece: each FieldStatuePartsData row is a bit of tb_field_statue
 //   (category = id / 64), and the `Complete` part is the statue whole;
@@ -100,6 +102,39 @@ const questText = stringTable('StringQuestData');
 const number = (value) => (value === undefined || value === '' ? null : Number(value));
 const byId = (list) => new Map(list.map((row) => [row.ID, row]));
 
+// ----------------------------------------------------------------- rewards
+
+const rewards = new Map();
+for (const row of rows('RewardData')) {
+  if (!rewards.has(row.ID)) rewards.set(row.ID, []);
+  rewards.get(row.ID).push(row);
+}
+const randomItems = new Map();
+for (const row of rows('RewardRandomData')) {
+  if (!randomItems.has(row.ID)) randomItems.set(row.ID, []);
+  randomItems.get(row.ID).push(row);
+}
+const gameItems = new Set(rows('GameItemData').map((row) => row.ID));
+
+/** A STATIC_REWARD bundle's items, `[item, count]`: every entry of every draw, at its fixed count. */
+function staticReward(id, what) {
+  const bundles = rewards.get(id) ?? fail(`${what} names missing reward ${id}`);
+  if (bundles.length !== 1) fail(`${what} reward ${id} has ${bundles.length} rows`);
+  const [bundle] = bundles;
+  if (bundle.ContentsType !== 'STATIC_REWARD') fail(`${what} reward ${id} is ${bundle.ContentsType}`);
+  const items = [];
+  for (let slot = 1; slot <= 10; slot += 1) {
+    const group = bundle[`RandomID${slot}`];
+    if (!group) continue;
+    for (const entry of randomItems.get(group) ?? fail(`${what} reward ${id} names missing ${group}`)) {
+      if (!gameItems.has(entry.ItemID)) fail(`${what} reward ${id} names missing item ${entry.ItemID}`);
+      if (entry.Min_ItemCount !== entry.Max_ItemCount) fail(`${what} reward ${id} has a random count`);
+      items.push([Number(entry.ItemID), Number(entry.Min_ItemCount)]);
+    }
+  }
+  return items;
+}
+
 // ------------------------------------------------------------------ worlds
 
 const worlds = rows('WorldCompleteControlData').map((row) => {
@@ -167,6 +202,7 @@ for (const row of rows('WayPointData')) {
     region: regionOf(row.FogSectionID),
     name,
     switch: Number(row.SwitchID),
+    ...(row.RewardID && { reward: staticReward(row.RewardID, `waypoint ${row.ID}`) }),
     x: Number(place.PosX),
     y: Number(place.PosY),
   });
@@ -220,17 +256,6 @@ for (const row of rows('MapDungeonGroupData')) {
 
 const props = byId(rows('PropTreasureBoxData'));
 const GRADES = { NORMAL: 'normal', SUPERIOR: 'superior', RARE: 'rare', EPIC: 'epic', LEGENDARY: 'legendary' };
-const rewards = new Map();
-for (const row of rows('RewardData')) {
-  if (!rewards.has(row.ID)) rewards.set(row.ID, []);
-  rewards.get(row.ID).push(row);
-}
-const randomItems = new Map();
-for (const row of rows('RewardRandomData')) {
-  if (!randomItems.has(row.ID)) randomItems.set(row.ID, []);
-  randomItems.get(row.ID).push(row);
-}
-const gameItems = new Set(rows('GameItemData').map((row) => row.ID));
 const loot = {};
 const chestNames = {};
 const chests = [];

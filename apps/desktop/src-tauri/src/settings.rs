@@ -18,6 +18,12 @@ pub struct Settings {
     pub show_unknown: bool,
     /// Last folder or file the user opened, offered on the start screen.
     pub last_folder: Option<String>,
+    /// Hand out what completing a quest, opening a chest or activating a
+    /// warp point gives, as the game does.
+    pub grant_rewards: bool,
+    /// Let world progress be undone. Off by default: the game never undoes
+    /// it, and doing a place again hands out its reward again.
+    pub allow_undo: bool,
 }
 
 impl Default for Settings {
@@ -28,6 +34,8 @@ impl Default for Settings {
             compact_rows: false,
             show_unknown: true,
             last_folder: None,
+            grant_rewards: true,
+            allow_undo: false,
         }
     }
 }

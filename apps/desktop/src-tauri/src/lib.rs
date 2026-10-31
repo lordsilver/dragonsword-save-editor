@@ -13,7 +13,7 @@ use dsa_core::domain::{
     Recipe, Skill, Stack, TeamPage, TitleEntry, Vehicle,
 };
 use dsa_core::raw::{RawPage, RawTable, RawValue};
-use dsa_core::world::{ChestOpening, LootDrawView, PlaceKind, QuestEntry, WorldView};
+use dsa_core::world::{LootDrawView, PlaceKind, QuestEntry, WorldProgress, WorldView};
 use dsa_core::{Catalog, Error, SaveSession, SlotInfo, WriteReport};
 use serde::Serialize;
 use tauri::{Emitter, Manager, State};
@@ -434,7 +434,8 @@ fn quest_complete(
     state: State<'_, AppState>,
     quest_id: i64,
 ) -> CommandResult<dsa_core::domain::QuestCompletion> {
-    game(&state, |game| game.complete_quest(quest_id))
+    let grant = state.settings().current().grant_rewards;
+    game(&state, |game| game.complete_quest_with(quest_id, grant))
 }
 
 #[tauri::command]
@@ -666,24 +667,38 @@ fn world_get(state: State<'_, AppState>) -> CommandResult<WorldView> {
     game(&state, |game| game.world())
 }
 
+/// Marks places done, handing out their rewards when the settings say so.
 #[tauri::command]
-fn world_places_set(
+fn world_places_complete(
     state: State<'_, AppState>,
     kind: PlaceKind,
     ids: Vec<i64>,
-    done: bool,
+) -> CommandResult<WorldProgress> {
+    let grant = state.settings().current().grant_rewards;
+    game(&state, |game| game.complete_world_places(kind, &ids, grant))
+}
+
+/// Undoes places, only when the settings allow it: doing them again would
+/// hand out their rewards again.
+#[tauri::command]
+fn world_places_undo(
+    state: State<'_, AppState>,
+    kind: PlaceKind,
+    ids: Vec<i64>,
 ) -> CommandResult<i64> {
-    game(&state, |game| game.set_world_places(kind, &ids, done))
+    if !state.settings().current().allow_undo {
+        return Err(
+            "Undoing progress is turned off. Turn on \"Allow undoing progress\" in Settings first."
+                .to_string()
+                .into(),
+        );
+    }
+    game(&state, |game| game.undo_world_places(kind, &ids))
 }
 
 #[tauri::command]
 fn chest_loot_get(state: State<'_, AppState>, id: i64) -> CommandResult<Vec<LootDrawView>> {
     game(&state, |game| game.chest_loot(id))
-}
-
-#[tauri::command]
-fn chests_open(state: State<'_, AppState>, ids: Vec<i64>) -> CommandResult<ChestOpening> {
-    game(&state, |game| game.open_chests(&ids))
 }
 
 #[tauri::command]
@@ -803,9 +818,9 @@ pub fn run() {
             recipe_set,
             recipes_unlock_all,
             world_get,
-            world_places_set,
+            world_places_complete,
+            world_places_undo,
             chest_loot_get,
-            chests_open,
             quest_log_get,
             raw_tables,
             raw_page,

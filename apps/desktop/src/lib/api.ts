@@ -5,7 +5,6 @@ import type {
   AppInfo,
   CatalogEntry,
   Character,
-  ChestOpening,
   Costume,
   Currency,
   Equipment,
@@ -34,6 +33,7 @@ import type {
   TeamPage,
   TitleEntry,
   Vehicle,
+  WorldProgress,
   WorldView,
   WriteReport,
 } from './types.ts';
@@ -353,16 +353,18 @@ export async function world(): Promise<WorldView> {
   return invoke<WorldView>('world_get');
 }
 
-export async function setWorldPlaces(kind: PlaceKind, ids: number[], done: boolean): Promise<number> {
-  return invoke<number>('world_places_set', { kind, ids, done });
+/** Marks places done; their rewards are handed out when the settings say so. */
+export async function completeWorldPlaces(kind: PlaceKind, ids: number[]): Promise<WorldProgress> {
+  return invoke<WorldProgress>('world_places_complete', { kind, ids });
+}
+
+/** Undoes places; refused unless the settings allow undoing progress. */
+export async function undoWorldPlaces(kind: PlaceKind, ids: number[]): Promise<number> {
+  return invoke<number>('world_places_undo', { kind, ids });
 }
 
 export async function chestLoot(id: number): Promise<LootDraw[]> {
   return invoke<LootDraw[]>('chest_loot_get', { id });
-}
-
-export async function openChests(ids: number[]): Promise<ChestOpening> {
-  return invoke<ChestOpening>('chests_open', { ids });
 }
 
 export async function questLog(): Promise<QuestEntry[]> {

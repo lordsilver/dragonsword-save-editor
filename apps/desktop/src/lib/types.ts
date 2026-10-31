@@ -98,6 +98,10 @@ export interface Settings {
   compactRows: boolean;
   showUnknown: boolean;
   lastFolder: string | null;
+  /** Hand out what completing a quest, opening a chest or activating a warp point gives. */
+  grantRewards: boolean;
+  /** Let world progress be undone; off by default, as redoing hands out rewards again. */
+  allowUndo: boolean;
 }
 
 export interface Counts {
@@ -529,6 +533,8 @@ export interface WaypointView {
   y: number;
   active: boolean;
   statue: { id: number; restored: boolean; pieces: number; found: number } | null;
+  /** What activating it gives in the game: 100 corps EXP for a warp point. */
+  reward: Array<{ item: Item; count: number }>;
 }
 
 export interface DungeonView {
@@ -570,8 +576,8 @@ export interface WorldView {
   player: { world: number; x: number; y: number } | null;
 }
 
-/** What the World map switches on and off: warp points, statues and dungeons. Chests only open. */
-export type PlaceKind = 'waypoint' | 'statue' | 'dungeon';
+/** What the World map marks done: warp points (with Eona's Legacy and the Tower of Trials), statues, dungeons and chests. */
+export type PlaceKind = 'waypoint' | 'statue' | 'dungeon' | 'chest';
 
 /** One draw of a chest's loot: it picks one of its options, `times` times. */
 export interface LootDraw {
@@ -580,11 +586,11 @@ export interface LootDraw {
   options: Array<{ item: Item; min: number; max: number; chance: number }>;
 }
 
-/** What opening chests handed out. */
-export interface ChestOpening {
-  opened: number;
-  /** Chests that were open already and gave nothing again. */
-  alreadyOpen: number;
+/** What marking places done handed out. */
+export interface WorldProgress {
+  done: number;
+  /** Places that were done already and gave nothing again. */
+  alreadyDone: number;
   grant: RewardGrant;
   levelsGained: number;
 }

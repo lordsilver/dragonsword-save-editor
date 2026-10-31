@@ -283,7 +283,9 @@ fn world_progress_reads_and_round_trips() {
         assert!(gold > 0 && corps > 0, "{loot:?}");
         let gold_before = gold_of(&game);
         let corps_before = game.overview().expect("overview").adventure_exp;
-        let opening = game.open_chests(&[chest.id]).expect("open chest");
+        let opening = game
+            .complete_world_places(PlaceKind::Chest, &[chest.id], true)
+            .expect("open chest");
         println!(
             "opened {} ({} levels): {:?}",
             chest.name.en,
@@ -295,7 +297,7 @@ fn world_progress_reads_and_round_trips() {
                 .map(|g| (&g.item.name_en, g.count))
                 .collect::<Vec<_>>()
         );
-        assert_eq!(opening.opened, 1);
+        assert_eq!(opening.done, 1);
         assert!(
             opening.grant.not_granted.is_empty(),
             "{:?}",
@@ -314,9 +316,23 @@ fn world_progress_reads_and_round_trips() {
             .expect("chest");
         assert!(now.opened && now.released);
         // An opened chest gives nothing again.
-        let again = game.open_chests(&[chest.id]).expect("open again");
-        assert_eq!((again.opened, again.already_open), (0, 1));
+        let again = game
+            .complete_world_places(PlaceKind::Chest, &[chest.id], true)
+            .expect("open again");
+        assert_eq!((again.done, again.already_done), (0, 1));
         assert!(again.grant.granted.is_empty());
+        assert_eq!(gold_of(&game), gold_before + gold);
+        // Undone, it keeps its lock open; opened without rewards, it gives nothing.
+        game.undo_world_places(PlaceKind::Chest, &[chest.id])
+            .expect("undo");
+        let now = game.world().expect("world");
+        let now = now.chests.iter().find(|c| c.id == chest.id).expect("chest");
+        assert!(!now.opened && now.released);
+        let quiet = game
+            .complete_world_places(PlaceKind::Chest, &[chest.id], false)
+            .expect("open without rewards");
+        assert_eq!(quiet.done, 1);
+        assert!(quiet.grant.granted.is_empty());
         assert_eq!(gold_of(&game), gold_before + gold);
 
         let statue = world
@@ -325,7 +341,7 @@ fn world_progress_reads_and_round_trips() {
             .find(|w| w.statue.as_ref().is_some_and(|s| !s.restored))
             .expect("a broken statue");
         let statue_id = statue.statue.as_ref().unwrap().id;
-        game.set_world_places(PlaceKind::Statue, &[statue_id], true)
+        game.complete_world_places(PlaceKind::Statue, &[statue_id], true)
             .expect("restore");
         let after = game.world().expect("world");
         let now = after
@@ -341,7 +357,7 @@ fn world_progress_reads_and_round_trips() {
             .iter()
             .find(|d| !d.found)
             .expect("a dungeon not found");
-        game.set_world_places(PlaceKind::Dungeon, &[dungeon.id], true)
+        game.complete_world_places(PlaceKind::Dungeon, &[dungeon.id], true)
             .expect("find");
         assert!(
             game.world()
@@ -351,15 +367,45 @@ fn world_progress_reads_and_round_trips() {
                 .any(|d| d.id == dungeon.id && d.found)
         );
 
+        // Activating a warp point gives its 100 corps EXP, once.
+        let warp = world
+            .waypoints
+            .iter()
+            .find(|w| !w.active && w.kind == "waypoint")
+            .expect("a warp point not activated");
+        assert_eq!(warp.reward.len(), 1);
+        assert_eq!(
+            (warp.reward[0].item.cid, warp.reward[0].count),
+            (1_000_201, 100)
+        );
+        let activation = game
+            .complete_world_places(PlaceKind::Waypoint, &[warp.id], true)
+            .expect("activate");
+        assert_eq!(activation.done, 1);
+        assert_eq!(activation.grant.granted.len(), 1);
+        assert_eq!(activation.grant.granted[0].count, 100);
+        let again = game
+            .complete_world_places(PlaceKind::Waypoint, &[warp.id], true)
+            .expect("activate again");
+        assert_eq!((again.done, again.already_done), (0, 1));
+        assert!(again.grant.granted.is_empty());
+
         let shut: Vec<i64> = world
             .waypoints
             .iter()
-            .filter(|w| !w.active)
+            .filter(|w| !w.active && w.kind != "statue")
             .map(|w| w.id)
             .collect();
-        game.set_world_places(PlaceKind::Waypoint, &shut, true)
+        game.complete_world_places(PlaceKind::Waypoint, &shut, true)
             .expect("activate all");
-        assert!(game.world().unwrap().waypoints.iter().all(|w| w.active));
+        assert!(
+            game.world()
+                .unwrap()
+                .waypoints
+                .iter()
+                .filter(|w| w.kind != "statue")
+                .all(|w| w.active)
+        );
     }
     session.close();
     fs::remove_dir_all(directory).ok();

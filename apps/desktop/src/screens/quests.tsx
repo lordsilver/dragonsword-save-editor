@@ -71,7 +71,7 @@ export function QuestsScreen() {
     <div className="space-y-5">
       <PageHeader
         title="Quests"
-        description="The game's quest log and where this save stands on each quest. A quest in progress can be completed the way the game completes it: its rewards are handed out, the quests waiting for it start, and it stays completed."
+        description="The game's quest log and where this save stands on each quest. A quest in progress can be completed the way the game completes it: its rewards are handed out (unless rewards are off in Settings), the quests waiting for it start, and it stays completed."
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

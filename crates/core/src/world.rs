@@ -77,6 +77,9 @@ struct WaypointDef {
     name: Text,
     /// The `tb_switch` bit set once the waypoint is activated.
     switch: i64,
+    /// What activating it gives: `[item CID, count]`.
+    #[serde(default)]
+    reward: Vec<[i64; 2]>,
     x: f64,
     y: f64,
 }
@@ -249,6 +252,15 @@ pub struct WaypointView {
     pub y: f64,
     pub active: bool,
     pub statue: Option<StatueProgress>,
+    /// What activating it gives in the game: 100 corps EXP for a warp point.
+    pub reward: Vec<RewardView>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RewardView {
+    pub item: Item,
+    pub count: i64,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -313,13 +325,13 @@ pub struct LootOption {
     pub chance: f64,
 }
 
-/// What opening chests did.
+/// What marking places done did.
 #[derive(Debug, Default, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ChestOpening {
-    pub opened: i64,
-    /// Chests asked for that were open already, which give nothing again.
-    pub already_open: i64,
+pub struct WorldProgress {
+    pub done: i64,
+    /// Places asked for that were done already, which give nothing again.
+    pub already_done: i64,
     pub grant: RewardGrant,
     pub levels_gained: i64,
 }
@@ -366,14 +378,17 @@ pub struct QuestStep {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum PlaceKind {
-    /// A warp point, Statue of Organa, Eona's Legacy or the Tower of Trials:
-    /// activated is its `tb_switch` bit.
+    /// A warp point, Eona's Legacy or the Tower of Trials: activated is its
+    /// `tb_switch` bit.
     Waypoint,
     /// A Statue of Organa restored: its pieces and the statue whole in
     /// `tb_field_statue`, and its warp activated.
     Statue,
     /// A dungeon found: a row of `tb_active_dungeon`.
     Dungeon,
+    /// A chest opened: its `tb_treasure_box` OPENED bit, and RELEASED, as
+    /// opening needs the lock open first.
+    Chest,
 }
 
 impl Game<'_> {
@@ -488,6 +503,14 @@ impl Game<'_> {
                 x: waypoint.x,
                 y: waypoint.y,
                 active: switches.contains(&waypoint.switch),
+                reward: waypoint
+                    .reward
+                    .iter()
+                    .map(|&[cid, count]| RewardView {
+                        item: self.catalog().lookup(cid),
+                        count,
+                    })
+                    .collect(),
                 statue: data.statue_of(waypoint.id).map(|statue| StatueProgress {
                     id: statue.id,
                     restored: statue_bits.contains(&statue.complete),
@@ -670,63 +693,147 @@ impl Game<'_> {
             .collect())
     }
 
-    /// Opens chests the way the game does: rolls each one's loot, hands it
-    /// out (corps EXP levels the corps up, gear and karma are created) and
-    /// marks the chest released and opened. A chest that is open already
-    /// gives nothing again, and an opened chest stays opened: the editor has
-    /// no way to shut one.
-    pub fn open_chests(&mut self, ids: &[i64]) -> Result<ChestOpening> {
+    /// Marks places done the way the game does, and hands out what they give
+    /// when `grant` is set: a warp point (or the Tower of Trials) its
+    /// reward, 100 corps EXP; a chest its loot, rolled from its table, with
+    /// gear and karma created and corps EXP levelling the corps up. A Statue
+    /// of Organa gets every piece back and its warp activated, and a chest is
+    /// released as well as opened. A place that is done already is counted
+    /// and left alone, so nothing is handed out twice.
+    pub fn complete_world_places(
+        &mut self,
+        kind: PlaceKind,
+        ids: &[i64],
+        grant: bool,
+    ) -> Result<WorldProgress> {
         let data = WorldData::shared();
-        let opened = self.world_bits("tb_treasure_box", "OPENED_BIT_FIELD")?;
-        let mut rng = rand::thread_rng();
-        let mut opening = ChestOpening::default();
-        let mut chosen: Vec<i64> = Vec::new();
+        let mut progress = WorldProgress::default();
         let mut items: Vec<(i64, i64)> = Vec::new();
-        for id in ids {
-            let chest = data
-                .chests
-                .iter()
-                .find(|chest| chest.id == *id)
-                .ok_or_else(|| Error::invalid(format!("unknown chest {id}")))?;
-            if opened.contains(id) || chosen.contains(id) {
-                opening.already_open += 1;
-                continue;
+        let mut gain = |cid: i64, count: i64| match items.iter_mut().find(|(seen, _)| *seen == cid)
+        {
+            Some((_, total)) => *total += count,
+            None => items.push((cid, count)),
+        };
+        let (level_before, _) = self.corps_status()?;
+        let transaction = self.conn().unchecked_transaction()?;
+        match kind {
+            PlaceKind::Waypoint => {
+                let active = self.world_bits("tb_switch", "BIT_FIELD")?;
+                let mut switches: Vec<i64> = Vec::new();
+                for id in ids {
+                    let waypoint = data
+                        .waypoints
+                        .iter()
+                        .find(|waypoint| waypoint.id == *id)
+                        .ok_or_else(|| Error::invalid(format!("unknown waypoint {id}")))?;
+                    if active.contains(&waypoint.switch) || switches.contains(&waypoint.switch) {
+                        progress.already_done += 1;
+                        continue;
+                    }
+                    switches.push(waypoint.switch);
+                    if grant {
+                        for &[cid, count] in &waypoint.reward {
+                            gain(cid, count);
+                        }
+                    }
+                }
+                self.write_world_bits("tb_switch", "BIT_FIELD", &switches, true)?;
+                progress.done = switches.len() as i64;
             }
-            if let Some(loot) = chest.loot {
-                let draws = data.loot.get(&loot.to_string()).ok_or_else(|| {
-                    Error::invalid(format!("chest {id} names missing loot {loot}"))
-                })?;
-                for (cid, count) in roll_loot(draws, &mut rng) {
-                    match items.iter_mut().find(|(seen, _)| *seen == cid) {
-                        Some((_, total)) => *total += count,
-                        None => items.push((cid, count)),
+            PlaceKind::Statue => {
+                let restored = self.world_bits("tb_field_statue", "BIT_FIELD")?;
+                let mut bits: Vec<i64> = Vec::new();
+                let mut switches: Vec<i64> = Vec::new();
+                for id in ids {
+                    let statue = data
+                        .statues
+                        .iter()
+                        .find(|statue| statue.id == *id)
+                        .ok_or_else(|| Error::invalid(format!("unknown statue {id}")))?;
+                    if restored.contains(&statue.complete) || bits.contains(&statue.complete) {
+                        progress.already_done += 1;
+                        continue;
+                    }
+                    bits.push(statue.complete);
+                    bits.extend(&statue.pieces);
+                    if let Some(waypoint) = data.waypoints.iter().find(|w| w.id == statue.waypoint)
+                    {
+                        switches.push(waypoint.switch);
+                    }
+                    progress.done += 1;
+                }
+                self.write_world_bits("tb_field_statue", "BIT_FIELD", &bits, true)?;
+                self.write_world_bits("tb_switch", "BIT_FIELD", &switches, true)?;
+            }
+            PlaceKind::Dungeon => {
+                if !self.table_exists("tb_active_dungeon")? {
+                    return Err(Error::invalid("this save has no tb_active_dungeon table"));
+                }
+                let found = self.found_dungeons()?;
+                for id in ids {
+                    if !data.dungeons.iter().any(|dungeon| dungeon.id == *id) {
+                        return Err(Error::invalid(format!("unknown dungeon {id}")));
+                    }
+                    let added = !found.contains(id)
+                        && self.conn().execute(
+                            "INSERT OR IGNORE INTO tb_active_dungeon (USER_DBID, DUNGEON_GROUP_CID) VALUES (?,?)",
+                            params![self.user_id, id],
+                        )? == 1;
+                    if added {
+                        progress.done += 1;
+                    } else {
+                        progress.already_done += 1;
                     }
                 }
             }
-            chosen.push(*id);
+            PlaceKind::Chest => {
+                let opened = self.world_bits("tb_treasure_box", "OPENED_BIT_FIELD")?;
+                let mut rng = rand::thread_rng();
+                let mut chosen: Vec<i64> = Vec::new();
+                for id in ids {
+                    let chest = data
+                        .chests
+                        .iter()
+                        .find(|chest| chest.id == *id)
+                        .ok_or_else(|| Error::invalid(format!("unknown chest {id}")))?;
+                    if opened.contains(id) || chosen.contains(id) {
+                        progress.already_done += 1;
+                        continue;
+                    }
+                    if let (true, Some(loot)) = (grant, chest.loot) {
+                        let draws = data.loot.get(&loot.to_string()).ok_or_else(|| {
+                            Error::invalid(format!("chest {id} names missing loot {loot}"))
+                        })?;
+                        for (cid, count) in roll_loot(draws, &mut rng) {
+                            gain(cid, count);
+                        }
+                    }
+                    chosen.push(*id);
+                }
+                self.write_world_bits("tb_treasure_box", "RELEASED_BIT_FIELD", &chosen, true)?;
+                self.write_world_bits("tb_treasure_box", "OPENED_BIT_FIELD", &chosen, true)?;
+                progress.done = chosen.len() as i64;
+            }
         }
-        if chosen.is_empty() {
-            return Ok(opening);
+        if !items.is_empty() {
+            self.add_reward(0, &items, &mut progress.grant)?;
         }
-        let (level_before, _) = self.corps_status()?;
-        let transaction = self.conn().unchecked_transaction()?;
-        self.add_reward(0, &items, &mut opening.grant)?;
-        self.write_world_bits("tb_treasure_box", "RELEASED_BIT_FIELD", &chosen, true)?;
-        self.write_world_bits("tb_treasure_box", "OPENED_BIT_FIELD", &chosen, true)?;
         transaction.commit()?;
         let (level_after, _) = self.corps_status()?;
-        opening.opened = chosen.len() as i64;
-        opening.levels_gained = level_after - level_before;
-        self.touch();
-        Ok(opening)
+        progress.levels_gained = level_after - level_before;
+        if progress.done > 0 {
+            self.touch();
+        }
+        Ok(progress)
     }
 
-    /// Marks places of one kind done or not done: warp points activated,
-    /// statues restored, dungeons found. Returns how many. Chests open
-    /// through `open_chests`, which hands out their loot.
-    ///
-    /// A statue restored or broken takes its warp with it.
-    pub fn set_world_places(&mut self, kind: PlaceKind, ids: &[i64], done: bool) -> Result<i64> {
+    /// Undoes places, which the game itself never does: switches warp
+    /// points off, breaks statues (their pieces, the statue whole and its
+    /// warp), forgets dungeons and marks chests not opened. A chest keeps its
+    /// lock open, so the game lets the player open it again. Doing a place
+    /// again hands out its reward again, which is why the app allows this
+    /// only when its settings say so. Returns how many places were asked for.
+    pub fn undo_world_places(&mut self, kind: PlaceKind, ids: &[i64]) -> Result<i64> {
         let data = WorldData::shared();
         let transaction = self.conn().unchecked_transaction()?;
         match kind {
@@ -741,7 +848,7 @@ impl Game<'_> {
                             .ok_or_else(|| Error::invalid(format!("unknown waypoint {id}")))
                     })
                     .collect::<Result<Vec<_>>>()?;
-                self.write_world_bits("tb_switch", "BIT_FIELD", &switches, done)?;
+                self.write_world_bits("tb_switch", "BIT_FIELD", &switches, false)?;
             }
             PlaceKind::Statue => {
                 let mut bits = Vec::new();
@@ -759,8 +866,8 @@ impl Game<'_> {
                         switches.push(waypoint.switch);
                     }
                 }
-                self.write_world_bits("tb_field_statue", "BIT_FIELD", &bits, done)?;
-                self.write_world_bits("tb_switch", "BIT_FIELD", &switches, done)?;
+                self.write_world_bits("tb_field_statue", "BIT_FIELD", &bits, false)?;
+                self.write_world_bits("tb_switch", "BIT_FIELD", &switches, false)?;
             }
             PlaceKind::Dungeon => {
                 if !self.table_exists("tb_active_dungeon")? {
@@ -770,13 +877,20 @@ impl Game<'_> {
                     if !data.dungeons.iter().any(|dungeon| dungeon.id == *id) {
                         return Err(Error::invalid(format!("unknown dungeon {id}")));
                     }
-                    let sql = if done {
-                        "INSERT OR IGNORE INTO tb_active_dungeon (USER_DBID, DUNGEON_GROUP_CID) VALUES (?,?)"
-                    } else {
-                        "DELETE FROM tb_active_dungeon WHERE USER_DBID=? AND DUNGEON_GROUP_CID=?"
-                    };
-                    self.conn().execute(sql, params![self.user_id, id])?;
+                    self.conn().execute(
+                        "DELETE FROM tb_active_dungeon WHERE USER_DBID=? AND DUNGEON_GROUP_CID=?",
+                        params![self.user_id, id],
+                    )?;
                 }
+            }
+            PlaceKind::Chest => {
+                if let Some(id) = ids
+                    .iter()
+                    .find(|id| !data.chests.iter().any(|chest| chest.id == **id))
+                {
+                    return Err(Error::invalid(format!("unknown chest {id}")));
+                }
+                self.write_world_bits("tb_treasure_box", "OPENED_BIT_FIELD", ids, false)?;
             }
         }
         transaction.commit()?;
@@ -947,6 +1061,22 @@ mod tests {
                 "waypoint {}",
                 waypoint.id
             );
+        }
+    }
+
+    #[test]
+    fn every_warp_point_gives_100_corps_exp() {
+        let data = WorldData::shared();
+        for waypoint in &data.waypoints {
+            match waypoint.kind.as_str() {
+                "waypoint" | "tower" => assert_eq!(
+                    waypoint.reward,
+                    vec![[1_000_201, 100]],
+                    "waypoint {}",
+                    waypoint.id
+                ),
+                _ => assert!(waypoint.reward.is_empty(), "waypoint {}", waypoint.id),
+            }
         }
     }
 

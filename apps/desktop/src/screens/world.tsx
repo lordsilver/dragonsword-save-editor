@@ -152,7 +152,7 @@ function placesOf(world: WorldView, worldId: number, map: MapPlacement): Place[]
 /** The ids and kind the save edit for a set of places of one layer. */
 function editTarget(places: Place[]): { kind: PlaceKind; ids: number[] } | null {
   const first = places[0];
-  if (!first || first.layer === 'chest') return null;
+  if (!first) return null;
   switch (first.layer) {
     case 'statue':
       return {
@@ -161,9 +161,18 @@ function editTarget(places: Place[]): { kind: PlaceKind; ids: number[] } | null 
       };
     case 'dungeon':
       return { kind: 'dungeon', ids: places.map((place) => place.id) };
+    case 'chest':
+      return { kind: 'chest', ids: places.map((place) => place.id) };
     default:
       return { kind: 'waypoint', ids: places.map((place) => place.id) };
   }
+}
+
+/** What doing a place hands out, as the card and the confirmations word it. */
+function rewardText(place: Place, language: string): string | null {
+  const reward = place.waypoint?.reward ?? [];
+  if (reward.length === 0) return null;
+  return reward.map((entry) => `${formatNumber(entry.count)} ${itemName(entry.item, language)}`).join(', ');
 }
 
 export function WorldScreen() {
@@ -171,8 +180,10 @@ export function WorldScreen() {
   const save = useApp((state) => state.save);
   const language = useApp((state) => state.settings.language);
   const pending = useApp((state) => state.pending);
-  const setWorldPlaces = useApp((state) => state.setWorldPlaces);
-  const openChests = useApp((state) => state.openChests);
+  const completeWorldPlaces = useApp((state) => state.completeWorldPlaces);
+  const undoWorldPlaces = useApp((state) => state.undoWorldPlaces);
+  const grantRewards = useApp((state) => state.settings.grantRewards);
+  const allowUndo = useApp((state) => state.settings.allowUndo);
   const [layers, setLayers] = useState<Set<Layer>>(() => new Set(['waypoint', 'statue', 'legacy', 'tower', 'dungeon']));
   const [show, setShow] = useState<Show>('all');
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -236,15 +247,13 @@ export function WorldScreen() {
     });
   }
 
+  // Doing a place hands out its reward when the settings say so; undoing
+  // one is only offered when the settings allow it.
   function apply(target: Place[], done: boolean): void {
-    // A chest only opens, and opening hands out its loot.
-    if (target[0]?.layer === 'chest') {
-      const shut = target.filter((place) => !place.done).map((place) => place.id);
-      if (done && shut.length > 0) void openChests(shut);
-      return;
-    }
-    const edit = editTarget(target);
-    if (edit && edit.ids.length > 0) void setWorldPlaces(edit.kind, edit.ids, done);
+    const edit = editTarget(target.filter((place) => place.done !== done));
+    if (!edit || edit.ids.length === 0) return;
+    if (done) void completeWorldPlaces(edit.kind, edit.ids);
+    else if (allowUndo) void undoWorldPlaces(edit.kind, edit.ids);
   }
 
   return (
@@ -260,7 +269,11 @@ export function WorldScreen() {
         actions={
           <ConfirmButton
             title="Activate every warp point?"
-            description={`Sets the activation switch of all ${warpPoints.length} warp points of ${shown.name.en} in tb_switch, so you can travel to any of them. Statues of Organa and Eona's Legacy are left as they are.`}
+            description={`Activates the ${warpPoints.filter((place) => !place.done).length} warp points of ${shown.name.en} not activated yet, so you can travel to any of them. ${
+              grantRewards
+                ? 'Each gives 100 Mercenary Crew Grade EXP, as in the game.'
+                : 'Rewards are off in Settings, so they give nothing.'
+            }${allowUndo ? '' : ' Activated warp points stay activated.'} Statues of Organa and Eona's Legacy are left as they are.`}
             confirmLabel="Activate all"
             variant="outline"
             size="sm"
@@ -339,6 +352,8 @@ export function WorldScreen() {
               regionName={regions.find((region) => region.id === selected.region)?.name ?? null}
               language={language}
               busy={busy}
+              grantRewards={grantRewards}
+              allowUndo={allowUndo}
               onSet={(done) => apply([selected], done)}
               onClose={() => setSelectedKey(null)}
             />
@@ -351,6 +366,8 @@ export function WorldScreen() {
             selected={regionId}
             language={language}
             busy={busy}
+            grantRewards={grantRewards}
+            allowUndo={allowUndo}
             onSelect={(id) => setRegionId((current) => (current === id ? null : id))}
             onApply={apply}
           />
@@ -686,6 +703,8 @@ function PlaceCard({
   regionName,
   language,
   busy,
+  grantRewards,
+  allowUndo,
   onSet,
   onClose,
 }: {
@@ -693,20 +712,26 @@ function PlaceCard({
   regionName: GameText | null;
   language: string;
   busy: boolean;
+  grantRewards: boolean;
+  allowUndo: boolean;
   onSet: (done: boolean) => void;
   onClose: () => void;
 }) {
   const name = (text: GameText) => (language === 'fr' ? text.fr : text.en);
   const statue = place.waypoint?.statue;
   const lines: ReactNode[] = [];
+  const notes: string[] = [];
   let toggle = 'Activated';
-  let note: string | null = null;
   switch (place.layer) {
     case 'statue':
       toggle = 'Restored';
       if (statue) lines.push(`${statue.found} of ${statue.pieces} pieces put back`);
       lines.push(place.waypoint?.active ? 'Warp activated' : 'Warp not activated');
-      note = 'Restoring puts back every piece and activates its warp; breaking it undoes both.';
+      notes.push(
+        allowUndo
+          ? 'Restoring puts back every piece and activates its warp; breaking it undoes both.'
+          : 'Restoring puts back every piece and activates its warp.',
+      );
       break;
     case 'dungeon':
       toggle = 'Found';
@@ -716,8 +741,19 @@ function PlaceCard({
       if (place.chest?.lock && !place.done) lines.push(place.chest.released ? 'Lock open' : 'Still locked');
       break;
     case 'legacy':
-      note = "Eona's Legacy is activated in game by its own quest; this sets only its switch.";
+      notes.push("Eona's Legacy is activated in game by its own quest; this sets only its switch.");
       break;
+  }
+  const reward = rewardText(place, language);
+  if (reward && !place.done) {
+    notes.push(
+      grantRewards
+        ? `Activating gives ${reward}, as in the game.`
+        : 'Rewards are off in Settings, so activating gives nothing.',
+    );
+  }
+  if (place.done && !allowUndo && !place.chest) {
+    notes.push('It stays this way: undoing progress is off in Settings.');
   }
   return (
     <section className="rounded-xl border bg-card/40 p-4">
@@ -756,7 +792,9 @@ function PlaceCard({
           opened={place.done}
           language={language}
           busy={busy}
-          onOpen={() => onSet(true)}
+          grantRewards={grantRewards}
+          allowUndo={allowUndo}
+          onSet={onSet}
         />
       ) : (
         <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm">
@@ -764,12 +802,16 @@ function PlaceCard({
           <Switch
             aria-labelledby="world-place-toggle"
             checked={place.done}
-            disabled={busy}
+            disabled={busy || (place.done && !allowUndo)}
             onCheckedChange={(value) => onSet(value)}
           />
         </div>
       )}
-      {note && <p className="mt-2 text-xs text-muted-foreground">{note}</p>}
+      {notes.map((note) => (
+        <p key={note} className="mt-2 text-xs text-muted-foreground">
+          {note}
+        </p>
+      ))}
     </section>
   );
 }
@@ -780,20 +822,25 @@ const LOOT_OPTIONS = 4;
 /**
  * What a chest gives, draw by draw, as its loot table reads, and the button
  * that opens it. Opening rolls the loot the way the game does and hands it
- * out; an opened chest stays opened.
+ * out when rewards are on; an opened chest stays opened unless the settings
+ * allow undoing progress.
  */
 function ChestContents({
   chest,
   opened,
   language,
   busy,
-  onOpen,
+  grantRewards,
+  allowUndo,
+  onSet,
 }: {
   chest: ChestView;
   opened: boolean;
   language: string;
   busy: boolean;
-  onOpen: () => void;
+  grantRewards: boolean;
+  allowUndo: boolean;
+  onSet: (done: boolean) => void;
 }) {
   const chestLoot = useApp((state) => state.chestLoot);
   const [loot, setLoot] = useState<{ id: number; draws: LootDraw[] } | null>(null);
@@ -857,14 +904,30 @@ function ChestContents({
         )}
       </div>
       {opened ? (
-        <p className="rounded-lg border bg-muted/30 px-3 py-2 text-sm">Opened. An opened chest stays opened.</p>
+        allowUndo ? (
+          <>
+            <Button variant="outline" className="w-full" disabled={busy} onClick={() => onSet(false)}>
+              Mark not opened
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Its lock stays open, so it can be opened again{grantRewards ? ', handing out its loot again' : ''}.
+            </p>
+          </>
+        ) : (
+          <p className="rounded-lg border bg-muted/30 px-3 py-2 text-sm">
+            Opened. An opened chest stays opened: undoing progress is off in Settings.
+          </p>
+        )
       ) : (
         <>
-          <Button className="w-full" disabled={busy || !chest.loot} onClick={onOpen}>
+          <Button className="w-full" disabled={busy} onClick={() => onSet(true)}>
             Open the chest
           </Button>
           <p className="text-xs text-muted-foreground">
-            Opening rolls its loot the way the game does and adds it to the save. It cannot be undone.
+            {grantRewards
+              ? 'Opening rolls its loot the way the game does and adds it to the save.'
+              : 'Rewards are off in Settings, so opening gives nothing.'}
+            {allowUndo ? '' : ' It cannot be undone.'}
           </p>
         </>
       )}
@@ -878,6 +941,8 @@ function RegionList({
   selected,
   language,
   busy,
+  grantRewards,
+  allowUndo,
   onSelect,
   onApply,
 }: {
@@ -886,23 +951,26 @@ function RegionList({
   selected: number | null;
   language: string;
   busy: boolean;
+  grantRewards: boolean;
+  allowUndo: boolean;
   onSelect: (id: number) => void;
   onApply: (places: Place[], done: boolean) => void;
 }) {
   const name = (text: GameText) => (language === 'fr' ? text.fr : text.en);
-  // Opening a region's chests hands out a lot of loot at once and cannot be undone.
-  const [confirm, setConfirm] = useState<{ region: string; target: Place[] } | null>(null);
-  const shut = confirm?.target.filter((place) => !place.done).length ?? 0;
+  // Doing many places at once that hand out rewards asks first.
+  const [confirm, setConfirm] = useState<{
+    title: string;
+    description: string;
+    label: string;
+    target: Place[];
+  } | null>(null);
   return (
     <section className="rounded-xl border bg-card/40">
       <AlertDialog open={confirm !== null} onOpenChange={(open) => !open && setConfirm(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Open every chest in {confirm?.region}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Opens {formatNumber(shut)} {shut === 1 ? 'chest' : 'chests'} and adds their loot to the save, rolled the
-              way the game rolls it. Opened chests stay opened.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{confirm?.title}</AlertDialogTitle>
+            <AlertDialogDescription>{confirm?.description}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -912,7 +980,7 @@ function RegionList({
                 setConfirm(null);
               }}
             >
-              Open {formatNumber(shut)}
+              {confirm?.label}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -934,7 +1002,46 @@ function RegionList({
             { label: 'Restore the statues', target: here('statue'), done: true },
             { label: 'Mark the dungeons found', target: here('dungeon'), done: true },
             { label: 'Open every chest', target: here('chest'), done: true },
+            ...(allowUndo
+              ? [
+                  { label: 'Switch the warp points off', target: here('waypoint'), done: false },
+                  { label: "Switch Eona's Legacy off", target: here('legacy'), done: false },
+                  { label: 'Break the statues', target: here('statue'), done: false },
+                  { label: 'Forget the dungeons', target: here('dungeon'), done: false },
+                  { label: 'Mark every chest not opened', target: here('chest'), done: false },
+                ]
+              : []),
           ];
+          // Opening chests and activating warp points hand out rewards, so a whole region asks first.
+          const ask = (target: Place[]): boolean => {
+            const left = target.filter((place) => !place.done).length;
+            const layer = target[0]?.layer;
+            if (layer === 'chest') {
+              setConfirm({
+                title: `Open every chest in ${name(region.name)}?`,
+                description: `Opens ${formatNumber(left)} ${left === 1 ? 'chest' : 'chests'}${
+                  grantRewards
+                    ? ' and adds their loot to the save, rolled the way the game rolls it.'
+                    : '. Rewards are off in Settings, so they give nothing.'
+                }${allowUndo ? '' : ' Opened chests stay opened.'}`,
+                label: `Open ${formatNumber(left)}`,
+                target,
+              });
+              return true;
+            }
+            if (layer === 'waypoint' && grantRewards) {
+              setConfirm({
+                title: `Activate the warp points of ${name(region.name)}?`,
+                description: `Activates ${formatNumber(left)} warp ${left === 1 ? 'point' : 'points'}; each gives 100 Mercenary Crew Grade EXP, as in the game.${
+                  allowUndo ? '' : ' Activated warp points stay activated.'
+                }`,
+                label: `Activate ${formatNumber(left)}`,
+                target,
+              });
+              return true;
+            }
+            return false;
+          };
           return (
             <li key={region.id} className={cn('px-4 py-2.5', selected === region.id && 'bg-accent/60')}>
               <div className="flex items-center gap-2">
@@ -963,11 +1070,9 @@ function RegionList({
                       .map((action) => (
                         <DropdownMenuItem
                           key={action.label}
-                          onSelect={() =>
-                            action.target[0]?.layer === 'chest'
-                              ? setConfirm({ region: name(region.name), target: action.target })
-                              : onApply(action.target, action.done)
-                          }
+                          onSelect={() => {
+                            if (!action.done || !ask(action.target)) onApply(action.target, action.done);
+                          }}
                         >
                           {action.label}
                         </DropdownMenuItem>

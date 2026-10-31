@@ -7,7 +7,6 @@ import type {
   AppInfo,
   CatalogEntry,
   Character,
-  ChestOpening,
   Costume,
   Currency,
   Equipment,
@@ -37,6 +36,7 @@ import type {
   TeamPage,
   TitleEntry,
   Vehicle,
+  WorldProgress,
   WorldView,
 } from './types.ts';
 
@@ -46,9 +46,31 @@ const DEFAULT_SETTINGS: Settings = {
   compactRows: false,
   showUnknown: true,
   lastFolder: null,
+  grantRewards: true,
+  allowUndo: false,
 };
 
 const EMPTY_SCAN: ScanResult = { roots: [], slots: [] };
+
+/** What the World map's edits are called while they run and once they are done. */
+const WORLD_LABELS: Record<PlaceKind, string> = {
+  waypoint: 'Activating',
+  statue: 'Restoring statues',
+  dungeon: 'Marking dungeons found',
+  chest: 'Opening chests',
+};
+const WORLD_NOUNS: Record<PlaceKind, string> = {
+  waypoint: 'place',
+  statue: 'statue',
+  dungeon: 'dungeon',
+  chest: 'chest',
+};
+const WORLD_VERBS: Record<PlaceKind, string> = {
+  waypoint: 'activated',
+  statue: 'restored',
+  dungeon: 'found',
+  chest: 'opened',
+};
 
 export interface AppState {
   desktop: boolean;
@@ -163,12 +185,12 @@ export interface AppActions {
   unlockAllTitles(): Promise<void>;
   setRecipe(key: number, known: boolean): Promise<void>;
   unlockAllRecipes(): Promise<void>;
-  /** Marks places of one kind done (activated, restored, found) or not. */
-  setWorldPlaces(kind: PlaceKind, ids: number[], done: boolean): Promise<void>;
+  /** Marks places done (activated, restored, found, opened), handing out their rewards when the settings say so. */
+  completeWorldPlaces(kind: PlaceKind, ids: number[]): Promise<WorldProgress | null>;
+  /** Undoes places, when the settings allow it. */
+  undoWorldPlaces(kind: PlaceKind, ids: number[]): Promise<void>;
   /** What a chest can give, read when it is picked on the map. */
   chestLoot(id: number): Promise<LootDraw[]>;
-  /** Opens chests and hands out their loot; an opened chest stays opened. */
-  openChests(ids: number[]): Promise<ChestOpening | null>;
   rawUpdate(table: string, rowid: string, column: string, value: RawValue, advanced: boolean): Promise<void>;
 }
 
@@ -269,6 +291,34 @@ export const useApp = create<Store>((set, get) => {
       toast.error(message(error));
       return null;
     }
+  }
+
+  /** Shows places as done or not done right away; the reload after the edit corrects any difference. */
+  function markWorld(kind: PlaceKind, ids: number[], done: boolean): void {
+    const world = get().world;
+    if (!world || ids.length === 0) return;
+    const chosen = new Set(ids);
+    set({
+      world: {
+        ...world,
+        waypoints: world.waypoints.map((waypoint) => {
+          if (kind === 'waypoint' && chosen.has(waypoint.id)) return { ...waypoint, active: done };
+          if (kind === 'statue' && waypoint.statue && chosen.has(waypoint.statue.id)) {
+            const statue = { ...waypoint.statue, restored: done, found: done ? waypoint.statue.pieces : 0 };
+            return { ...waypoint, active: done, statue };
+          }
+          return waypoint;
+        }),
+        dungeons: world.dungeons.map((dungeon) =>
+          kind === 'dungeon' && chosen.has(dungeon.id) ? { ...dungeon, found: done } : dungeon,
+        ),
+        chests: world.chests.map((chest) =>
+          kind === 'chest' && chosen.has(chest.id)
+            ? { ...chest, opened: done, released: chest.released || done }
+            : chest,
+        ),
+      },
+    });
   }
 
   async function read<T>(loader: () => Promise<T>, apply: (value: T) => void): Promise<void> {
@@ -1063,30 +1113,43 @@ export const useApp = create<Store>((set, get) => {
       if (count !== null) toast.success('Every recipe is known.');
     },
 
-    async setWorldPlaces(kind, ids, done) {
-      const world = get().world;
-      if (world && ids.length > 0) {
-        const chosen = new Set(ids);
-        set({
-          world: {
-            ...world,
-            waypoints: world.waypoints.map((waypoint) => {
-              if (kind === 'waypoint' && chosen.has(waypoint.id)) return { ...waypoint, active: done };
-              if (kind === 'statue' && waypoint.statue && chosen.has(waypoint.statue.id)) {
-                const statue = { ...waypoint.statue, restored: done, found: done ? waypoint.statue.pieces : 0 };
-                return { ...waypoint, active: done, statue };
-              }
-              return waypoint;
-            }),
-            dungeons: world.dungeons.map((dungeon) =>
-              kind === 'dungeon' && chosen.has(dungeon.id) ? { ...dungeon, found: done } : dungeon,
-            ),
-          },
-        });
+    async completeWorldPlaces(kind, ids) {
+      markWorld(kind, ids, true);
+      const progress = await attempt(
+        WORLD_LABELS[kind],
+        () => api.completeWorldPlaces(kind, ids),
+        async () => {
+          await get().loadWorld();
+          await get().loadInventory();
+          await get().loadCurrencies();
+          await get().loadOverview();
+        },
+      );
+      if (progress && progress.done > 0) {
+        const language = get().settings.language;
+        const got = progress.grant.granted.map(
+          (entry) => `${formatNumber(entry.count)} ${itemName(entry.item, language)}`,
+        );
+        const shown = got.length > 5 ? [...got.slice(0, 5), `${got.length - 5} more`] : got;
+        const levels =
+          progress.levelsGained > 0
+            ? ` The corps gained ${progress.levelsGained} level${progress.levelsGained === 1 ? '' : 's'}.`
+            : '';
+        const what = `${formatNumber(progress.done)} ${WORLD_NOUNS[kind]}${progress.done === 1 ? '' : 's'} ${WORLD_VERBS[kind]}`;
+        toast.success(got.length > 0 ? `${what}: ${shown.join(', ')}.${levels}` : `${what}.${levels}`);
+        if (progress.grant.notGranted.length > 0) {
+          const missed = progress.grant.notGranted.map((entry) => itemName(entry.item, language)).join(', ');
+          toast.warning(`Not handed out, the editor has no way to add: ${missed}.`);
+        }
       }
+      return progress;
+    },
+
+    async undoWorldPlaces(kind, ids) {
+      markWorld(kind, ids, false);
       await attempt(
-        'Updating the world',
-        () => api.setWorldPlaces(kind, ids, done),
+        'Undoing world progress',
+        () => api.undoWorldPlaces(kind, ids),
         async () => {
           await get().loadWorld();
         },
@@ -1100,37 +1163,6 @@ export const useApp = create<Store>((set, get) => {
         toast.error(message(error));
         return [];
       }
-    },
-
-    async openChests(ids) {
-      const opening = await attempt(
-        ids.length === 1 ? 'Opening the chest' : 'Opening chests',
-        () => api.openChests(ids),
-        async () => {
-          await get().loadWorld();
-          await get().loadInventory();
-          await get().loadCurrencies();
-          await get().loadOverview();
-        },
-      );
-      if (opening && opening.opened > 0) {
-        const language = get().settings.language;
-        const got = opening.grant.granted.map(
-          (entry) => `${formatNumber(entry.count)} ${itemName(entry.item, language)}`,
-        );
-        const shown = got.length > 5 ? [...got.slice(0, 5), `${got.length - 5} more`] : got;
-        const what = opening.opened === 1 ? 'Chest opened' : `${formatNumber(opening.opened)} chests opened`;
-        const levels =
-          opening.levelsGained > 0
-            ? ` The corps gained ${opening.levelsGained} level${opening.levelsGained === 1 ? '' : 's'}.`
-            : '';
-        toast.success(`${what}: ${shown.join(', ') || 'nothing inside'}.${levels}`);
-        if (opening.grant.notGranted.length > 0) {
-          const missed = opening.grant.notGranted.map((entry) => itemName(entry.item, language)).join(', ');
-          toast.warning(`Not handed out, the editor has no way to add: ${missed}.`);
-        }
-      }
-      return opening;
     },
 
     async rawUpdate(table, rowid, column, value, advanced) {

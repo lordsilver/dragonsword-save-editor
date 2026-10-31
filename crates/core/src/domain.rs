@@ -554,6 +554,14 @@ impl<'a> Game<'a> {
     /// (corps EXP and level-up rewards included), promotes the corps for a
     /// promotion exam, and starts the quests that were waiting for it.
     pub fn complete_quest(&mut self, id: i64) -> Result<QuestCompletion> {
+        self.complete_quest_with(id, true)
+    }
+
+    /// Completes a quest in progress, handing out its rewards (gold, items,
+    /// corps EXP and a promotion's items) only when `grant` is set. Its
+    /// lasting side effects, a promotion's grade and the quests waiting for
+    /// it apply either way.
+    pub fn complete_quest_with(&mut self, id: i64, grant: bool) -> Result<QuestCompletion> {
         let growth = Growth::shared();
         let quest = growth
             .quest(id)
@@ -599,10 +607,12 @@ impl<'a> Game<'a> {
                 _ => {}
             }
         }
-        self.add_reward(quest.gold, &quest.items, &mut completion.grant)?;
-        completion.levels_gained = self.add_corps_exp(quest.adv_exp)?;
+        if grant {
+            self.add_reward(quest.gold, &quest.items, &mut completion.grant)?;
+            completion.levels_gained = self.add_corps_exp(quest.adv_exp)?;
+        }
         if quest.category == "ADVENT_GRADE" {
-            completion.new_grade = self.promote(id, &mut completion.grant)?;
+            completion.new_grade = self.promote(id, grant, &mut completion.grant)?;
         }
         completion.started = self.start_waiting_quests(id)?;
         transaction.commit()?;
@@ -661,7 +671,12 @@ impl<'a> Game<'a> {
     /// Raises the grade for a completed promotion exam and hands out its title
     /// and items. The adventure difficulty follows the grade when it was at
     /// the old grade, as it is in every save seen so far.
-    fn promote(&self, quest_id: i64, grant: &mut RewardGrant) -> Result<Option<i64>> {
+    fn promote(
+        &self,
+        quest_id: i64,
+        hand_out: bool,
+        grant: &mut RewardGrant,
+    ) -> Result<Option<i64>> {
         let growth = Growth::shared();
         let Some(grade) = (1..=growth.region(REGION).max_advent_grade)
             .filter_map(|grade| growth.grade(grade))
@@ -687,7 +702,9 @@ impl<'a> Game<'a> {
                 )?;
             }
         }
-        self.add_reward(0, &grade.items, grant)?;
+        if hand_out {
+            self.add_reward(0, &grade.items, grant)?;
+        }
         Ok(Some(grade.grade))
     }
 
