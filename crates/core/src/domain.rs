@@ -89,7 +89,7 @@ fn fillable_kind(kind: &str) -> bool {
 pub struct Game<'a> {
     session: &'a mut SaveSession,
     catalog: &'a Catalog,
-    user_id: i64,
+    pub(crate) user_id: i64,
 }
 
 impl<'a> Game<'a> {
@@ -102,11 +102,11 @@ impl<'a> Game<'a> {
         }
     }
 
-    fn conn(&self) -> &Connection {
+    pub(crate) fn conn(&self) -> &Connection {
         self.session.conn()
     }
 
-    fn touch(&mut self) {
+    pub(crate) fn touch(&mut self) {
         self.session.touch();
     }
 
@@ -270,7 +270,7 @@ impl<'a> Game<'a> {
     }
 
     /// Quest IDs from one quest table, or none when the save lacks it.
-    fn quest_ids(&self, table: &str, extra: &str) -> Result<Vec<i64>> {
+    pub(crate) fn quest_ids(&self, table: &str, extra: &str) -> Result<Vec<i64>> {
         let exists: i64 = self.conn().query_row(
             "SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?",
             [table],
@@ -501,7 +501,7 @@ impl<'a> Game<'a> {
     }
 
     /// Why the editor cannot complete a quest, if it cannot.
-    fn completion_blocker(&self, quest: &growth::Quest) -> Result<Option<String>> {
+    pub(crate) fn completion_blocker(&self, quest: &growth::Quest) -> Result<Option<String>> {
         if quest.save_category.is_none() {
             return Ok(Some(format!(
                 "the editor does not know how saves record {} quests",
@@ -959,7 +959,7 @@ impl<'a> Game<'a> {
         Ok(())
     }
 
-    fn table_exists(&self, table: &str) -> Result<bool> {
+    pub(crate) fn table_exists(&self, table: &str) -> Result<bool> {
         let count: i64 = self.conn().query_row(
             "SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?",
             [table],

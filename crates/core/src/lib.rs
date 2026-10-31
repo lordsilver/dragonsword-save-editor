@@ -14,6 +14,7 @@ pub mod growth;
 pub mod raw;
 pub mod save;
 pub mod sqlcipher;
+pub mod world;
 
 pub use catalog::{Catalog, Item};
 pub use consistency::ConsistencyReport;

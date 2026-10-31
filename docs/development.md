@@ -126,6 +126,8 @@ The JSON files in `crates/core/data` are embedded at compile time with `include_
 
 `game.json` holds the game's maths and texts for heroes, equipment, karma, costumes, skills and items, from `scripts/gen-game-data.mjs`; `crates/core/src/gamedata.rs` loads it and computes the hero screen's stats. [Game assets](game-assets.md#game-maths-and-texts) lists what it holds.
 
+`world.json` holds the places of the game's world maps (warp points, Statues of Organa, Eona's Legacy, dungeons, chests and mini-games, by region) and its quest log's descriptions and steps, from `scripts/gen-world.mjs`; `world_maps.json` and the map images come from `scripts/gen-world-map.mjs`. `crates/core/src/world.rs` reads them against the save. [Game rules](game-rules.md#world) gives the save side, [Game assets](game-assets.md#world-maps) the map.
+
 `growth.json` holds the game's growth rules: level and EXP tables, skill caps per breakthrough, Mercenary Corps grades, and each region's live limits. `scripts/gen-growth.mjs` generates it from the XML tables extracted from the game's paks; [Game rules](game-rules.md) covers the extraction and what each table gives. Never commit the extracted files. After regenerating, run `cargo test -p dsa-core --lib growth`: its tests pin key rows, so a changed rule fails until it is looked at.
 
 ## Packaging

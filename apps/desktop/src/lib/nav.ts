@@ -8,7 +8,9 @@ import {
   Flame,
   Gem,
   LayoutDashboard,
+  Map as MapIcon,
   PawPrint,
+  ScrollText,
   Shirt,
   SlidersHorizontal,
   Sword,
@@ -16,7 +18,7 @@ import {
 } from 'lucide-react';
 import type { Counts, Section } from './types';
 
-export const NAV_GROUPS = ['Save', 'Heroes', 'Collection', 'Advanced'] as const;
+export const NAV_GROUPS = ['Save', 'Heroes', 'Collection', 'World', 'Advanced'] as const;
 
 /** The app's own screens, pinned below the save's: they change the editor, not the save. */
 export const APP_GROUP = 'App';
@@ -42,6 +44,8 @@ export const NAV_ITEMS: NavItem[] = [
   { id: 'mounts', label: 'Familiars', icon: PawPrint, group: 'Collection', count: (c) => c.mounts },
   { id: 'titles', label: 'Titles', icon: Crown, group: 'Collection', count: (c) => c.titlesUnlocked },
   { id: 'cooking', label: 'Cooking', icon: CookingPot, group: 'Collection', count: (c) => c.recipesKnown },
+  { id: 'world', label: 'World map', icon: MapIcon, group: 'World' },
+  { id: 'quests', label: 'Quests', icon: ScrollText, group: 'World' },
   { id: 'raw', label: 'Raw database', icon: Database, group: 'Advanced' },
   { id: 'settings', label: 'Settings', icon: SlidersHorizontal, group: APP_GROUP },
 ];

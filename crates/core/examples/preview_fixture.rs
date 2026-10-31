@@ -107,6 +107,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "heroes_recruitable",
         serde_json::to_value(game.recruitable_heroes()?)?,
     );
+    fixture.insert("world_get", serde_json::to_value(game.world()?)?);
+    fixture.insert("quest_log_get", serde_json::to_value(game.quest_log()?)?);
 
     std::fs::write(out, serde_json::to_string(&fixture)?)?;
     println!("wrote {out}");

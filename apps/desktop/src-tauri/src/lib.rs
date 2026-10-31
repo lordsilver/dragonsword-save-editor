@@ -13,6 +13,7 @@ use dsa_core::domain::{
     Recipe, Skill, Stack, TeamPage, TitleEntry, Vehicle,
 };
 use dsa_core::raw::{RawPage, RawTable, RawValue};
+use dsa_core::world::{PlaceKind, QuestEntry, WorldView};
 use dsa_core::{Catalog, Error, SaveSession, SlotInfo, WriteReport};
 use serde::Serialize;
 use tauri::{Emitter, Manager, State};
@@ -658,6 +659,28 @@ fn recipes_unlock_all(state: State<'_, AppState>) -> CommandResult<i64> {
     game(&state, |game| game.unlock_all_recipes())
 }
 
+// --------------------------------------------------------------------- world
+
+#[tauri::command]
+fn world_get(state: State<'_, AppState>) -> CommandResult<WorldView> {
+    game(&state, |game| game.world())
+}
+
+#[tauri::command]
+fn world_places_set(
+    state: State<'_, AppState>,
+    kind: PlaceKind,
+    ids: Vec<i64>,
+    done: bool,
+) -> CommandResult<i64> {
+    game(&state, |game| game.set_world_places(kind, &ids, done))
+}
+
+#[tauri::command]
+fn quest_log_get(state: State<'_, AppState>) -> CommandResult<Vec<QuestEntry>> {
+    game(&state, |game| game.quest_log())
+}
+
 // ---------------------------------------------------------------- raw tables
 
 #[tauri::command]
@@ -769,6 +792,9 @@ pub fn run() {
             recipes_get,
             recipe_set,
             recipes_unlock_all,
+            world_get,
+            world_places_set,
+            quest_log_get,
             raw_tables,
             raw_page,
             raw_update

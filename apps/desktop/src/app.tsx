@@ -28,10 +28,12 @@ import { InventoryScreen } from '@/screens/inventory';
 import { KarmaScreen } from '@/screens/karma';
 import { MountsScreen } from '@/screens/mounts';
 import { OverviewScreen } from '@/screens/overview';
+import { QuestsScreen } from '@/screens/quests';
 import { RawScreen } from '@/screens/raw';
 import { SettingsScreen } from '@/screens/settings';
 import { StartScreen } from '@/screens/start';
 import { TitlesScreen } from '@/screens/titles';
+import { WorldScreen } from '@/screens/world';
 
 const SCREENS: Record<Section, () => ReactElement | null> = {
   overview: OverviewScreen,
@@ -45,6 +47,8 @@ const SCREENS: Record<Section, () => ReactElement | null> = {
   mounts: MountsScreen,
   titles: TitlesScreen,
   cooking: CookingScreen,
+  world: WorldScreen,
+  quests: QuestsScreen,
   raw: RawScreen,
   settings: SettingsScreen,
 };

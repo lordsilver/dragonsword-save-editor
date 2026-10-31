@@ -27,6 +27,28 @@ node scripts/gen-icons.mjs <assets-dir> <extract-dir> <fx-dir>
 
 `gen-icons.mjs` also writes the game's grade artwork next to the sprite, for normal, superior, rare, epic and legendary (textures 01 to 05): the inventory tile background `Frame/Frame_Item_Grade_0N` as `grade-tile-<grade>.webp`, and the item card header `Frame/Frame_Grade_0N` as `grade-card-<grade>.webp`. The inventory draws its tiles and its item card from them, as the game's inventory does.
 
+## World maps
+
+The World map screen draws Orbis from the game's own capture of it seen from above, `apps/desktop/src/assets/world-map-100.webp` (4096 px square, from 16 textures of 1024 px), with the game's map markers `map-mark-*.webp` (`Common/Mark/Icon_Mark_Waypoint`, `_Godbless`, `_AWindmill` and `_AWindmill_Activate`, `_TrialTower`, `_Dungeon_Single` and `_Complete`, `_Box_png`). `scripts/gen-world-map.mjs` writes them and `crates/core/data/world_maps.json`, the square of the world the image covers:
+
+```bash
+node scripts/gen-world.mjs <xml-dir>/GameData
+node scripts/gen-world-map.mjs <dump-dir> <tiles-dir> <assets-dir>
+```
+
+`<dump-dir>` holds the map assets as JSON and `<tiles-dir>` the capture's textures as PNG, both from DsaExport (`MSYS_NO_PATHCONV=1` keeps Git Bash from rewriting the `/Game/...` prefix):
+
+```bash
+dotnet DsaExport.dll dump "C:\Games\DragonSword Awakening" <tools-dir> <dump-dir> @maps.txt
+dotnet DsaExport.dll export "C:\Games\DragonSword Awakening" <tools-dir> <tiles-dir> /Game/Design/CaptureMinimap/Export/
+```
+
+where `maps.txt` lists `DS/Content/Design/CaptureMinimap/Data/WorldMapData_100.uasset`, `WorldMapData_200.uasset` and `DS/Content/Design/CaptureMinimap/Export/RTM_W1_world_01_main_WP.uasset`. A world's map is `MapFieldData`'s `WorldMapPath` for the world's ID, a `DWorldMapData` asset whose `MapTexturePath` names the capture (`RTM_W1_world_01_main_WP`, `MapTextureCount` 4). Beside the textures, a `JSONString` asset of the same name gives the square they cover: corner `sx` -165,990, `sy` -151,100, side `size` 460,000 world units, `TexSize` 1024.
+
+How the textures fit was worked out, since nothing in the assets says so. Of the 64 ways to lay out the 16 textures (which index is the row, either order for rows and columns, one of the 8 symmetries of a square applied to each), only one arrangement up to rotating and mirroring the whole map joins at every seam: texture `<a>_<b>` at row a, column b, flipped top to bottom. Matched against the game's 297 map points of Orbis inside the image (`WarpPositionData`, `MapPointIconData`), 269 fall on land with the world point (X, Y) at ((sy + size − Y) / size, (X − sx) / size) of the image, more than in any other orientation; that one is also unmirrored (Unreal's world is left-handed, so a view from above keeps +X and +Y a quarter turn apart clockwise). The capture stops short of the world on two sides: a statue, a dungeon and 99 chests lie up to a tenth of the map beyond it, and the screen draws them past the image.
+
+Belos has no map yet. Its main capture, `RTM_W2_1_world_02_main_wp`, is 16 textures of uneven sizes (769 × 765 and so on) that no `JSONString` describes; `RTM_W2_world_02_main_wp` describes a 1,100,000-unit square of 3072-pixel textures the paks do not hold. Its 29 warp points, 3 dungeons and 158 chests are in `world.json` for when its map can be placed.
+
 ## The catalog from the game tables
 
 `scripts/gen-catalog.mjs <extract-dir>` writes the editor's catalog from the game's tables (2026-10-30):

@@ -17,7 +17,9 @@ import type {
   Karma,
   Loadout,
   Overview,
+  PlaceKind,
   QuestCompletion,
+  QuestEntry,
   QuestRewards,
   RawPage,
   RawTable,
@@ -33,6 +35,7 @@ import type {
   TeamPage,
   TitleEntry,
   Vehicle,
+  WorldView,
 } from './types.ts';
 
 const DEFAULT_SETTINGS: Settings = {
@@ -81,6 +84,8 @@ export interface AppState {
   mountCatalog: CatalogEntry[];
   titles: TitleEntry[];
   recipes: Recipe[];
+  world: WorldView | null;
+  questLog: QuestEntry[] | null;
   rawTables: RawTable[];
   rawPage: RawPage | null;
 }
@@ -114,6 +119,8 @@ export interface AppActions {
   loadMounts(): Promise<void>;
   loadTitles(): Promise<void>;
   loadRecipes(): Promise<void>;
+  loadWorld(): Promise<void>;
+  loadQuestLog(): Promise<void>;
   loadTeams(): Promise<void>;
   loadRawTables(): Promise<void>;
   loadRawPage(table: string, offset: number, search: string): Promise<void>;
@@ -154,6 +161,8 @@ export interface AppActions {
   unlockAllTitles(): Promise<void>;
   setRecipe(key: number, known: boolean): Promise<void>;
   unlockAllRecipes(): Promise<void>;
+  /** Marks places of one kind done (activated, restored, found, opened) or not. */
+  setWorldPlaces(kind: PlaceKind, ids: number[], done: boolean): Promise<void>;
   rawUpdate(table: string, rowid: string, column: string, value: RawValue, advanced: boolean): Promise<void>;
 }
 
@@ -207,6 +216,8 @@ function initialState(): AppState {
     mountCatalog: [],
     titles: [],
     recipes: [],
+    world: null,
+    questLog: null,
     rawTables: [],
     rawPage: null,
   };
@@ -514,6 +525,12 @@ export const useApp = create<Store>((set, get) => {
           case 'cooking':
             await get().loadRecipes();
             break;
+          case 'world':
+            await get().loadWorld();
+            break;
+          case 'quests':
+            await get().loadQuestLog();
+            break;
           case 'raw':
             await get().loadRawTables();
             break;
@@ -606,6 +623,14 @@ export const useApp = create<Store>((set, get) => {
 
     async loadRecipes() {
       await read(api.recipes, (recipes) => set({ recipes }));
+    },
+
+    async loadWorld() {
+      await read(api.world, (world) => set({ world }));
+    },
+
+    async loadQuestLog() {
+      await read(api.questLog, (questLog) => set({ questLog }));
     },
 
     async loadRawTables() {
@@ -771,6 +796,7 @@ export const useApp = create<Store>((set, get) => {
           await get().loadCurrencies();
           await get().loadMounts();
           await get().loadOverview();
+          if (get().questLog) await get().loadQuestLog();
         },
       );
       if (completion) {
@@ -1029,6 +1055,41 @@ export const useApp = create<Store>((set, get) => {
         },
       );
       if (count !== null) toast.success('Every recipe is known.');
+    },
+
+    async setWorldPlaces(kind, ids, done) {
+      const world = get().world;
+      if (world && ids.length > 0) {
+        const chosen = new Set(ids);
+        set({
+          world: {
+            ...world,
+            waypoints: world.waypoints.map((waypoint) => {
+              if (kind === 'waypoint' && chosen.has(waypoint.id)) return { ...waypoint, active: done };
+              if (kind === 'statue' && waypoint.statue && chosen.has(waypoint.statue.id)) {
+                const statue = { ...waypoint.statue, restored: done, found: done ? waypoint.statue.pieces : 0 };
+                return { ...waypoint, active: done, statue };
+              }
+              return waypoint;
+            }),
+            dungeons: world.dungeons.map((dungeon) =>
+              kind === 'dungeon' && chosen.has(dungeon.id) ? { ...dungeon, found: done } : dungeon,
+            ),
+            chests: world.chests.map((chest) =>
+              kind === 'chest' && chosen.has(chest.id)
+                ? { ...chest, opened: done, released: chest.released || done }
+                : chest,
+            ),
+          },
+        });
+      }
+      await attempt(
+        'Updating the world',
+        () => api.setWorldPlaces(kind, ids, done),
+        async () => {
+          await get().loadWorld();
+        },
+      );
     },
 
     async rawUpdate(table, rowid, column, value, advanced) {

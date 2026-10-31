@@ -14,7 +14,9 @@ import type {
   Karma,
   Loadout,
   Overview,
+  PlaceKind,
   QuestCompletion,
+  QuestEntry,
   QuestRewards,
   RawPage,
   RawTable,
@@ -30,6 +32,7 @@ import type {
   TeamPage,
   TitleEntry,
   Vehicle,
+  WorldView,
   WriteReport,
 } from './types.ts';
 
@@ -342,6 +345,18 @@ export async function setRecipe(key: number, known: boolean): Promise<void> {
 
 export async function unlockAllRecipes(): Promise<number> {
   return invoke<number>('recipes_unlock_all');
+}
+
+export async function world(): Promise<WorldView> {
+  return invoke<WorldView>('world_get');
+}
+
+export async function setWorldPlaces(kind: PlaceKind, ids: number[], done: boolean): Promise<number> {
+  return invoke<number>('world_places_set', { kind, ids, done });
+}
+
+export async function questLog(): Promise<QuestEntry[]> {
+  return invoke<QuestEntry[]>('quest_log_get');
 }
 
 export async function rawTables(): Promise<RawTable[]> {

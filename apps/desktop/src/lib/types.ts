@@ -487,6 +487,105 @@ export interface Costume {
   portrait: { iconX: number; iconY: number } | null;
 }
 
+/** Where a world map image sits: a square of `size` world units from corner (`x0`, `y0`). */
+export interface MapPlacement {
+  x0: number;
+  y0: number;
+  size: number;
+}
+
+export interface WorldInfo {
+  id: number;
+  name: GameText;
+  /** None when the editor has no image of the world's map. */
+  map: MapPlacement | null;
+}
+
+export type MissionKind =
+  | 'TREASUREBOX_OPEN'
+  | 'MINIGAME'
+  | 'DUNGEON_FIND'
+  | 'WAYPOINT_OPEN'
+  | 'FIELDSTATUE_COMPLETE'
+  | 'WINDMILL_OPEN';
+
+/** A part of a world the game's world map counts completion in. */
+export interface RegionView {
+  id: number;
+  world: number;
+  name: GameText;
+  missions: Array<{ kind: MissionKind; done: number; total: number }>;
+}
+
+export type WaypointKind = 'waypoint' | 'statue' | 'legacy' | 'tower';
+
+export interface WaypointView {
+  id: number;
+  kind: WaypointKind;
+  world: number;
+  region: number | null;
+  name: GameText;
+  x: number;
+  y: number;
+  active: boolean;
+  statue: { id: number; restored: boolean; pieces: number; found: number } | null;
+}
+
+export interface DungeonView {
+  id: number;
+  world: number;
+  region: number | null;
+  name: GameText;
+  x: number;
+  y: number;
+  found: boolean;
+}
+
+export type ChestLock = 'lock' | 'hide' | 'excavation' | 'lock_with_key' | 'hide_with_map';
+
+export interface ChestView {
+  id: number;
+  world: number;
+  region: number | null;
+  name: GameText;
+  /** normal, superior, rare, epic or legendary. */
+  grade: string;
+  lock: ChestLock | null;
+  x: number;
+  y: number;
+  released: boolean;
+  opened: boolean;
+}
+
+/** The world maps with every place on them and the save's progress. */
+export interface WorldView {
+  worlds: WorldInfo[];
+  regions: RegionView[];
+  waypoints: WaypointView[];
+  dungeons: DungeonView[];
+  chests: ChestView[];
+  /** Where the player stands, when that is on a world map. */
+  player: { world: number; x: number; y: number } | null;
+}
+
+/** What the World map edits: warp points, statues, dungeons and chests. */
+export type PlaceKind = 'waypoint' | 'statue' | 'dungeon' | 'chest';
+
+/** One quest of the game's quest log and where the save stands on it. */
+export interface QuestEntry {
+  id: number;
+  category: string;
+  nameEn: string;
+  nameFr: string;
+  description: GameText | null;
+  state: 'done' | 'active' | 'open';
+  /** The step the save is on, for a quest in progress. */
+  step: { id: number; count: number; text: GameText | null } | null;
+  steps: number;
+  /** Why the editor cannot complete it, for a quest in progress. */
+  blocked: string | null;
+}
+
 /** The rewards one completed quest lists in the game's quest table. */
 export interface QuestRewards {
   questId: number;
@@ -627,6 +726,8 @@ export type Section =
   | 'mounts'
   | 'titles'
   | 'cooking'
+  | 'world'
+  | 'quests'
   | 'raw'
   | 'settings';
 

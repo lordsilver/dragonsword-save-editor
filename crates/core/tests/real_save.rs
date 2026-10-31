@@ -196,3 +196,134 @@ fn current_health_never_exceeds_the_computed_max_hp() {
     session.close();
     fs::remove_dir_all(directory).ok();
 }
+
+/// Reads the save's world progress and edits a place of each kind both ways
+/// on a copy: a chest marked opened and back keeps its lock open, a statue
+/// restored activates its warp.
+#[test]
+#[ignore = "needs DSA_SAVE pointing at a copy of a real save"]
+fn world_progress_reads_and_round_trips() {
+    use dsa_core::world::PlaceKind;
+
+    let (directory, path) = copy_fixture();
+    let mut session = SaveSession::open(&path).expect("open save");
+    {
+        let mut game = session.catalog_game(Catalog::shared());
+        let world = game.world().expect("world");
+        let active = world.waypoints.iter().filter(|w| w.active).count();
+        let opened = world.chests.iter().filter(|c| c.opened).count();
+        let found = world.dungeons.iter().filter(|d| d.found).count();
+        println!(
+            "waypoints {active}/{} · chests {opened}/{} · dungeons {found}/{} · player {:?}",
+            world.waypoints.len(),
+            world.chests.len(),
+            world.dungeons.len(),
+            world.player.as_ref().map(|p| (p.world, p.x, p.y))
+        );
+        for region in &world.regions {
+            let missions: Vec<String> = region
+                .missions
+                .iter()
+                .map(|m| format!("{} {}/{}", m.kind, m.done, m.total))
+                .collect();
+            println!("  {}: {}", region.name.en, missions.join(", "));
+            for mission in &region.missions {
+                assert!(
+                    mission.done <= mission.total,
+                    "{} {}",
+                    region.name.en,
+                    mission.kind
+                );
+            }
+        }
+        let log = game.quest_log().expect("quest log");
+        let states = |state: &str| log.iter().filter(|q| q.state == state).count();
+        println!(
+            "quests done {} active {} open {}",
+            states("done"),
+            states("active"),
+            states("open")
+        );
+        for quest in log.iter().filter(|q| q.state == "active") {
+            let step = quest.step.as_ref().expect("an active quest has a step");
+            println!(
+                "  {} step {} ({}): {:?}",
+                quest.name_en,
+                step.id,
+                step.count,
+                step.text.as_ref().map(|t| &t.en)
+            );
+        }
+
+        let chest = world
+            .chests
+            .iter()
+            .find(|c| !c.opened && c.lock.is_some())
+            .expect("a shut chest");
+        game.set_world_places(PlaceKind::Chest, &[chest.id], true)
+            .expect("open chest");
+        let after = game.world().expect("world");
+        let now = after
+            .chests
+            .iter()
+            .find(|c| c.id == chest.id)
+            .expect("chest");
+        assert!(now.opened && now.released);
+        game.set_world_places(PlaceKind::Chest, &[chest.id], false)
+            .expect("shut chest");
+        let after = game.world().expect("world");
+        let now = after
+            .chests
+            .iter()
+            .find(|c| c.id == chest.id)
+            .expect("chest");
+        assert!(
+            !now.opened && now.released,
+            "un-opening keeps the lock open"
+        );
+
+        let statue = world
+            .waypoints
+            .iter()
+            .find(|w| w.statue.as_ref().is_some_and(|s| !s.restored))
+            .expect("a broken statue");
+        let statue_id = statue.statue.as_ref().unwrap().id;
+        game.set_world_places(PlaceKind::Statue, &[statue_id], true)
+            .expect("restore");
+        let after = game.world().expect("world");
+        let now = after
+            .waypoints
+            .iter()
+            .find(|w| w.id == statue.id)
+            .expect("statue");
+        let progress = now.statue.as_ref().unwrap();
+        assert!(now.active && progress.restored && progress.found == progress.pieces);
+
+        let dungeon = world
+            .dungeons
+            .iter()
+            .find(|d| !d.found)
+            .expect("a dungeon not found");
+        game.set_world_places(PlaceKind::Dungeon, &[dungeon.id], true)
+            .expect("find");
+        assert!(
+            game.world()
+                .unwrap()
+                .dungeons
+                .iter()
+                .any(|d| d.id == dungeon.id && d.found)
+        );
+
+        let shut: Vec<i64> = world
+            .waypoints
+            .iter()
+            .filter(|w| !w.active)
+            .map(|w| w.id)
+            .collect();
+        game.set_world_places(PlaceKind::Waypoint, &shut, true)
+            .expect("activate all");
+        assert!(game.world().unwrap().waypoints.iter().all(|w| w.active));
+    }
+    session.close();
+    fs::remove_dir_all(directory).ok();
+}
