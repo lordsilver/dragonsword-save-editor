@@ -44,6 +44,7 @@ fn every_mutation_survives_a_write() {
     let baseline;
     let expected_team_slots;
     let (expected_level, expected_exp, karma_ascend, karma_transcend);
+    let gear_dbid: i64;
     {
         let mut session = SaveSession::open(&path).expect("open");
         // A clean game-written save and a save that already has damage both
@@ -328,6 +329,32 @@ fn every_mutation_survives_a_write() {
                 assert_eq!(gem.stat_info_cid, 654_321);
                 assert!(gem.is_lock);
             }
+
+            // Gear: wear a piece any hero fits, then move it to another hero.
+            let piece = game
+                .equipment()
+                .expect("equipment")
+                .into_iter()
+                .find(|piece| {
+                    piece
+                        .stats
+                        .as_ref()
+                        .is_some_and(|stats| stats.trait_info.is_none())
+                })
+                .expect("gear any hero wears");
+            gear_dbid = piece.dbid.parse().expect("gear dbid");
+            let part = piece.stats.expect("stats").part;
+            game.equip_gear(character_a, &part, gear_dbid)
+                .expect("wear gear");
+            game.equip_gear(character_b, &part, gear_dbid)
+                .expect("move gear");
+            let worn = game
+                .equipment()
+                .expect("equipment")
+                .into_iter()
+                .find(|piece| piece.dbid == gear_dbid.to_string())
+                .expect("gear");
+            assert_eq!(worn.equipped_by, Some(character_b));
 
             // Karma: stats and moving the owner between characters.
             let karma = game
@@ -670,6 +697,13 @@ fn every_mutation_survives_a_write() {
         assert_eq!(piece.exp, 1_234);
         assert!(piece.is_lock);
         assert_eq!(piece.gem_dbid, gem_dbid.to_string());
+        let worn = game
+            .equipment()
+            .expect("equipment")
+            .into_iter()
+            .find(|piece| piece.dbid == gear_dbid.to_string())
+            .expect("gear");
+        assert_eq!(worn.equipped_by, Some(character_b));
 
         let live: HashSet<i64> = game
             .gems()

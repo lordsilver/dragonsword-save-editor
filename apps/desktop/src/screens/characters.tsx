@@ -18,8 +18,8 @@ import { type CSSProperties, useMemo, useState } from 'react';
 import skillDiscCircle from '@/assets/skill-disc-circle.webp';
 import skillDiscDiamond from '@/assets/skill-disc-diamond.webp';
 import { ConfirmButton, EmptyPanel } from '@/components/common';
-import { NumberField } from '@/components/fields';
-import { RichText } from '@/components/game-text';
+import { NumberField, SearchField } from '@/components/fields';
+import { GradeStars, RichText } from '@/components/game-text';
 import { ItemIcon } from '@/components/item-icon';
 import { PageHeader } from '@/components/page';
 import { NativeSelect } from '@/components/select';
@@ -45,6 +45,7 @@ import type {
   HeroEntry,
   HeroSource,
   HeroTab,
+  Item,
   Loadout,
   LoadoutEntry,
   Skill,
@@ -296,12 +297,16 @@ function HeroDetail({ character, language, busy }: { character: Character; langu
         ))}
       </div>
 
-      <div className="scroll-thin min-h-0 flex-1 overflow-y-auto px-6 py-5">
-        {tab === 'info' && <HeroInformation character={character} busy={busy} language={language} />}
-        {tab === 'skills' && <HeroSkills character={character} language={language} busy={busy} />}
-        {tab === 'equipment' && <HeroEquipment language={language} />}
-        {tab === 'awaken' && <HeroAwaken character={character} language={language} />}
-      </div>
+      {/* The Skills tab scrolls its tree and its detail apart, so it has no shared scroll. */}
+      {tab === 'skills' ? (
+        <HeroSkills character={character} language={language} busy={busy} />
+      ) : (
+        <div className="scroll-thin min-h-0 flex-1 overflow-y-auto px-6 py-5">
+          {tab === 'info' && <HeroInformation character={character} busy={busy} language={language} />}
+          {tab === 'equipment' && <HeroEquipment character={character} language={language} busy={busy} />}
+          {tab === 'awaken' && <HeroAwaken character={character} language={language} />}
+        </div>
+      )}
     </div>
   );
 }
@@ -512,10 +517,16 @@ function effectName(skill: Skill, language: string): string | null {
  * a translucent glow (FXT_ring13_UI_ad01) and an additive line (_ad02) on a
  * circle, the additive signal ring on a diamond. The rings are the game's own
  * shader maths averaged over their motion (docs/game-assets.md); the game
- * rotates their noise, the editor keeps them still.
+ * rotates their noise, the editor keeps them still. The effect's mark is the
+ * State_Mark glyph on the small dark plate the game gives it, centred on the
+ * ring's top-left edge.
  */
-function SkillIcon({ skill, size }: { skill: Skill; size: number }) {
-  const badge = Math.round(size * 0.4);
+function SkillIcon({ skill, size, badge = true }: { skill: Skill; size: number; badge?: boolean }) {
+  // The ring art puts its line 0.21 of the slot in from each side at 45°.
+  // The game's mark is about a fifth of the ring across; at list sizes that
+  // is under 12px, so 12px is the least it gets.
+  const mark = Math.max(12, Math.round(size * 0.16));
+  const edge = Math.round(size * 0.21 - mark / 2);
   const signal = skill.info?.signal ?? false;
   const glyph = {
     nameEn: skill.info?.nameEn ?? '?',
@@ -541,12 +552,18 @@ function SkillIcon({ skill, size }: { skill: Skill; size: number }) {
           <span aria-hidden className="absolute inset-0" style={ringStyle('line', skill)} />
         </>
       )}
-      {skill.effect && (
-        <ItemIcon
-          item={{ ...skill.effect, category: 'skill', icon: true }}
-          size={badge}
-          className="absolute -top-1 -left-1 rounded-full border-white/40 bg-zinc-900"
-        />
+      {badge && skill.effect && (
+        <span
+          aria-hidden
+          className="absolute flex items-center justify-center rounded-[25%] bg-[#10202a] ring-1 ring-black"
+          style={{ top: edge, left: edge, width: mark, height: mark }}
+        >
+          <ItemIcon
+            item={{ ...skill.effect, category: 'skill', icon: true }}
+            size={Math.round(mark * 0.8)}
+            className="rounded-none border-0 bg-transparent"
+          />
+        </span>
       )}
     </span>
   );
@@ -559,9 +576,11 @@ function HeroSkills({ character, language, busy }: { character: Character; langu
 
   if (!selected) {
     return (
-      <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-        The game data names no skills for this hero, and the save has no skill rows.
-      </p>
+      <div className="px-6 py-5">
+        <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+          The game data names no skills for this hero, and the save has no skill rows.
+        </p>
+      </div>
     );
   }
 
@@ -581,24 +600,24 @@ function HeroSkills({ character, language, busy }: { character: Character; langu
     />
   );
 
-  // The detail pane sits beside the tree only when the panel has room for
-  // both, so narrow windows never cut the skill names short.
+  // The detail stays beside the tree at every window width, and each scrolls
+  // on its own, so picking a skill never sends its detail out of view. The
+  // tree keeps the game's two columns when it has room and stacks them, in
+  // slot order, when it does not.
   return (
-    <div className="@container">
-      <div className="grid max-w-4xl gap-6 @2xl:grid-cols-[minmax(0,1fr)_17rem]">
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-x-3">
-            <div className="space-y-1">{left.map(node)}</div>
-            <div className="space-y-1">{right.map(node)}</div>
-          </div>
-          {rest.length > 0 && (
-            <div className="flex justify-center border-t pt-4">
-              <div className="w-1/2 space-y-1">{rest.map(node)}</div>
-            </div>
-          )}
+    <div className="@container flex min-h-0 flex-1">
+      <div className="scroll-thin @container/tree min-h-0 min-w-0 flex-1 overflow-y-auto px-6 py-5">
+        <div className="grid gap-x-3 gap-y-1 @sm/tree:grid-cols-2">
+          <div className="space-y-1">{left.map(node)}</div>
+          <div className="space-y-1">{right.map(node)}</div>
         </div>
-        <SkillDetail key={selected.typeValue} skill={selected} character={character} language={language} busy={busy} />
+        {rest.length > 0 && (
+          <div className="mt-4 flex justify-center border-t pt-4">
+            <div className="w-full space-y-1 @sm/tree:w-1/2">{rest.map(node)}</div>
+          </div>
+        )}
       </div>
+      <SkillDetail key={selected.typeValue} skill={selected} character={character} language={language} busy={busy} />
     </div>
   );
 }
@@ -634,7 +653,7 @@ function SkillNode({
       <span className="min-w-0 flex-1">
         <span
           className={cn(
-            'block truncate text-sm font-medium',
+            'line-clamp-2 text-sm leading-snug font-medium',
             !skill.saved && skill.editable && 'text-muted-foreground',
           )}
         >
@@ -665,90 +684,98 @@ function SkillDetail({
   const effect = effectName(skill, language);
 
   return (
-    <aside className="flex flex-col items-center gap-3 self-start rounded-lg border p-5 text-center">
-      {(skill.label || (effect && skill.effect)) && (
-        <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs">
-          {effect && skill.effect && (
-            <span className="flex items-center gap-1 rounded-full border bg-muted/40 py-0.5 pr-2 pl-0.5">
-              <ItemIcon
-                item={{ ...skill.effect, category: 'skill', icon: true }}
-                size={18}
-                className="rounded-full border-none bg-zinc-900"
+    <aside
+      aria-label={name}
+      className="scroll-thin min-h-0 w-64 shrink-0 overflow-y-auto border-l bg-muted/10 @3xl:w-80"
+    >
+      <div className="flex flex-col items-center gap-3 p-5 text-center">
+        {(skill.label || (effect && skill.effect)) && (
+          <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs">
+            {effect && skill.effect && (
+              <span className="flex items-center gap-1 rounded-full border bg-muted/40 py-0.5 pr-2 pl-0.5">
+                <ItemIcon
+                  item={{ ...skill.effect, category: 'skill', icon: true }}
+                  size={18}
+                  className="rounded-full border-none bg-zinc-900"
+                />
+                {effect}
+              </span>
+            )}
+            {skill.label && (
+              <span className="rounded-full border bg-muted/40 px-2 py-0.5 text-muted-foreground">
+                {gameText(skill.label, language)}
+              </span>
+            )}
+          </div>
+        )}
+        {/* The effect chip above names the effect, so the large icon carries no mark. */}
+        <SkillIcon skill={skill} size={88} badge={false} />
+        <div>
+          <div className="text-sm text-muted-foreground tabular-nums">
+            {skill.saved || !skill.editable ? `Lv. ${skill.level}` : 'Not in this save'}
+          </div>
+          <h3 className="font-heading text-lg font-semibold">{name}</h3>
+        </div>
+        {skill.lines.length > 0 ? (
+          <div className="w-full space-y-1.5 text-left text-sm">
+            {skill.lines.map((line) => (
+              <RichText
+                key={line.kind}
+                text={gameText(line.text, language)}
+                className={cn(
+                  'block leading-relaxed',
+                  // Damage and the inflicted status sit on the game's tinted rows.
+                  line.kind === '2' || line.kind === '3'
+                    ? 'rounded-md bg-muted/60 px-2.5 py-1'
+                    : 'text-muted-foreground',
+                  line.kind === '4' && 'pt-1',
+                )}
               />
-              {effect}
-            </span>
-          )}
-          {skill.label && (
-            <span className="rounded-full border bg-muted/40 px-2 py-0.5 text-muted-foreground">
-              {gameText(skill.label, language)}
-            </span>
-          )}
-        </div>
-      )}
-      <SkillIcon skill={skill} size={88} />
-      <div>
-        <div className="text-sm text-muted-foreground tabular-nums">
-          {skill.saved || !skill.editable ? `Lv. ${skill.level}` : 'Not in this save'}
-        </div>
-        <h3 className="font-heading text-lg font-semibold">{name}</h3>
-      </div>
-      {skill.lines.length > 0 ? (
-        <div className="w-full space-y-1.5 text-left text-sm">
-          {skill.lines.map((line) => (
-            <RichText
-              key={line.kind}
-              text={gameText(line.text, language)}
-              className={cn(
-                'block leading-relaxed',
-                // Damage and the inflicted status sit on the game's tinted rows.
-                line.kind === '2' || line.kind === '3' ? 'rounded-md bg-muted/60 px-2.5 py-1' : 'text-muted-foreground',
-                line.kind === '4' && 'pt-1',
-              )}
-            />
-          ))}
-        </div>
-      ) : (
-        description && <p className="text-sm text-muted-foreground">{description}</p>
-      )}
-      {skill.next && <SkillCostView cost={skill.next} language={language} />}
-      <div className="mt-1 w-full border-t pt-4">
-        {!skill.editable ? (
-          <p className="text-xs text-muted-foreground">
-            The game keeps no save row for this slot. It is always at level {skill.level}.
-          </p>
-        ) : skill.saved ? (
-          <div className="flex items-center justify-center gap-2">
-            <NumberField
-              value={skill.level}
-              onCommit={(level) => void setSkill(character.cid, skill.typeValue, level)}
-              max={max}
-              disabled={busy}
-              ariaLabel={`${name} level`}
-              className="h-8 w-20"
-            />
-            <span className="text-xs text-muted-foreground tabular-nums">max {max}</span>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              title="Remove this skill's save row"
-              disabled={busy}
-              onClick={() => void removeSkill(character.cid, skill.typeValue)}
-            >
-              <Trash2 />
-              <span className="sr-only">Remove skill row</span>
-            </Button>
+            ))}
           </div>
         ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={busy || max < 1}
-            onClick={() => void setSkill(character.cid, skill.typeValue, 1)}
-          >
-            <Plus />
-            Add at level 1
-          </Button>
+          description && <p className="text-sm text-muted-foreground">{description}</p>
         )}
+        {skill.next && <SkillCostView cost={skill.next} language={language} />}
+        <div className="mt-1 w-full border-t pt-4">
+          {!skill.editable ? (
+            <p className="text-xs text-muted-foreground">
+              The game keeps no save row for this slot. It is always at level {skill.level}.
+            </p>
+          ) : skill.saved ? (
+            <div className="flex items-center justify-center gap-2">
+              <NumberField
+                value={skill.level}
+                onCommit={(level) => void setSkill(character.cid, skill.typeValue, level)}
+                max={max}
+                disabled={busy}
+                ariaLabel={`${name} level`}
+                className="h-8 w-20"
+              />
+              <span className="text-xs text-muted-foreground tabular-nums">max {max}</span>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                title="Remove this skill's save row"
+                disabled={busy}
+                onClick={() => void removeSkill(character.cid, skill.typeValue)}
+              >
+                <Trash2 />
+                <span className="sr-only">Remove skill row</span>
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={busy || max < 1}
+              onClick={() => void setSkill(character.cid, skill.typeValue, 1)}
+            >
+              <Plus />
+              Add at level 1
+            </Button>
+          )}
+        </div>
       </div>
     </aside>
   );
@@ -757,6 +784,8 @@ function SkillDetail({
 /** The Skill screen's Required Materials and gold for the next level. */
 function SkillCostView({ cost, language }: { cost: NonNullable<Skill['next']>; language: string }) {
   const gameUi = useGameUi((state) => state.ui);
+  // A level with nothing to pay shows no Required Materials, as in the game.
+  if (cost.gold === 0 && cost.items.length === 0 && !cost.ascend) return null;
   return (
     <div className="w-full space-y-2 border-t pt-3 text-left">
       <div className="flex items-baseline justify-between text-xs text-muted-foreground">
@@ -776,78 +805,101 @@ function SkillCostView({ cost, language }: { cost: NonNullable<Skill['next']>; l
           ))}
         </div>
       )}
-      <div className="flex items-baseline justify-between text-sm">
-        <span className="text-muted-foreground">{uiText(gameUi, 'required', language) || 'Required'}</span>
-        <span className={cn('font-medium tabular-nums', cost.goldOwned < cost.gold && 'text-destructive')}>
-          {formatNumber(cost.gold)} gold
-        </span>
-      </div>
+      {cost.gold > 0 && (
+        <div className="flex items-baseline justify-between text-sm">
+          <span className="text-muted-foreground">{uiText(gameUi, 'required', language) || 'Required'}</span>
+          <span className={cn('font-medium tabular-nums', cost.goldOwned < cost.gold && 'text-destructive')}>
+            {formatNumber(cost.gold)} gold
+          </span>
+        </div>
+      )}
       {cost.ascend ? <p className="text-xs text-muted-foreground">Needs breakthrough {cost.ascend}.</p> : null}
     </div>
   );
 }
 
-function HeroEquipment({ language }: { language: string }) {
+function slotLabel(slot: SlotKey): string {
+  if (slot === 'karma') return 'Karma';
+  if (slot === 'vehicle') return 'Familiar';
+  return GEAR_SLOTS.find(([key]) => key === slot)?.[1] ?? slot;
+}
+
+function HeroEquipment({ character, language, busy }: { character: Character; language: string; busy: boolean }) {
   const loadout = useApp((state) => state.loadout);
-  const setSection = useApp((state) => state.setSection);
+  const [picking, setPicking] = useState<SlotKey | null>(null);
+  // Until the loadout arrives every slot reads empty, so none opens yet.
+  const disabled = busy || !loadout;
 
   return (
     <div className="max-w-3xl space-y-6">
       <div className="space-y-2">
-        <div className="flex items-baseline justify-between">
-          <h3 className="text-sm font-medium">Gear</h3>
-          <button
-            type="button"
-            className="text-xs text-muted-foreground hover:text-foreground"
-            onClick={() => setSection('equipment')}
-          >
-            Change on the Equipment screen
-          </button>
-        </div>
+        <h3 className="text-sm font-medium">Gear</h3>
         <div className="grid grid-cols-5 gap-3">
           {GEAR_SLOTS.map(([slot, label, icon]) => (
-            <SlotTile key={slot} label={label} icon={icon} entry={loadout?.[slot] ?? null} language={language} />
+            <SlotTile
+              key={slot}
+              label={label}
+              icon={icon}
+              entry={loadout?.[slot] ?? null}
+              language={language}
+              disabled={disabled}
+              onPick={() => setPicking(slot)}
+            />
           ))}
         </div>
       </div>
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-2">
-          <div className="flex items-baseline justify-between">
-            <h3 className="text-sm font-medium">Karma</h3>
-            <button
-              type="button"
-              className="text-xs text-muted-foreground hover:text-foreground"
-              onClick={() => setSection('karma')}
-            >
-              Change
-            </button>
-          </div>
-          <SlotTile wide label="Karma" icon={Flame} entry={loadout?.karma ?? null} language={language} karma />
+          <h3 className="text-sm font-medium">Karma</h3>
+          <SlotTile
+            wide
+            karma
+            label="Karma"
+            icon={Flame}
+            entry={loadout?.karma ?? null}
+            language={language}
+            disabled={disabled}
+            onPick={() => setPicking('karma')}
+          />
         </div>
         <div className="space-y-2">
-          <div className="flex items-baseline justify-between">
-            <h3 className="text-sm font-medium">Familiar</h3>
-            <button
-              type="button"
-              className="text-xs text-muted-foreground hover:text-foreground"
-              onClick={() => setSection('mounts')}
-            >
-              Change
-            </button>
-          </div>
-          <SlotTile wide label="Familiar" icon={PawPrint} entry={loadout?.vehicle ?? null} language={language} />
+          <h3 className="text-sm font-medium">Familiar</h3>
+          <SlotTile
+            wide
+            label="Familiar"
+            icon={PawPrint}
+            entry={loadout?.vehicle ?? null}
+            language={language}
+            disabled={disabled}
+            onPick={() => setPicking('vehicle')}
+          />
         </div>
       </div>
+      <p className="text-xs text-muted-foreground">
+        Choose a slot to change what {itemName(character.item, language)} wears.
+      </p>
+      <EquipPicker
+        slot={picking}
+        character={character}
+        language={language}
+        busy={busy}
+        onClose={() => setPicking(null)}
+      />
     </div>
   );
 }
 
-/** An equipment slot as the game draws it: the item, or the slot's outline when empty. */
+/**
+ * An equipment slot as the game draws it: the item, or the slot's outline
+ * when empty. Choosing it opens the slot's picker.
+ */
 function SlotTile({
   label,
   icon: Icon,
   entry,
   language,
+  disabled,
+  onPick,
   wide = false,
   karma = false,
 }: {
@@ -855,44 +907,308 @@ function SlotTile({
   icon: LucideIcon;
   entry: LoadoutEntry | null;
   language: string;
+  disabled: boolean;
+  onPick: () => void;
   wide?: boolean;
   karma?: boolean;
 }) {
+  const frame = cn(
+    'rounded-lg border outline-none transition-colors hover:border-brand/60 focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-60',
+    wide
+      ? 'flex h-16 w-full items-center gap-3 px-3 text-left'
+      : 'flex aspect-square w-full flex-col items-center justify-center gap-1.5 p-2 text-center',
+  );
   if (!entry) {
     return (
-      <div
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onPick}
+        title={`${label}: empty. Choose to equip.`}
         className={cn(
-          'flex items-center justify-center gap-2 rounded-lg border border-dashed bg-muted/20 text-muted-foreground/60',
-          wide ? 'h-16' : 'aspect-square flex-col',
+          frame,
+          'justify-center border-dashed bg-muted/20 text-muted-foreground/60 hover:bg-muted/50 hover:text-muted-foreground',
         )}
-        title={`${label}: empty`}
       >
         <Icon aria-hidden className="size-6" />
         <span className="text-xs">{wide ? `No ${label.toLowerCase()}` : label}</span>
-      </div>
+      </button>
     );
   }
+  const name = itemName(entry.item, language);
   const level = karma ? `Breakthrough ${entry.enchantLevel}` : `+${entry.enchantLevel}`;
   if (wide) {
     return (
-      <div className="flex h-16 items-center gap-3 rounded-lg border bg-muted/30 px-3">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onPick}
+        title={`${label}: ${name}. Choose to change.`}
+        className={cn(frame, 'bg-muted/30 hover:bg-muted/60')}
+      >
         <ItemIcon item={entry.item} size={44} />
-        <div className="min-w-0">
-          <div className="truncate text-sm font-medium">{itemName(entry.item, language)}</div>
-          {!entry.item.category.startsWith('mount') && <div className="text-xs text-muted-foreground">{level}</div>}
-        </div>
-      </div>
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-medium">{name}</span>
+          {!entry.item.category.startsWith('mount') && (
+            <span className="block text-xs text-muted-foreground">{level}</span>
+          )}
+        </span>
+      </button>
     );
   }
   return (
-    <div
-      className="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-lg border bg-muted/30 p-2 text-center"
-      title={`${label}: ${itemName(entry.item, language)}`}
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onPick}
+      title={`${label}: ${name}. Choose to change.`}
+      className={cn(frame, 'bg-muted/30 hover:bg-muted/60')}
     >
       <ItemIcon item={entry.item} size={52} />
-      <div className="w-full truncate text-xs font-medium">{itemName(entry.item, language)}</div>
-      <div className="text-xs text-muted-foreground">{level}</div>
-    </div>
+      <span className="block w-full truncate text-xs font-medium">{name}</span>
+      <span className="block text-xs text-muted-foreground">{level}</span>
+    </button>
+  );
+}
+
+/** One owned piece, karma or familiar in a slot's picker. */
+interface Choice {
+  dbid: string;
+  item: Item;
+  /** Grade stars, for gear. */
+  stars: number;
+  /** The enchant, or a karma's level and breakthrough. */
+  level: string;
+  /** What orders pieces of one grade: the enchant, or a karma's level. */
+  rank: number;
+  /** The main stat and set, or whether a karma's trait applies here. */
+  note: string | null;
+  /** The note is good news: a karma whose trait matches the hero's. */
+  good: boolean;
+  /** The trait a piece needs, or a karma's trait. */
+  traitInfo: TraitInfo | null;
+  /** The hero wearing it now, when that is another hero. */
+  wearer: Item | null;
+  /** Why this hero cannot wear it, as the game refuses it. */
+  blocked: string | null;
+}
+
+/**
+ * The owned gear for one slot, or the owned karma or familiars, to put on
+ * the hero without leaving the hero screen. Each opening reads the save
+ * again, so who wears what is current.
+ */
+function EquipPicker({
+  slot,
+  character,
+  language,
+  busy,
+  onClose,
+}: {
+  slot: SlotKey | null;
+  character: Character;
+  language: string;
+  busy: boolean;
+  onClose: () => void;
+}) {
+  const gameUi = useGameUi((state) => state.ui);
+  const loadout = useApp((state) => state.loadout);
+  const equipment = useApp((state) => state.equipment);
+  const karma = useApp((state) => state.karma);
+  const mounts = useApp((state) => state.mounts);
+  const characters = useApp((state) => state.characters);
+  const loadEquipment = useApp((state) => state.loadEquipment);
+  const loadKarma = useApp((state) => state.loadKarma);
+  const loadMounts = useApp((state) => state.loadMounts);
+  const equipGear = useApp((state) => state.equipGear);
+  const equipKarma = useApp((state) => state.equipKarma);
+  const equipMount = useApp((state) => state.equipMount);
+  const [query, setQuery] = useState('');
+  const [shown, setShown] = useState<SlotKey | null>(null);
+  const [loaded, setLoaded] = useState<SlotKey | null>(null);
+  if (slot !== shown) {
+    setShown(slot);
+    setQuery('');
+    if (slot) {
+      const load = slot === 'karma' ? loadKarma : slot === 'vehicle' ? loadMounts : loadEquipment;
+      void load().then(() => setLoaded(slot));
+    }
+  }
+
+  const current = slot ? (loadout?.[slot] ?? null) : null;
+  const choices = useMemo((): Choice[] => {
+    if (!slot) return [];
+    const heroTrait = character.traitInfo?.key ?? null;
+    const wornBy = (cid: number | null) =>
+      cid === null || cid === character.cid ? null : (characters.find((hero) => hero.cid === cid)?.item ?? null);
+    const trait = (info: TraitInfo) => (language === 'fr' ? info.nameFr : info.nameEn);
+    let list: Choice[];
+    if (slot === 'karma') {
+      const effect = uiText(gameUi, 'traitEffect', language) || 'Trait Effect';
+      const notApplied = uiText(gameUi, 'notApplied', language) || 'Not Applied';
+      list = karma.map((entry) => {
+        const applies = entry.traitInfo !== null && entry.traitInfo.key === heroTrait;
+        return {
+          dbid: entry.dbid,
+          item: entry.item,
+          stars: 0,
+          level: `Lv. ${entry.level} · Breakthrough ${entry.ascend}`,
+          rank: entry.level * 100 + entry.ascend,
+          note: entry.traitInfo ? (applies ? effect : `${effect} (${notApplied})`) : null,
+          good: applies,
+          traitInfo: entry.traitInfo,
+          wearer: wornBy(entry.equippedBy),
+          blocked: null,
+        };
+      });
+    } else if (slot === 'vehicle') {
+      list = mounts.map((mount) => ({
+        dbid: mount.dbid,
+        item: mount.item,
+        stars: 0,
+        level: '',
+        rank: 0,
+        note: null,
+        good: false,
+        traitInfo: null,
+        wearer: wornBy(mount.equippedBy),
+        blocked: null,
+      }));
+    } else {
+      list = equipment
+        .filter((piece) => piece.stats?.part.toLowerCase() === slot)
+        .map((piece) => {
+          const needs = piece.stats?.traitInfo ?? null;
+          const main = piece.stats?.main;
+          const note = [
+            main && `${statName(main, language)} ${formatStatValue(main.value, main.percent)}`,
+            piece.set && (language === 'fr' ? piece.set.nameFr : piece.set.nameEn),
+          ].filter(Boolean);
+          return {
+            dbid: piece.dbid,
+            item: piece.item,
+            stars: piece.stats?.stars ?? 0,
+            level: `+${piece.enchantLevel}`,
+            rank: piece.enchantLevel,
+            note: note.length > 0 ? note.join(' · ') : null,
+            good: false,
+            traitInfo: needs,
+            wearer: piece.equippedBy === character.cid ? null : piece.equippedItem,
+            blocked: needs && needs.key !== heroTrait ? `Only ${trait(needs)} heroes can wear this` : null,
+          };
+        });
+    }
+    // What the hero can wear first, the best of it on top.
+    return list
+      .filter((choice) => choice.dbid !== current?.dbid)
+      .sort(
+        (left, right) =>
+          Number(left.blocked !== null) - Number(right.blocked !== null) ||
+          Number(right.good) - Number(left.good) ||
+          right.stars - left.stars ||
+          right.rank - left.rank ||
+          itemName(left.item, language).localeCompare(itemName(right.item, language)),
+      );
+  }, [slot, current, character, characters, equipment, karma, mounts, gameUi, language]);
+
+  const needle = query.trim().toLowerCase();
+  const visible = needle
+    ? choices.filter(
+        (choice) =>
+          choice.item.nameEn.toLowerCase().includes(needle) || choice.item.nameFr.toLowerCase().includes(needle),
+      )
+    : choices;
+  const hero = itemName(character.item, language);
+  const label = slot ? slotLabel(slot) : '';
+  const kind = slot === 'karma' ? 'karma' : slot === 'vehicle' ? 'familiar' : 'piece';
+
+  const pick = async (dbid: string) => {
+    if (!slot) return;
+    if (slot === 'karma') await equipKarma(character.cid, dbid);
+    else if (slot === 'vehicle') await equipMount(character.cid, dbid);
+    else await equipGear(character.cid, slot, dbid);
+    onClose();
+  };
+
+  return (
+    <Dialog open={slot !== null} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>
+            {hero} · {label}
+          </DialogTitle>
+          <DialogDescription>
+            {slot === 'karma'
+              ? `Choosing karma another hero holds moves it to ${hero}. A karma's trait effect applies only to a hero of the same trait.`
+              : `Choosing a ${kind} another hero has moves it to ${hero}.`}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex items-center gap-3 rounded-lg border bg-muted/30 px-3 py-2">
+          {current ? (
+            <>
+              <ItemIcon item={current.item} size={40} />
+              <span className="min-w-0 flex-1">
+                <span className="block text-xs text-muted-foreground">Equipped now</span>
+                <span className="block truncate text-sm font-medium">{itemName(current.item, language)}</span>
+              </span>
+              <Button variant="outline" size="sm" disabled={busy} onClick={() => void pick('0')}>
+                Unequip
+              </Button>
+            </>
+          ) : (
+            <span className="py-2.5 text-sm text-muted-foreground">Nothing in this slot.</span>
+          )}
+        </div>
+        {choices.length > 8 && <SearchField value={query} onChange={setQuery} placeholder={`Find a ${kind}`} />}
+        {loaded !== slot && choices.length === 0 ? (
+          <div className="flex h-32 items-center justify-center">
+            <Spinner />
+          </div>
+        ) : visible.length === 0 ? (
+          <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+            {needle
+              ? 'Nothing matches that search.'
+              : kind === 'piece'
+                ? 'This save has no other piece for this slot.'
+                : `This save has no other ${kind}.`}
+          </p>
+        ) : (
+          <div className="scroll-thin max-h-[50vh] divide-y overflow-y-auto rounded-lg border">
+            {visible.map((choice) => (
+              <button
+                key={choice.dbid}
+                type="button"
+                disabled={busy || choice.blocked !== null}
+                onClick={() => void pick(choice.dbid)}
+                className="flex w-full items-center gap-3 px-3 py-2 text-left outline-none hover:bg-accent focus-visible:bg-accent disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+              >
+                <ItemIcon item={choice.item} size={40} />
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-1.5">
+                    <span className="truncate text-sm font-medium">{itemName(choice.item, language)}</span>
+                    {choice.traitInfo && <TraitEmblem info={choice.traitInfo} size={16} language={language} />}
+                  </span>
+                  <span className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                    {choice.stars > 0 && <GradeStars count={choice.stars} size={12} />}
+                    {choice.level && <span className="tabular-nums">{choice.level}</span>}
+                    {choice.note && (
+                      <span className={cn(choice.good && 'text-emerald-600 dark:text-emerald-400')}>{choice.note}</span>
+                    )}
+                  </span>
+                  {choice.blocked && <span className="block text-xs text-destructive">{choice.blocked}</span>}
+                </span>
+                {choice.wearer && (
+                  <span className="flex shrink-0 items-center gap-1 rounded-full bg-brand/10 py-px pr-1.5 pl-px text-xs text-brand">
+                    <ItemIcon item={choice.wearer} size={16} className="rounded-full" />
+                    {uiText(gameUi, 'equippedBy', language, itemName(choice.wearer, language))}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 

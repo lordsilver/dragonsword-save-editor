@@ -283,6 +283,8 @@ export interface EquipmentStats {
   main: StatValue | null;
   subs: Array<{ stat: StatValue | null; unlockAt: number; active: boolean }>;
   setId: number | null;
+  /** The trait a hero needs to wear the piece; the game refuses heroes of other traits. */
+  traitInfo: TraitInfo | null;
 }
 
 export interface SetView {

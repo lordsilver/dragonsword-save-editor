@@ -534,6 +534,17 @@ fn equipment_gem_set(
 }
 
 #[tauri::command]
+fn equipment_equip(
+    state: State<'_, AppState>,
+    character_cid: i64,
+    part: String,
+    dbid: String,
+) -> CommandResult<()> {
+    let dbid = instance_id(&dbid, "equipment id")?;
+    game(&state, |game| game.equip_gear(character_cid, &part, dbid))
+}
+
+#[tauri::command]
 fn gems_get(state: State<'_, AppState>) -> CommandResult<Vec<Gem>> {
     game(&state, |game| game.gems())
 }
@@ -738,6 +749,7 @@ pub fn run() {
             equipment_get,
             equipment_set,
             equipment_gem_set,
+            equipment_equip,
             gems_get,
             gem_set,
             karma_get,

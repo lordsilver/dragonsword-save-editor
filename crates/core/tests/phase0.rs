@@ -286,6 +286,11 @@ fn fixture_with_version(name: &str, version: i64) -> Fixture {
 }
 
 fn fixture_with(name: &str, gold: i64, grade: i64, version: i64) -> Fixture {
+    fixture_from(name, gold, grade, version, "")
+}
+
+/// `fixture_with`, with `extra` run on the plaintext before it is encrypted.
+fn fixture_from(name: &str, gold: i64, grade: i64, version: i64, extra: &str) -> Fixture {
     let directory = std::env::temp_dir().join(format!("dsa-phase0-{}-{name}", std::process::id()));
     let _ = fs::remove_dir_all(&directory);
     fs::create_dir_all(&directory).expect("mkdir");
@@ -415,6 +420,7 @@ fn fixture_with(name: &str, gold: i64, grade: i64, version: i64) -> Fixture {
             [USER],
         )
         .expect("quests in progress");
+        conn.execute_batch(extra).expect("extra fixture rows");
         conn.execute_batch("PRAGMA journal_mode=DELETE;")
             .expect("journal");
     }
@@ -813,6 +819,94 @@ fn only_heroes_the_game_hands_out_can_be_recruited() {
             10_003, 10_006, 10_007, 10_008, 10_029, 10_011, 10_014, 10_017, 10_020, 10_032, 10_016,
             10_036, 10_001, 10_037, 10_004, 10_005, 10_030, 10_028, 10_022,
         ]
+    );
+}
+
+#[test]
+fn gear_goes_in_its_own_slot_on_one_hero_of_its_trait() {
+    // The game's tb_equip_mount has the gear slots the base fixture leaves
+    // out, and the fixture's three equipment rows become real pieces: Battle
+    // Will Helmet (1370101) and Top (1370102) fit any hero; the Ruinsbreaker
+    // Helmet (1390001) is Breaker (DESTRUCTION) gear, which Castella (10003)
+    // is and Eileen (10001, Gale) is not.
+    const HELMET: i64 = BASE;
+    const CHEST: i64 = BASE + 1;
+    const BREAKER: i64 = BASE + 2;
+    let path = fixture_from(
+        "gear",
+        100,
+        1,
+        0,
+        &format!(
+            // The table on one line: SQLite keeps the statement's text, and
+            // the fixture's schema page has little room to spare.
+            "DROP TABLE tb_equip_mount;
+             CREATE TABLE tb_equip_mount (USER_DBID INTEGER, CHARACTER_CID INTEGER, ACC_HEAD INTEGER, ACC_CHEST INTEGER, ACC_LEG INTEGER, ACC_HAND INTEGER, ACC_FOOT INTEGER, TALISMAN_1 INTEGER, TALISMAN_2 INTEGER, KARMA INTEGER, VEHICLE INTEGER, PRIMARY KEY (USER_DBID, CHARACTER_CID));
+             INSERT INTO tb_equip_mount VALUES ({USER}, 10002, 0, 0, 0, 0, 0, 0, 0, {KARMA}, 0);
+             UPDATE tb_equipment SET ITEM_CID=1370101 WHERE ITEM_DBID={HELMET};
+             UPDATE tb_equipment SET ITEM_CID=1370102 WHERE ITEM_DBID={CHEST};
+             UPDATE tb_equipment SET ITEM_CID=1390001 WHERE ITEM_DBID={BREAKER};"
+        ),
+    );
+    let mut session = SaveSession::open(&path).expect("open");
+    let mut game = Game::new(&mut session, Catalog::shared());
+    let head = |game: &Game<'_>, cid: i64| {
+        game.loadout(cid)
+            .expect("loadout")
+            .head
+            .map(|entry| entry.dbid)
+    };
+
+    game.equip_gear(10_001, "head", HELMET)
+        .expect("wear the helmet");
+    assert_eq!(head(&game, 10_001), Some(HELMET.to_string()));
+    let piece = game
+        .equipment()
+        .expect("equipment")
+        .into_iter()
+        .find(|piece| piece.dbid == HELMET.to_string())
+        .expect("helmet");
+    assert_eq!(piece.equipped_by, Some(10_001));
+
+    // The wrong slot, an unknown slot, a piece the save does not own, a hero
+    // it does not have, and a Breaker helmet on a hero of another trait.
+    for (hero, part, dbid) in [
+        (10_001, "chest", HELMET),
+        (10_001, "head", CHEST),
+        (10_001, "ring", HELMET),
+        (10_001, "head", BASE + 99),
+        (10_099, "head", HELMET),
+        (10_001, "head", BREAKER),
+    ] {
+        let error = game.equip_gear(hero, part, dbid).expect_err("refused");
+        assert_eq!(error.kind(), "invalid", "{hero} {part} {dbid}");
+    }
+    assert_eq!(head(&game, 10_001), Some(HELMET.to_string()));
+    game.equip_gear(10_003, "HEAD", BREAKER)
+        .expect("a Breaker wears Breaker gear");
+
+    // Moving the helmet empties the first hero's slot, and keeps the second
+    // hero's karma; dbid 0 takes it off.
+    game.equip_gear(10_002, "head", HELMET)
+        .expect("move the helmet");
+    assert_eq!(head(&game, 10_001), None);
+    assert_eq!(head(&game, 10_002), Some(HELMET.to_string()));
+    assert_eq!(
+        game.loadout(10_002)
+            .expect("loadout")
+            .karma
+            .map(|entry| entry.dbid),
+        Some(KARMA.to_string())
+    );
+    game.equip_gear(10_002, "chest", CHEST)
+        .expect("wear the chest piece");
+    game.equip_gear(10_002, "head", 0)
+        .expect("take the helmet off");
+    let loadout = game.loadout(10_002).expect("loadout");
+    assert_eq!(loadout.head.map(|entry| entry.dbid), None);
+    assert_eq!(
+        loadout.chest.map(|entry| entry.dbid),
+        Some(CHEST.to_string())
     );
 }
 

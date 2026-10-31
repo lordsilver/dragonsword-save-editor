@@ -46,6 +46,16 @@ const SKILL_TYPES: [i64; 8] = [1, 2, 3, 4, 5, 6, 7, 801];
 
 const GOLD_CID: i64 = 1_000_001;
 
+/// `tb_equip_mount`'s gear slots, named after `EquipmentData.PartsType`.
+const GEAR_COLUMNS: [&str; 5] = ["ACC_HEAD", "ACC_CHEST", "ACC_LEG", "ACC_HAND", "ACC_FOOT"];
+
+/// The `tb_equip_mount` column of a gear slot (HEAD … FOOT, in any case).
+fn gear_column(part: &str) -> Option<&'static str> {
+    GEAR_COLUMNS
+        .into_iter()
+        .find(|column| column["ACC_".len()..].eq_ignore_ascii_case(part))
+}
+
 /// A new save carries rows for the heroes who join during the story, with
 /// this HP until they do. Snapshots of a new game show Castella and Aria at
 /// 999999 until their quests, then at 461.
@@ -1904,6 +1914,79 @@ impl<'a> Game<'a> {
             .find(|equipment| equipment.dbid == dbid.to_string()))
     }
 
+    /// Puts a piece of gear in a hero's slot, or empties the slot when `dbid`
+    /// is 0. The piece leaves whoever wore it, as the game's "already wearing
+    /// this equipment … replace it?" does. It must fit the slot
+    /// (`EquipmentData.PartsType`), and a piece with a `CharacterAbilityType`
+    /// fits only a hero of that trait; the game refuses others with "This
+    /// equipment cannot be equipped on this hero."
+    pub fn equip_gear(&mut self, character_cid: i64, part: &str, dbid: i64) -> Result<()> {
+        self.require_character(character_cid)?;
+        let column = gear_column(part)
+            .ok_or_else(|| Error::invalid(format!("{part} is not a gear slot")))?;
+        if dbid != 0 {
+            let cid: i64 = self
+                .conn()
+                .query_row(
+                    "SELECT ITEM_CID FROM tb_equipment
+                      WHERE USER_DBID=? AND ITEM_DBID=? AND DELETED_DATE=0",
+                    params![self.user_id, dbid],
+                    |row| row.get(0),
+                )
+                .optional()?
+                .ok_or_else(|| Error::invalid("that equipment is not owned in this save"))?;
+            let data = GameData::shared();
+            let piece = data.equipment.get(&cid.to_string()).ok_or_else(|| {
+                Error::invalid(format!("the game data names no slot for equipment {cid}"))
+            })?;
+            if !piece.part.eq_ignore_ascii_case(part) {
+                return Err(Error::invalid(format!(
+                    "that piece goes in the {} slot, not {}",
+                    piece.part.to_lowercase(),
+                    part.to_lowercase()
+                )));
+            }
+            if let Some(needed) = piece.trait_key.as_deref() {
+                let hero = data
+                    .hero(character_cid)
+                    .and_then(|hero| hero.trait_key.as_deref());
+                if hero != Some(needed) {
+                    let name = data
+                        .trait_info(Some(needed))
+                        .map_or_else(|| needed.to_string(), |info| info.name_en);
+                    return Err(Error::invalid(format!(
+                        "this equipment cannot be equipped on this hero: only {name} heroes can wear it"
+                    )));
+                }
+            }
+        }
+        let transaction = self.conn().unchecked_transaction()?;
+        if dbid != 0 {
+            for worn in GEAR_COLUMNS {
+                transaction.execute(
+                    &format!("UPDATE tb_equip_mount SET {worn}=0 WHERE USER_DBID=? AND {worn}=?"),
+                    params![self.user_id, dbid],
+                )?;
+            }
+        }
+        let values = GEAR_COLUMNS
+            .map(|other| if other == column { "?3" } else { "0" })
+            .join(",");
+        transaction.execute(
+            &format!(
+                "INSERT INTO tb_equip_mount
+                    (USER_DBID, CHARACTER_CID, ACC_HEAD, ACC_CHEST, ACC_LEG, ACC_HAND, ACC_FOOT,
+                     TALISMAN_1, TALISMAN_2, KARMA, VEHICLE)
+                 VALUES (?1,?2,{values},0,0,0,0)
+                 ON CONFLICT(USER_DBID, CHARACTER_CID) DO UPDATE SET {column}=excluded.{column}"
+            ),
+            params![self.user_id, character_cid, dbid],
+        )?;
+        transaction.commit()?;
+        self.touch();
+        Ok(())
+    }
+
     pub fn set_equipment(&mut self, dbid: i64, field: &str, value: i64) -> Result<()> {
         let column = match field {
             "enchantLevel" => "ENCHANT_LEVEL",
@@ -3367,6 +3450,11 @@ impl Game<'_> {
         else {
             return Ok(None);
         };
+        // A level with nothing to pay (level 1 of most slots) has no Required
+        // Materials in the game either.
+        if row.gold.unwrap_or(0) == 0 && row.items.is_empty() && row.ascend.is_none() {
+            return Ok(None);
+        }
         let owned = |item: i64| -> Result<i64> {
             Ok(self
                 .conn()

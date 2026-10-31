@@ -411,6 +411,8 @@ pub struct EquipmentStats {
     pub main: Option<StatValue>,
     pub subs: Vec<SubStat>,
     pub set_id: Option<i64>,
+    /// The trait (`CharacterAbilityType`) a hero needs to wear the piece.
+    pub trait_info: Option<TraitInfo>,
 }
 
 /// The value one stat roll (a `MAIN_STAT_CID` or `SUB_STAT_CID`) gives a piece.
@@ -464,6 +466,7 @@ pub fn equipment_stats(
             .flatten(),
         subs,
         set_id: piece.set,
+        trait_info: data.trait_info(piece.trait_key.as_deref()),
     })
 }
 

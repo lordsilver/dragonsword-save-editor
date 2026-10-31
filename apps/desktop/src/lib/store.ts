@@ -141,6 +141,8 @@ export interface AppActions {
   setTeamSlot(pageId: number, slot: number, cid: number): Promise<void>;
   setEquipment(dbid: string, field: string, value: number): Promise<void>;
   setEquipmentGem(dbid: string, gemDbid: string): Promise<void>;
+  /** Put a piece in a hero's gear slot (`head` … `foot`), or empty the slot with dbid "0". */
+  equipGear(characterCid: number, part: string, dbid: string): Promise<void>;
   setGem(dbid: string, field: string, value: number): Promise<void>;
   setKarma(dbid: string, field: string, value: number): Promise<void>;
   equipKarma(characterCid: number, dbid: string): Promise<void>;
@@ -258,6 +260,25 @@ export const useApp = create<Store>((set, get) => {
     } catch (error) {
       toast.error(message(error));
     }
+  }
+
+  /**
+   * Reload what a change of gear, karma or familiar alters: every hero's
+   * stats and the selected hero's loadout. Unlike selecting the hero again,
+   * nothing is cleared first, so the hero screen does not flash empty.
+   */
+  async function refreshHeroes(): Promise<void> {
+    const cid = get().selectedCharacter;
+    await Promise.all([
+      read(api.characters, (characters) => set({ characters })),
+      cid !== null &&
+        read(
+          () => api.loadout(cid),
+          (loadout) => {
+            if (get().selectedCharacter === cid) set({ loadout });
+          },
+        ),
+    ]);
   }
 
   return {
@@ -880,6 +901,16 @@ export const useApp = create<Store>((set, get) => {
       );
     },
 
+    async equipGear(characterCid, part, dbid) {
+      await attempt(
+        dbid === '0' ? 'Removing gear' : 'Equipping gear',
+        () => api.equipGear(characterCid, part, dbid),
+        async () => {
+          await Promise.all([get().loadEquipment(), refreshHeroes()]);
+        },
+      );
+    },
+
     async setGem(dbid, field, value) {
       await attempt(
         'Updating gem',
@@ -905,8 +936,7 @@ export const useApp = create<Store>((set, get) => {
         'Equipping karma',
         () => api.equipKarma(characterCid, dbid),
         async () => {
-          await get().loadKarma();
-          await get().loadCharacters();
+          await Promise.all([get().loadKarma(), refreshHeroes()]);
         },
       );
     },
@@ -950,7 +980,7 @@ export const useApp = create<Store>((set, get) => {
         'Equipping familiar',
         () => api.equipMount(characterCid, dbid),
         async () => {
-          await get().loadMounts();
+          await Promise.all([get().loadMounts(), refreshHeroes()]);
         },
       );
     },

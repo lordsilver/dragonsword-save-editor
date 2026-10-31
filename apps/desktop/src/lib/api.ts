@@ -239,6 +239,11 @@ export async function setEquipmentGem(dbid: string, gemDbid: string): Promise<vo
   await invoke('equipment_gem_set', { dbid, gemDbid });
 }
 
+/** Put a piece in a hero's gear slot (`head` … `foot`), or empty the slot with dbid "0". */
+export async function equipGear(characterCid: number, part: string, dbid: string): Promise<void> {
+  await invoke('equipment_equip', { characterCid, part, dbid });
+}
+
 export async function gems(): Promise<Gem[]> {
   return invoke<Gem[]>('gems_get');
 }
