@@ -33,7 +33,11 @@
 //   which is also its bit in tb_treasure_box (category = id / 64). The save
 //   keeps three bits per chest: RELEASED (its lock is open: the monsters are
 //   beaten, the mini-game won, the key used), OPENED and REGISTERED_MAP (shown
-//   on the map by a treasure map). `lock` is the TreasureBoxLockType;
+//   on the map by a treasure map). `lock` is the TreasureBoxLockType, `loot`
+//   the chest's ItemRewardID, a key of `loot`;
+// - loot: what a chest gives, by its RewardData ID: draws, each with its
+//   chance and the [item, min count, max count, weight] entries it picks one
+//   of by weight;
 // - minigames: the MiniGameData rows of a region; tb_minigame bits;
 // - quests: per QuestMainData row its order in the quest log, its
 //   description and the text of each step (StringQuestData). Names, rewards
@@ -216,6 +220,18 @@ for (const row of rows('MapDungeonGroupData')) {
 
 const props = byId(rows('PropTreasureBoxData'));
 const GRADES = { NORMAL: 'normal', SUPERIOR: 'superior', RARE: 'rare', EPIC: 'epic', LEGENDARY: 'legendary' };
+const rewards = new Map();
+for (const row of rows('RewardData')) {
+  if (!rewards.has(row.ID)) rewards.set(row.ID, []);
+  rewards.get(row.ID).push(row);
+}
+const randomItems = new Map();
+for (const row of rows('RewardRandomData')) {
+  if (!randomItems.has(row.ID)) randomItems.set(row.ID, []);
+  randomItems.get(row.ID).push(row);
+}
+const gameItems = new Set(rows('GameItemData').map((row) => row.ID));
+const loot = {};
 const chestNames = {};
 const chests = [];
 const chestIds = new Set();
@@ -245,6 +261,7 @@ for (const [folder, world] of mapFolders) {
       if (!name) fail(`chest ${row.CID} has no name`);
       chestNames[prop.Name] = name;
     }
+    if (prop.ItemRewardID) lootTable(prop.ItemRewardID, row.CID);
     chests.push({
       id: Number(row.CID),
       world,
@@ -252,10 +269,39 @@ for (const [folder, world] of mapFolders) {
       name: Number(prop.Name),
       grade,
       ...(prop.TreasureBoxLockType && { lock: prop.TreasureBoxLockType.toLowerCase() }),
+      ...(prop.ItemRewardID && { loot: Number(prop.ItemRewardID) }),
       x: Number(row.PosX),
       y: Number(row.PosY),
     });
   }
+}
+
+/**
+ * Adds a chest's RewardData row to `loot`: its draws, each made with chance
+ * RandomRate and picking one RewardRandomData entry of its group by
+ * ItemWeight, with a count from Min_ItemCount to Max_ItemCount. Every chest
+ * reward is a single RANDOM_REWARD row with every draw at chance 1; an empty
+ * group draws nothing.
+ */
+function lootTable(id, chest) {
+  if (loot[id]) return;
+  const bundles = rewards.get(id) ?? fail(`chest ${chest} names missing reward ${id}`);
+  if (bundles.length !== 1) fail(`chest reward ${id} has ${bundles.length} rows`);
+  const [bundle] = bundles;
+  if (bundle.ContentsType !== 'RANDOM_REWARD') fail(`chest reward ${id} is ${bundle.ContentsType}`);
+  const draws = [];
+  for (let slot = 1; slot <= 10; slot += 1) {
+    const group = bundle[`RandomID${slot}`];
+    if (!group) continue;
+    const chance = Number(bundle[`RandomRate${slot}`]);
+    if (!(chance > 0 && chance <= 1)) fail(`chest reward ${id} draws with chance ${bundle[`RandomRate${slot}`]}`);
+    const entries = (randomItems.get(group) ?? []).map((entry) => {
+      if (!gameItems.has(entry.ItemID)) fail(`chest reward ${id} names missing item ${entry.ItemID}`);
+      return [entry.ItemID, entry.Min_ItemCount, entry.Max_ItemCount, entry.ItemWeight].map(Number);
+    });
+    draws.push({ chance, entries });
+  }
+  loot[id] = draws;
 }
 
 // --------------------------------------------------------------- minigames
@@ -283,7 +329,7 @@ for (const row of rows('QuestMainData')) {
 
 // ---------------------------------------------------------------- write
 
-const world = { worlds, fieldMaps, regions, waypoints, statues, dungeons, chestNames, chests, minigames, quests };
+const world = { worlds, fieldMaps, regions, waypoints, statues, dungeons, chestNames, chests, loot, minigames, quests };
 writeFileSync(new URL('../crates/core/data/world.json', import.meta.url), `${JSON.stringify(world)}\n`);
 console.log(
   `worlds ${worlds.length}, regions ${regions.length}, waypoints ${waypoints.length}, statues ${statues.length}, ` +

@@ -5,6 +5,7 @@ import type {
   AppInfo,
   CatalogEntry,
   Character,
+  ChestOpening,
   Costume,
   Currency,
   Equipment,
@@ -13,6 +14,7 @@ import type {
   HeroEntry,
   Karma,
   Loadout,
+  LootDraw,
   Overview,
   PlaceKind,
   QuestCompletion,
@@ -353,6 +355,14 @@ export async function world(): Promise<WorldView> {
 
 export async function setWorldPlaces(kind: PlaceKind, ids: number[], done: boolean): Promise<number> {
   return invoke<number>('world_places_set', { kind, ids, done });
+}
+
+export async function chestLoot(id: number): Promise<LootDraw[]> {
+  return invoke<LootDraw[]>('chest_loot_get', { id });
+}
+
+export async function openChests(ids: number[]): Promise<ChestOpening> {
+  return invoke<ChestOpening>('chests_open', { ids });
 }
 
 export async function questLog(): Promise<QuestEntry[]> {

@@ -13,7 +13,7 @@ use dsa_core::domain::{
     Recipe, Skill, Stack, TeamPage, TitleEntry, Vehicle,
 };
 use dsa_core::raw::{RawPage, RawTable, RawValue};
-use dsa_core::world::{PlaceKind, QuestEntry, WorldView};
+use dsa_core::world::{ChestOpening, LootDrawView, PlaceKind, QuestEntry, WorldView};
 use dsa_core::{Catalog, Error, SaveSession, SlotInfo, WriteReport};
 use serde::Serialize;
 use tauri::{Emitter, Manager, State};
@@ -677,6 +677,16 @@ fn world_places_set(
 }
 
 #[tauri::command]
+fn chest_loot_get(state: State<'_, AppState>, id: i64) -> CommandResult<Vec<LootDrawView>> {
+    game(&state, |game| game.chest_loot(id))
+}
+
+#[tauri::command]
+fn chests_open(state: State<'_, AppState>, ids: Vec<i64>) -> CommandResult<ChestOpening> {
+    game(&state, |game| game.open_chests(&ids))
+}
+
+#[tauri::command]
 fn quest_log_get(state: State<'_, AppState>) -> CommandResult<Vec<QuestEntry>> {
     game(&state, |game| game.quest_log())
 }
@@ -794,6 +804,8 @@ pub fn run() {
             recipes_unlock_all,
             world_get,
             world_places_set,
+            chest_loot_get,
+            chests_open,
             quest_log_get,
             raw_tables,
             raw_page,

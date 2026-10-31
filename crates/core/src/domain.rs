@@ -394,7 +394,7 @@ impl<'a> Game<'a> {
         Ok(())
     }
 
-    fn corps_status(&self) -> Result<(i64, i64)> {
+    pub(crate) fn corps_status(&self) -> Result<(i64, i64)> {
         Ok(self
             .conn()
             .query_row(
@@ -740,7 +740,12 @@ impl<'a> Game<'a> {
     /// Hands out gold and reward items. Currency, stackable items, mounts,
     /// titles, heroes, dishes and equipment are written; anything else is
     /// listed in `grant.not_granted`.
-    fn add_reward(&self, gold: i64, items: &[(i64, i64)], grant: &mut RewardGrant) -> Result<()> {
+    pub(crate) fn add_reward(
+        &self,
+        gold: i64,
+        items: &[(i64, i64)],
+        grant: &mut RewardGrant,
+    ) -> Result<()> {
         if gold > 0 {
             self.add_currency(GOLD_CID, gold, grant)?;
         }
@@ -819,10 +824,50 @@ impl<'a> Game<'a> {
                     }
                     note(&mut grant.granted, item, *count);
                 }
+                RewardRoute::CorpsExp => {
+                    self.add_corps_exp(*count)?;
+                    note(&mut grant.granted, item, *count);
+                }
+                RewardRoute::Karma => {
+                    for _ in 0..*count {
+                        self.add_karma(*cid)?;
+                    }
+                    note(&mut grant.granted, item, *count);
+                }
+                RewardRoute::Costume => {
+                    if self.add_costume(*cid)? {
+                        note(&mut grant.granted, item, 1);
+                    } else {
+                        // The game keeps one row per costume.
+                        note(&mut grant.not_granted, item, *count);
+                    }
+                }
                 RewardRoute::None => note(&mut grant.not_granted, item, *count),
             }
         }
         Ok(())
+    }
+
+    /// Creates a karma the way the game does: a game-style instance ID, EXP,
+    /// breakthrough and transcendence at zero, and the karma's bit in the
+    /// karma collection (`tb_karma_collection_switch`, the CID as the bit),
+    /// which the game sets on a karma's first appearance.
+    fn add_karma(&self, cid: i64) -> Result<i64> {
+        let dbid = self.mint_item_id("tb_karma")?;
+        self.conn().execute(
+            "INSERT INTO tb_karma
+                (ITEM_DBID, USER_DBID, ITEM_CID, IS_LOCK, EXP, ASCEND, TRANSCEND, CREATED_DATE, DELETED_DATE)
+             VALUES (?,?,?,0,0,0,0,CAST(strftime('%s','now','localtime') AS INTEGER),0)",
+            params![dbid, self.user_id, cid],
+        )?;
+        if self.table_exists("tb_karma_collection_switch")? {
+            self.conn().execute(
+                "INSERT INTO tb_karma_collection_switch (USER_DBID, CATEGORY, BIT_FIELD) VALUES (?,?,?)
+                 ON CONFLICT(USER_DBID, CATEGORY) DO UPDATE SET BIT_FIELD=BIT_FIELD | excluded.BIT_FIELD",
+                params![self.user_id, cid / 64, 1i64 << (cid % 64)],
+            )?;
+        }
+        Ok(dbid)
     }
 
     /// Creates a piece of equipment the way the game does: a game-style
@@ -2342,6 +2387,15 @@ impl<'a> Game<'a> {
         if self.catalog.lookup(cid).category != "costume" {
             return Err(Error::invalid(format!("CID {cid} is not a costume")));
         }
+        let added = self.add_costume(cid)?;
+        if added {
+            self.touch();
+        }
+        Ok(added)
+    }
+
+    /// Adds a costume row unless the save already owns the costume.
+    fn add_costume(&self, cid: i64) -> Result<bool> {
         let exists: i64 = self.conn().query_row(
             "SELECT count(*) FROM tb_costume WHERE USER_DBID=? AND COSTUME_CID=?",
             params![self.user_id, cid],
@@ -2358,7 +2412,6 @@ impl<'a> Game<'a> {
              VALUES (?,?,?,0,strftime('%s','now'),1,1)",
             params![next, self.user_id, cid],
         )?;
-        self.touch();
         Ok(true)
     }
 
@@ -2822,6 +2875,13 @@ pub enum RewardRoute {
     Dish,
     /// Equipment the game data can roll: one new `tb_equipment` row per piece.
     Equipment,
+    /// Mercenary Corps EXP (`PAY_ADV_EXP`): added to `tb_advent_status`, which
+    /// levels the corps up the way completing a quest does.
+    CorpsExp,
+    /// A karma: one new `tb_karma` row per karma.
+    Karma,
+    /// A costume: a `tb_costume` row, through the same path as unlocking one.
+    Costume,
     /// Hero items the game data does not map to a hero, and anything else.
     None,
 }
@@ -2884,7 +2944,9 @@ fn roll_stat<'a>(
 }
 
 fn reward_route(item: &Item) -> RewardRoute {
-    if item.category == "currency" {
+    if item.kind == "PAY_ADV_EXP" {
+        RewardRoute::CorpsExp
+    } else if item.category == "currency" {
         RewardRoute::Currency
     } else if item.category == "mount" {
         RewardRoute::Mount
@@ -2896,6 +2958,10 @@ fn reward_route(item: &Item) -> RewardRoute {
         RewardRoute::Dish
     } else if Growth::shared().equipment(item.cid).is_some() {
         RewardRoute::Equipment
+    } else if item.kind == "KARMA" {
+        RewardRoute::Karma
+    } else if item.category == "costume" {
+        RewardRoute::Costume
     } else if item.is_stackable() {
         RewardRoute::Stack
     } else {

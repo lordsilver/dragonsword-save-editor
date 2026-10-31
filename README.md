@@ -12,7 +12,7 @@ A desktop save editor for **DragonSword Awakening**. Open a save slot, change yo
 - **Heroes**: level, EXP, breakthrough, transcendence and skills within the game's own caps, with the stats, skill damage and outfit portraits the game shows. Recruit any of the 19 heroes the game hands out.
 - **Gear**: enchant level, stat rolls, gems, karma and familiars, each named and valued with the game's tables, with set bonuses and the hero wearing it.
 - **Inventory**: the game's bag tabs, grades and item cards; edit counts, add items, or fill every material stack at once.
-- **World map and quests**: the game's map of Orbis with every warp point, Statue of Organa, Eona's Legacy, dungeon and chest, what the save has done in each region, and switches to activate, restore, find or open them; the full quest log with each quest's step, and completing a quest in progress the way the game does.
+- **World map and quests**: the game's map of Orbis with every warp point, Statue of Organa, Eona's Legacy, dungeon and chest, what the save has done in each region, and switches to activate, restore or find them; opening a chest hands out its loot, rolled from the game's own loot table, and an opened chest stays opened; the full quest log with each quest's step, and completing a quest in progress the way the game does.
 - **Currencies and collections**: gold and aether crystals, costumes, familiars, all 109 titles and all 1,025 cooking recipes.
 - **Raw database**: every table and column of the save, one type-checked cell at a time, for anything the screens don't cover.
 - **Safe writes**: nothing is written until you save, the original is backed up first, and a write is refused if the game changed the file or left it half-saved.

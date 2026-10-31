@@ -24,6 +24,8 @@ window.addEventListener('unhandledrejection', (event) =>
 );
 
 const PER_HERO = new Set(['skills_get', 'loadout_get']);
+/** Commands recorded per ID; an ID the recording lacks gets an empty answer. */
+const PER_ID = new Set(['chest_loot_get']);
 
 const params = new URLSearchParams(window.location.search);
 const theme = (params.get('theme') ?? 'dark') as Settings['theme'];
@@ -40,6 +42,10 @@ mockIPC(
     if (PER_HERO.has(command)) {
       const cid = String((args as { cid: number }).cid);
       return (fixture[command] as Record<string, unknown>)[cid];
+    }
+    if (PER_ID.has(command)) {
+      const id = String((args as { id: number }).id);
+      return (fixture[command] as Record<string, unknown> | undefined)?.[id] ?? [];
     }
     if (command === 'slots_scan') return { roots: [], slots: [] };
     if (command in fixture) return fixture[command];

@@ -7,6 +7,7 @@ import type {
   AppInfo,
   CatalogEntry,
   Character,
+  ChestOpening,
   Costume,
   Currency,
   Equipment,
@@ -16,6 +17,7 @@ import type {
   Item,
   Karma,
   Loadout,
+  LootDraw,
   Overview,
   PlaceKind,
   QuestCompletion,
@@ -161,8 +163,12 @@ export interface AppActions {
   unlockAllTitles(): Promise<void>;
   setRecipe(key: number, known: boolean): Promise<void>;
   unlockAllRecipes(): Promise<void>;
-  /** Marks places of one kind done (activated, restored, found, opened) or not. */
+  /** Marks places of one kind done (activated, restored, found) or not. */
   setWorldPlaces(kind: PlaceKind, ids: number[], done: boolean): Promise<void>;
+  /** What a chest can give, read when it is picked on the map. */
+  chestLoot(id: number): Promise<LootDraw[]>;
+  /** Opens chests and hands out their loot; an opened chest stays opened. */
+  openChests(ids: number[]): Promise<ChestOpening | null>;
   rawUpdate(table: string, rowid: string, column: string, value: RawValue, advanced: boolean): Promise<void>;
 }
 
@@ -1075,11 +1081,6 @@ export const useApp = create<Store>((set, get) => {
             dungeons: world.dungeons.map((dungeon) =>
               kind === 'dungeon' && chosen.has(dungeon.id) ? { ...dungeon, found: done } : dungeon,
             ),
-            chests: world.chests.map((chest) =>
-              kind === 'chest' && chosen.has(chest.id)
-                ? { ...chest, opened: done, released: chest.released || done }
-                : chest,
-            ),
           },
         });
       }
@@ -1090,6 +1091,46 @@ export const useApp = create<Store>((set, get) => {
           await get().loadWorld();
         },
       );
+    },
+
+    async chestLoot(id) {
+      try {
+        return (await api.chestLoot(id)) ?? [];
+      } catch (error) {
+        toast.error(message(error));
+        return [];
+      }
+    },
+
+    async openChests(ids) {
+      const opening = await attempt(
+        ids.length === 1 ? 'Opening the chest' : 'Opening chests',
+        () => api.openChests(ids),
+        async () => {
+          await get().loadWorld();
+          await get().loadInventory();
+          await get().loadCurrencies();
+          await get().loadOverview();
+        },
+      );
+      if (opening && opening.opened > 0) {
+        const language = get().settings.language;
+        const got = opening.grant.granted.map(
+          (entry) => `${formatNumber(entry.count)} ${itemName(entry.item, language)}`,
+        );
+        const shown = got.length > 5 ? [...got.slice(0, 5), `${got.length - 5} more`] : got;
+        const what = opening.opened === 1 ? 'Chest opened' : `${formatNumber(opening.opened)} chests opened`;
+        const levels =
+          opening.levelsGained > 0
+            ? ` The corps gained ${opening.levelsGained} level${opening.levelsGained === 1 ? '' : 's'}.`
+            : '';
+        toast.success(`${what}: ${shown.join(', ') || 'nothing inside'}.${levels}`);
+        if (opening.grant.notGranted.length > 0) {
+          const missed = opening.grant.notGranted.map((entry) => itemName(entry.item, language)).join(', ');
+          toast.warning(`Not handed out, the editor has no way to add: ${missed}.`);
+        }
+      }
+      return opening;
     },
 
     async rawUpdate(table, rowid, column, value, advanced) {

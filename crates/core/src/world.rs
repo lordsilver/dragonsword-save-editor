@@ -10,10 +10,12 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::OnceLock;
 
+use rand::Rng;
 use rusqlite::{OptionalExtension, params};
 use serde::{Deserialize, Serialize};
 
-use crate::domain::Game;
+use crate::catalog::Item;
+use crate::domain::{Game, RewardGrant};
 use crate::error::{Error, Result};
 use crate::gamedata::Text;
 use crate::growth::Growth;
@@ -44,6 +46,8 @@ struct WorldData {
     dungeons: Vec<DungeonDef>,
     chest_names: HashMap<String, Text>,
     chests: Vec<ChestDef>,
+    /// What a chest gives, by its `RewardData` ID.
+    loot: HashMap<String, Vec<LootDraw>>,
     minigames: Vec<MinigameDef>,
     quests: HashMap<String, QuestDef>,
     #[serde(skip)]
@@ -106,8 +110,49 @@ struct ChestDef {
     name: i64,
     grade: String,
     lock: Option<String>,
+    /// Its `RewardData` ID, a key of `loot`.
+    loot: Option<i64>,
     x: f64,
     y: f64,
+}
+
+/// One draw of a chest's loot: made with `chance`, it picks one entry by
+/// weight. An entry is `[item CID, min count, max count, weight]`; a draw
+/// with no entries gives nothing.
+#[derive(Debug, Deserialize)]
+struct LootDraw {
+    chance: f64,
+    entries: Vec<[i64; 4]>,
+}
+
+/// Rolls a chest's loot the way its `RewardData` row reads: each draw happens
+/// with its chance and picks one entry by weight, with a count anywhere from
+/// the entry's minimum to its maximum.
+fn roll_loot(draws: &[LootDraw], rng: &mut impl Rng) -> Vec<(i64, i64)> {
+    let mut items = Vec::new();
+    for draw in draws {
+        let total: i64 = draw.entries.iter().map(|entry| entry[3].max(0)).sum();
+        if total == 0 || !rng.gen_bool(draw.chance.clamp(0.0, 1.0)) {
+            continue;
+        }
+        let mut pick = rng.gen_range(0..total);
+        for &[cid, min, max, weight] in &draw.entries {
+            let weight = weight.max(0);
+            if pick < weight {
+                let count = if max > min {
+                    rng.gen_range(min..=max)
+                } else {
+                    min
+                };
+                if count > 0 {
+                    items.push((cid, count));
+                }
+                break;
+            }
+            pick -= weight;
+        }
+    }
+    items
 }
 
 #[derive(Debug, Deserialize)]
@@ -239,10 +284,44 @@ pub struct ChestView {
     /// its mini-game), `excavation` (dig it up), `lock_with_key` or
     /// `hide_with_map`; none for a chest that just opens.
     pub lock: Option<String>,
+    /// Whether it gives anything; `chest_loot` lists what.
+    pub loot: bool,
     pub x: f64,
     pub y: f64,
     pub released: bool,
     pub opened: bool,
+}
+
+/// One draw of a chest's loot as the World map lists it.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LootDrawView {
+    /// The chance the draw happens, 1 for every chest the game places.
+    pub chance: f64,
+    /// How many times the chest makes this same draw.
+    pub times: i64,
+    pub options: Vec<LootOption>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LootOption {
+    pub item: Item,
+    pub min: i64,
+    pub max: i64,
+    /// The chance this is what the draw picks.
+    pub chance: f64,
+}
+
+/// What opening chests did.
+#[derive(Debug, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChestOpening {
+    pub opened: i64,
+    /// Chests asked for that were open already, which give nothing again.
+    pub already_open: i64,
+    pub grant: RewardGrant,
+    pub levels_gained: i64,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -295,9 +374,6 @@ pub enum PlaceKind {
     Statue,
     /// A dungeon found: a row of `tb_active_dungeon`.
     Dungeon,
-    /// A chest opened: its `tb_treasure_box` OPENED bit (and RELEASED, as
-    /// opening needs the lock open first).
-    Chest,
 }
 
 impl Game<'_> {
@@ -451,6 +527,7 @@ impl Game<'_> {
                     .unwrap_or_default(),
                 grade: chest.grade.clone(),
                 lock: chest.lock.clone(),
+                loot: chest.loot.is_some(),
                 x: chest.x,
                 y: chest.y,
                 released: released.contains(&chest.id),
@@ -545,12 +622,110 @@ impl Game<'_> {
         })
     }
 
+    /// What a chest can give, draw by draw, with the same draws merged.
+    pub fn chest_loot(&self, id: i64) -> Result<Vec<LootDrawView>> {
+        let data = WorldData::shared();
+        let chest = data
+            .chests
+            .iter()
+            .find(|chest| chest.id == id)
+            .ok_or_else(|| Error::invalid(format!("unknown chest {id}")))?;
+        let Some(draws) = chest.loot.and_then(|loot| data.loot.get(&loot.to_string())) else {
+            return Ok(Vec::new());
+        };
+        let mut out: Vec<(&LootDraw, i64)> = Vec::new();
+        for draw in draws.iter().filter(|draw| !draw.entries.is_empty()) {
+            match out.last_mut() {
+                Some((last, times))
+                    if last.entries == draw.entries && last.chance == draw.chance =>
+                {
+                    *times += 1
+                }
+                _ => out.push((draw, 1)),
+            }
+        }
+        Ok(out
+            .into_iter()
+            .map(|(draw, times)| {
+                let total: i64 = draw.entries.iter().map(|entry| entry[3].max(0)).sum();
+                LootDrawView {
+                    chance: draw.chance,
+                    times,
+                    options: draw
+                        .entries
+                        .iter()
+                        .map(|&[cid, min, max, weight]| LootOption {
+                            item: self.catalog().lookup(cid),
+                            min,
+                            max,
+                            chance: if total > 0 {
+                                weight.max(0) as f64 / total as f64
+                            } else {
+                                0.0
+                            },
+                        })
+                        .collect(),
+                }
+            })
+            .collect())
+    }
+
+    /// Opens chests the way the game does: rolls each one's loot, hands it
+    /// out (corps EXP levels the corps up, gear and karma are created) and
+    /// marks the chest released and opened. A chest that is open already
+    /// gives nothing again, and an opened chest stays opened: the editor has
+    /// no way to shut one.
+    pub fn open_chests(&mut self, ids: &[i64]) -> Result<ChestOpening> {
+        let data = WorldData::shared();
+        let opened = self.world_bits("tb_treasure_box", "OPENED_BIT_FIELD")?;
+        let mut rng = rand::thread_rng();
+        let mut opening = ChestOpening::default();
+        let mut chosen: Vec<i64> = Vec::new();
+        let mut items: Vec<(i64, i64)> = Vec::new();
+        for id in ids {
+            let chest = data
+                .chests
+                .iter()
+                .find(|chest| chest.id == *id)
+                .ok_or_else(|| Error::invalid(format!("unknown chest {id}")))?;
+            if opened.contains(id) || chosen.contains(id) {
+                opening.already_open += 1;
+                continue;
+            }
+            if let Some(loot) = chest.loot {
+                let draws = data.loot.get(&loot.to_string()).ok_or_else(|| {
+                    Error::invalid(format!("chest {id} names missing loot {loot}"))
+                })?;
+                for (cid, count) in roll_loot(draws, &mut rng) {
+                    match items.iter_mut().find(|(seen, _)| *seen == cid) {
+                        Some((_, total)) => *total += count,
+                        None => items.push((cid, count)),
+                    }
+                }
+            }
+            chosen.push(*id);
+        }
+        if chosen.is_empty() {
+            return Ok(opening);
+        }
+        let (level_before, _) = self.corps_status()?;
+        let transaction = self.conn().unchecked_transaction()?;
+        self.add_reward(0, &items, &mut opening.grant)?;
+        self.write_world_bits("tb_treasure_box", "RELEASED_BIT_FIELD", &chosen, true)?;
+        self.write_world_bits("tb_treasure_box", "OPENED_BIT_FIELD", &chosen, true)?;
+        transaction.commit()?;
+        let (level_after, _) = self.corps_status()?;
+        opening.opened = chosen.len() as i64;
+        opening.levels_gained = level_after - level_before;
+        self.touch();
+        Ok(opening)
+    }
+
     /// Marks places of one kind done or not done: warp points activated,
-    /// statues restored, dungeons found, chests opened. Returns how many.
+    /// statues restored, dungeons found. Returns how many. Chests open
+    /// through `open_chests`, which hands out their loot.
     ///
-    /// A chest marked not opened keeps its lock open, so it can be opened
-    /// again in game without beating its monsters or mini-game twice. A
-    /// statue restored or broken takes its warp with it.
+    /// A statue restored or broken takes its warp with it.
     pub fn set_world_places(&mut self, kind: PlaceKind, ids: &[i64], done: bool) -> Result<i64> {
         let data = WorldData::shared();
         let transaction = self.conn().unchecked_transaction()?;
@@ -601,18 +776,6 @@ impl Game<'_> {
                         "DELETE FROM tb_active_dungeon WHERE USER_DBID=? AND DUNGEON_GROUP_CID=?"
                     };
                     self.conn().execute(sql, params![self.user_id, id])?;
-                }
-            }
-            PlaceKind::Chest => {
-                if let Some(id) = ids
-                    .iter()
-                    .find(|id| !data.chests.iter().any(|chest| chest.id == **id))
-                {
-                    return Err(Error::invalid(format!("unknown chest {id}")));
-                }
-                self.write_world_bits("tb_treasure_box", "OPENED_BIT_FIELD", ids, done)?;
-                if done {
-                    self.write_world_bits("tb_treasure_box", "RELEASED_BIT_FIELD", ids, true)?;
                 }
             }
         }
@@ -784,6 +947,50 @@ mod tests {
                 "waypoint {}",
                 waypoint.id
             );
+        }
+    }
+
+    #[test]
+    fn every_chest_has_loot_the_catalog_knows() {
+        let data = WorldData::shared();
+        let catalog = crate::catalog::Catalog::shared();
+        for chest in &data.chests {
+            let loot = chest.loot.expect("every placed chest has loot");
+            let draws = data.loot.get(&loot.to_string()).expect("its table");
+            assert!(!draws.is_empty(), "chest {}", chest.id);
+            for draw in draws {
+                for &[cid, min, max, weight] in &draw.entries {
+                    assert!(
+                        min > 0 && max >= min && weight >= 0,
+                        "chest {} item {cid}",
+                        chest.id
+                    );
+                    assert!(
+                        !catalog.lookup(cid).name_en.is_empty(),
+                        "chest {} item {cid}",
+                        chest.id
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn a_legendary_chest_rolls_its_fixed_draws_and_one_pick_per_draw() {
+        use rand::SeedableRng;
+
+        let data = WorldData::shared();
+        // Chest 11001, a Legendary Chest: 1,000 corps EXP, 30,000 gold, one
+        // of two fragments, one of three books, and three weighted extras.
+        let draws = data.loot.get("1501900").expect("loot 1501900");
+        for seed in 0..50 {
+            let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+            let items = roll_loot(draws, &mut rng);
+            assert_eq!(items.len(), 7, "seed {seed}: {items:?}");
+            assert_eq!(items[0], (1_000_201, 1_000));
+            assert_eq!(items[1], (1_000_001, 30_000));
+            assert!([1_450_403, 1_000_501].contains(&items[2].0) && items[2].1 == 25);
+            assert!([1_410_005, 1_410_105, 1_410_205].contains(&items[3].0) && items[3].1 == 5);
         }
     }
 }

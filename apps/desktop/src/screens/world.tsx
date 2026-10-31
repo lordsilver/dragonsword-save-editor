@@ -1,8 +1,19 @@
 import { Crosshair, Map as MapIcon, Minus, MoreHorizontal, Plus, Route } from 'lucide-react';
 import { type KeyboardEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ConfirmButton, EmptyPanel } from '@/components/common';
+import { ItemIcon } from '@/components/item-icon';
 import { PageHeader } from '@/components/page';
 import { InfoNote } from '@/components/summary';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -13,12 +24,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
-import { formatNumber, useApp } from '@/lib/store';
+import { formatNumber, itemName, useApp } from '@/lib/store';
 import type {
   ChestLock,
   ChestView,
   DungeonView,
   GameText,
+  LootDraw,
   MapPlacement,
   MissionKind,
   PlaceKind,
@@ -140,7 +152,7 @@ function placesOf(world: WorldView, worldId: number, map: MapPlacement): Place[]
 /** The ids and kind the save edit for a set of places of one layer. */
 function editTarget(places: Place[]): { kind: PlaceKind; ids: number[] } | null {
   const first = places[0];
-  if (!first) return null;
+  if (!first || first.layer === 'chest') return null;
   switch (first.layer) {
     case 'statue':
       return {
@@ -149,8 +161,6 @@ function editTarget(places: Place[]): { kind: PlaceKind; ids: number[] } | null 
       };
     case 'dungeon':
       return { kind: 'dungeon', ids: places.map((place) => place.id) };
-    case 'chest':
-      return { kind: 'chest', ids: places.map((place) => place.id) };
     default:
       return { kind: 'waypoint', ids: places.map((place) => place.id) };
   }
@@ -162,6 +172,7 @@ export function WorldScreen() {
   const language = useApp((state) => state.settings.language);
   const pending = useApp((state) => state.pending);
   const setWorldPlaces = useApp((state) => state.setWorldPlaces);
+  const openChests = useApp((state) => state.openChests);
   const [layers, setLayers] = useState<Set<Layer>>(() => new Set(['waypoint', 'statue', 'legacy', 'tower', 'dungeon']));
   const [show, setShow] = useState<Show>('all');
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -226,6 +237,12 @@ export function WorldScreen() {
   }
 
   function apply(target: Place[], done: boolean): void {
+    // A chest only opens, and opening hands out its loot.
+    if (target[0]?.layer === 'chest') {
+      const shut = target.filter((place) => !place.done).map((place) => place.id);
+      if (done && shut.length > 0) void openChests(shut);
+      return;
+    }
     const edit = editTarget(target);
     if (edit && edit.ids.length > 0) void setWorldPlaces(edit.kind, edit.ids, done);
   }
@@ -455,10 +472,18 @@ function MapView({
       fitAll();
       return;
     }
-    const across = inRegion.map((place) => place.across);
-    const down = inRegion.map((place) => place.down);
+    // A few of a region's places can sit far from the rest (Orbis Castle has
+    // four chests off the map's corner), so the zoom leaves out the outer
+    // twentieth on each side of a large region.
+    const span = (values: number[]): [number, number] => {
+      const sorted = [...values].sort((a, b) => a - b);
+      const cut = sorted.length >= 20 ? Math.floor(sorted.length * 0.05) : 0;
+      return [sorted[cut] ?? 0, sorted[sorted.length - 1 - cut] ?? 0];
+    };
+    const [a0, a1] = span(inRegion.map((place) => place.across));
+    const [d0, d1] = span(inRegion.map((place) => place.down));
     const pad = 0.03;
-    show(Math.min(...across) - pad, Math.max(...across) + pad, Math.min(...down) - pad, Math.max(...down) + pad);
+    show(a0 - pad, a1 + pad, d0 - pad, d1 + pad);
   }, [fitAll, focus, show]);
 
   const zoomAt = useCallback(
@@ -687,11 +712,8 @@ function PlaceCard({
       toggle = 'Found';
       break;
     case 'chest':
-      toggle = 'Opened';
       if (place.chest?.lock) lines.push(LOCKS[place.chest.lock]);
-      if (place.chest?.lock) lines.push(place.chest.released ? 'Lock open' : 'Still locked');
-      note =
-        'Marking it not opened keeps its lock open, so the game lets you open it again. Opening it here gives no loot.';
+      if (place.chest?.lock && !place.done) lines.push(place.chest.released ? 'Lock open' : 'Still locked');
       break;
     case 'legacy':
       note = "Eona's Legacy is activated in game by its own quest; this sets only its switch.";
@@ -728,17 +750,125 @@ function PlaceCard({
           ))}
         </ul>
       )}
-      <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm">
-        <span id="world-place-toggle">{toggle}</span>
-        <Switch
-          aria-labelledby="world-place-toggle"
-          checked={place.done}
-          disabled={busy}
-          onCheckedChange={(value) => onSet(value)}
+      {place.chest ? (
+        <ChestContents
+          chest={place.chest}
+          opened={place.done}
+          language={language}
+          busy={busy}
+          onOpen={() => onSet(true)}
         />
-      </div>
+      ) : (
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm">
+          <span id="world-place-toggle">{toggle}</span>
+          <Switch
+            aria-labelledby="world-place-toggle"
+            checked={place.done}
+            disabled={busy}
+            onCheckedChange={(value) => onSet(value)}
+          />
+        </div>
+      )}
       {note && <p className="mt-2 text-xs text-muted-foreground">{note}</p>}
     </section>
+  );
+}
+
+/** How many options of a long draw the card lists before "and N more". */
+const LOOT_OPTIONS = 4;
+
+/**
+ * What a chest gives, draw by draw, as its loot table reads, and the button
+ * that opens it. Opening rolls the loot the way the game does and hands it
+ * out; an opened chest stays opened.
+ */
+function ChestContents({
+  chest,
+  opened,
+  language,
+  busy,
+  onOpen,
+}: {
+  chest: ChestView;
+  opened: boolean;
+  language: string;
+  busy: boolean;
+  onOpen: () => void;
+}) {
+  const chestLoot = useApp((state) => state.chestLoot);
+  const [loot, setLoot] = useState<{ id: number; draws: LootDraw[] } | null>(null);
+  useEffect(() => {
+    let live = true;
+    void chestLoot(chest.id).then((draws) => {
+      if (live) setLoot({ id: chest.id, draws });
+    });
+    return () => {
+      live = false;
+    };
+  }, [chest.id, chestLoot]);
+  const draws = loot?.id === chest.id ? loot.draws : null;
+  const count = (min: number, max: number) =>
+    min === max ? formatNumber(min) : `${formatNumber(min)}–${formatNumber(max)}`;
+
+  return (
+    <div className="mt-3 space-y-3">
+      <div>
+        <h3 className="text-xs font-medium text-muted-foreground">Inside</h3>
+        {draws === null ? (
+          <p className="mt-1 text-sm text-muted-foreground">Reading its loot…</p>
+        ) : draws.length === 0 ? (
+          <p className="mt-1 text-sm text-muted-foreground">Nothing.</p>
+        ) : (
+          <ul className="mt-1.5 space-y-2 text-sm">
+            {draws.map((draw, index) => {
+              const options = [...draw.options].sort((a, b) => b.chance - a.chance);
+              const shown = options.slice(0, LOOT_OPTIONS);
+              const single = options.length === 1;
+              return (
+                // biome-ignore lint/suspicious/noArrayIndexKey: draws are listed in their table's order
+                <li key={index}>
+                  {!single && (
+                    <div className="text-xs text-muted-foreground">
+                      {draw.times > 1 ? `${draw.times} picks` : 'One pick'} from {options.length}
+                      {draw.chance < 1 && `, ${Math.round(draw.chance * 100)}% chance`}:
+                    </div>
+                  )}
+                  <ul className={cn('space-y-1', !single && 'mt-1')}>
+                    {shown.map((option, at) => (
+                      // biome-ignore lint/suspicious/noArrayIndexKey: one item can appear with several counts
+                      <li key={at} className="flex items-center gap-2">
+                        <ItemIcon item={option.item} size={22} className="shrink-0" />
+                        <span className="min-w-0 flex-1 truncate">{itemName(option.item, language)}</span>
+                        <span className="numeric text-xs text-muted-foreground">
+                          {single && draw.times > 1 ? `${draw.times} × ` : ''}
+                          {count(option.min, option.max)}
+                          {!single && ` · ${(option.chance * 100).toFixed(option.chance < 0.1 ? 1 : 0)}%`}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  {options.length > shown.length && (
+                    <div className="mt-0.5 text-xs text-muted-foreground">and {options.length - shown.length} more</div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+      {opened ? (
+        <p className="rounded-lg border bg-muted/30 px-3 py-2 text-sm">Opened. An opened chest stays opened.</p>
+      ) : (
+        <>
+          <Button className="w-full" disabled={busy || !chest.loot} onClick={onOpen}>
+            Open the chest
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Opening rolls its loot the way the game does and adds it to the save. It cannot be undone.
+          </p>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -760,8 +890,33 @@ function RegionList({
   onApply: (places: Place[], done: boolean) => void;
 }) {
   const name = (text: GameText) => (language === 'fr' ? text.fr : text.en);
+  // Opening a region's chests hands out a lot of loot at once and cannot be undone.
+  const [confirm, setConfirm] = useState<{ region: string; target: Place[] } | null>(null);
+  const shut = confirm?.target.filter((place) => !place.done).length ?? 0;
   return (
     <section className="rounded-xl border bg-card/40">
+      <AlertDialog open={confirm !== null} onOpenChange={(open) => !open && setConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Open every chest in {confirm?.region}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Opens {formatNumber(shut)} {shut === 1 ? 'chest' : 'chests'} and adds their loot to the save, rolled the
+              way the game rolls it. Opened chests stay opened.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirm) onApply(confirm.target, true);
+                setConfirm(null);
+              }}
+            >
+              Open {formatNumber(shut)}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <header className="border-b px-4 py-3">
         <h2 className="font-semibold">Regions</h2>
         <p className="text-xs text-muted-foreground">
@@ -778,8 +933,7 @@ function RegionList({
             { label: "Activate Eona's Legacy", target: here('legacy'), done: true },
             { label: 'Restore the statues', target: here('statue'), done: true },
             { label: 'Mark the dungeons found', target: here('dungeon'), done: true },
-            { label: 'Mark every chest opened', target: here('chest'), done: true },
-            { label: 'Mark every chest not opened', target: here('chest'), done: false },
+            { label: 'Open every chest', target: here('chest'), done: true },
           ];
           return (
             <li key={region.id} className={cn('px-4 py-2.5', selected === region.id && 'bg-accent/60')}>
@@ -807,7 +961,14 @@ function RegionList({
                     {actions
                       .filter((action) => action.target.some((place) => place.done !== action.done))
                       .map((action) => (
-                        <DropdownMenuItem key={action.label} onSelect={() => onApply(action.target, action.done)}>
+                        <DropdownMenuItem
+                          key={action.label}
+                          onSelect={() =>
+                            action.target[0]?.layer === 'chest'
+                              ? setConfirm({ region: name(region.name), target: action.target })
+                              : onApply(action.target, action.done)
+                          }
+                        >
                           {action.label}
                         </DropdownMenuItem>
                       ))}

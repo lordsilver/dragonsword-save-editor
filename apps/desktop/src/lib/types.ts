@@ -551,6 +551,8 @@ export interface ChestView {
   /** normal, superior, rare, epic or legendary. */
   grade: string;
   lock: ChestLock | null;
+  /** Whether it gives anything; the loot is read when the chest is picked. */
+  loot: boolean;
   x: number;
   y: number;
   released: boolean;
@@ -568,8 +570,24 @@ export interface WorldView {
   player: { world: number; x: number; y: number } | null;
 }
 
-/** What the World map edits: warp points, statues, dungeons and chests. */
-export type PlaceKind = 'waypoint' | 'statue' | 'dungeon' | 'chest';
+/** What the World map switches on and off: warp points, statues and dungeons. Chests only open. */
+export type PlaceKind = 'waypoint' | 'statue' | 'dungeon';
+
+/** One draw of a chest's loot: it picks one of its options, `times` times. */
+export interface LootDraw {
+  chance: number;
+  times: number;
+  options: Array<{ item: Item; min: number; max: number; chance: number }>;
+}
+
+/** What opening chests handed out. */
+export interface ChestOpening {
+  opened: number;
+  /** Chests that were open already and gave nothing again. */
+  alreadyOpen: number;
+  grant: RewardGrant;
+  levelsGained: number;
+}
 
 /** One quest of the game's quest log and where the save stands on it. */
 export interface QuestEntry {
@@ -598,7 +616,18 @@ export interface QuestRewards {
   items: Array<{
     item: Item;
     count: number;
-    route: 'currency' | 'stack' | 'mount' | 'title' | 'hero' | 'dish' | 'equipment' | 'none';
+    route:
+      | 'currency'
+      | 'stack'
+      | 'mount'
+      | 'title'
+      | 'hero'
+      | 'dish'
+      | 'equipment'
+      | 'corpsExp'
+      | 'karma'
+      | 'costume'
+      | 'none';
   }>;
   /** Why the editor cannot complete this quest, for a quest in progress. */
   blocked: string | null;

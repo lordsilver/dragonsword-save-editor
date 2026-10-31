@@ -107,7 +107,38 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "heroes_recruitable",
         serde_json::to_value(game.recruitable_heroes()?)?,
     );
-    fixture.insert("world_get", serde_json::to_value(game.world()?)?);
+    let world = game.world()?;
+    // The loot of the chests in the region the player stands in, by chest ID;
+    // every chest would make the recording tens of megabytes.
+    let mut loot = serde_json::Map::new();
+    let here = world
+        .player
+        .as_ref()
+        .and_then(|player| {
+            world
+                .chests
+                .iter()
+                .filter(|chest| chest.world == player.world)
+                .min_by(|a, b| {
+                    let distance = |chest: &&dsa_core::world::ChestView| {
+                        (chest.x - player.x).powi(2) + (chest.y - player.y).powi(2)
+                    };
+                    distance(a).total_cmp(&distance(b))
+                })
+        })
+        .and_then(|chest| chest.region);
+    for chest in world
+        .chests
+        .iter()
+        .filter(|chest| here.is_some() && chest.region == here)
+    {
+        loot.insert(
+            chest.id.to_string(),
+            serde_json::to_value(game.chest_loot(chest.id)?)?,
+        );
+    }
+    fixture.insert("chest_loot_get", Value::Object(loot));
+    fixture.insert("world_get", serde_json::to_value(&world)?);
     fixture.insert("quest_log_get", serde_json::to_value(game.quest_log()?)?);
 
     std::fs::write(out, serde_json::to_string(&fixture)?)?;

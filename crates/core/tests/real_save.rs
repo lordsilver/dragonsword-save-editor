@@ -9,6 +9,15 @@ use dsa_core::SaveSession;
 use dsa_core::catalog::Catalog;
 use dsa_core::raw::RawValue;
 
+/// The save's gold, as the Currencies screen reads it.
+fn gold_of(game: &dsa_core::domain::Game<'_>) -> i64 {
+    game.currencies()
+        .expect("currencies")
+        .iter()
+        .find(|currency| currency.item.cid == 1_000_001)
+        .map_or(0, |currency| currency.amount)
+}
+
 fn copy_fixture() -> (PathBuf, PathBuf) {
     let source = PathBuf::from(std::env::var("DSA_SAVE").expect("set DSA_SAVE"));
     // One folder per test thread: the tests run in parallel and each removes its own.
@@ -197,9 +206,9 @@ fn current_health_never_exceeds_the_computed_max_hp() {
     fs::remove_dir_all(directory).ok();
 }
 
-/// Reads the save's world progress and edits a place of each kind both ways
-/// on a copy: a chest marked opened and back keeps its lock open, a statue
-/// restored activates its warp.
+/// Reads the save's world progress and edits it on a copy: an opened chest
+/// hands out its loot once and stays opened, a statue restored activates its
+/// warp.
 #[test]
 #[ignore = "needs DSA_SAVE pointing at a copy of a real save"]
 fn world_progress_reads_and_round_trips() {
@@ -255,13 +264,48 @@ fn world_progress_reads_and_round_trips() {
             );
         }
 
+        // Opening a chest hands out its loot: every chest gives a fixed amount
+        // of gold and corps EXP in its first two draws.
         let chest = world
             .chests
             .iter()
-            .find(|c| !c.opened && c.lock.is_some())
+            .find(|c| !c.opened && c.lock.is_some() && c.loot)
             .expect("a shut chest");
-        game.set_world_places(PlaceKind::Chest, &[chest.id], true)
-            .expect("open chest");
+        let loot = game.chest_loot(chest.id).expect("loot");
+        let fixed = |cid: i64| {
+            loot.iter()
+                .find(|draw| draw.options.len() == 1 && draw.options[0].item.cid == cid)
+                .map(|draw| draw.options[0].min * draw.times)
+                .unwrap_or(0)
+        };
+        let gold = fixed(1_000_001);
+        let corps = fixed(1_000_201);
+        assert!(gold > 0 && corps > 0, "{loot:?}");
+        let gold_before = gold_of(&game);
+        let corps_before = game.overview().expect("overview").adventure_exp;
+        let opening = game.open_chests(&[chest.id]).expect("open chest");
+        println!(
+            "opened {} ({} levels): {:?}",
+            chest.name.en,
+            opening.levels_gained,
+            opening
+                .grant
+                .granted
+                .iter()
+                .map(|g| (&g.item.name_en, g.count))
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(opening.opened, 1);
+        assert!(
+            opening.grant.not_granted.is_empty(),
+            "{:?}",
+            opening.grant.not_granted
+        );
+        assert_eq!(gold_of(&game), gold_before + gold);
+        assert!(
+            game.overview().expect("overview").adventure_exp >= corps_before + corps
+                || opening.levels_gained > 0
+        );
         let after = game.world().expect("world");
         let now = after
             .chests
@@ -269,18 +313,11 @@ fn world_progress_reads_and_round_trips() {
             .find(|c| c.id == chest.id)
             .expect("chest");
         assert!(now.opened && now.released);
-        game.set_world_places(PlaceKind::Chest, &[chest.id], false)
-            .expect("shut chest");
-        let after = game.world().expect("world");
-        let now = after
-            .chests
-            .iter()
-            .find(|c| c.id == chest.id)
-            .expect("chest");
-        assert!(
-            !now.opened && now.released,
-            "un-opening keeps the lock open"
-        );
+        // An opened chest gives nothing again.
+        let again = game.open_chests(&[chest.id]).expect("open again");
+        assert_eq!((again.opened, again.already_open), (0, 1));
+        assert!(again.grant.granted.is_empty());
+        assert_eq!(gold_of(&game), gold_before + gold);
 
         let statue = world
             .waypoints
