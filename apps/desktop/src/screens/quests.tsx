@@ -12,11 +12,12 @@ import { cn } from '@/lib/utils';
 
 type StateFilter = 'all' | QuestEntry['state'];
 
-/** The quest log's categories in the order the game lists them. */
+/** The quest log's categories, one tab each, in the order the game lists them. */
 const CATEGORIES: Array<[string, string]> = [
   ['MAIN', 'Main story'],
   ['EPIC', 'Epic quests'],
   ['CHARACTER', 'Hero stories'],
+  ['SUB', 'Side quests'],
   ['ADVENT_GRADE', 'Promotion exams'],
   ['TUTORIAL', 'Tutorials'],
 ];
@@ -35,7 +36,7 @@ export function QuestsScreen() {
   const completeQuest = useApp((state) => state.completeQuest);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<StateFilter>('all');
-  const [category, setCategory] = useState('all');
+  const [category, setCategory] = useState('MAIN');
   const [open, setOpen] = useState<number | null>(null);
   const busy = pending !== null;
 
@@ -43,7 +44,7 @@ export function QuestsScreen() {
     const needle = query.trim().toLowerCase();
     return (log ?? []).filter((quest) => {
       if (filter !== 'all' && quest.state !== filter) return false;
-      if (category !== 'all' && quest.category !== category) return false;
+      if (quest.category !== category) return false;
       if (!needle) return true;
       return (
         quest.nameEn.toLowerCase().includes(needle) ||
@@ -101,6 +102,32 @@ export function QuestsScreen() {
         />
       </div>
 
+      <div role="tablist" aria-label="Quest category" className="flex flex-wrap gap-x-6 border-b">
+        {CATEGORIES.map(([value, label]) => {
+          const all = log.filter((quest) => quest.category === value);
+          if (all.length === 0) return null;
+          const done = all.filter((quest) => quest.state === 'done').length;
+          return (
+            <button
+              key={value}
+              type="button"
+              role="tab"
+              aria-selected={category === value}
+              onClick={() => setCategory(value)}
+              className={cn(
+                'relative -mb-px flex items-baseline gap-1.5 border-b-2 border-transparent py-2.5 text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:text-foreground',
+                category === value && 'border-brand font-medium text-foreground',
+              )}
+            >
+              {label}
+              <span className="numeric text-xs font-normal text-muted-foreground">
+                {formatNumber(done)}/{formatNumber(all.length)}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       <Toolbar>
         <div className="relative min-w-52 flex-1">
           <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -123,56 +150,30 @@ export function QuestsScreen() {
             </Button>
           ))}
         </div>
-        <select
-          value={category}
-          onChange={(event) => setCategory(event.target.value)}
-          aria-label="Filter by category"
-          className="h-8 rounded-md border border-input bg-background px-2 text-xs shadow-xs dark:bg-input/30"
-        >
-          <option value="all">Every category</option>
-          {CATEGORIES.map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
       </Toolbar>
 
       {rows.length === 0 ? (
         <EmptyPanel
           icon={<ScrollText />}
           title="No quest matches that filter"
-          description="Try a different search or filter."
+          description="Try a different search or filter, or another tab."
         />
       ) : (
-        CATEGORIES.map(([value, label]) => {
-          const quests = rows.filter((quest) => quest.category === value);
-          if (quests.length === 0) return null;
-          const all = log.filter((quest) => quest.category === value);
-          const done = all.filter((quest) => quest.state === 'done').length;
-          return (
-            <Panel
-              key={value}
-              title={label}
-              description={`${formatNumber(done)} of ${formatNumber(all.length)} done`}
-              contentClassName="p-0"
-            >
-              <ul className="divide-y">
-                {quests.map((quest) => (
-                  <QuestRow
-                    key={quest.id}
-                    quest={quest}
-                    language={language}
-                    busy={busy}
-                    expanded={open === quest.id}
-                    onToggle={() => setOpen((current) => (current === quest.id ? null : quest.id))}
-                    onComplete={() => void completeQuest(quest.id)}
-                  />
-                ))}
-              </ul>
-            </Panel>
-          );
-        })
+        <Panel contentClassName="p-0">
+          <ul className="divide-y">
+            {rows.map((quest) => (
+              <QuestRow
+                key={quest.id}
+                quest={quest}
+                language={language}
+                busy={busy}
+                expanded={open === quest.id}
+                onToggle={() => setOpen((current) => (current === quest.id ? null : quest.id))}
+                onComplete={() => void completeQuest(quest.id)}
+              />
+            ))}
+          </ul>
+        </Panel>
       )}
 
       <InfoNote>
