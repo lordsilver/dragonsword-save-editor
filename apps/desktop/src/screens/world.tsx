@@ -199,6 +199,8 @@ export function WorldScreen() {
   const [show, setShow] = useState<Show>('all');
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [regionId, setRegionId] = useState<number | null>(null);
+  /** The region under the pointer in the list, highlighted on the map while it is. */
+  const [hoverRegion, setHoverRegion] = useState<number | null>(null);
   const [worldId, setWorldId] = useState<number | null>(null);
   const busy = pending !== null;
 
@@ -212,12 +214,9 @@ export function WorldScreen() {
   const visible = useMemo(
     () =>
       places.filter(
-        (place) =>
-          layers.has(place.layer) &&
-          (show === 'all' || (show === 'done' ? place.done : !place.done)) &&
-          (regionId === null || place.region === regionId || place.key === selectedKey),
+        (place) => layers.has(place.layer) && (show === 'all' || (show === 'done' ? place.done : !place.done)),
       ),
-    [layers, places, regionId, selectedKey, show],
+    [layers, places, show],
   );
   const player =
     world?.player && map && world.player.world === shown?.id ? onMap(map, world.player.x, world.player.y) : null;
@@ -340,6 +339,7 @@ export function WorldScreen() {
                     setWorldId(entry.id);
                     setSelectedKey(null);
                     setRegionId(null);
+                    setHoverRegion(null);
                   }}
                 >
                   {name(entry.name)}
@@ -378,6 +378,7 @@ export function WorldScreen() {
           player={player}
           selectedKey={selectedKey}
           focus={regionId}
+          highlight={hoverRegion ?? regionId}
           onSelect={setSelectedKey}
         />
         <div className="scroll-thin flex max-h-[max(420px,calc(100svh-17.5rem))] min-h-0 flex-col gap-3 overflow-y-auto">
@@ -404,6 +405,7 @@ export function WorldScreen() {
             grantRewards={grantRewards}
             allowUndo={allowUndo}
             onSelect={(id) => setRegionId((current) => (current === id ? null : id))}
+            onHover={setHoverRegion}
             onApply={apply}
           />
         </div>
@@ -426,6 +428,7 @@ function MapView({
   player,
   selectedKey,
   focus,
+  highlight,
   onSelect,
 }: {
   image: string | undefined;
@@ -436,11 +439,14 @@ function MapView({
   selectedKey: string | null;
   /** A region to zoom to. */
   focus: number | null;
+  /** A region whose markers stand out while the others fade. */
+  highlight: number | null;
   onSelect: (key: string | null) => void;
 }) {
   const viewport = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
-  const view = useRef({ scale: 1, x: 0, y: 0, fit: 1 });
+  /** The zoom and pan; `whole` while it shows the whole map, which a resize keeps. */
+  const view = useRef({ scale: 1, x: 0, y: 0, fit: 1, whole: true });
   /** A press on the map: where it was, whether it became a drag, and the marker under it. */
   const drag = useRef<{ x: number; y: number; moved: boolean; place: string | null } | null>(null);
 
@@ -477,7 +483,7 @@ function MapView({
 
   /** Shows a box of map units [a0, a1] × [d0, d1] as large as it fits. */
   const show = useCallback(
-    (a0: number, a1: number, d0: number, d1: number) => {
+    (a0: number, a1: number, d0: number, d1: number, whole = false) => {
       const box = viewport.current;
       if (!box) return;
       const { frame, width, height } = latest.current;
@@ -493,23 +499,21 @@ function MapView({
         scale,
         x: box.clientWidth / 2 - centerX * scale,
         y: box.clientHeight / 2 - centerY * scale,
+        whole,
       };
       draw();
     },
     [draw],
   );
-  const fitAll = useCallback(() => {
-    const { frame } = latest.current;
-    show(frame.a0, frame.a1, frame.d0, frame.d1);
-  }, [show]);
+  // The whole map is the map image; the few places past its edge stay a drag away.
+  const fitAll = useCallback(() => show(0, 1, 0, 1, true), [show]);
 
   useEffect(() => {
     const box = viewport.current;
     if (!box) return;
     const observer = new ResizeObserver(() => {
-      const { scale, fit } = view.current;
-      // Keep the zoom the user chose; refit only an unzoomed map.
-      if (Math.abs(scale - fit) < 1e-6) fitAll();
+      // Keep the zoom the user chose; refit only the whole map.
+      if (view.current.whole) fitAll();
       else {
         const { width, height } = latest.current;
         view.current.fit = Math.min(box.clientWidth / width, box.clientHeight / height);
@@ -547,6 +551,7 @@ function MapView({
       const ratio = scale / current.scale;
       view.current = {
         ...current,
+        whole: false,
         scale,
         x: pointX - (pointX - current.x) * ratio,
         y: pointY - (pointY - current.y) * ratio,
@@ -600,7 +605,7 @@ function MapView({
         const dy = event.clientY - start.y;
         if (!start.moved && Math.hypot(dx, dy) < 4) return;
         start.moved = true;
-        view.current = { ...view.current, x: view.current.x + dx, y: view.current.y + dy };
+        view.current = { ...view.current, x: view.current.x + dx, y: view.current.y + dy, whole: false };
         start.x = event.clientX;
         start.y = event.clientY;
         draw();
@@ -630,6 +635,7 @@ function MapView({
             key={place.key}
             place={place}
             selected={place.key === selectedKey}
+            faded={highlight !== null && place.region !== highlight && place.key !== selectedKey}
             style={position(place.across, place.down)}
             onSelect={onSelect}
           />
@@ -669,11 +675,14 @@ function markOf(place: Place): string {
 function Marker({
   place,
   selected,
+  faded,
   style,
   onSelect,
 }: {
   place: Place;
   selected: boolean;
+  /** Another region is highlighted. */
+  faded: boolean;
   style: { left: number; top: number };
   onSelect: (key: string) => void;
 }) {
@@ -694,11 +703,15 @@ function Marker({
         aria-label={`${place.name.en}${place.done ? ', opened' : ''}`}
         title={`${place.name.en}${place.done ? ' (opened)' : ''}`}
         className={cn(
-          'absolute size-2.5 rounded-full ring-1 ring-black/45 outline-none focus-visible:ring-2 focus-visible:ring-white',
-          place.done && 'opacity-35',
+          'absolute size-2.5 rounded-full ring-1 ring-black/45 transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-white',
           selected && 'z-10 ring-2 ring-white',
         )}
-        style={{ ...style, transform, backgroundColor: GRADE_DOT[place.chest.grade] ?? GRADE_DOT.normal }}
+        style={{
+          ...style,
+          transform,
+          opacity: (place.done ? 0.35 : 1) * (faded ? 0.4 : 1),
+          backgroundColor: GRADE_DOT[place.chest.grade] ?? GRADE_DOT.normal,
+        }}
       />
     );
   }
@@ -710,7 +723,8 @@ function Marker({
       aria-label={`${place.name.en}${place.done ? '' : ', not done'}`}
       title={place.name.en}
       className={cn(
-        'absolute z-[1] grid size-9 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-white',
+        'absolute z-[2] grid size-9 place-items-center rounded-full transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-white',
+        faded && 'z-[1] opacity-45',
         selected && 'z-10 bg-black/35 ring-2 ring-white',
       )}
       style={{ ...style, transform }}
@@ -974,6 +988,7 @@ function RegionList({
   grantRewards,
   allowUndo,
   onSelect,
+  onHover,
   onApply,
 }: {
   regions: RegionView[];
@@ -984,6 +999,8 @@ function RegionList({
   grantRewards: boolean;
   allowUndo: boolean;
   onSelect: (id: number) => void;
+  /** The region under the pointer or the keyboard focus, or none. */
+  onHover: (id: number | null) => void;
   onApply: (places: Place[], done: boolean) => void;
 }) {
   const name = (text: GameText) => (language === 'fr' ? text.fr : text.en);
@@ -1018,7 +1035,8 @@ function RegionList({
       <header className="border-b px-4 py-3">
         <h2 className="font-semibold">Regions</h2>
         <p className="text-xs text-muted-foreground">
-          What the game's world map counts in each region. Click one to zoom to it.
+          What the game's world map counts in each region. Point at one to pick out its markers on the map; click it to
+          zoom there and keep them picked out, and again to see the whole map.
         </p>
       </header>
       <ul className="divide-y">
@@ -1073,13 +1091,26 @@ function RegionList({
             return false;
           };
           return (
-            <li key={region.id} className={cn('px-4 py-2.5', selected === region.id && 'bg-accent/60')}>
+            // The whole card selects the region: the name's button stretches over
+            // it, and only the menu button sits above that.
+            <li
+              key={region.id}
+              className={cn(
+                'relative border-l-2 border-transparent px-4 py-2.5 transition-colors hover:bg-accent/40 has-[[data-region]:focus-visible]:bg-accent/40',
+                selected === region.id && 'border-l-brand bg-accent/60 hover:bg-accent/60',
+              )}
+              onPointerEnter={() => onHover(region.id)}
+              onPointerLeave={() => onHover(null)}
+            >
               <div className="flex items-center gap-2">
                 <button
                   type="button"
+                  data-region
                   aria-pressed={selected === region.id}
                   onClick={() => onSelect(region.id)}
-                  className="min-w-0 flex-1 truncate text-left text-sm font-medium outline-none hover:underline focus-visible:underline"
+                  onFocus={() => onHover(region.id)}
+                  onBlur={() => onHover(null)}
+                  className="min-w-0 flex-1 cursor-pointer truncate text-left text-sm font-medium outline-none after:absolute after:inset-0"
                 >
                   {name(region.name)}
                 </button>
@@ -1088,7 +1119,13 @@ function RegionList({
                 </span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button size="icon-xs" variant="ghost" aria-label={`Change ${name(region.name)}`} disabled={busy}>
+                    <Button
+                      size="icon-xs"
+                      variant="ghost"
+                      aria-label={`Change ${name(region.name)}`}
+                      disabled={busy}
+                      className="relative z-10"
+                    >
                       <MoreHorizontal />
                     </Button>
                   </DropdownMenuTrigger>
