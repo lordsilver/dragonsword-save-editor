@@ -689,27 +689,37 @@ function SkillDetail({
       className="scroll-thin min-h-0 w-64 shrink-0 overflow-y-auto border-l bg-muted/10 @3xl:w-80"
     >
       <div className="flex flex-col items-center gap-3 p-5 text-center">
-        {(skill.label || (effect && skill.effect)) && (
-          <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs">
-            {effect && skill.effect && (
-              <span className="flex items-center gap-1 rounded-full border bg-muted/40 py-0.5 pr-2 pl-0.5">
-                <ItemIcon
-                  item={{ ...skill.effect, category: 'skill', icon: true }}
-                  size={18}
-                  className="rounded-full border-none bg-zinc-900"
-                />
-                {effect}
-              </span>
-            )}
-            {skill.label && (
-              <span className="rounded-full border bg-muted/40 px-2 py-0.5 text-muted-foreground">
-                {gameText(skill.label, language)}
-              </span>
-            )}
-          </div>
-        )}
-        {/* The effect chip above names the effect, so the large icon carries no mark. */}
-        <SkillIcon skill={skill} size={88} badge={false} />
+        {/* As in the game, the effect and slot chips sit in the top-left
+            corner beside the icon, so the icon stays put from skill to skill. */}
+        <div className="relative flex w-full justify-center">
+          {(skill.label || (effect && skill.effect)) && (
+            <div className="absolute top-0 left-0 flex max-w-[calc(50%-48px)] flex-col items-start gap-1 text-xs">
+              {effect && skill.effect && (
+                <span
+                  title={effect}
+                  className="flex max-w-full items-center gap-1 rounded-full border bg-muted/40 py-0.5 pr-2 pl-0.5"
+                >
+                  <ItemIcon
+                    item={{ ...skill.effect, category: 'skill', icon: true }}
+                    size={18}
+                    className="shrink-0 rounded-full border-none bg-zinc-900"
+                  />
+                  <span className="truncate">{effect}</span>
+                </span>
+              )}
+              {skill.label && (
+                <span
+                  title={gameText(skill.label, language)}
+                  className="max-w-full truncate rounded-full border bg-muted/40 px-2 py-0.5 text-muted-foreground"
+                >
+                  {gameText(skill.label, language)}
+                </span>
+              )}
+            </div>
+          )}
+          {/* The effect chip names the effect, so the large icon carries no mark. */}
+          <SkillIcon skill={skill} size={88} badge={false} />
+        </div>
         <div>
           <div className="text-sm text-muted-foreground tabular-nums">
             {skill.saved || !skill.editable ? `Lv. ${skill.level}` : 'Not in this save'}
