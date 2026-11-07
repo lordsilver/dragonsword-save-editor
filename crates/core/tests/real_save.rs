@@ -245,6 +245,12 @@ fn world_progress_reads_and_round_trips() {
                 );
             }
         }
+        for mark in &world.quests {
+            println!(
+                "  mark {} step {} at ({}, {}) on {} with QuestMark_{:02}",
+                mark.name_en, mark.step.id, mark.x, mark.y, mark.world, mark.mark
+            );
+        }
         let log = game.quest_log().expect("quest log");
         let states = |state: &str| log.iter().filter(|q| q.state == state).count();
         println!(

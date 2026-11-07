@@ -25,12 +25,22 @@
 //   the row's SwitchID, the tb_switch bit set once it is activated (category
 //   = switch / 64, bit = switch % 64), as the cookbook's recipes are.
 //   `reward` is what activating it gives, from its RewardID (a STATIC_REWARD
-//   bundle): `[item, count]` pairs, 100 corps EXP for every warp point;
+//   bundle): `[item, count]` pairs, 100 corps EXP for every warp point. The
+//   world map's card for it (UI/Layer/LayerWorldMapInfoPopup) shows `area`, the
+//   map section it is in (WorldMapSectionID), `description`, and once it is
+//   activated `descriptionDone` (Use_Description) where it has one, over the
+//   `picture` its MapInfoImgName names (World_MapInfo_<picture>);
 // - statues: the FieldStatueData rows on a waypoint. A statue is restored
 //   piece by piece: each FieldStatuePartsData row is a bit of tb_field_statue
 //   (category = id / 64), and the `Complete` part is the statue whole;
 // - dungeons: the MapDungeonGroupData rows with an entrance on a world map
-//   (WarpPositionData DUNGEON). tb_active_dungeon lists the ones found;
+//   (WarpPositionData DUNGEON), with their card's `description` (Desc) and
+//   `picture`. tb_active_dungeon lists the ones found;
+// - labels: the names the world map writes on Orbis (MapPointIconData; Belos
+//   has none): the 12 regions' names (CHAPTERNAME, the ID is the string),
+//   shown zoomed out, and 38 area names (AREANAME, the ID is a MapSectionData
+//   row), shown zoomed in. Eight AREANAME rows name no section and show
+//   nothing in the game; they are left out;
 // - chests: every chest placed on a world map, by its PropTreasureBoxData ID,
 //   which is also its bit in tb_treasure_box (category = id / 64). The save
 //   keeps three bits per chest: RELEASED (its lock is open: the monsters are
@@ -43,7 +53,10 @@
 // - minigames: the MiniGameData rows of a region; tb_minigame bits;
 // - quests: per QuestMainData row its order in the quest log, its
 //   description and the text of each step (StringQuestData). Names, rewards
-//   and prerequisites are in growth.json (scripts/gen-growth.mjs).
+//   and prerequisites are in growth.json (scripts/gen-growth.mjs). `marks`
+//   is where the world map marks each step, `[world, x, y, mark]`: mark is the
+//   NN of the step's Icon_Mark_QuestMark_NN (MapButtonDesign, or the
+//   category's own where the row names none). See questMark below.
 //
 // Positions are the game's world coordinates (PosX, PosY).
 
@@ -182,6 +195,16 @@ const regionOf = (fog) => (regionIds.has(Number(fog)) ? Number(fog) : null);
 // --------------------------------------------------------------- waypoints
 
 const KINDS = { WAYPOINT: 'waypoint', STATUE: 'statue', WINDMILL: 'legacy', TRIALTOWER: 'tower' };
+const sections = byId(rows('MapSectionData'));
+/** A MapSectionData row's name, or null. */
+const sectionName = (id) => text(sections.get(String(id ?? ''))?.SectionName);
+/** The World_MapInfo_* picture a MapInfoImgName names, as the editor's asset name (map-info-<name>). */
+function picture(path, what) {
+  if (!path) return null;
+  const name = path.match(/\/World_MapInfo_(\w+?)(?:_Sprite)?\./)?.[1];
+  if (!name) fail(`${what} has picture ${path}`);
+  return name.toLowerCase();
+}
 const positions = byId(rows('WarpPositionData'));
 const waypoints = [];
 for (const row of rows('WayPointData')) {
@@ -203,11 +226,26 @@ for (const row of rows('WayPointData')) {
     name,
     switch: Number(row.SwitchID),
     ...(row.RewardID && { reward: staticReward(row.RewardID, `waypoint ${row.ID}`) }),
+    ...card(row, `waypoint ${row.ID}`),
     x: Number(place.PosX),
     y: Number(place.PosY),
   });
 }
 const waypointIds = new Set(waypoints.map((waypoint) => waypoint.id));
+
+/** What the world map's card for a waypoint shows besides its name. */
+function card(row, what) {
+  const out = {};
+  const area = sectionName(row.WorldMapSectionID);
+  if (area) out.area = area;
+  const description = text(row.Description);
+  if (description) out.description = description;
+  const done = text(row.Use_Description);
+  if (done) out.descriptionDone = done;
+  const image = picture(row.MapInfoImgName, what);
+  if (image) out.picture = image;
+  return out;
+}
 
 // ----------------------------------------------------------------- statues
 
@@ -237,6 +275,7 @@ for (const row of rows('FieldStatueData')) {
 const dungeons = [];
 for (const row of rows('MapDungeonGroupData')) {
   const place = positions.get(row.ID);
+  const image = picture(row.MapInfoImgName, `dungeon ${row.ID}`);
   if (place?.MapInfoType !== 'DUNGEON') continue;
   const world = worldOf(place.MapID);
   if (world === null) fail(`dungeon ${row.ID} is on map ${place.MapID}, in no world`);
@@ -247,9 +286,28 @@ for (const row of rows('MapDungeonGroupData')) {
     world,
     region: regionOf(row.FogSectionID),
     name,
+    ...(text(row.Desc) && { description: text(row.Desc) }),
+    ...(image && { picture: image }),
     x: Number(place.PosX),
     y: Number(place.PosY),
   });
+}
+
+// ------------------------------------------------------------------ labels
+
+const LABELS = { CHAPTERNAME: 'region', AREANAME: 'area' };
+const labels = [];
+for (const row of rows('MapPointIconData')) {
+  const kind = LABELS[row.MapInfoType];
+  if (!kind) continue;
+  const world = worldOf(row.MapID);
+  if (world === null) fail(`label ${row.ID} is on map ${row.MapID}, in no world`);
+  const name = kind === 'region' ? text(row.ID) : sectionName(row.ID);
+  if (!name) {
+    if (kind === 'region') fail(`region label ${row.ID} has no name`);
+    continue;
+  }
+  labels.push({ world, kind, name, x: Number(row.PosX), y: Number(row.PosY) });
 }
 
 // ------------------------------------------------------------------ chests
@@ -343,20 +401,116 @@ for (const row of rows('QuestStepData')) {
   if (!steps.has(row.ID)) steps.set(row.ID, {});
   if (description) steps.get(row.ID)[row.StepID] = description;
 }
+
+// Where the world map marks a step. A step names its target actor
+// (StepPosition), whose place is in ActorPositionData; a TALK_TO_NPC step
+// without one names the NPC (StepValue1), as actor NPC<id> or a SectionNpcData
+// spawn. A target indoors or in a dungeon is not on the world map, so its
+// StepPositionGroupID lists, per map the player may be on, another actor to
+// point at instead: the door or the entrance. The world map uses the row for
+// its own world. Checked against a save's three quests in progress and the
+// marks the game drew for them (docs/exports/map-labels-quests). Both step
+// tables are read; QuestStepData, the one the game loads, wins where both have
+// a step.
+const actors = new Map();
+for (const row of rows('ActorPositionData')) {
+  if (!actors.has(row.Name)) actors.set(row.Name, []);
+  actors.get(row.Name).push({ map: row.MapGroupID, x: Number(row.PosX), y: Number(row.PosY) });
+}
+/** An actor's place, on the first of `maps` it is on, else wherever it is. */
+function actor(name, maps) {
+  const found = actors.get(name) ?? [];
+  for (const map of maps) {
+    const hit = found.find((place) => place.map === map);
+    if (hit) return hit;
+  }
+  return found[0] ?? null;
+}
+const mapFileWorlds = new Map();
+for (const row of mapBase.values()) {
+  const file = row.MapFile?.match(/\/([^/.']+)\.[^/']+'$/)?.[1]?.toLowerCase();
+  if (file && worldIds.has(Number(row.MapGroupID)) && row.MapType !== 'INSIDE') {
+    mapFileWorlds.set(file, row.MapGroupID);
+  }
+}
+const npcs = new Map();
+const npcFolder = 'ExportSectionNpcData';
+for (const folder of readdirSync(join(extractDir, npcFolder))) {
+  const map = mapFileWorlds.get(folder.toLowerCase()) ?? folder;
+  if (!existsSync(join(extractDir, npcFolder, folder, 'SectionNpcData.xml'))) continue;
+  for (const row of rows(`${npcFolder}/${folder}/SectionNpcData`)) {
+    if (row.CID && !npcs.has(row.CID)) npcs.set(row.CID, { map, x: Number(row.PosX), y: Number(row.PosY) });
+  }
+}
+const redirects = new Map();
+for (const row of rows('QuestStepPositionGroupData')) {
+  if (!redirects.has(row.ID)) redirects.set(row.ID, new Map());
+  redirects.get(row.ID).set(row.StepPositionMapID, row.StepPosition);
+}
+/** The mark each category's steps carry where a row names none: its `?`. */
+const CATEGORY_MARK = { MAIN: 2, EPIC: 4, SUB: 4, CHARACTER: 6, ADVENT_GRADE: 10 };
+const category = new Map(rows('QuestMainData').map((row) => [row.ID, row.Category]));
+/** A step's `[world, x, y, mark]`, or null when the world map does not mark it. */
+function questMark(step) {
+  const maps = [step.IconMapGroupID, step.MapID2, step.StepPositionMapID, '100', '200', '1'].filter(
+    (map) => map && map !== '0',
+  );
+  let target = step.StepPosition ? actor(step.StepPosition, maps) : null;
+  if (!target && step.StepType?.startsWith('TALK_TO_NPC') && step.StepValue1) {
+    target = actor(`NPC${step.StepValue1}`, maps) ?? npcs.get(step.StepValue1) ?? null;
+  }
+  // The world the mark is on: the target's, or the one the step's map (1, the
+  // castle town, is a part of Orbis) is in.
+  const home =
+    target && worldIds.has(Number(target.map)) ? target.map : String(worldOf(step.IconMapGroupID || '100') ?? '');
+  const redirect = redirects.get(step.StepPositionGroupID)?.get(home);
+  const place = redirect ? actor(redirect, [home]) : target?.map === home ? target : null;
+  if (!place || !worldIds.has(Number(home))) return null;
+  const mark =
+    Number(step.MapButtonDesign?.match(/Icon_Mark_QuestMark_(\d+)/)?.[1]) || CATEGORY_MARK[category.get(step.ID)];
+  if (!mark) return null;
+  return [Number(home), place.x, place.y, mark];
+}
+const marks = new Map();
+for (const table of ['QuestStepData', 'QuestStepData_Export']) {
+  for (const row of rows(table)) {
+    if (!marks.has(row.ID)) marks.set(row.ID, {});
+    const quest = marks.get(row.ID);
+    if (row.StepID in quest) continue;
+    quest[row.StepID] = questMark(row);
+  }
+}
+
 const quests = {};
 for (const row of rows('QuestMainData')) {
+  const questMarks = Object.fromEntries(Object.entries(marks.get(row.ID) ?? {}).filter(([, mark]) => mark));
   quests[row.ID] = {
     order: Number(row.Order ?? 0),
     ...(questText(row.QuestDesc) && { description: questText(row.QuestDesc) }),
     steps: steps.get(row.ID) ?? {},
+    ...(Object.keys(questMarks).length > 0 && { marks: questMarks }),
   };
 }
 
 // ---------------------------------------------------------------- write
 
-const world = { worlds, fieldMaps, regions, waypoints, statues, dungeons, chestNames, chests, loot, minigames, quests };
+const world = {
+  worlds,
+  fieldMaps,
+  regions,
+  labels,
+  waypoints,
+  statues,
+  dungeons,
+  chestNames,
+  chests,
+  loot,
+  minigames,
+  quests,
+};
 writeFileSync(new URL('../crates/core/data/world.json', import.meta.url), `${JSON.stringify(world)}\n`);
 console.log(
   `worlds ${worlds.length}, regions ${regions.length}, waypoints ${waypoints.length}, statues ${statues.length}, ` +
-    `dungeons ${dungeons.length}, chests ${chests.length}, minigames ${minigames.length}, quests ${Object.keys(quests).length}`,
+    `dungeons ${dungeons.length}, chests ${chests.length}, minigames ${minigames.length}, labels ${labels.length}, ` +
+    `quests ${Object.keys(quests).length} (steps marked ${Object.values(quests).reduce((n, q) => n + Object.keys(q.marks ?? {}).length, 0)})`,
 );

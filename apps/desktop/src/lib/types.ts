@@ -523,7 +523,18 @@ export interface RegionView {
 
 export type WaypointKind = 'waypoint' | 'statue' | 'legacy' | 'tower';
 
-export interface WaypointView {
+/** What the world map's card for a place shows besides its name. */
+export interface PlaceCardText {
+  /** The map section it is in, such as "Hill of Journey". */
+  area?: GameText | null;
+  description?: GameText | null;
+  /** The description once it is activated, for a statue and Eona's Legacy. */
+  descriptionDone?: GameText | null;
+  /** The card's picture: waypoint, statue, windmill, trialtower or dungeon. */
+  picture?: string | null;
+}
+
+export interface WaypointView extends PlaceCardText {
   id: number;
   kind: WaypointKind;
   world: number;
@@ -537,7 +548,7 @@ export interface WaypointView {
   reward: Array<{ item: Item; count: number }>;
 }
 
-export interface DungeonView {
+export interface DungeonView extends PlaceCardText {
   id: number;
   world: number;
   region: number | null;
@@ -566,12 +577,39 @@ export interface ChestView {
 }
 
 /** The world maps with every place on them and the save's progress. */
+/** A name the game's world map writes on it: a region's, shown zoomed out, or an area's, shown zoomed in. */
+export interface MapLabel {
+  world: number;
+  kind: 'region' | 'area';
+  name: GameText;
+  x: number;
+  y: number;
+}
+
+/** Where the world map marks a quest in progress: its current step's target. */
+export interface QuestMark {
+  id: number;
+  category: string;
+  nameEn: string;
+  nameFr: string;
+  step: { id: number; count: number; text: GameText | null };
+  steps: number;
+  world: number;
+  x: number;
+  y: number;
+  /** The NN of the game's Icon_Mark_QuestMark_NN: 2 main story, 4 bond, 6 hero, 10 promotion; odd is a `!`. */
+  mark: number;
+}
+
 export interface WorldView {
   worlds: WorldInfo[];
   regions: RegionView[];
+  labels: MapLabel[];
   waypoints: WaypointView[];
   dungeons: DungeonView[];
   chests: ChestView[];
+  /** The marks of the quests in progress, at their current step. */
+  quests: QuestMark[];
   /** Where the player stands, when that is on a world map. */
   player: { world: number; x: number; y: number } | null;
 }

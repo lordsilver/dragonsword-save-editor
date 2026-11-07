@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 type StateFilter = 'all' | QuestEntry['state'];
 
 /** The quest log's categories, one tab each, in the order the game lists them. */
-const CATEGORIES: Array<[string, string]> = [
+export const CATEGORIES: Array<[string, string]> = [
   ['MAIN', 'Main story'],
   ['EPIC', 'Epic quests'],
   ['CHARACTER', 'Hero stories'],

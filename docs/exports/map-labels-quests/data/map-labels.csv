@@ -1,0 +1,59 @@
+﻿id,kind,level,map_id,world,name_string_id,en,fr,x,y,z,section_type,section_memo,fog_region_id,fog_region_by_polygon,fog_region_en,inside_own_section_polygon,has_section_row,obtain_link,condition_check_id
+705098,CHAPTERNAME,region (large),100,Orbis,705098,Moss Forest Logging Site,Zone d'abattage de la Forêt moussue,257847,196427,20784,,,10106,10106,Moss Forest Logging Site,,yes,TYPE_NONE,0
+705122,CHAPTERNAME,region (large),100,Orbis,705122,Silver Ford Lake,Lac du Gué d'Argent,234207,124957,20784,,,10107,10107,Silver Ford Lake,,yes,TYPE_NONE,0
+705099,CHAPTERNAME,region (large),100,Orbis,705099,Starshade Forest,Forêt de l'ombre étoilée,296247,114097,20784,,,10111,10111,Starshade Forest,,yes,TYPE_NONE,0
+705079,CHAPTERNAME,region (large),100,Orbis,705079,Skyridge Uplands,Hautes terres de la crête céleste,56696,-66811,1320,,,10110,10110,Skyridge Uplands,,yes,TYPE_NONE,0
+705001,CHAPTERNAME,region (large),100,Orbis,705001,Orbis Castle,Château d'Orbis,41219,101601,1320,,,100000,100000,Orbis Castle,,yes,TYPE_NONE,0
+705058,CHAPTERNAME,region (large),100,Orbis,705058,Breezewind Hill,La colline de la brise,39939,56737,1320,,,10104,10104,Breezewind Hill,,yes,TYPE_NONE,0
+705030,CHAPTERNAME,region (large),100,Orbis,705030,Steelheart Fortress,Forteresse Cœur de Fer,148466,48894,1320,,,10105,10105,Steelheart Fortress,,yes,TYPE_NONE,0
+705060,CHAPTERNAME,region (large),100,Orbis,705060,Misty Veil Highlands,Hauts-Plateaux du Voile de Brume,140560,-22828,1320,,,10109,10109,Misty Veil Highlands,,yes,TYPE_NONE,0
+705059,CHAPTERNAME,region (large),100,Orbis,705059,Dragonrise Basin,Bassin d'ascension du dragon,232107,-15781,1320,,,10108,10108,Dragonrise Basin,,yes,TYPE_NONE,0
+705055,CHAPTERNAME,region (large),100,Orbis,705055,Meadow of Beginnings,La prairie du commencement,48663,145756,1320,,,10101,100000,Meadow of Beginnings,,yes,TYPE_NONE,0
+705056,CHAPTERNAME,region (large),100,Orbis,705056,Field of Plenty,Terres de l'abondance,77204,202745,8181,,,10103,10103,Field of Plenty,,yes,TYPE_NONE,0
+705057,CHAPTERNAME,region (large),100,Orbis,705057,Shadowed Woods,La forêt des ombres,109617,137357,20784,,,10102,10102,Shadowed Woods,,yes,TYPE_NONE,0
+110102,AREANAME,area (small),100,Orbis,,,,16200,235530,-780,,,10103,10103,Field of Plenty,no,no,TYPE_NONE,0
+110204,AREANAME,area (small),100,Orbis,,,,52100,177900,-250,,,10101,10101,Meadow of Beginnings,no,no,TYPE_NONE,0
+110401,AREANAME,area (small),100,Orbis,,,,85230,113330,3070,,,100000,100000,Orbis Castle,no,no,TYPE_NONE,0
+110402,AREANAME,area (small),100,Orbis,,,,119310,137770,6600,,,10102,10102,Shadowed Woods,no,no,TYPE_NONE,0
+110403,AREANAME,area (small),100,Orbis,,,,110430,121355,12484,,,10102,10102,Shadowed Woods,no,no,TYPE_NONE,0
+110405,AREANAME,area (small),100,Orbis,,,,91910,145390,6100,,,10102,10102,Shadowed Woods,no,no,TYPE_NONE,0
+110101,AREANAME,area (small),100,Orbis,,,,12590,141340,3640,,,10101,10101,Meadow of Beginnings,no,no,TYPE_NONE,0
+110302,AREANAME,area (small),100,Orbis,,,,45590,204430,1160,,,10103,10103,Field of Plenty,no,no,TYPE_NONE,0
+102201,AREANAME,area (small),100,Orbis,705123,The Barren Old Trading Post,Ancien comptoir commercial déserté,217175,116865,12500,AREA,메마른 옛 무역지 / 중구역,10107,10107,Silver Ford Lake,yes,yes,TYPE_NONE,0
+102202,AREANAME,area (small),100,Orbis,705124,Silver Ford Outpost,Le poste de garde du Gué d'Argent,244800,138435,12190,AREA,은빛여울 초소 / 중구역,10107,10107,Silver Ford Lake,no,yes,TYPE_NONE,0
+102002,AREANAME,area (small),100,Orbis,705102,Mistblossom Village,Village de la fleur de brume,240600,209250,-4220,AREA,안개꽃 마을 / 중구역,10106,10106,Moss Forest Logging Site,yes,yes,TYPE_NONE,0
+102003,AREANAME,area (small),100,Orbis,705103,Amber Harbor,Port Amber,244805,234910,-2220,AREA,앰버 항구 / 중구역,10106,10106,Moss Forest Logging Site,yes,yes,TYPE_NONE,0
+102004,AREANAME,area (small),100,Orbis,705104,The Serene Forest,La forêt paisible,291635,186650,-4220,AREA,그윽한 숲 / 중구역,10106,10106,Moss Forest Logging Site,yes,yes,TYPE_NONE,0
+102103,AREANAME,area (small),100,Orbis,705116,Skyfeather Ridge,Crête du plumage céleste,298180,67295,37480,AREA,하늘깃 능선 / 중구역,10111,10111,Starshade Forest,yes,yes,TYPE_NONE,0
+102100,AREANAME,area (small),100,Orbis,705117,Starshade Forest,La forêt de l'ombre étoilée,313360,134500,16440,AREA,별그늘 숲 / 중구역,10111,10111,Starshade Forest,yes,yes,TYPE_NONE,0
+102101,AREANAME,area (small),100,Orbis,705118,Ruined Old Castle,Le vieux château en ruines,327305,177330,25450,AREA,폐허가 된 고성 / 중구역,10111,10111,Starshade Forest,yes,yes,TYPE_NONE,0
+102102,AREANAME,area (small),100,Orbis,705115,Blue Plateau,Le plateau bleu,227180,67550,350,AREA,푸른 고원 / 중구역,10111,10111,Starshade Forest,no,yes,TYPE_NONE,0
+102001,AREANAME,area (small),100,Orbis,705101,Two Lakes Hill,La colline des deux lacs,218530,183830,9810,AREA,두 개의 호수 언덕 / 중구역,10106,10106,Moss Forest Logging Site,yes,yes,TYPE_NONE,0
+101800,AREANAME,area (small),100,Orbis,705051,Ruined Temple,Le temple en ruines,150681,-53373,-4220,AREA,폐허가 된 신전 / 중구역,10109,10109,Misty Veil Highlands,yes,yes,TYPE_NONE,0
+101501,AREANAME,area (small),100,Orbis,705031,Bluehill Wetlands,Marécages de la colline bleue,175365,108107,-4220,AREA,푸른 언덕 습원 / 중구역,10105,10105,Steelheart Fortress,yes,yes,TYPE_NONE,0
+101502,AREANAME,area (small),100,Orbis,705032,Estuary of Stillness,L'embouchure du silence,181141,149004,-4220,AREA,고요의 하구 / 중구역,10106,10106,Moss Forest Logging Site,yes,yes,TYPE_NONE,0
+101701,AREANAME,area (small),100,Orbis,705045,Thick Mist Zone,Zone de brume épaisse,230516,9424,-11655,AREA,짙은 안개 지대 / 중구역,10108,10108,Dragonrise Basin,yes,yes,TYPE_NONE,0
+101900,AREANAME,area (small),100,Orbis,705080,Twilight Field,Les Champs du Crépuscule,30688,-99152,34360,AREA,황혼 들판 / 중구역,10110,10110,Skyridge Uplands,yes,yes,TYPE_NONE,0
+101901,AREANAME,area (small),100,Orbis,705081,Worm's Valley,Vallée des Vers,33576,-26580,32629,AREA,웜의 골짜기 / 중구역,10110,10110,Skyridge Uplands,no,yes,TYPE_NONE,0
+101902,AREANAME,area (small),100,Orbis,705082,Dusktone Slope,Pentes de la Pierre sombre,98744,-5244,31773,AREA,묵석 자락 / 중구역,10109,10109,Misty Veil Highlands,yes,yes,TYPE_NONE,0
+101101,AREANAME,area (small),100,Orbis,705002,Morninglight Farm,Ferme du soleil levant,49910,134144,-4220,AREA,아침햇살 농장 / 중구역,100000,100000,Orbis Castle,yes,yes,TYPE_NONE,0
+101202,AREANAME,area (small),100,Orbis,705006,Hill of Journey,La colline du voyage,59207,172626,5847,AREA,여정의 언덕 / 중구역,10101,10101,Meadow of Beginnings,yes,yes,TYPE_NONE,0
+101301,AREANAME,area (small),100,Orbis,705012,Echo Canyon,Le Canyon de l'écho,53632,213160,-4220,AREA,메아리 협로 / 중구역,10103,10103,Field of Plenty,yes,yes,TYPE_NONE,0
+101302,AREANAME,area (small),100,Orbis,705013,Seagull Village,Le village des mouettes,88773,222810,-4220,AREA,갈매기 마을 / 중구역,10103,10103,Field of Plenty,yes,yes,TYPE_NONE,0
+101300,AREANAME,area (small),100,Orbis,705011,Firefly Forest,La forêt des lucioles,85590,201468,-4220,AREA,반딧불이 숲 / 중구역,10103,10103,Field of Plenty,yes,yes,TYPE_NONE,0
+101401,AREANAME,area (small),100,Orbis,705023,Shadowed Forest,La forêt ombragée,120675,135381,-4220,AREA,그늘 숲 / 중구역,10102,10102,Shadowed Woods,yes,yes,TYPE_NONE,0
+101402,AREANAME,area (small),100,Orbis,705024,Stronghold Ridge,Col de la forteresse,123727,89095,-4220,AREA,요새 고개 / 중구역,10102,10102,Shadowed Woods,yes,yes,TYPE_NONE,0
+101500,AREANAME,area (small),100,Orbis,705030,Steelheart Fortress,Forteresse Cœur de Fer,162450,48556,10102,AREA,강철심장 요새 / 중구역,10105,10105,Steelheart Fortress,yes,yes,TYPE_NONE,0
+101601,AREANAME,area (small),100,Orbis,705036,Autumnleaf Zone,La zone d'érables,53154,31001,-9052,AREA,단풍 지대 / 중구역,10104,10104,Breezewind Hill,yes,yes,TYPE_NONE,0
+101703,AREANAME,area (small),100,Orbis,705047,Dragon's Stonepeak,Le Pic de pierre du dragon,221708,-59822,8333,AREA,용 바위산 / 중구역,10108,10108,Dragonrise Basin,yes,yes,TYPE_NONE,0
+101201,AREANAME,area (small),100,Orbis,705005,Shaded Tree Hill,La colline ombragée,6448,144245,-4220,AREA,나무 그늘 언덕 / 중구역,10101,10101,Meadow of Beginnings,yes,yes,TYPE_NONE,0
+101303,AREANAME,area (small),100,Orbis,705014,Skyspire Rock Mountain,Montagne rocheuse flèche du ciel,6899,241706,11961,AREA,하늘기둥 바위산 / 중구역,10103,10103,Field of Plenty,yes,yes,TYPE_NONE,0
+101403,AREANAME,area (small),100,Orbis,705025,Trench of Secrets,La fosse aux secrets,137322,175714,3092,AREA,비밀을 품은 해구 / 중구역,10102,10102,Shadowed Woods,yes,yes,TYPE_NONE,0
+101100,AREANAME,area (small),100,Orbis,705001,Orbis Castle,Château d'Orbis,37345,102437,6883,AREA,오르비스 왕국 / 중구역,100000,100000,Orbis Castle,yes,yes,TYPE_NONE,0
+101600,AREANAME,area (small),100,Orbis,705035,Blue Lake Island,L'île du lac bleu,82023,79830,19401,AREA,푸른 호수 섬 / 중구역,10104,10104,Breezewind Hill,yes,yes,TYPE_NONE,0
+101700,AREANAME,area (small),100,Orbis,705044,Tranquil Wind Meadow Entrance,Entrée de la prairie du Vent Tranquille,169969,20536,16857,AREA,고요한 바람 초원 입구 / 중구역,10108,10108,Dragonrise Basin,yes,yes,TYPE_NONE,0
+101702,AREANAME,area (small),100,Orbis,705046,Slumbering Star Tree,L'arbre où dorment les étoiles,264724,-15965,21388,AREA,별이 잠든 나무 / 중구역,10108,10108,Dragonrise Basin,yes,yes,TYPE_NONE,0
+101801,AREANAME,area (small),100,Orbis,705052,Deepwind Borderland,Frontière des Vents Profonds,177288,-15286,-4220,AREA,깊은바람 경계지 / 중구역,10108,10108,Dragonrise Basin,yes,yes,TYPE_NONE,0
+102005,AREANAME,area (small),100,Orbis,705105,A Forgotten Haven,Le refuge oublié,189167,206744,5495,AREA,잊혀진 쉼터 / 중구역,10106,10106,Moss Forest Logging Site,yes,yes,TYPE_NONE,0
+102000,AREANAME,area (small),100,Orbis,705100,Moss Logging Camp,La scierie de la mousse,281806,223331,6633,AREA,이끼 벌목장 / 중구역,10106,10106,Moss Forest Logging Site,yes,yes,TYPE_NONE,0
+101400,AREANAME,area (small),100,Orbis,705022,Cemetery of Rest,Cimetière du Repos,85191,106268,10154,AREA,안식의 묘지 / 중구역,100000,100000,Orbis Castle,yes,yes,TYPE_NONE,0

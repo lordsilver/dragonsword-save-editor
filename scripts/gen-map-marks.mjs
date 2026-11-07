@@ -4,7 +4,11 @@
 // 2D-art export in <assets-dir>, docs/game-assets.md), and the dark disc with a
 // white ring the game draws under the selected marker
 // (Art/UI/InGame/Frame/Frame_Map_02) as map-mark-selected.webp. They are kept at 128 pixels, so that they stay sharp
-// at the size the game draws them.
+// at the size the game draws them. It also writes the quest marks the quest
+// steps of crates/core/data/world.json use (Icon_Mark_QuestMark_NN, drawn as
+// is, map-mark-quest-NN.webp; run scripts/gen-world.mjs first), and the
+// pictures the world map's card shows for a place
+// (Art/UI/InGame/03_System/World/World_MapInfo_*, map-info-*.webp).
 //
 // Usage: node scripts/gen-map-marks.mjs <assets-dir>
 //
@@ -21,7 +25,7 @@
 // The game shows a found dungeon as a blue doorway without the check mark of
 // Icon_Mark_Dungeon_Single_Complete, so that icon is not used.
 
-import { existsSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';
 
@@ -51,6 +55,25 @@ const MARKS = {
   chest: [`${MARK}/Icon_Mark_Box_png`, null],
   selected: ['Art/UI/InGame/Frame/Frame_Map_02', null],
 };
+
+const world = JSON.parse(readFileSync(new URL('../crates/core/data/world.json', import.meta.url), 'utf8'));
+const questMarks = new Set(
+  Object.values(world.quests).flatMap((quest) => Object.values(quest.marks ?? {}).map(([, , , mark]) => mark)),
+);
+for (const mark of [...questMarks].sort((a, b) => a - b)) {
+  const nn = String(mark).padStart(2, '0');
+  MARKS[`quest-${nn}`] = [`${MARK}/Icon_Mark_QuestMark_${nn}`, null];
+}
+
+/** The place pictures the cards use, by the name world.json gives them, and the texture behind each. */
+const PICTURES = new Map();
+for (const place of [...world.waypoints, ...world.dungeons]) {
+  if (place.picture) PICTURES.set(place.picture, null);
+}
+const WORLD_ART = 'Art/UI/InGame/03_System/World';
+const pictureFiles = new Map(
+  ['Waypoint', 'Statue', 'Windmill', 'TrialTower', 'Dungeon', 'Cave'].map((name) => [name.toLowerCase(), name]),
+);
 
 /** The texture scaled to 128 px and tinted: each pixel's brightness, relative to the glyph's, times the colour. */
 async function tinted(path, colour) {
@@ -86,4 +109,16 @@ for (const [mark, [texture, colour]] of Object.entries(MARKS)) {
     await tinted(path, colour),
   );
 }
-console.log(`markers: ${Object.keys(MARKS).length}`);
+for (const name of PICTURES.keys()) {
+  const file = pictureFiles.get(name);
+  const path = file && join(assetsDir, WORLD_ART, `World_MapInfo_${file}.png`);
+  if (!path || !existsSync(path)) {
+    console.error(`gen-map-marks: no picture for ${name}`);
+    process.exit(1);
+  }
+  writeFileSync(
+    new URL(`../apps/desktop/src/assets/map-info-${name}.webp`, import.meta.url),
+    await sharp(path).webp({ quality: 82 }).toBuffer(),
+  );
+}
+console.log(`markers: ${Object.keys(MARKS).length}, pictures: ${PICTURES.size}`);

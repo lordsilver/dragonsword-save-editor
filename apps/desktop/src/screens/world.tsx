@@ -1,6 +1,7 @@
 import { Crosshair, Map as MapIcon, Minus, Plus, Route } from 'lucide-react';
 import { type KeyboardEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ConfirmButton, EmptyPanel } from '@/components/common';
+import { RichText } from '@/components/game-text';
 import { ItemIcon } from '@/components/item-icon';
 import { PageHeader } from '@/components/page';
 import {
@@ -22,19 +23,24 @@ import type {
   DungeonView,
   GameText,
   LootDraw,
+  MapLabel,
   MapPlacement,
   MissionKind,
   PlaceKind,
+  QuestMark,
   RegionView,
   WaypointView,
   WorldView,
 } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { CATEGORIES } from './quests';
 
 // The game's own map markers (scripts/gen-map-marks.mjs) and world maps (scripts/gen-world-map.mjs).
 const MARKS = import.meta.glob<string>('../assets/map-mark-*.webp', { eager: true, import: 'default' });
 const MAPS = import.meta.glob<string>('../assets/world-map-*.webp', { eager: true, import: 'default' });
+const PICTURES = import.meta.glob<string>('../assets/map-info-*.webp', { eager: true, import: 'default' });
 const markImage = (name: string): string | undefined => MARKS[`../assets/map-mark-${name}.webp`];
+const questImage = (mark: number): string | undefined => markImage(`quest-${String(mark).padStart(2, '0')}`);
 
 type Layer = 'waypoint' | 'statue' | 'legacy' | 'tower' | 'dungeon' | 'chest';
 type Show = 'all' | 'todo' | 'done';
@@ -106,6 +112,32 @@ const GRADE_DOT: Record<string, string> = {
  * place. Every other marker is centred on its point.
  */
 const MARK_LIFT: Partial<Record<Layer, number>> = { waypoint: 1900, statue: 2700 };
+
+/** A name written on the map, where it falls on the image. */
+interface Label {
+  key: string;
+  kind: MapLabel['kind'];
+  text: string;
+  across: number;
+  down: number;
+}
+
+/** A quest in progress, marked at its current step. */
+interface QuestPlace {
+  key: string;
+  quest: QuestMark;
+  across: number;
+  down: number;
+}
+
+/**
+ * The game's world map writes the regions' names while zoomed out and the
+ * areas' names once zoomed in, never both (WorldMapHideChapterName and
+ * WorldMapHideAreaName: zoom level 1). Measured on in-game screenshots, that
+ * switch comes at about 200,000 world units across the screen's height, so
+ * the map shows area names once its shorter side spans less than that.
+ */
+const AREA_NAMES_BELOW = 200_000;
 
 /** What the game's map shows around each world's capture: Orbis's sea, Belos's sky. */
 const BACKDROP: Record<number, string> = { 100: '#33bbd5', 200: '#000000' };
@@ -200,6 +232,8 @@ export function WorldScreen() {
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [regionId, setRegionId] = useState<number | null>(null);
   const [worldId, setWorldId] = useState<number | null>(null);
+  const [showQuests, setShowQuests] = useState(true);
+  const [showNames, setShowNames] = useState(true);
   const busy = pending !== null;
 
   // The worlds the editor has a map image of: Orbis, and Belos once the story reaches it.
@@ -208,7 +242,31 @@ export function WorldScreen() {
   const map = shown?.map ?? null;
   const places = useMemo(() => (world && shown && map ? placesOf(world, shown.id, map) : []), [world, shown, map]);
   const regions = useMemo(() => world?.regions.filter((region) => region.world === shown?.id) ?? [], [world, shown]);
+  const labels = useMemo<Label[]>(
+    () =>
+      world && shown && map
+        ? world.labels
+            .filter((label) => label.world === shown.id)
+            .map((label, index) => ({
+              key: `l${index}`,
+              kind: label.kind,
+              text: language === 'fr' ? label.name.fr : label.name.en,
+              ...onMap(map, label.x, label.y),
+            }))
+        : [],
+    [world, shown, map, language],
+  );
+  const quests = useMemo<QuestPlace[]>(
+    () =>
+      world && shown && map
+        ? world.quests
+            .filter((quest) => quest.world === shown.id)
+            .map((quest) => ({ key: `q${quest.id}`, quest, ...onMap(map, quest.x, quest.y) }))
+        : [],
+    [world, shown, map],
+  );
   const selected = places.find((place) => place.key === selectedKey) ?? null;
+  const selectedQuest = quests.find((place) => place.key === selectedKey) ?? null;
   const visible = useMemo(
     () =>
       places.filter(
@@ -273,7 +331,8 @@ export function WorldScreen() {
         description={
           <>
             {name(shown.name)} as the game's world map draws it, with every warp point, Statue of Organa, Eona's Legacy,
-            dungeon and chest and what this save has done. Click a marker to change it; drag to move, scroll to zoom.
+            dungeon and chest and what this save has done, and the quests in progress where their current step leads.
+            Click a marker to change it; drag to move, scroll to zoom.
           </>
         }
         actions={
@@ -325,6 +384,37 @@ export function WorldScreen() {
             </button>
           );
         })}
+        {quests.length > 0 && (
+          <button
+            type="button"
+            aria-pressed={showQuests}
+            onClick={() => setShowQuests((on) => !on)}
+            className={cn(
+              'flex h-8 items-center gap-1.5 rounded-full border px-2.5 text-xs transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+              showQuests ? 'border-brand/40 bg-brand/10 text-foreground' : 'text-muted-foreground hover:bg-accent',
+            )}
+          >
+            <img src={questImage(2)} alt="" className={cn('size-4', !showQuests && 'opacity-50 grayscale')} />
+            Quests in progress
+            <span className="numeric text-muted-foreground">{formatNumber(quests.length)}</span>
+          </button>
+        )}
+        {labels.length > 0 && (
+          <button
+            type="button"
+            aria-pressed={showNames}
+            onClick={() => setShowNames((on) => !on)}
+            className={cn(
+              'flex h-8 items-center gap-1.5 rounded-full border px-2.5 text-xs transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+              showNames ? 'border-brand/40 bg-brand/10 text-foreground' : 'text-muted-foreground hover:bg-accent',
+            )}
+          >
+            <span aria-hidden className={cn('text-[0.7rem] font-semibold', !showNames && 'opacity-50')}>
+              Aa
+            </span>
+            Place names
+          </button>
+        )}
         <div className="ml-auto flex gap-2">
           {mapped.length > 1 && (
             <div className="flex gap-1 rounded-lg bg-muted/60 p-0.5">
@@ -372,12 +462,18 @@ export function WorldScreen() {
           backdrop={BACKDROP[shown.id] ?? '#000000'}
           places={places}
           visible={visible}
+          labels={showNames ? labels : []}
+          quests={showQuests ? quests : []}
+          worldSize={map.size}
           player={player}
           selectedKey={selectedKey}
           focus={regionId}
           onSelect={setSelectedKey}
         />
         <div className="scroll-thin flex max-h-[max(420px,calc(100svh-17.5rem))] min-h-0 flex-col gap-3 overflow-y-auto">
+          {selectedQuest && (
+            <QuestCard place={selectedQuest} language={language} onClose={() => setSelectedKey(null)} />
+          )}
           {selected && (
             <PlaceCard
               place={selected}
@@ -418,6 +514,9 @@ function MapView({
   backdrop,
   places,
   visible,
+  labels,
+  quests,
+  worldSize,
   player,
   selectedKey,
   focus,
@@ -427,6 +526,10 @@ function MapView({
   backdrop: string;
   places: Place[];
   visible: Place[];
+  labels: Label[];
+  quests: QuestPlace[];
+  /** The map image's side in world units, which sets when area names show. */
+  worldSize: number;
   player: { across: number; down: number } | null;
   selectedKey: string | null;
   /** A region to zoom to. */
@@ -460,15 +563,19 @@ function MapView({
   const height = (frame.d1 - frame.d0) * STAGE;
   // Each edit reloads the places; the view must not jump back when it does,
   // so the callbacks below read the latest frame from here.
-  const latest = useRef({ frame, width, height, places });
-  latest.current = { frame, width, height, places };
+  const latest = useRef({ frame, width, height, places, worldSize });
+  latest.current = { frame, width, height, places, worldSize };
 
   const draw = useCallback(() => {
     const { scale, x, y } = view.current;
     const element = stage.current;
-    if (!element) return;
+    const box = viewport.current;
+    if (!element || !box) return;
     element.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
     element.style.setProperty('--inv', String(1 / scale));
+    // Which names the map writes: the regions' zoomed out, the areas' zoomed in.
+    const span = (Math.min(box.clientWidth, box.clientHeight) / (scale * STAGE)) * latest.current.worldSize;
+    element.dataset.zoom = span < AREA_NAMES_BELOW ? 'near' : 'far';
   }, []);
 
   /** Shows a box of map units [a0, a1] × [d0, d1] as large as it fits. */
@@ -610,7 +717,7 @@ function MapView({
         drag.current = null;
       }}
     >
-      <div ref={stage} className="absolute top-0 left-0 origin-top-left" style={{ width, height }}>
+      <div ref={stage} className="group/stage absolute top-0 left-0 origin-top-left" style={{ width, height }}>
         {image && (
           <img
             src={image}
@@ -620,8 +727,37 @@ function MapView({
             style={{ ...position(0, 0), width: STAGE, height: STAGE }}
           />
         )}
+        {labels.map((label) => (
+          <span
+            key={label.key}
+            aria-hidden
+            className={cn(
+              'pointer-events-none absolute font-medium whitespace-nowrap text-white/[0.98]',
+              label.kind === 'region'
+                ? 'text-[17px] group-data-[zoom=near]/stage:hidden'
+                : 'hidden text-lg group-data-[zoom=near]/stage:block',
+            )}
+            style={{
+              ...position(label.across, label.down),
+              transform: 'translate(-50%, -50%) scale(var(--inv))',
+              // The game's label sits on a soft dark-green glow (Gradation_13 tinted #113D31).
+              textShadow: '0 0 8px rgb(17 61 49 / 0.85), 0 0 3px rgb(17 61 49 / 0.9), 0 1px 1px rgb(0 0 0 / 0.4)',
+            }}
+          >
+            {label.text}
+          </span>
+        ))}
         {visible.map((place) => (
           <Marker
+            key={place.key}
+            place={place}
+            selected={place.key === selectedKey}
+            style={position(place.across, place.down)}
+            onSelect={onSelect}
+          />
+        ))}
+        {quests.map((place) => (
+          <QuestMarker
             key={place.key}
             place={place}
             selected={place.key === selectedKey}
@@ -735,7 +871,89 @@ function Marker({
   );
 }
 
+/** A quest in progress, with the game's mark for its kind, above every place as in the game. */
+function QuestMarker({
+  place,
+  selected,
+  style,
+  onSelect,
+}: {
+  place: QuestPlace;
+  selected: boolean;
+  style: { left: number; top: number };
+  onSelect: (key: string) => void;
+}) {
+  const { quest } = place;
+  return (
+    <button
+      type="button"
+      data-place={place.key}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onSelect(place.key);
+        }
+      }}
+      aria-label={`${quest.nameEn}, step ${quest.step.id}`}
+      title={quest.nameEn}
+      className={cn(
+        'absolute z-[5] grid size-11 place-items-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-white',
+        selected && 'z-10',
+      )}
+      style={{ ...style, transform: 'translate(-50%, -50%) scale(var(--inv))' }}
+    >
+      {selected && (
+        <img
+          src={markImage('selected')}
+          alt=""
+          draggable={false}
+          className="pointer-events-none col-start-1 row-start-1 size-[3.25rem] max-w-none"
+        />
+      )}
+      <img
+        src={questImage(quest.mark)}
+        alt=""
+        draggable={false}
+        className="pointer-events-none col-start-1 row-start-1 size-11"
+      />
+    </button>
+  );
+}
+
 // ----------------------------------------------------------- side panel
+
+/** The quest a mark stands for and the step it points at. */
+function QuestCard({ place, language, onClose }: { place: QuestPlace; language: string; onClose: () => void }) {
+  const { quest } = place;
+  const category = CATEGORIES.find(([value]) => value === quest.category)?.[1] ?? quest.category;
+  const step = quest.step.text ? (language === 'fr' ? quest.step.text.fr : quest.step.text.en) : null;
+  return (
+    <section className="rounded-xl border bg-card/40 p-4">
+      <div className="flex items-start gap-3">
+        <img src={questImage(quest.mark)} alt="" className="size-8 shrink-0" />
+        <div className="min-w-0 flex-1">
+          <h2 className="font-semibold">{language === 'fr' ? quest.nameFr : quest.nameEn}</h2>
+          <p className="text-xs text-muted-foreground">
+            {category} · <span className="numeric">#{quest.id}</span>
+          </p>
+        </div>
+        <Button size="xs" variant="ghost" onClick={onClose}>
+          Close
+        </Button>
+      </div>
+      <p className="mt-3 text-sm">
+        <span className="text-muted-foreground">
+          Step {quest.step.id}
+          {quest.steps > 0 && ` of ${quest.steps}`}:{' '}
+        </span>
+        {step ? <RichText text={step} /> : 'no text in the game data'}
+      </p>
+      <p className="mt-2 text-xs text-muted-foreground">
+        The mark is where the game points this step, as its world map does. The Quests screen completes it.
+      </p>
+    </section>
+  );
+}
 
 function PlaceCard({
   place,
@@ -783,6 +1001,10 @@ function PlaceCard({
       notes.push("Eona's Legacy is activated in game by its own quest; this sets only its switch.");
       break;
   }
+  const card = place.waypoint ?? place.dungeon;
+  const picture = card?.picture ? PICTURES[`../assets/map-info-${card.picture}.webp`] : undefined;
+  // A restored statue and a lit Eona's Legacy read differently from before.
+  const description = (place.done && card?.descriptionDone) || card?.description;
   const reward = rewardText(place, language);
   if (reward && !place.done) {
     notes.push(
@@ -795,62 +1017,72 @@ function PlaceCard({
     notes.push('It stays this way: undoing progress is off in Settings.');
   }
   return (
-    <section className="rounded-xl border bg-card/40 p-4">
-      <div className="flex items-start gap-3">
+    <section className="shrink-0 overflow-hidden rounded-xl border bg-card/40">
+      {/* The picture the game's card shows for the place (World_MapInfo_*). */}
+      {picture && <img src={picture} alt="" className="aspect-[662/360] w-full object-cover" />}
+      <div className="p-4">
+        <div className="flex items-start gap-3">
+          {place.chest ? (
+            <span
+              aria-hidden
+              className="mt-1 size-4 shrink-0 rounded-full ring-1 ring-black/40"
+              style={{ backgroundColor: GRADE_DOT[place.chest.grade] ?? GRADE_DOT.normal }}
+            />
+          ) : (
+            <img src={markImage(markOf({ ...place, done: true }))} alt="" className="size-8 shrink-0" />
+          )}
+          <div className="min-w-0 flex-1">
+            <h2 className="font-semibold">{name(place.name)}</h2>
+            <p className="text-xs text-muted-foreground">
+              {card?.area && `${name(card.area)} · `}
+              {regionName ? name(regionName) : 'Outside the counted regions'} ·{' '}
+              <span className="numeric">#{place.id}</span>
+            </p>
+          </div>
+          <Button size="xs" variant="ghost" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+        {description && (
+          <p className="mt-3 text-sm text-muted-foreground">
+            <RichText text={name(description)} />
+          </p>
+        )}
+        {lines.length > 0 && (
+          <ul className="mt-3 space-y-1 text-sm">
+            {lines.map((line, index) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: a fixed list of lines
+              <li key={index}>{line}</li>
+            ))}
+          </ul>
+        )}
         {place.chest ? (
-          <span
-            aria-hidden
-            className="mt-1 size-4 shrink-0 rounded-full ring-1 ring-black/40"
-            style={{ backgroundColor: GRADE_DOT[place.chest.grade] ?? GRADE_DOT.normal }}
+          <ChestContents
+            chest={place.chest}
+            opened={place.done}
+            language={language}
+            busy={busy}
+            grantRewards={grantRewards}
+            allowUndo={allowUndo}
+            onSet={onSet}
           />
         ) : (
-          <img src={markImage(markOf({ ...place, done: true }))} alt="" className="size-8 shrink-0" />
+          <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm">
+            <span id="world-place-toggle">{toggle}</span>
+            <Switch
+              aria-labelledby="world-place-toggle"
+              checked={place.done}
+              disabled={busy || (place.done && !allowUndo)}
+              onCheckedChange={(value) => onSet(value)}
+            />
+          </div>
         )}
-        <div className="min-w-0 flex-1">
-          <h2 className="font-semibold">{name(place.name)}</h2>
-          <p className="text-xs text-muted-foreground">
-            {regionName ? name(regionName) : 'Outside the counted regions'} ·{' '}
-            <span className="numeric">#{place.id}</span>
+        {notes.map((note) => (
+          <p key={note} className="mt-2 text-xs text-muted-foreground">
+            {note}
           </p>
-        </div>
-        <Button size="xs" variant="ghost" onClick={onClose}>
-          Close
-        </Button>
+        ))}
       </div>
-      {lines.length > 0 && (
-        <ul className="mt-3 space-y-1 text-sm">
-          {lines.map((line, index) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: a fixed list of lines
-            <li key={index}>{line}</li>
-          ))}
-        </ul>
-      )}
-      {place.chest ? (
-        <ChestContents
-          chest={place.chest}
-          opened={place.done}
-          language={language}
-          busy={busy}
-          grantRewards={grantRewards}
-          allowUndo={allowUndo}
-          onSet={onSet}
-        />
-      ) : (
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm">
-          <span id="world-place-toggle">{toggle}</span>
-          <Switch
-            aria-labelledby="world-place-toggle"
-            checked={place.done}
-            disabled={busy || (place.done && !allowUndo)}
-            onCheckedChange={(value) => onSet(value)}
-          />
-        </div>
-      )}
-      {notes.map((note) => (
-        <p key={note} className="mt-2 text-xs text-muted-foreground">
-          {note}
-        </p>
-      ))}
     </section>
   );
 }

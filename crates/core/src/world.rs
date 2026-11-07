@@ -41,6 +41,7 @@ struct WorldData {
     /// The world each open-world map (`tb_user.REGION_CID`) is in.
     field_maps: HashMap<String, i64>,
     regions: Vec<RegionDef>,
+    labels: Vec<LabelDef>,
     waypoints: Vec<WaypointDef>,
     statues: Vec<StatueDef>,
     dungeons: Vec<DungeonDef>,
@@ -68,6 +69,30 @@ struct RegionDef {
     missions: Vec<String>,
 }
 
+/// A name the world map writes on a world (`MapPointIconData`).
+#[derive(Debug, Deserialize)]
+struct LabelDef {
+    world: i64,
+    /// `region` (shown zoomed out) or `area` (shown zoomed in).
+    kind: String,
+    name: Text,
+    x: f64,
+    y: f64,
+}
+
+/// What the world map's card for a place shows besides its name.
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlaceCardText {
+    /// The map section it is in, such as "Hill of Journey".
+    pub area: Option<Text>,
+    pub description: Option<Text>,
+    /// The description once it is activated, for a statue and Eona's Legacy.
+    pub description_done: Option<Text>,
+    /// The card's picture, `World_MapInfo_<picture>` in the game.
+    pub picture: Option<String>,
+}
+
 #[derive(Debug, Deserialize)]
 struct WaypointDef {
     id: i64,
@@ -80,6 +105,8 @@ struct WaypointDef {
     /// What activating it gives: `[item CID, count]`.
     #[serde(default)]
     reward: Vec<[i64; 2]>,
+    #[serde(flatten)]
+    card: PlaceCardText,
     x: f64,
     y: f64,
 }
@@ -100,6 +127,8 @@ struct DungeonDef {
     world: i64,
     region: Option<i64>,
     name: Text,
+    #[serde(flatten)]
+    card: PlaceCardText,
     x: f64,
     y: f64,
 }
@@ -168,6 +197,10 @@ struct MinigameDef {
 struct QuestDef {
     description: Option<Text>,
     steps: HashMap<String, Text>,
+    /// Where the world map marks each step: world, X, Y and the NN of its
+    /// `Icon_Mark_QuestMark_NN`.
+    #[serde(default)]
+    marks: HashMap<String, (i64, f64, f64, i64)>,
 }
 
 impl WorldData {
@@ -201,9 +234,12 @@ impl WorldData {
 pub struct WorldView {
     pub worlds: Vec<WorldInfo>,
     pub regions: Vec<RegionView>,
+    pub labels: Vec<MapLabel>,
     pub waypoints: Vec<WaypointView>,
     pub dungeons: Vec<DungeonView>,
     pub chests: Vec<ChestView>,
+    /// The marks of the quests in progress, at their current step.
+    pub quests: Vec<QuestMark>,
     /// Where the player stands, when that is on a world map.
     pub player: Option<PlayerPlace>,
 }
@@ -225,6 +261,38 @@ pub struct RegionView {
     pub world: i64,
     pub name: Text,
     pub missions: Vec<MissionProgress>,
+}
+
+/// A name the game's world map writes on it: a region's name, which it
+/// shows zoomed out, or an area's, which it shows zoomed in.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MapLabel {
+    pub world: i64,
+    /// `region` or `area`.
+    pub kind: String,
+    pub name: Text,
+    pub x: f64,
+    pub y: f64,
+}
+
+/// Where the world map marks a quest in progress: its current step's target.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct QuestMark {
+    pub id: i64,
+    pub category: String,
+    pub name_en: String,
+    pub name_fr: String,
+    pub step: QuestStep,
+    pub steps: i64,
+    pub world: i64,
+    pub x: f64,
+    pub y: f64,
+    /// The NN of the game's `Icon_Mark_QuestMark_NN`: 2 for the main story,
+    /// 4 a bond quest, 6 a hero quest, 10 a promotion; odd ones are the `!`
+    /// of a quest still to be taken from its giver.
+    pub mark: i64,
 }
 
 /// One completion count of a region, in the order the game lists them.
@@ -254,6 +322,8 @@ pub struct WaypointView {
     pub statue: Option<StatueProgress>,
     /// What activating it gives in the game: 100 corps EXP for a warp point.
     pub reward: Vec<RewardView>,
+    #[serde(flatten)]
+    pub card: PlaceCardText,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -282,6 +352,8 @@ pub struct DungeonView {
     pub x: f64,
     pub y: f64,
     pub found: bool,
+    #[serde(flatten)]
+    pub card: PlaceCardText,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -511,6 +583,7 @@ impl Game<'_> {
                         count,
                     })
                     .collect(),
+                card: waypoint.card.clone(),
                 statue: data.statue_of(waypoint.id).map(|statue| StatueProgress {
                     id: statue.id,
                     restored: statue_bits.contains(&statue.complete),
@@ -534,6 +607,7 @@ impl Game<'_> {
                 x: dungeon.x,
                 y: dungeon.y,
                 found: found.contains(&dungeon.id),
+                card: dungeon.card.clone(),
             })
             .collect();
         let chests: Vec<ChestView> = data
@@ -638,11 +712,78 @@ impl Game<'_> {
                 })
                 .collect(),
             regions,
+            labels: data
+                .labels
+                .iter()
+                .map(|label| MapLabel {
+                    world: label.world,
+                    kind: label.kind.clone(),
+                    name: label.name.clone(),
+                    x: label.x,
+                    y: label.y,
+                })
+                .collect(),
             waypoints,
             dungeons,
             chests,
+            quests: self.quest_marks()?,
             player: self.player_place()?,
         })
+    }
+
+    /// The quests in progress and their current step: id, step, count.
+    fn held_quests(&self) -> Result<Vec<(i64, i64, i64)>> {
+        if !self.table_exists("tb_quest_hold")? {
+            return Ok(Vec::new());
+        }
+        let mut statement = self.conn().prepare(
+            "SELECT QUEST_CID, STEP_ID, CNT FROM tb_quest_hold WHERE USER_DBID=? ORDER BY QUEST_CID",
+        )?;
+        let rows = statement.query_map(params![self.user_id], |row| {
+            Ok((row.get(0)?, row.get(1)?, row.get(2)?))
+        })?;
+        Ok(rows.collect::<rusqlite::Result<_>>()?)
+    }
+
+    /// Where the game's world map marks each quest in progress: at its
+    /// current step's target, when that is on a world map the editor has.
+    fn quest_marks(&self) -> Result<Vec<QuestMark>> {
+        let growth = Growth::shared();
+        let data = WorldData::shared();
+        let mut out = Vec::new();
+        for (id, step, count) in self.held_quests()? {
+            let (Some(quest), Some(def)) = (growth.quest(id), data.quests.get(&id.to_string()))
+            else {
+                continue;
+            };
+            let Some(&(world, x, y, mark)) = def.marks.get(&step.to_string()) else {
+                continue;
+            };
+            let on_map = data.maps.get(&world).is_some_and(|map| {
+                (map.x0..=map.x0 + map.size).contains(&x)
+                    && (map.y0..=map.y0 + map.size).contains(&y)
+            });
+            if !on_map {
+                continue;
+            }
+            out.push(QuestMark {
+                id,
+                category: quest.category.clone(),
+                name_en: quest.name_en.clone(),
+                name_fr: quest.name_fr.clone(),
+                step: QuestStep {
+                    id: step,
+                    count,
+                    text: def.steps.get(&step.to_string()).cloned(),
+                },
+                steps: def.steps.len() as i64,
+                world,
+                x,
+                y,
+                mark,
+            });
+        }
+        Ok(out)
     }
 
     /// What a chest can give, draw by draw, with the same draws merged.
@@ -907,23 +1048,11 @@ impl Game<'_> {
             .quest_ids("tb_quest_complete", "")?
             .into_iter()
             .collect();
-        let mut held: HashMap<i64, (i64, i64)> = HashMap::new();
-        if self.table_exists("tb_quest_hold")? {
-            let mut statement = self
-                .conn()
-                .prepare("SELECT QUEST_CID, STEP_ID, CNT FROM tb_quest_hold WHERE USER_DBID=?")?;
-            let rows = statement.query_map(params![self.user_id], |row| {
-                Ok((
-                    row.get::<_, i64>(0)?,
-                    row.get::<_, i64>(1)?,
-                    row.get::<_, i64>(2)?,
-                ))
-            })?;
-            for row in rows {
-                let (id, step, count) = row?;
-                held.insert(id, (step, count));
-            }
-        }
+        let held: HashMap<i64, (i64, i64)> = self
+            .held_quests()?
+            .into_iter()
+            .map(|(id, step, count)| (id, (step, count)))
+            .collect();
         let mut out = Vec::new();
         for (id, quest) in growth.quests() {
             // Unreleased quests have no name in the game's strings.
@@ -1056,6 +1185,41 @@ mod tests {
                 size: 1_100_000.0
             }
         );
+    }
+
+    #[test]
+    fn orbis_has_the_world_maps_names_and_belos_none() {
+        let data = WorldData::shared();
+        let count = |world: i64, kind: &str| {
+            data.labels
+                .iter()
+                .filter(|label| label.world == world && label.kind == kind)
+                .count()
+        };
+        assert_eq!(count(100, "region"), data.regions.len());
+        assert_eq!(count(100, "area"), 38);
+        assert_eq!(count(200, "region") + count(200, "area"), 0);
+        let hill = data
+            .labels
+            .iter()
+            .find(|label| label.name.en == "Hill of Journey")
+            .expect("Hill of Journey");
+        assert_eq!(hill.kind, "area");
+    }
+
+    /// The three quests in progress in the 2026-11-07 save, where the game's
+    /// world map drew their marks (docs/exports/map-labels-quests): the main
+    /// quest at the cathedral's door, as its target is indoors, and the two
+    /// bond quests at Guard Bart and at a dungeon's entrance.
+    #[test]
+    fn quest_steps_mark_where_the_game_draws_them() {
+        let data = WorldData::shared();
+        let mark = |quest: &str, step: &str| data.quests[quest].marks[step];
+        assert_eq!(mark("10018", "5"), (100, 49_623.0, 102_451.0, 2));
+        assert_eq!(mark("20001", "1"), (100, 43_418.0, 127_411.0, 4));
+        assert_eq!(mark("20402", "2"), (100, -11_547.0, 144_959.0, 4));
+        // A bond quest taken from its giver shows a `!` until it is taken.
+        assert_eq!(mark("20001", "0").3, 3);
     }
 
     #[test]
