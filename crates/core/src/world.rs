@@ -25,7 +25,7 @@ const WORLD_MAPS_JSON: &str = include_str!("../data/world_maps.json");
 
 /// The place a world map image covers: a square of `size` world units whose
 /// corner is (`x0`, `y0`). The image shows world point (X, Y) at
-/// `((y0 + size - Y) / size, (X - x0) / size)`, across and down.
+/// `((X - x0) / size, (Y - y0) / size)`, across and down.
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct MapPlacement {
@@ -1011,20 +1011,20 @@ mod tests {
         assert_eq!(
             *map,
             MapPlacement {
-                x0: -165_990.0,
-                y0: -151_100.0,
-                size: 460_000.0
+                x0: -140_990.0,
+                y0: -198_850.0,
+                size: 570_000.0
             }
         );
-        // The capture stops short of Orbis's edges: a statue, a dungeon and
-        // 99 chests lie up to a tenth of the map beyond it, most of them south
-        // of it, and the World map screen draws them past the image.
-        let place = |x: f64, y: f64| ((map.y0 + map.size - y) / map.size, (x - map.x0) / map.size);
+        // Every place of Orbis but seven chests is on the image; those lie
+        // in the sea up to a tenth of the map west of it, and the World map
+        // screen draws them past the image.
+        let place = |x: f64, y: f64| ((x - map.x0) / map.size, (y - map.y0) / map.size);
         let inside = |(across, down): (f64, f64)| {
             (0.0..=1.0).contains(&across) && (0.0..=1.0).contains(&down)
         };
         let near = |(across, down): (f64, f64)| {
-            (-0.12..=1.12).contains(&across) && (-0.12..=1.12).contains(&down)
+            (-0.12..=1.0).contains(&across) && (0.0..=1.0).contains(&down)
         };
         let orbis = |world: i64| world == 100;
         let points: Vec<(f64, f64)> = data
@@ -1046,9 +1046,16 @@ mod tests {
             )
             .collect();
         assert!(points.iter().all(|point| near(*point)));
-        assert_eq!(points.iter().filter(|point| !inside(**point)).count(), 101);
-        // Belos's map textures do not match a capture square, so it has none yet.
-        assert!(!data.maps.contains_key(&200));
+        assert_eq!(points.iter().filter(|point| !inside(**point)).count(), 7);
+        let belos = data.maps.get(&200).expect("Belos has a map");
+        assert_eq!(
+            *belos,
+            MapPlacement {
+                x0: -593_730.0,
+                y0: -524_310.0,
+                size: 1_100_000.0
+            }
+        );
     }
 
     #[test]

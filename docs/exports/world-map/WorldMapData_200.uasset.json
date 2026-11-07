@@ -1,0 +1,36 @@
+[
+  {
+    "Type": "DWorldMapData",
+    "Name": "WorldMapData_200",
+    "Flags": "RF_Public | RF_Standalone | RF_Transactional | RF_WasLoaded | RF_LoadCompleted",
+    "Class": "UScriptClass'DWorldMapData'",
+    "Package": "DS/Content/Design/CaptureMinimap/Data/WorldMapData_200",
+    "Properties": {
+      "WorldMapDataInfo": {
+        "MapID": 200,
+        "MapTexturePath": "RTM_W2_1_world_02_main_wp",
+        "MapTextureCount": 4,
+        "MapDimensions": 1100000.0,
+        "MapDimensionsCenterX": -43730.0,
+        "MapDimensionsCenterY": 25690.0,
+        "WorldMapUISize": 3000.0,
+        "WorldMapBaseZoom": 1.2,
+        "WorldMapZoomValuePerLevel": 0.3,
+        "WorldMapZoomMaxLevel": 5,
+        "WorldMapDragScale": 1.3,
+        "WorldMapMouseWheelScale": 1.0,
+        "MiniMapUISize": 2200.0,
+        "MiniMapZoomValuePerLevel": 0.2,
+        "MiniMapMaxZoomLevel": 5,
+        "MiniMapAutoZoomLevel": 5.0,
+        "MiniMapMouseWheelScale": 5.0,
+        "MiniMapSpatialQueryValue": 15000.0,
+        "WorldMapHideNPC": 4.0,
+        "WorldMapHideAreaName": 1.0,
+        "WorldMapHideWayPoint": 2.0,
+        "WorldMapHideWorldMemo": 2.5,
+        "WorldMapHideChapterName": 1.0
+      }
+    }
+  }
+]

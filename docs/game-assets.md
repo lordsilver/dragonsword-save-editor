@@ -29,25 +29,35 @@ node scripts/gen-icons.mjs <assets-dir> <extract-dir> <fx-dir>
 
 ## World maps
 
-The World map screen draws Orbis from the game's own capture of it seen from above, `apps/desktop/src/assets/world-map-100.webp` (4096 px square, from 16 textures of 1024 px), with the game's map markers `map-mark-*.webp` (`Common/Mark/Icon_Mark_Waypoint`, `_Godbless`, `_AWindmill` and `_AWindmill_Activate`, `_TrialTower`, `_Dungeon_Single` and `_Complete`, `_Box_png`). `scripts/gen-world-map.mjs` writes them and `crates/core/data/world_maps.json`, the square of the world the image covers:
+The World map screen draws Orbis and Belos from the game's own captures of them seen from above, `apps/desktop/src/assets/world-map-100.webp` (4096 px, from 16 textures of 1024 px) and `world-map-200.webp` (3072 px), with the game's map markers `map-mark-*.webp`. `scripts/gen-world-map.mjs` writes the images and `crates/core/data/world_maps.json`, the square of the world each image covers; `scripts/gen-map-marks.mjs` writes the markers from the 2D-art export (`Common/Mark/Icon_Mark_Waypoint`, `_Godbless`, `_AWindmill` and `_AWindmill_Activate`, `_TrialTower`, `_Dungeon_Single`, `_Box_png`):
 
 ```bash
 node scripts/gen-world.mjs <xml-dir>/GameData
-node scripts/gen-world-map.mjs <dump-dir> <tiles-dir> <assets-dir>
+node scripts/gen-world-map.mjs <dump-dir> <tiles-dir>
+node scripts/gen-map-marks.mjs <assets-dir>
 ```
 
-`<dump-dir>` holds the map assets as JSON and `<tiles-dir>` the capture's textures as PNG, both from DsaExport (`MSYS_NO_PATHCONV=1` keeps Git Bash from rewriting the `/Game/...` prefix):
+`<dump-dir>` holds the map assets as JSON and `<tiles-dir>` the captures' textures as PNG, both from DsaExport (`MSYS_NO_PATHCONV=1` keeps Git Bash from rewriting the `/Game/...` prefix):
 
 ```bash
 dotnet DsaExport.dll dump "C:\Games\DragonSword Awakening" <tools-dir> <dump-dir> @maps.txt
 dotnet DsaExport.dll export "C:\Games\DragonSword Awakening" <tools-dir> <tiles-dir> /Game/Design/CaptureMinimap/Export/
 ```
 
-where `maps.txt` lists `DS/Content/Design/CaptureMinimap/Data/WorldMapData_100.uasset`, `WorldMapData_200.uasset` and `DS/Content/Design/CaptureMinimap/Export/RTM_W1_world_01_main_WP.uasset`. A world's map is `MapFieldData`'s `WorldMapPath` for the world's ID, a `DWorldMapData` asset whose `MapTexturePath` names the capture (`RTM_W1_world_01_main_WP`, `MapTextureCount` 4). Beside the textures, a `JSONString` asset of the same name gives the square they cover: corner `sx` -165,990, `sy` -151,100, side `size` 460,000 world units, `TexSize` 1024.
+where `maps.txt` lists `DS/Content/Design/CaptureMinimap/Data/WorldMapData_100.uasset` and `WorldMapData_200.uasset`. The game's notes below come from an export of the map widget and its data on 2026-11-07 (`docs/exports/world-map/`).
 
-How the textures fit was worked out, since nothing in the assets says so. Of the 64 ways to lay out the 16 textures (which index is the row, either order for rows and columns, one of the 8 symmetries of a square applied to each), only one arrangement up to rotating and mirroring the whole map joins at every seam: texture `<a>_<b>` at row a, column b, flipped top to bottom. Matched against the game's 297 map points of Orbis inside the image (`WarpPositionData`, `MapPointIconData`), 269 fall on land with the world point (X, Y) at ((sy + size − Y) / size, (X − sx) / size) of the image, more than in any other orientation; that one is also unmirrored (Unreal's world is left-handed, so a view from above keeps +X and +Y a quarter turn apart clockwise). The capture stops short of the world on two sides: a statue, a dungeon and 99 chests lie up to a tenth of the map beyond it, and the screen draws them past the image.
+A world's map is its `DWorldMapData` asset, `Design/CaptureMinimap/Data/WorldMapData_<world>`. `MapTexturePath` names the capture, `MapTextureCount` × `MapTextureCount` textures `<prefix>_<a>_<b>` in `Design/CaptureMinimap/Export/`, and the map widget (`UI/Layer/DLayerMap`, a grid of images that fills its map square) stretches them over a square of `MapDimensions` world units centred on (`MapDimensionsCenterX`, `MapDimensionsCenterY`). World point (X, Y) is at ((X − x0) / size, (Y − y0) / size) of the image, across and down, with x0 = CenterX − size / 2 and y0 = CenterY − size / 2:
 
-Belos has no map yet. Its main capture, `RTM_W2_1_world_02_main_wp`, is 16 textures of uneven sizes (769 × 765 and so on) that no `JSONString` describes; `RTM_W2_world_02_main_wp` describes a 1,100,000-unit square of 3072-pixel textures the paks do not hold. Its 29 warp points, 3 dungeons and 158 chests are in `world.json` for when its map can be placed.
+| World       | Capture                     | `MapDimensions` | Centre            | Corner (x0, y0)      |
+| ----------- | --------------------------- | --------------- | ----------------- | -------------------- |
+| Orbis (100) | `RTM_W1_world_01_main_WP`   | 570,000         | (144,010, 86,150) | (−140,990, −198,850) |
+| Belos (200) | `RTM_W2_1_world_02_main_wp` | 1,100,000       | (−43,730, 25,690) | (−593,730, −524,310) |
+
+The `JSONString` asset beside each capture's textures is the capture tool's own record. The widget does not read it, and its square (Orbis: corner −165,990, −151,100, side 460,000) places the points wrongly; an earlier version of the editor used it and showed many markers in the sea. Under the `WorldMapData` square, 1,499 of Orbis's 1,506 chests are on the image; seven lie in the sea up to a tenth of the map west of it, and the screen draws them past it. 185 of Belos's 190 places fall on or within a few pixels of an island.
+
+How the textures fit was worked out, since nothing in the assets says so. Of the 64 ways to lay out the 16 textures (which index is the row, either order for rows and columns, one of the 8 symmetries of a square applied to each), only one arrangement up to rotating and mirroring the whole map joins at every seam: texture `<a>_<b>` at row a, column b, flipped top to bottom. Laid out that way the capture is the map upside down (the game's map has Orbis Castle at the top of its island and the ring of islets below it), so the generator flips the whole image top to bottom. The fog's contour texture `Art/FX/textures/UI/FX_WorldMap_Line`, which the game samples at the map's own coordinates, falls on Orbis's coastline only in that orientation. Belos's textures are one 3072-pixel capture cut into uneven pieces (columns 769, 769, 769 and 765 pixels, rows 765, 769, 769 and 769), so each row and column takes the size of its pieces.
+
+The marker icons are white glyphs with a dark rim. The game's world map tints them by state in native code (no asset stores the colours), so the tints were measured on in-game screenshots: a place that is done (warp point or statue activated, dungeon found, Tower of Trials activated) in a flat periwinkle `#82affa`, one that is not in grey `#99a697`, with the rim staying dark. `gen-map-marks.mjs` tints each icon by scaling the colour with the pixel's brightness. Eona's Legacy has its own coloured sprites: an unlit one is `_AWindmill` under the grey tint, a lit one `_AWindmill_Activate` as drawn. A found dungeon is a blue doorway in the game, not `_Dungeon_Single_Complete`'s check mark. Every icon is centred on its place, except that the game draws a warp point's 1,900 and a statue's 2,700 world units north of it (`WayPointCorrectionDistance`, `StatueCorrectionDistance`), so the pin's tip sits on the place; the screen does the same. Icons keep their size on screen at every zoom.
 
 ## The catalog from the game tables
 

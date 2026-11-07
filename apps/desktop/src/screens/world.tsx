@@ -40,7 +40,7 @@ import type {
 } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
-// The game's own map markers and world maps, written by scripts/gen-world-map.mjs.
+// The game's own map markers (scripts/gen-map-marks.mjs) and world maps (scripts/gen-world-map.mjs).
 const MARKS = import.meta.glob<string>('../assets/map-mark-*.webp', { eager: true, import: 'default' });
 const MAPS = import.meta.glob<string>('../assets/world-map-*.webp', { eager: true, import: 'default' });
 const markImage = (name: string): string | undefined => MARKS[`../assets/map-mark-${name}.webp`];
@@ -65,11 +65,11 @@ interface Place {
 }
 
 const LAYERS: Array<{ layer: Layer; label: string; mark: string }> = [
-  { layer: 'waypoint', label: 'Warp points', mark: 'waypoint' },
-  { layer: 'statue', label: 'Statues of Organa', mark: 'statue' },
-  { layer: 'legacy', label: "Eona's Legacy", mark: 'legacy-active' },
-  { layer: 'tower', label: 'Tower of Trials', mark: 'tower' },
-  { layer: 'dungeon', label: 'Dungeons', mark: 'dungeon-found' },
+  { layer: 'waypoint', label: 'Warp points', mark: 'waypoint-done' },
+  { layer: 'statue', label: 'Statues of Organa', mark: 'statue-done' },
+  { layer: 'legacy', label: "Eona's Legacy", mark: 'legacy-done' },
+  { layer: 'tower', label: 'Tower of Trials', mark: 'tower-done' },
+  { layer: 'dungeon', label: 'Dungeons', mark: 'dungeon-done' },
   { layer: 'chest', label: 'Chests', mark: 'chest' },
 ];
 
@@ -99,9 +99,20 @@ const GRADE_DOT: Record<string, string> = {
   legendary: '#ffb02e',
 };
 
+/**
+ * How far north of its point the game draws a warp point's and a statue's
+ * marker, in world units (DLayerMap's WayPointCorrectionDistance and
+ * StatueCorrectionDistance), so that the pin's tip, not its middle, is on the
+ * place. Every other marker is centred on its point.
+ */
+const MARK_LIFT: Partial<Record<Layer, number>> = { waypoint: 1900, statue: 2700 };
+
+/** What the game's map shows around each world's capture: Orbis's sea, Belos's sky. */
+const BACKDROP: Record<number, string> = { 100: '#33bbd5', 200: '#000000' };
+
 /** Where world point (x, y) falls on a map image: across and down, 0 to 1 inside it. */
 function onMap(map: MapPlacement, x: number, y: number): { across: number; down: number } {
-  return { across: (map.y0 + map.size - y) / map.size, down: (x - map.x0) / map.size };
+  return { across: (x - map.x0) / map.size, down: (y - map.y0) / map.size };
 }
 
 function placesOf(world: WorldView, worldId: number, map: MapPlacement): Place[] {
@@ -115,7 +126,7 @@ function placesOf(world: WorldView, worldId: number, map: MapPlacement): Place[]
       id: waypoint.id,
       region: waypoint.region,
       name: waypoint.name,
-      ...onMap(map, waypoint.x, waypoint.y),
+      ...onMap(map, waypoint.x, waypoint.y - (MARK_LIFT[layer] ?? 0)),
       done: layer === 'statue' ? (waypoint.statue?.restored ?? waypoint.active) : waypoint.active,
       waypoint,
     });
@@ -188,10 +199,12 @@ export function WorldScreen() {
   const [show, setShow] = useState<Show>('all');
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [regionId, setRegionId] = useState<number | null>(null);
+  const [worldId, setWorldId] = useState<number | null>(null);
   const busy = pending !== null;
 
-  // The editor shows the worlds it has a map image of; Belos has none yet.
-  const shown = world?.worlds.find((entry) => entry.map && MAPS[`../assets/world-map-${entry.id}.webp`]) ?? null;
+  // The worlds the editor has a map image of: Orbis, and Belos once the story reaches it.
+  const mapped = world?.worlds.filter((entry) => entry.map && MAPS[`../assets/world-map-${entry.id}.webp`]) ?? [];
+  const shown = mapped.find((entry) => entry.id === worldId) ?? mapped[0] ?? null;
   const map = shown?.map ?? null;
   const places = useMemo(() => (world && shown && map ? placesOf(world, shown.id, map) : []), [world, shown, map]);
   const regions = useMemo(() => world?.regions.filter((region) => region.world === shown?.id) ?? [], [world, shown]);
@@ -315,29 +328,51 @@ export function WorldScreen() {
             </button>
           );
         })}
-        <div className="ml-auto flex gap-1 rounded-lg bg-muted/60 p-0.5">
-          {(
-            [
-              ['all', 'All'],
-              ['todo', 'Not done'],
-              ['done', 'Done'],
-            ] as const
-          ).map(([value, label]) => (
-            <Button
-              key={value}
-              size="xs"
-              variant={show === value ? 'secondary' : 'ghost'}
-              onClick={() => setShow(value)}
-            >
-              {label}
-            </Button>
-          ))}
+        <div className="ml-auto flex gap-2">
+          {mapped.length > 1 && (
+            <div className="flex gap-1 rounded-lg bg-muted/60 p-0.5">
+              {mapped.map((entry) => (
+                <Button
+                  key={entry.id}
+                  size="xs"
+                  variant={entry.id === shown.id ? 'secondary' : 'ghost'}
+                  onClick={() => {
+                    setWorldId(entry.id);
+                    setSelectedKey(null);
+                    setRegionId(null);
+                  }}
+                >
+                  {name(entry.name)}
+                </Button>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-1 rounded-lg bg-muted/60 p-0.5">
+            {(
+              [
+                ['all', 'All'],
+                ['todo', 'Not done'],
+                ['done', 'Done'],
+              ] as const
+            ).map(([value, label]) => (
+              <Button
+                key={value}
+                size="xs"
+                variant={show === value ? 'secondary' : 'ghost'}
+                onClick={() => setShow(value)}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <MapView
+          key={shown.id}
           image={MAPS[`../assets/world-map-${shown.id}.webp`]}
+          backdrop={BACKDROP[shown.id] ?? '#000000'}
           places={places}
           visible={visible}
           player={player}
@@ -385,6 +420,7 @@ const MAX_ZOOM = 14;
 
 function MapView({
   image,
+  backdrop,
   places,
   visible,
   player,
@@ -393,6 +429,7 @@ function MapView({
   onSelect,
 }: {
   image: string | undefined;
+  backdrop: string;
   places: Place[];
   visible: Place[];
   player: { across: number; down: number } | null;
@@ -489,8 +526,8 @@ function MapView({
       fitAll();
       return;
     }
-    // A few of a region's places can sit far from the rest (Orbis Castle has
-    // four chests off the map's corner), so the zoom leaves out the outer
+    // A few of a region's places can sit far from the rest (seven chests lie
+    // in the sea off the map's west edge), so the zoom leaves out the outer
     // twentieth on each side of a large region.
     const span = (values: number[]): [number, number] => {
       const sorted = [...values].sort((a, b) => a - b);
@@ -547,7 +584,8 @@ function MapView({
       ref={viewport}
       role="application"
       aria-label="World map"
-      className="relative h-[max(420px,calc(100svh-17.5rem))] cursor-grab touch-none overflow-hidden rounded-xl border bg-[#33bbd5] select-none active:cursor-grabbing"
+      className="relative h-[max(420px,calc(100svh-17.5rem))] cursor-grab touch-none overflow-hidden rounded-xl border select-none active:cursor-grabbing"
+      style={{ backgroundColor: backdrop }}
       onPointerDown={(event) => {
         if (event.button !== 0) return;
         // Pointer capture sends the release to the map, so note the marker now.
@@ -623,15 +661,9 @@ function MapView({
   );
 }
 
+/** The game's marker for a place: blue once it is done, grey before. */
 function markOf(place: Place): string {
-  switch (place.layer) {
-    case 'legacy':
-      return place.done ? 'legacy-active' : 'legacy';
-    case 'dungeon':
-      return place.done ? 'dungeon-found' : 'dungeon';
-    default:
-      return place.layer;
-  }
+  return place.layer === 'chest' || !place.done ? place.layer : `${place.layer}-done`;
 }
 
 function Marker({
@@ -678,7 +710,7 @@ function Marker({
       aria-label={`${place.name.en}${place.done ? '' : ', not done'}`}
       title={place.name.en}
       className={cn(
-        'absolute z-[1] grid size-7 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-white',
+        'absolute z-[1] grid size-9 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-white',
         selected && 'z-10 bg-black/35 ring-2 ring-white',
       )}
       style={{ ...style, transform }}
@@ -687,10 +719,8 @@ function Marker({
         src={markImage(markOf(place))}
         alt=""
         draggable={false}
-        className={cn(
-          'pointer-events-none size-6 drop-shadow-[0_1px_1px_rgb(0_0_0/0.6)]',
-          !place.done && 'opacity-55 grayscale',
-        )}
+        // Blue once done and grey before, as the game's own map draws them.
+        className="pointer-events-none size-8 drop-shadow-[0_1px_1px_rgb(0_0_0/0.5)]"
       />
     </button>
   );
