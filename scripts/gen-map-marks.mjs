@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 // Write the World map screen's markers, apps/desktop/src/assets/map-mark-*.webp,
 // from the game's map icons (Art/UI/InGame/Common/Mark/Icon_Mark_* in the
-// 2D-art export in <assets-dir>, docs/game-assets.md).
+// 2D-art export in <assets-dir>, docs/game-assets.md), and the frame the game
+// draws around the selected marker (Art/UI/InGame/Frame/Frame_Map_01) as
+// map-mark-selected.webp. They are kept at 128 pixels, so that they stay sharp
+// at the size the game draws them.
 //
 // Usage: node scripts/gen-map-marks.mjs <assets-dir>
 //
@@ -31,24 +34,31 @@ if (!assetsDir) {
 const DONE = [0x82, 0xaf, 0xfa];
 const NOT_DONE = [0x99, 0xa6, 0x97];
 
-/** The editor's name for each marker: the game's icon, and the tint it is drawn in (none: as is). */
+const MARK = 'Art/UI/InGame/Common/Mark';
+
+/** The editor's name for each marker: the game's texture, and the tint it is drawn in (none: as is). */
 const MARKS = {
-  waypoint: ['Icon_Mark_Waypoint', NOT_DONE],
-  'waypoint-done': ['Icon_Mark_Waypoint', DONE],
-  statue: ['Icon_Mark_Godbless', NOT_DONE],
-  'statue-done': ['Icon_Mark_Godbless', DONE],
-  legacy: ['Icon_Mark_AWindmill', NOT_DONE],
-  'legacy-done': ['Icon_Mark_AWindmill_Activate', null],
-  tower: ['Icon_Mark_TrialTower', NOT_DONE],
-  'tower-done': ['Icon_Mark_TrialTower', DONE],
-  dungeon: ['Icon_Mark_Dungeon_Single', NOT_DONE],
-  'dungeon-done': ['Icon_Mark_Dungeon_Single', DONE],
-  chest: ['Icon_Mark_Box_png', null],
+  waypoint: [`${MARK}/Icon_Mark_Waypoint`, NOT_DONE],
+  'waypoint-done': [`${MARK}/Icon_Mark_Waypoint`, DONE],
+  statue: [`${MARK}/Icon_Mark_Godbless`, NOT_DONE],
+  'statue-done': [`${MARK}/Icon_Mark_Godbless`, DONE],
+  legacy: [`${MARK}/Icon_Mark_AWindmill`, NOT_DONE],
+  'legacy-done': [`${MARK}/Icon_Mark_AWindmill_Activate`, null],
+  tower: [`${MARK}/Icon_Mark_TrialTower`, NOT_DONE],
+  'tower-done': [`${MARK}/Icon_Mark_TrialTower`, DONE],
+  dungeon: [`${MARK}/Icon_Mark_Dungeon_Single`, NOT_DONE],
+  'dungeon-done': [`${MARK}/Icon_Mark_Dungeon_Single`, DONE],
+  chest: [`${MARK}/Icon_Mark_Box_png`, null],
+  selected: ['Art/UI/InGame/Frame/Frame_Map_01', null],
 };
 
-/** The icon scaled to 64 px and tinted: each pixel's brightness, relative to the glyph's, times the colour. */
+/** The texture scaled to 128 px and tinted: each pixel's brightness, relative to the glyph's, times the colour. */
 async function tinted(path, colour) {
-  const { data, info } = await sharp(path).resize(64, 64).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { data, info } = await sharp(path)
+    .resize(128, 128, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
   if (colour) {
     const brightness = [];
     for (let i = 0; i < data.length; i += 4) {
@@ -66,7 +76,7 @@ async function tinted(path, colour) {
 }
 
 for (const [mark, [texture, colour]] of Object.entries(MARKS)) {
-  const path = join(assetsDir, 'Art/UI/InGame/Common/Mark', `${texture}.png`);
+  const path = join(assetsDir, `${texture}.png`);
   if (!existsSync(path)) {
     console.error(`gen-map-marks: ${path} is missing`);
     process.exit(1);

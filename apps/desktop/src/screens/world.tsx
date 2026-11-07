@@ -1,9 +1,8 @@
-import { Crosshair, Map as MapIcon, Minus, MoreHorizontal, Plus, Route } from 'lucide-react';
+import { Crosshair, Map as MapIcon, Minus, Plus, Route } from 'lucide-react';
 import { type KeyboardEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ConfirmButton, EmptyPanel } from '@/components/common';
 import { ItemIcon } from '@/components/item-icon';
 import { PageHeader } from '@/components/page';
-import { InfoNote } from '@/components/summary';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,14 +14,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
 import { formatNumber, itemName, useApp } from '@/lib/store';
 import type {
@@ -80,6 +71,15 @@ const MISSIONS: Record<MissionKind, string> = {
   WAYPOINT_OPEN: 'Warp points',
   FIELDSTATUE_COMPLETE: 'Statues restored',
   WINDMILL_OPEN: "Eona's Legacy",
+};
+
+/** The places each region mission counts, and what doing the rest is called. */
+const STEPS: Partial<Record<MissionKind, { layer: Layer; label: string }>> = {
+  WAYPOINT_OPEN: { layer: 'waypoint', label: 'Activate' },
+  WINDMILL_OPEN: { layer: 'legacy', label: 'Activate' },
+  FIELDSTATUE_COMPLETE: { layer: 'statue', label: 'Restore' },
+  DUNGEON_FIND: { layer: 'dungeon', label: 'Mark found' },
+  TREASUREBOX_OPEN: { layer: 'chest', label: 'Open all' },
 };
 
 const LOCKS: Record<ChestLock, string> = {
@@ -199,8 +199,6 @@ export function WorldScreen() {
   const [show, setShow] = useState<Show>('all');
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [regionId, setRegionId] = useState<number | null>(null);
-  /** The region under the pointer in the list, highlighted on the map while it is. */
-  const [hoverRegion, setHoverRegion] = useState<number | null>(null);
   const [worldId, setWorldId] = useState<number | null>(null);
   const busy = pending !== null;
 
@@ -339,7 +337,6 @@ export function WorldScreen() {
                     setWorldId(entry.id);
                     setSelectedKey(null);
                     setRegionId(null);
-                    setHoverRegion(null);
                   }}
                 >
                   {name(entry.name)}
@@ -378,11 +375,10 @@ export function WorldScreen() {
           player={player}
           selectedKey={selectedKey}
           focus={regionId}
-          highlight={hoverRegion ?? regionId}
           onSelect={setSelectedKey}
         />
         <div className="scroll-thin flex max-h-[max(420px,calc(100svh-17.5rem))] min-h-0 flex-col gap-3 overflow-y-auto">
-          {selected ? (
+          {selected && (
             <PlaceCard
               place={selected}
               regionName={regions.find((region) => region.id === selected.region)?.name ?? null}
@@ -393,8 +389,6 @@ export function WorldScreen() {
               onSet={(done) => apply([selected], done)}
               onClose={() => setSelectedKey(null)}
             />
-          ) : (
-            <InfoNote>Click a marker to see it here and change it.</InfoNote>
           )}
           <RegionList
             regions={regions}
@@ -405,7 +399,6 @@ export function WorldScreen() {
             grantRewards={grantRewards}
             allowUndo={allowUndo}
             onSelect={(id) => setRegionId((current) => (current === id ? null : id))}
-            onHover={setHoverRegion}
             onApply={apply}
           />
         </div>
@@ -428,7 +421,6 @@ function MapView({
   player,
   selectedKey,
   focus,
-  highlight,
   onSelect,
 }: {
   image: string | undefined;
@@ -439,8 +431,6 @@ function MapView({
   selectedKey: string | null;
   /** A region to zoom to. */
   focus: number | null;
-  /** A region whose markers stand out while the others fade. */
-  highlight: number | null;
   onSelect: (key: string | null) => void;
 }) {
   const viewport = useRef<HTMLDivElement>(null);
@@ -635,7 +625,6 @@ function MapView({
             key={place.key}
             place={place}
             selected={place.key === selectedKey}
-            faded={highlight !== null && place.region !== highlight && place.key !== selectedKey}
             style={position(place.across, place.down)}
             onSelect={onSelect}
           />
@@ -675,18 +664,15 @@ function markOf(place: Place): string {
 function Marker({
   place,
   selected,
-  faded,
   style,
   onSelect,
 }: {
   place: Place;
   selected: boolean;
-  /** Another region is highlighted. */
-  faded: boolean;
   style: { left: number; top: number };
   onSelect: (key: string) => void;
 }) {
-  const transform = `translate(-50%, -50%) scale(calc(var(--inv) * ${selected ? 1.35 : 1}))`;
+  const transform = `translate(-50%, -50%) scale(calc(var(--inv) * ${place.chest && selected ? 1.35 : 1}))`;
   // The mouse selects through the map's press handling; this is for the keyboard.
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -709,7 +695,7 @@ function Marker({
         style={{
           ...style,
           transform,
-          opacity: (place.done ? 0.35 : 1) * (faded ? 0.4 : 1),
+          opacity: place.done ? 0.35 : 1,
           backgroundColor: GRADE_DOT[place.chest.grade] ?? GRADE_DOT.normal,
         }}
       />
@@ -723,19 +709,28 @@ function Marker({
       aria-label={`${place.name.en}${place.done ? '' : ', not done'}`}
       title={place.name.en}
       className={cn(
-        'absolute z-[2] grid size-9 place-items-center rounded-full transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-white',
-        faded && 'z-[1] opacity-45',
-        selected && 'z-10 bg-black/35 ring-2 ring-white',
+        'absolute z-[1] grid size-11 place-items-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-white',
+        selected && 'z-10',
       )}
       style={{ ...style, transform }}
     >
+      {/* The game's own marker, about as large on screen as the game draws it (DUWG_MapPointIcon:
+          an 85-unit box at 1.3×), blue once done and grey before. */}
       <img
         src={markImage(markOf(place))}
         alt=""
         draggable={false}
-        // Blue once done and grey before, as the game's own map draws them.
-        className="pointer-events-none size-8 drop-shadow-[0_1px_1px_rgb(0_0_0/0.5)]"
+        className="pointer-events-none col-start-1 row-start-1 size-11"
       />
+      {/* The frame the game draws around the selected marker (Frame_Map_01). */}
+      {selected && (
+        <img
+          src={markImage('selected')}
+          alt=""
+          draggable={false}
+          className="pointer-events-none col-start-1 row-start-1 size-12"
+        />
+      )}
     </button>
   );
 }
@@ -988,7 +983,6 @@ function RegionList({
   grantRewards,
   allowUndo,
   onSelect,
-  onHover,
   onApply,
 }: {
   regions: RegionView[];
@@ -999,8 +993,6 @@ function RegionList({
   grantRewards: boolean;
   allowUndo: boolean;
   onSelect: (id: number) => void;
-  /** The region under the pointer or the keyboard focus, or none. */
-  onHover: (id: number | null) => void;
   onApply: (places: Place[], done: boolean) => void;
 }) {
   const name = (text: GameText) => (language === 'fr' ? text.fr : text.en);
@@ -1035,8 +1027,8 @@ function RegionList({
       <header className="border-b px-4 py-3">
         <h2 className="font-semibold">Regions</h2>
         <p className="text-xs text-muted-foreground">
-          What the game's world map counts in each region. Point at one to pick out its markers on the map; click it to
-          zoom there and keep them picked out, and again to see the whole map.
+          What the game's world map counts in each region. Click one to zoom to it and change its places; click it again
+          to see the whole map.
         </p>
       </header>
       <ul className="divide-y">
@@ -1044,22 +1036,6 @@ function RegionList({
           const done = region.missions.reduce((sum, mission) => sum + mission.done, 0);
           const total = region.missions.reduce((sum, mission) => sum + mission.total, 0);
           const here = (layer: Layer) => places.filter((place) => place.layer === layer && place.region === region.id);
-          const actions: Array<{ label: string; target: Place[]; done: boolean }> = [
-            { label: 'Activate the warp points', target: here('waypoint'), done: true },
-            { label: "Activate Eona's Legacy", target: here('legacy'), done: true },
-            { label: 'Restore the statues', target: here('statue'), done: true },
-            { label: 'Mark the dungeons found', target: here('dungeon'), done: true },
-            { label: 'Open every chest', target: here('chest'), done: true },
-            ...(allowUndo
-              ? [
-                  { label: 'Switch the warp points off', target: here('waypoint'), done: false },
-                  { label: "Switch Eona's Legacy off", target: here('legacy'), done: false },
-                  { label: 'Break the statues', target: here('statue'), done: false },
-                  { label: 'Forget the dungeons', target: here('dungeon'), done: false },
-                  { label: 'Mark every chest not opened', target: here('chest'), done: false },
-                ]
-              : []),
-          ];
           // Opening chests and activating warp points hand out rewards, so a whole region asks first.
           const ask = (target: Place[]): boolean => {
             const left = target.filter((place) => !place.done).length;
@@ -1090,73 +1066,84 @@ function RegionList({
             }
             return false;
           };
+          const open = selected === region.id;
           return (
-            // The whole card selects the region: the name's button stretches over
-            // it, and only the menu button sits above that.
-            <li
-              key={region.id}
-              className={cn(
-                'relative border-l-2 border-transparent px-4 py-2.5 transition-colors hover:bg-accent/40 has-[[data-region]:focus-visible]:bg-accent/40',
-                selected === region.id && 'border-l-brand bg-accent/60 hover:bg-accent/60',
-              )}
-              onPointerEnter={() => onHover(region.id)}
-              onPointerLeave={() => onHover(null)}
-            >
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  data-region
-                  aria-pressed={selected === region.id}
-                  onClick={() => onSelect(region.id)}
-                  onFocus={() => onHover(region.id)}
-                  onBlur={() => onHover(null)}
-                  className="min-w-0 flex-1 cursor-pointer truncate text-left text-sm font-medium outline-none after:absolute after:inset-0"
-                >
-                  {name(region.name)}
-                </button>
-                <span className="numeric text-xs text-muted-foreground">
-                  {total > 0 ? Math.round((done / total) * 100) : 0}%
-                </span>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      size="icon-xs"
-                      variant="ghost"
-                      aria-label={`Change ${name(region.name)}`}
-                      disabled={busy}
-                      className="relative z-10"
-                    >
-                      <MoreHorizontal />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="min-w-56">
-                    <DropdownMenuLabel>{name(region.name)}</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {actions
-                      .filter((action) => action.target.some((place) => place.done !== action.done))
-                      .map((action) => (
-                        <DropdownMenuItem
-                          key={action.label}
-                          onSelect={() => {
-                            if (!action.done || !ask(action.target)) onApply(action.target, action.done);
-                          }}
-                        >
-                          {action.label}
-                        </DropdownMenuItem>
-                      ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                {region.missions.map((mission) => (
-                  <span key={mission.kind} className={cn(mission.done === mission.total && 'text-foreground')}>
-                    {MISSIONS[mission.kind] ?? mission.kind}{' '}
-                    <span className="numeric">
-                      {mission.done}/{mission.total}
-                    </span>
+            <li key={region.id} className={cn('border-l-2 border-transparent', open && 'border-l-brand bg-accent/40')}>
+              <button
+                type="button"
+                aria-expanded={open}
+                onClick={() => onSelect(region.id)}
+                className="block w-full px-4 py-2.5 text-left outline-none hover:bg-accent/40 focus-visible:bg-accent/40"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium">{name(region.name)}</span>
+                  <span className="numeric text-xs text-muted-foreground">
+                    {total > 0 ? Math.round((done / total) * 100) : 0}%
                   </span>
-                ))}
-              </div>
+                </span>
+                {!open && (
+                  <span className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                    {region.missions.map((mission) => (
+                      <span key={mission.kind} className={cn(mission.done === mission.total && 'text-foreground')}>
+                        {MISSIONS[mission.kind] ?? mission.kind}{' '}
+                        <span className="numeric">
+                          {mission.done}/{mission.total}
+                        </span>
+                      </span>
+                    ))}
+                  </span>
+                )}
+              </button>
+              {open && (
+                // Each of the region's kinds of place: how many are done, and doing the rest.
+                <ul className="space-y-1 px-4 pb-3">
+                  {region.missions.map((mission) => {
+                    const step = STEPS[mission.kind];
+                    const target = step ? here(step.layer) : [];
+                    const left = target.filter((place) => !place.done);
+                    const doneHere = target.filter((place) => place.done);
+                    return (
+                      <li key={mission.kind} className="flex h-8 items-center gap-2 text-xs">
+                        <span className="grid size-6 shrink-0 place-items-center">
+                          {step?.layer === 'chest' ? (
+                            <span aria-hidden className="size-2.5 rounded-full bg-[#ffb02e] ring-1 ring-black/30" />
+                          ) : step ? (
+                            <img src={markImage(`${step.layer}-done`)} alt="" className="size-6" />
+                          ) : null}
+                        </span>
+                        <span
+                          className={cn(
+                            'min-w-0 flex-1 truncate',
+                            mission.done < mission.total && 'text-muted-foreground',
+                          )}
+                        >
+                          {MISSIONS[mission.kind] ?? mission.kind}
+                        </span>
+                        <span className="numeric text-muted-foreground">
+                          {mission.done}/{mission.total}
+                        </span>
+                        {step && left.length > 0 && (
+                          <Button
+                            size="xs"
+                            variant="outline"
+                            disabled={busy}
+                            onClick={() => {
+                              if (!ask(left)) onApply(left, true);
+                            }}
+                          >
+                            {step.label}
+                          </Button>
+                        )}
+                        {step && allowUndo && doneHere.length > 0 && (
+                          <Button size="xs" variant="ghost" disabled={busy} onClick={() => onApply(doneHere, false)}>
+                            Undo
+                          </Button>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </li>
           );
         })}
