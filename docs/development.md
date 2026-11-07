@@ -140,7 +140,7 @@ The JSON files in `crates/core/data` are embedded at compile time with `include_
 
 ## Releasing
 
-`.github/workflows/release.yml` builds the Windows NSIS setup (`.exe`), the MSI and a portable `.zip` of the app's exe on a Windows runner and publishes them on a GitHub release as `dragonsword-save-editor-<tag>-windows-x64-setup.exe`, `.msi` and `.zip`, with `SHA256SUMS` (and build provenance while the repository is public). mise's github backend installs the `.zip`: it never picks installers, and it reads the platform from `windows` and `x64` in the name.
+`.github/workflows/release.yml` builds the Windows NSIS setup (`.exe`), the MSI and a portable `.zip` of the app's exe on a Windows runner and publishes them on a GitHub release as `dragonsword-save-editor-<tag>-windows-x64-setup.exe`, `.msi` and `.zip`, with build provenance while the repository is public. GitHub shows each file's SHA-256 on the release page, so the release carries no checksum file. mise's github backend installs the `.zip`: it never picks installers, and it reads the platform from `windows` and `x64` in the name.
 1. Set the version in `[workspace.package]` in `Cargo.toml` (the installers take it from there) and in both `package.json` files, and merge that to `main`. The workflow refuses a tag that does not match `Cargo.toml`.
 2. Tag the commit with the release notes in the tag message: the first line is the title, the rest becomes the release notes. `--cleanup=verbatim` keeps Markdown headings.
 

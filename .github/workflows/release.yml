@@ -1,8 +1,8 @@
 name: Release
 
 # Pushing a tag like v0.1.0 builds the Windows installers (NSIS setup and MSI)
-# and publishes them as a GitHub release with checksums (and build provenance
-# while the repository is public). Running it by hand builds the same files as
+# and publishes them as a GitHub release (with build provenance while the
+# repository is public). Running it by hand builds the same files as
 # workflow artifacts, without a release; given an existing tag, it builds that
 # tag's source with this workflow and replaces the tag's release, so older
 # releases can follow the current file names and notes.
@@ -123,9 +123,6 @@ jobs:
         with:
           path: dist
           merge-multiple: true
-      - name: Checksums
-        working-directory: dist
-        run: sha256sum -- * > SHA256SUMS
       # Attestations need a public repository (or GitHub Enterprise).
       - uses: actions/attest-build-provenance@v4
         if: ${{ !github.event.repository.private }}
@@ -164,11 +161,10 @@ jobs:
             echo "| \`$name-setup.exe\` | Windows setup program, for the current user or all users |"
             echo "| \`$name.msi\` | Windows MSI package, for all users and managed installs |"
             echo "| \`$name.zip\` | Portable: the app on its own, to run without installing |"
-            echo "| \`SHA256SUMS\` | SHA-256 checksums of the files above |"
             echo
             echo "The installers are not code-signed, so Windows SmartScreen may warn before the first run."
             echo
-            echo "Check a download with \`sha256sum --check --ignore-missing SHA256SUMS\`."
+            echo "GitHub shows each file's SHA-256 beside it on this page."
             if [ "$PUBLIC" = true ]; then
               echo "Check where it was built with \`gh attestation verify <file> --repo $GITHUB_REPOSITORY\`."
             fi
