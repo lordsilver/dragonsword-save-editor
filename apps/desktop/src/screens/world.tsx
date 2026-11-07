@@ -714,6 +714,15 @@ function Marker({
       )}
       style={{ ...style, transform }}
     >
+      {/* The dark disc with a white ring the game draws under the selected marker (Frame_Map_02). */}
+      {selected && (
+        <img
+          src={markImage('selected')}
+          alt=""
+          draggable={false}
+          className="pointer-events-none col-start-1 row-start-1 size-[3.25rem] max-w-none"
+        />
+      )}
       {/* The game's own marker, about as large on screen as the game draws it (DUWG_MapPointIcon:
           an 85-unit box at 1.3×), blue once done and grey before. */}
       <img
@@ -722,15 +731,6 @@ function Marker({
         draggable={false}
         className="pointer-events-none col-start-1 row-start-1 size-11"
       />
-      {/* The frame the game draws around the selected marker (Frame_Map_01). */}
-      {selected && (
-        <img
-          src={markImage('selected')}
-          alt=""
-          draggable={false}
-          className="pointer-events-none col-start-1 row-start-1 size-12"
-        />
-      )}
     </button>
   );
 }

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Write the World map screen's markers, apps/desktop/src/assets/map-mark-*.webp,
 // from the game's map icons (Art/UI/InGame/Common/Mark/Icon_Mark_* in the
-// 2D-art export in <assets-dir>, docs/game-assets.md), and the frame the game
-// draws around the selected marker (Art/UI/InGame/Frame/Frame_Map_01) as
-// map-mark-selected.webp. They are kept at 128 pixels, so that they stay sharp
+// 2D-art export in <assets-dir>, docs/game-assets.md), and the dark disc with a
+// white ring the game draws under the selected marker
+// (Art/UI/InGame/Frame/Frame_Map_02) as map-mark-selected.webp. They are kept at 128 pixels, so that they stay sharp
 // at the size the game draws them.
 //
 // Usage: node scripts/gen-map-marks.mjs <assets-dir>
@@ -49,7 +49,7 @@ const MARKS = {
   dungeon: [`${MARK}/Icon_Mark_Dungeon_Single`, NOT_DONE],
   'dungeon-done': [`${MARK}/Icon_Mark_Dungeon_Single`, DONE],
   chest: [`${MARK}/Icon_Mark_Box_png`, null],
-  selected: ['Art/UI/InGame/Frame/Frame_Map_01', null],
+  selected: ['Art/UI/InGame/Frame/Frame_Map_02', null],
 };
 
 /** The texture scaled to 128 px and tinted: each pixel's brightness, relative to the glyph's, times the colour. */
