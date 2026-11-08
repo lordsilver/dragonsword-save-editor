@@ -109,6 +109,8 @@ export interface AppState {
   titles: TitleEntry[];
   recipes: Recipe[];
   world: WorldView | null;
+  /** The world as the save file has it: read while there were no unsaved edits, and again after saving. */
+  worldSaved: WorldView | null;
   questLog: QuestEntry[] | null;
   rawTables: RawTable[];
   rawPage: RawPage | null;
@@ -245,6 +247,7 @@ function initialState(): AppState {
     titles: [],
     recipes: [],
     world: null,
+    worldSaved: null,
     questLog: null,
     rawTables: [],
     rawPage: null,
@@ -396,6 +399,8 @@ export const useApp = create<Store>((set, get) => {
             dirty: false,
             draftCount: 0,
             changes: {},
+            world: null,
+            worldSaved: null,
             section: 'overview',
             overview: null,
             currencies: [],
@@ -414,6 +419,8 @@ export const useApp = create<Store>((set, get) => {
           });
           await get().setSettings({ lastFolder: folder });
           await get().loadSection('overview');
+          // What the file holds, so the World map can mark places changed since.
+          await get().loadWorld();
           toast.success(`Opened slot ${save.slot} of account ${save.accountId}`);
           for (const warning of save.warnings ?? []) {
             toast.warning(warning, { duration: 15000 });
@@ -444,7 +451,16 @@ export const useApp = create<Store>((set, get) => {
       try {
         await enqueue('Closing save', async () => {
           await api.closeSave();
-          set({ save: null, dirty: false, draftCount: 0, changes: {}, overview: null, section: 'overview' });
+          set({
+            save: null,
+            dirty: false,
+            draftCount: 0,
+            changes: {},
+            world: null,
+            worldSaved: null,
+            overview: null,
+            section: 'overview',
+          });
           if (refresh) await get().refreshScan(get().settings.lastFolder ?? undefined);
         });
       } catch (error) {
@@ -472,12 +488,13 @@ export const useApp = create<Store>((set, get) => {
             return true;
           }
           const report = await api.writeSave();
-          set({
+          set((state) => ({
             dirty: false,
             draftCount: 0,
             changes: {},
             save: { ...current, dirty: false, consistency: report.consistency },
-          });
+            worldSaved: state.world,
+          }));
           toast.success(report.backup ? `Save written. Backup kept at ${report.backup}` : 'Save written.', {
             duration: 8000,
           });
@@ -682,7 +699,8 @@ export const useApp = create<Store>((set, get) => {
     },
 
     async loadWorld() {
-      await read(api.world, (world) => set({ world }));
+      // Read with no unsaved edits, the world is also what the file holds.
+      await read(api.world, (world) => set((state) => (state.dirty ? { world } : { world, worldSaved: world })));
     },
 
     async loadQuestLog() {

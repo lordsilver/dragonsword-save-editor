@@ -14,6 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { formatNumber, itemName, useApp } from '@/lib/store';
@@ -56,6 +57,8 @@ interface Place {
   across: number;
   down: number;
   done: boolean;
+  /** Done or undone since the save file was last written: an unsaved change. */
+  unsaved?: boolean;
   waypoint?: WaypointView;
   dungeon?: DungeonView;
   chest?: ChestView;
@@ -220,6 +223,7 @@ function rewardText(place: Place, language: string): string | null {
 
 export function WorldScreen() {
   const world = useApp((state) => state.world);
+  const worldSaved = useApp((state) => state.worldSaved);
   const save = useApp((state) => state.save);
   const language = useApp((state) => state.settings.language);
   const pending = useApp((state) => state.pending);
@@ -240,7 +244,17 @@ export function WorldScreen() {
   const mapped = world?.worlds.filter((entry) => entry.map && MAPS[`../assets/world-map-${entry.id}.webp`]) ?? [];
   const shown = mapped.find((entry) => entry.id === worldId) ?? mapped[0] ?? null;
   const map = shown?.map ?? null;
-  const places = useMemo(() => (world && shown && map ? placesOf(world, shown.id, map) : []), [world, shown, map]);
+  const places = useMemo(() => {
+    if (!world || !shown || !map) return [];
+    // Each place against the file, as a source-control view marks modified files.
+    const saved = worldSaved
+      ? new Map(placesOf(worldSaved, shown.id, map).map((place) => [place.key, place.done]))
+      : null;
+    return placesOf(world, shown.id, map).map((place) => ({
+      ...place,
+      unsaved: saved?.has(place.key) === true && saved.get(place.key) !== place.done,
+    }));
+  }, [world, worldSaved, shown, map]);
   const regions = useMemo(() => world?.regions.filter((region) => region.world === shown?.id) ?? [], [world, shown]);
   const labels = useMemo<Label[]>(
     () =>
@@ -845,12 +859,13 @@ function Marker({
         title={`${place.name.en}${place.done ? ' (opened)' : ''}`}
         className={cn(
           'absolute size-2.5 rounded-full ring-1 ring-black/45 transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-white',
+          place.unsaved && 'ring-2 ring-brand',
           selected && 'z-10 ring-2 ring-white',
         )}
         style={{
           ...style,
           transform,
-          opacity: place.done ? 0.35 : 1,
+          opacity: place.done && !place.unsaved ? 0.35 : 1,
           backgroundColor: GRADE_DOT[place.chest.grade] ?? GRADE_DOT.normal,
         }}
       />
@@ -861,8 +876,8 @@ function Marker({
       type="button"
       data-place={place.key}
       onKeyDown={onKeyDown}
-      aria-label={`${place.name.en}${place.done ? '' : ', not done'}`}
-      title={place.name.en}
+      aria-label={`${place.name.en}${place.done ? '' : ', not done'}${place.unsaved ? ', not saved' : ''}`}
+      title={place.unsaved ? `${place.name.en} (not saved)` : place.name.en}
       className={cn(
         'absolute z-[1] grid size-11 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-white',
         selected && 'z-10',
@@ -872,7 +887,21 @@ function Marker({
       {/* The game's own marker, about as large on screen as the game draws it (DUWG_MapPointIcon:
           an 85-unit box at 1.3×), periwinkle once done and grey before, on its solid rim. */}
       <MarkerArt src={markImage(markOf(place))} selected={selected} pin={place.layer in MARK_LIFT} />
+      {place.unsaved && <UnsavedDot className="absolute top-0.5 right-0.5" />}
     </button>
+  );
+}
+
+/** The mark of an unsaved change, in the colour the status bar and the Save button use for one. */
+function UnsavedDot({ className }: { className?: string }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        'pointer-events-none size-2.5 rounded-full bg-brand shadow-[0_0_6px_var(--brand)] ring-2 ring-[#0b2a22]',
+        className,
+      )}
+    />
   );
 }
 
@@ -1086,6 +1115,11 @@ function PlaceCard({
               {regionName ? name(regionName) : 'Outside the counted regions'} ·{' '}
               <span className="numeric">#{place.id}</span>
             </p>
+            {place.unsaved && (
+              <Badge variant="outline" className="mt-1.5 border-brand/50 text-brand">
+                Not saved
+              </Badge>
+            )}
           </div>
           <Button size="xs" variant="ghost" onClick={onClose}>
             Close
@@ -1316,6 +1350,7 @@ function RegionList({
           const done = region.missions.reduce((sum, mission) => sum + mission.done, 0);
           const total = region.missions.reduce((sum, mission) => sum + mission.total, 0);
           const here = (layer: Layer) => places.filter((place) => place.layer === layer && place.region === region.id);
+          const unsavedHere = places.filter((place) => place.unsaved && place.region === region.id).length;
           // Opening chests and activating warp points hand out rewards, so a whole region asks first.
           const ask = (target: Place[]): boolean => {
             const left = target.filter((place) => !place.done).length;
@@ -1357,6 +1392,15 @@ function RegionList({
               >
                 <span className="flex items-center gap-2">
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">{name(region.name)}</span>
+                  {unsavedHere > 0 && (
+                    <span
+                      className="flex items-center gap-1 text-xs text-brand"
+                      title={`${unsavedHere} unsaved ${unsavedHere === 1 ? 'change' : 'changes'}`}
+                    >
+                      <UnsavedDot />
+                      <span className="numeric">{unsavedHere}</span>
+                    </span>
+                  )}
                   <span className="numeric text-xs text-muted-foreground">
                     {total > 0 ? Math.round((done / total) * 100) : 0}%
                   </span>

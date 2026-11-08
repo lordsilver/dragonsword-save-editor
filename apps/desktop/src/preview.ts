@@ -44,6 +44,52 @@ const fixture: Fixture = await fetch(
   `/__preview/fixture.json?name=${encodeURIComponent(params.get('fixture') ?? 'fixture')}`,
 ).then((response) => response.json());
 
+/**
+ * The World map's edits, kept in the recording so they show and stay until
+ * "saved", as in the app: a place's done state, and whether the session has
+ * unsaved changes. Other edits still do nothing.
+ */
+let previewDirty = false;
+function worldEdit(kind: string, ids: number[], done: boolean): number {
+  const world = fixture.world_get as {
+    waypoints: Array<{
+      id: number;
+      active: boolean;
+      statue: { id: number; restored: boolean; found: number; pieces: number } | null;
+    }>;
+    dungeons: Array<{ id: number; found: boolean }>;
+    chests: Array<{ id: number; opened: boolean; released: boolean }>;
+  };
+  const chosen = new Set(ids);
+  let changed = 0;
+  for (const waypoint of world.waypoints) {
+    if (kind === 'waypoint' && chosen.has(waypoint.id) && waypoint.active !== done) {
+      waypoint.active = done;
+      changed += 1;
+    }
+    if (kind === 'statue' && waypoint.statue && chosen.has(waypoint.statue.id) && waypoint.statue.restored !== done) {
+      waypoint.statue = { ...waypoint.statue, restored: done, found: done ? waypoint.statue.pieces : 0 };
+      waypoint.active = done;
+      changed += 1;
+    }
+  }
+  for (const dungeon of world.dungeons) {
+    if (kind === 'dungeon' && chosen.has(dungeon.id) && dungeon.found !== done) {
+      dungeon.found = done;
+      changed += 1;
+    }
+  }
+  for (const chest of world.chests) {
+    if (kind === 'chest' && chosen.has(chest.id) && chest.opened !== done) {
+      chest.opened = done;
+      chest.released ||= done;
+      changed += 1;
+    }
+  }
+  if (changed > 0) previewDirty = true;
+  return changed;
+}
+
 mockWindows('main');
 mockIPC(
   (command, args) => {
@@ -57,6 +103,21 @@ mockIPC(
       return (fixture[command] as Record<string, unknown> | undefined)?.[id] ?? [];
     }
     if (command === 'slots_scan') return { roots: [], slots: [] };
+    if (command === 'world_places_complete' || command === 'world_places_undo') {
+      const { kind, ids } = args as { kind: string; ids: number[] };
+      const done = worldEdit(kind, ids, command === 'world_places_complete');
+      return command === 'world_places_undo'
+        ? done
+        : { done, alreadyDone: ids.length - done, grant: { granted: [], notGranted: [] }, levelsGained: 0 };
+    }
+    // A copy, as the app gets from the backend: the World map keeps the last saved one to compare with.
+    if (command === 'world_get') return structuredClone(fixture.world_get);
+    if (command === 'save_current') return { ...(fixture.save_current as object), dirty: previewDirty };
+    if (command === 'save_write') {
+      previewDirty = false;
+      const current = fixture.save_current as { path?: string; consistency?: unknown };
+      return { backup: null, bytes: 0, path: current.path ?? '', consistency: current.consistency };
+    }
     if (command in fixture) return fixture[command];
     if (params.has('trace') && !command.startsWith('plugin:')) report(`unrecorded command: ${command}`);
     return null;

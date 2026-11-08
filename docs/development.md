@@ -46,7 +46,7 @@ cargo run -p dsa-core --example preview_fixture -- /path/to/copy/1000_Slot3.db /
 DSA_PREVIEW_FIXTURE=/tmp/fixtures pnpm preview:ui
 ```
 
-Open `http://127.0.0.1:1421/preview.html`. `DSA_PREVIEW_FIXTURE` names one recording or a folder of them; query parameters pick the recording (`fixture=<name>`, default `fixture`), the screen (`section=characters`), the hero (`hero=10001`) and the theme (`theme=light`), and `trace` lists commands the recording does not answer. Read commands replay the recording and edits do nothing. The example only reads the save, but record a copy anyway. Headless Chrome needs `--virtual-time-budget=10000` rather than `--timeout`, which stops the page before it loads the recording.
+Open `http://127.0.0.1:1421/preview.html`. `DSA_PREVIEW_FIXTURE` names one recording or a folder of them; query parameters pick the recording (`fixture=<name>`, default `fixture`), the screen (`section=characters`), the hero (`hero=10001`) and the theme (`theme=light`), and `trace` lists commands the recording does not answer. Read commands replay the recording. Edits do nothing, except that the World map's are kept in memory until Save, so its unsaved-change marks can be tried; the region counts do not follow them. The example only reads the save, but record a copy anyway. Headless Chrome needs `--virtual-time-budget=10000` rather than `--timeout`, which stops the page before it loads the recording.
 
 ## Checks
 
