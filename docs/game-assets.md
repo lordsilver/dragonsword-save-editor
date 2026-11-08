@@ -46,7 +46,7 @@ dotnet DsaExport.dll dump "C:\Games\DragonSword Awakening" <tools-dir> <dump-dir
 dotnet DsaExport.dll export "C:\Games\DragonSword Awakening" <tools-dir> <tiles-dir> /Game/Design/CaptureMinimap/Export/
 ```
 
-where `maps.txt` lists `DS/Content/Design/CaptureMinimap/Data/WorldMapData_100.uasset` and `WorldMapData_200.uasset`. The game's notes below come from an export of the map widget and its data on 2026-11-07 (`docs/exports/world-map/`).
+where `maps.txt` lists `DS/Content/Design/CaptureMinimap/Data/WorldMapData_100.uasset` and `WorldMapData_200.uasset`. Orbis's 16 textures are BC7, and DsaExport's BC7 decoder (Detex) rounds about one pixel in twenty a level away from the BC7 specification, so the committed image is built from a spec decode of them instead (`docs/exports/map-tiles/scripts/spec_decode.py`); Belos's are stored uncompressed and export exactly. The textures hold a single mip each, so these PNGs are the most detail the game has; the image is written lossless from them. The game's notes below come from an export of the map widget and its data on 2026-11-07 (`docs/exports/world-map/`).
 
 A world's map is its `DWorldMapData` asset, `Design/CaptureMinimap/Data/WorldMapData_<world>`. `MapTexturePath` names the capture, `MapTextureCount` × `MapTextureCount` textures `<prefix>_<a>_<b>` in `Design/CaptureMinimap/Export/`, and the map widget (`UI/Layer/DLayerMap`, a grid of images that fills its map square) stretches them over a square of `MapDimensions` world units centred on (`MapDimensionsCenterX`, `MapDimensionsCenterY`). World point (X, Y) is at ((X − x0) / size, (Y − y0) / size) of the image, across and down, with x0 = CenterX − size / 2 and y0 = CenterY − size / 2:
 

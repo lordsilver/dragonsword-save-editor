@@ -1,0 +1,390 @@
+RTM_W1_world_01_main_WP_0_0: PF_BC7, 1024x1024, first mip index 0
+  mip 0: 1024x1024 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 1048576 sizeOnDisk 1048576 offset 115 data 1048576
+  prop ImportedSize = X: 1024, Y: 1024 (FIntPoint)
+  prop LightingGuid = 32F7AC7743DB35FAB51240A905D54E77 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+RTM_W1_world_01_main_WP_0_1: PF_BC7, 1024x1024, first mip index 0
+  mip 0: 1024x1024 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 1048576 sizeOnDisk 1048576 offset 115 data 1048576
+  prop ImportedSize = X: 1024, Y: 1024 (FIntPoint)
+  prop LightingGuid = CFEF8B0A42A6C36E0D43DAB99370DB98 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+RTM_W1_world_01_main_WP_0_2: PF_BC7, 1024x1024, first mip index 0
+  mip 0: 1024x1024 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 1048576 sizeOnDisk 1048576 offset 115 data 1048576
+  prop ImportedSize = X: 1024, Y: 1024 (FIntPoint)
+  prop LightingGuid = 10F5C27C46A054C587651D8EB0DAFFEE (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+RTM_W1_world_01_main_WP_0_3: PF_BC7, 1024x1024, first mip index 0
+  mip 0: 1024x1024 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 1048576 sizeOnDisk 1048576 offset 115 data 1048576
+  prop ImportedSize = X: 1024, Y: 1024 (FIntPoint)
+  prop LightingGuid = 8D3AE8294EB17A25173FE5BB1D454BCE (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+RTM_W1_world_01_main_WP_1_0: PF_BC7, 1024x1024, first mip index 0
+  mip 0: 1024x1024 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 1048576 sizeOnDisk 1048576 offset 115 data 1048576
+  prop ImportedSize = X: 1024, Y: 1024 (FIntPoint)
+  prop LightingGuid = 3E04AF4345C45D8BD29EA48FD58E99AF (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+RTM_W1_world_01_main_WP_1_1: PF_BC7, 1024x1024, first mip index 0
+  mip 0: 1024x1024 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 1048576 sizeOnDisk 1048576 offset 115 data 1048576
+  prop ImportedSize = X: 1024, Y: 1024 (FIntPoint)
+  prop LightingGuid = 2EC0215A483E9EAF7EFB88AC5097EADE (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+RTM_W1_world_01_main_WP_1_2: PF_BC7, 1024x1024, first mip index 0
+  mip 0: 1024x1024 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 1048576 sizeOnDisk 1048576 offset 115 data 1048576
+  prop ImportedSize = X: 1024, Y: 1024 (FIntPoint)
+  prop LightingGuid = FEDE6B6A4DB3BEB8EED5058C7610343F (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+RTM_W1_world_01_main_WP_1_3: PF_BC7, 1024x1024, first mip index 0
+  mip 0: 1024x1024 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 1048576 sizeOnDisk 1048576 offset 115 data 1048576
+  prop ImportedSize = X: 1024, Y: 1024 (FIntPoint)
+  prop LightingGuid = F21623624BAAE3AF1CD9C2B662004710 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+RTM_W1_world_01_main_WP_2_0: PF_BC7, 1024x1024, first mip index 0
+  mip 0: 1024x1024 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 1048576 sizeOnDisk 1048576 offset 115 data 1048576
+  prop ImportedSize = X: 1024, Y: 1024 (FIntPoint)
+  prop LightingGuid = EAB67F6348379A0E64E48DA84A2D6200 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+RTM_W1_world_01_main_WP_2_1: PF_BC7, 1024x1024, first mip index 0
+  mip 0: 1024x1024 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 1048576 sizeOnDisk 1048576 offset 115 data 1048576
+  prop ImportedSize = X: 1024, Y: 1024 (FIntPoint)
+  prop LightingGuid = 9C36F3A9420591ED2FF63DB37A20CEED (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+RTM_W1_world_01_main_WP_2_2: PF_BC7, 1024x1024, first mip index 0
+  mip 0: 1024x1024 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 1048576 sizeOnDisk 1048576 offset 115 data 1048576
+  prop ImportedSize = X: 1024, Y: 1024 (FIntPoint)
+  prop LightingGuid = 143101524FDB0E480A54158626E8EAB0 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+RTM_W1_world_01_main_WP_2_3: PF_BC7, 1024x1024, first mip index 0
+  mip 0: 1024x1024 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 1048576 sizeOnDisk 1048576 offset 115 data 1048576
+  prop ImportedSize = X: 1024, Y: 1024 (FIntPoint)
+  prop LightingGuid = 63D858CD4B91634BBE6FDD8A0BB9E229 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+RTM_W1_world_01_main_WP_3_0: PF_BC7, 1024x1024, first mip index 0
+  mip 0: 1024x1024 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 1048576 sizeOnDisk 1048576 offset 115 data 1048576
+  prop ImportedSize = X: 1024, Y: 1024 (FIntPoint)
+  prop LightingGuid = 3CB3CA2A45A4AF928ABBC4B72715845A (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+RTM_W1_world_01_main_WP_3_1: PF_BC7, 1024x1024, first mip index 0
+  mip 0: 1024x1024 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 1048576 sizeOnDisk 1048576 offset 115 data 1048576
+  prop ImportedSize = X: 1024, Y: 1024 (FIntPoint)
+  prop LightingGuid = 5A7DB17D4FBC07E9D44746A70EE49BE3 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+RTM_W1_world_01_main_WP_3_2: PF_BC7, 1024x1024, first mip index 0
+  mip 0: 1024x1024 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 1048576 sizeOnDisk 1048576 offset 115 data 1048576
+  prop ImportedSize = X: 1024, Y: 1024 (FIntPoint)
+  prop LightingGuid = B31A8ECC4A8A2ADD3A781DBC2CFC633D (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+RTM_W1_world_01_main_WP_3_3: PF_BC7, 1024x1024, first mip index 0
+  mip 0: 1024x1024 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 1048576 sizeOnDisk 1048576 offset 115 data 1048576
+  prop ImportedSize = X: 1024, Y: 1024 (FIntPoint)
+  prop LightingGuid = 5DAC934D452341AE3984E4A4087743BC (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+RTM_W2_102_world_02_main_wp_0_0: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = DF42D8EE4912B9EA324285A74B1BD9E1 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_103_world_02_main_wp_0_0: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = 22AA2B4B46B6FE738A429D91C13C7C30 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_104_world_02_main_wp_0_0: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = A04998D54432F28911D6C7B59C42519F (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_105_world_02_main_wp_0_0: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = 40FFDF30467E7906AA341D9765D7B147 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_106_world_02_main_wp_0_0: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = FDE99345434837C1A01902835B2B808C (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_107_world_02_main_wp_0_0: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = 51934AAC4B4AC3A12EDB2EA5BA446955 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_108_world_02_main_wp_0_0: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = E6788D0C45E420873E65C7A1F96CC0C4 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_109_world_02_main_wp_0_0: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = 91646BEA4E5100180F8833857313436D (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_110_world_02_main_wp_0_0: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = ED237E144159546A001E71910716ED89 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_111_world_02_main_wp_0_0: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = D97AB2EF4B1193E2A1AEDC9FB1355B15 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_1_world_02_main_wp_0_0: PF_B8G8R8A8, 769x765, first mip index 0
+  mip 0: 769x765 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 2353140 sizeOnDisk 2353140 offset 123 data 2353140
+  prop ImportedSize = X: 769, Y: 765 (FIntPoint)
+  prop LightingGuid = 66E5A0DC4EBA5E2E31D8178EE23D360E (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_1_world_02_main_wp_0_1: PF_B8G8R8A8, 769x765, first mip index 0
+  mip 0: 769x765 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 2353140 sizeOnDisk 2353140 offset 123 data 2353140
+  prop ImportedSize = X: 769, Y: 765 (FIntPoint)
+  prop LightingGuid = 4AD5453443807CD3AA492F9C4B657F69 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_1_world_02_main_wp_0_2: PF_B8G8R8A8, 769x765, first mip index 0
+  mip 0: 769x765 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 2353140 sizeOnDisk 2353140 offset 123 data 2353140
+  prop ImportedSize = X: 769, Y: 765 (FIntPoint)
+  prop LightingGuid = C34CE39D4983B567EE9784A562652742 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_1_world_02_main_wp_0_3: PF_B8G8R8A8, 765x765, first mip index 0
+  mip 0: 765x765 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 2340900 sizeOnDisk 2340900 offset 123 data 2340900
+  prop ImportedSize = X: 765, Y: 765 (FIntPoint)
+  prop LightingGuid = E70093BF4D8BB607398D3EA99A0D75AF (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_1_world_02_main_wp_1_0: PF_B8G8R8A8, 769x769, first mip index 0
+  mip 0: 769x769 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 2365444 sizeOnDisk 2365444 offset 123 data 2365444
+  prop ImportedSize = X: 769, Y: 769 (FIntPoint)
+  prop LightingGuid = 87C4339B4AF3D2460033AB857BF15643 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_1_world_02_main_wp_1_1: PF_B8G8R8A8, 769x769, first mip index 0
+  mip 0: 769x769 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 2365444 sizeOnDisk 2365444 offset 123 data 2365444
+  prop ImportedSize = X: 769, Y: 769 (FIntPoint)
+  prop LightingGuid = 307C31A8442EAA206A8137B62B0C6D01 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_1_world_02_main_wp_1_2: PF_B8G8R8A8, 769x769, first mip index 0
+  mip 0: 769x769 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 2365444 sizeOnDisk 2365444 offset 123 data 2365444
+  prop ImportedSize = X: 769, Y: 769 (FIntPoint)
+  prop LightingGuid = 0521D9F04102730E78309EAD7168942D (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_1_world_02_main_wp_1_3: PF_B8G8R8A8, 765x769, first mip index 0
+  mip 0: 765x769 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 2353140 sizeOnDisk 2353140 offset 123 data 2353140
+  prop ImportedSize = X: 765, Y: 769 (FIntPoint)
+  prop LightingGuid = A753E935454F0302A0E1E7820CAE48A6 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_1_world_02_main_wp_2_0: PF_B8G8R8A8, 769x769, first mip index 0
+  mip 0: 769x769 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 2365444 sizeOnDisk 2365444 offset 123 data 2365444
+  prop ImportedSize = X: 769, Y: 769 (FIntPoint)
+  prop LightingGuid = 48C39DAB4F96C5269A5A83A50D378F9E (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_1_world_02_main_wp_2_1: PF_B8G8R8A8, 769x769, first mip index 0
+  mip 0: 769x769 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 2365444 sizeOnDisk 2365444 offset 123 data 2365444
+  prop ImportedSize = X: 769, Y: 769 (FIntPoint)
+  prop LightingGuid = 5269A0B3456233D34452FA92AC64EA8A (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_1_world_02_main_wp_2_2: PF_B8G8R8A8, 769x769, first mip index 0
+  mip 0: 769x769 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 2365444 sizeOnDisk 2365444 offset 123 data 2365444
+  prop ImportedSize = X: 769, Y: 769 (FIntPoint)
+  prop LightingGuid = D5280F2A471F9EBF839C16B3E919F6C3 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_1_world_02_main_wp_2_3: PF_B8G8R8A8, 765x769, first mip index 0
+  mip 0: 765x769 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 2353140 sizeOnDisk 2353140 offset 123 data 2353140
+  prop ImportedSize = X: 765, Y: 769 (FIntPoint)
+  prop LightingGuid = 71D3A4DC4DEA520916386986F53FC160 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_1_world_02_main_wp_3_0: PF_B8G8R8A8, 769x769, first mip index 0
+  mip 0: 769x769 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 2365444 sizeOnDisk 2365444 offset 123 data 2365444
+  prop ImportedSize = X: 769, Y: 769 (FIntPoint)
+  prop LightingGuid = 6F8CA25D49B7D7902BF49DA5AA38C1C2 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_1_world_02_main_wp_3_1: PF_B8G8R8A8, 769x769, first mip index 0
+  mip 0: 769x769 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 2365444 sizeOnDisk 2365444 offset 123 data 2365444
+  prop ImportedSize = X: 769, Y: 769 (FIntPoint)
+  prop LightingGuid = 84EB5FDD4251DD6662635B9E67135288 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_1_world_02_main_wp_3_2: PF_B8G8R8A8, 769x769, first mip index 0
+  mip 0: 769x769 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 2365444 sizeOnDisk 2365444 offset 123 data 2365444
+  prop ImportedSize = X: 769, Y: 769 (FIntPoint)
+  prop LightingGuid = 951D13C74FFD50E7FEC8DE8C6B7CFBBD (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_1_world_02_main_wp_3_3: PF_B8G8R8A8, 765x769, first mip index 0
+  mip 0: 765x769 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 2353140 sizeOnDisk 2353140 offset 123 data 2353140
+  prop ImportedSize = X: 765, Y: 769 (FIntPoint)
+  prop LightingGuid = 776B3EB9492045223C7D38BF8DC3C1B5 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_World_02_Dummy1_WP_0_0: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = 07972BE84086A17AA36E68B72B572985 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_World_02_Dummy1_WP_0_1: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = 1DDEFF4B4117E261266E9D899BF97B34 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_World_02_Dummy1_WP_0_2: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = 25FF8A6C467EE2890D4A4EB74C2063EA (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_World_02_Dummy1_WP_0_3: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = FADEEA0C46353F4B3741C7B6670FC167 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_World_02_Dummy1_WP_1_0: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = 4F3E07FB45B4FDCAE0D5D4A9ED94578E (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_World_02_Dummy1_WP_1_1: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = 02F0EC5C42EF349623D6B8BE570739ED (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_World_02_Dummy1_WP_1_2: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = AA200E8949A9921C4E7210A606E590FB (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_World_02_Dummy1_WP_1_3: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = 7A1DA0234F94AB896F242B8596BBF451 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_World_02_Dummy1_WP_2_0: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = DFC360604DD6BE09B1ADC39528EB7ACB (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_World_02_Dummy1_WP_2_1: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = 6B11BAA246F3CB3308BF6DAB8892DDF1 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_World_02_Dummy1_WP_2_2: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = 6FB01967440B777984ABA9B4F0FD7AD5 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_World_02_Dummy1_WP_2_3: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = 98037D9F448B7805727897B216789C19 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_World_02_Dummy1_WP_3_0: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = A144C75D4EB0F9BE41A0C2B4D6204F51 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_World_02_Dummy1_WP_3_1: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = 13D71E72470ABA71A342D9A488BD8ADD (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_World_02_Dummy1_WP_3_2: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = 7DF321E243CD18B75AC83FB6A0A39AD0 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
+RTM_W2_World_02_Dummy1_WP_3_3: PF_BC7, 3072x3072, first mip index 0
+  mip 0: 3072x3072 flags BULKDATA_SingleUse, BULKDATA_ForceInlinePayload elements 9437184 sizeOnDisk 9437184 offset 118 data 9437184
+  prop ImportedSize = X: 3072, Y: 3072 (FIntPoint)
+  prop LightingGuid = 81634CBF4737AD44DEA90295E38C0EF9 (FGuid)
+  prop CompressionSettings = TextureCompressionSettings::TC_BC7
+  prop LODGroup = TextureGroup::TEXTUREGROUP_UI
+  prop NeverStream = True
