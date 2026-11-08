@@ -3,6 +3,8 @@ import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+// sharp is the workspace root's dependency, the one the asset generators use.
+import sharp from 'sharp';
 import { type Connect, type Plugin, defineConfig } from 'vite';
 
 /**
@@ -65,9 +67,39 @@ function lfsArt(): Plugin {
   };
 }
 
+/**
+ * Encodes the game art the build ships. The repository keeps every image in
+ * src/assets lossless, as the generators in scripts/ write it, so no detail
+ * is lost for good; the built app carries copies at WebP quality 90, which
+ * looks the same at the size the screens draw them and is a fraction of the
+ * size. The skill rings stay lossless: lossy coding shifts their faint,
+ * colour-divided light. Dev servers serve the lossless files as they are.
+ */
+function shipArt(): Plugin {
+  return {
+    name: 'dsa-ship-art',
+    apply: 'build',
+    async generateBundle(_options, bundle) {
+      const encoded = await Promise.all(
+        Object.values(bundle).map(async (file) => {
+          if (file.type !== 'asset' || !file.fileName.endsWith('.webp')) return 0;
+          if (basename(file.fileName).startsWith('skill-ring-')) return 0;
+          const before = file.source.length;
+          file.source = await sharp(Buffer.from(file.source))
+            .webp({ quality: 90, alphaQuality: 100, effort: 6 })
+            .toBuffer();
+          return before - file.source.length;
+        }),
+      );
+      const saved = encoded.reduce((sum, bytes) => sum + bytes, 0);
+      this.info(`game art encoded for shipping, ${(saved / 1048576).toFixed(1)} MB smaller`);
+    },
+  };
+}
+
 // `--mode preview` builds the browser preview (preview.html) instead of the app.
 export default defineConfig(({ mode }) => ({
-  plugins: [lfsArt(), react(), tailwindcss(), previewFixture()],
+  plugins: [lfsArt(), react(), tailwindcss(), previewFixture(), shipArt()],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },

@@ -1,4 +1,4 @@
-import { Crosshair, Map as MapIcon, Minus, Plus, Route } from 'lucide-react';
+import { Crosshair, Map as MapIcon, Minus, Plus, Route, Undo2 } from 'lucide-react';
 import { type KeyboardEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ConfirmButton, EmptyPanel } from '@/components/common';
 import { RichText } from '@/components/game-text';
@@ -62,11 +62,11 @@ interface Place {
 }
 
 const LAYERS: Array<{ layer: Layer; label: string; mark: string }> = [
-  { layer: 'waypoint', label: 'Warp points', mark: 'waypoint-done' },
-  { layer: 'statue', label: 'Statues of Organa', mark: 'statue-done' },
-  { layer: 'legacy', label: "Eona's Legacy", mark: 'legacy-done' },
-  { layer: 'tower', label: 'Tower of Trials', mark: 'tower-done' },
-  { layer: 'dungeon', label: 'Dungeons', mark: 'dungeon-done' },
+  { layer: 'waypoint', label: 'Warp points', mark: 'waypoint' },
+  { layer: 'statue', label: 'Statues of Organa', mark: 'statue' },
+  { layer: 'legacy', label: "Eona's Legacy", mark: 'legacy' },
+  { layer: 'tower', label: 'Tower of Trials', mark: 'tower' },
+  { layer: 'dungeon', label: 'Dungeons', mark: 'dungeon' },
   { layer: 'chest', label: 'Chests', mark: 'chest' },
 ];
 
@@ -79,13 +79,13 @@ const MISSIONS: Record<MissionKind, string> = {
   WINDMILL_OPEN: "Eona's Legacy",
 };
 
-/** The places each region mission counts, and what doing the rest is called. */
-const STEPS: Partial<Record<MissionKind, { layer: Layer; label: string }>> = {
-  WAYPOINT_OPEN: { layer: 'waypoint', label: 'Activate' },
-  WINDMILL_OPEN: { layer: 'legacy', label: 'Activate' },
-  FIELDSTATUE_COMPLETE: { layer: 'statue', label: 'Restore' },
-  DUNGEON_FIND: { layer: 'dungeon', label: 'Mark found' },
-  TREASUREBOX_OPEN: { layer: 'chest', label: 'Open all' },
+/** The places each region mission counts; its row's Complete marks the rest of them done. */
+const STEPS: Partial<Record<MissionKind, { layer: Layer }>> = {
+  WAYPOINT_OPEN: { layer: 'waypoint' },
+  WINDMILL_OPEN: { layer: 'legacy' },
+  FIELDSTATUE_COMPLETE: { layer: 'statue' },
+  DUNGEON_FIND: { layer: 'dungeon' },
+  TREASUREBOX_OPEN: { layer: 'chest' },
 };
 
 const LOCKS: Record<ChestLock, string> = {
@@ -507,7 +507,13 @@ export function WorldScreen() {
 
 /** Map units (one = the map image's side) drawn as this many stage pixels. */
 const STAGE = 1000;
-const MAX_ZOOM = 14;
+/**
+ * How far the map zooms: until one pixel of the map image covers two screen
+ * pixels, about as far as the game's own closest zoom, past which the image
+ * only blurs; and at least to four times the whole map.
+ */
+const IMAGE_ZOOM = 2;
+const MIN_MAX_ZOOM = 4;
 
 function MapView({
   image,
@@ -563,6 +569,12 @@ function MapView({
   const height = (frame.d1 - frame.d0) * STAGE;
   // Each edit reloads the places; the view must not jump back when it does,
   // so the callbacks below read the latest frame from here.
+  /** The map image's width in pixels, which sets how far it zooms. */
+  const pixels = useRef(4096);
+  const maxScale = useCallback(
+    (fit: number) => Math.max(fit * MIN_MAX_ZOOM, (pixels.current / STAGE) * IMAGE_ZOOM),
+    [],
+  );
   const latest = useRef({ frame, width, height, places, worldSize });
   latest.current = { frame, width, height, places, worldSize };
 
@@ -588,7 +600,7 @@ function MapView({
       const boxWidth = (a1 - a0) * STAGE;
       const boxHeight = (d1 - d0) * STAGE;
       const wanted = Math.min(box.clientWidth / boxWidth, box.clientHeight / boxHeight);
-      const scale = Math.min(fit * MAX_ZOOM, Math.max(fit, wanted));
+      const scale = Math.min(maxScale(fit), Math.max(fit, wanted));
       const centerX = ((a0 + a1) / 2 - frame.a0) * STAGE;
       const centerY = ((d0 + d1) / 2 - frame.d0) * STAGE;
       view.current = {
@@ -600,7 +612,7 @@ function MapView({
       };
       draw();
     },
-    [draw],
+    [draw, maxScale],
   );
   // The whole map is the map image; the few places past its edge stay a drag away.
   const fitAll = useCallback(() => show(0, 1, 0, 1, true), [show]);
@@ -644,7 +656,7 @@ function MapView({
   const zoomAt = useCallback(
     (factor: number, pointX: number, pointY: number) => {
       const current = view.current;
-      const scale = Math.min(current.fit * MAX_ZOOM, Math.max(current.fit, current.scale * factor));
+      const scale = Math.min(maxScale(current.fit), Math.max(current.fit, current.scale * factor));
       const ratio = scale / current.scale;
       view.current = {
         ...current,
@@ -655,7 +667,7 @@ function MapView({
       };
       draw();
     },
-    [draw],
+    [draw, maxScale],
   );
 
   // React's wheel listener is passive, so it cannot keep the page from scrolling.
@@ -690,6 +702,9 @@ function MapView({
       style={{ backgroundColor: backdrop }}
       onPointerDown={(event) => {
         if (event.button !== 0) return;
+        // A press drags or selects; it does not move the keyboard focus, so a
+        // clicked marker shows no focus outline.
+        event.preventDefault();
         // Pointer capture sends the release to the map, so note the marker now.
         const place = (event.target as HTMLElement).closest<HTMLElement>('[data-place]')?.dataset.place ?? null;
         drag.current = { x: event.clientX, y: event.clientY, moved: false, place };
@@ -721,6 +736,9 @@ function MapView({
         {image && (
           <img
             src={image}
+            onLoad={(event) => {
+              pixels.current = event.currentTarget.naturalWidth || pixels.current;
+            }}
             alt=""
             draggable={false}
             className="pointer-events-none absolute max-w-none"
@@ -792,7 +810,7 @@ function MapView({
   );
 }
 
-/** The game's marker for a place: blue once it is done, grey before. */
+/** The game's marker for a place: white while there is something to do, grey once it is done. */
 function markOf(place: Place): string {
   return place.layer === 'chest' || !place.done ? place.layer : `${place.layer}-done`;
 }
@@ -808,7 +826,7 @@ function Marker({
   style: { left: number; top: number };
   onSelect: (key: string) => void;
 }) {
-  const transform = `translate(-50%, -50%) scale(calc(var(--inv) * ${place.chest && selected ? 1.35 : 1}))`;
+  const transform = `translate(-50%, -50%) scale(calc(var(--inv) * ${selected ? (place.chest ? 1.35 : 1.15) : 1}))`;
   // The mouse selects through the map's press handling; this is for the keyboard.
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -825,8 +843,8 @@ function Marker({
         aria-label={`${place.name.en}${place.done ? ', opened' : ''}`}
         title={`${place.name.en}${place.done ? ' (opened)' : ''}`}
         className={cn(
-          'absolute size-2.5 rounded-full ring-1 ring-black/45 transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-white',
-          selected && 'z-10 ring-2 ring-white',
+          'absolute size-2.5 rounded-full ring-1 ring-black/45 transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-brand',
+          selected && 'z-10 ring-2 ring-brand',
         )}
         style={{
           ...style,
@@ -845,29 +863,31 @@ function Marker({
       aria-label={`${place.name.en}${place.done ? '' : ', not done'}`}
       title={place.name.en}
       className={cn(
-        'absolute z-[1] grid size-11 place-items-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-white',
+        'absolute z-[1] grid size-11 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-brand',
         selected && 'z-10',
       )}
       style={{ ...style, transform }}
     >
-      {/* The dark disc with a white ring the game draws under the selected marker (Frame_Map_02). */}
-      {selected && (
-        <img
-          src={markImage('selected')}
-          alt=""
-          draggable={false}
-          className="pointer-events-none col-start-1 row-start-1 size-[3.25rem] max-w-none"
-        />
-      )}
+      {selected && <SelectedRing />}
       {/* The game's own marker, about as large on screen as the game draws it (DUWG_MapPointIcon:
-          an 85-unit box at 1.3×), blue once done and grey before. */}
+          an 85-unit box at 1.3×): white while there is something to do, grey and dimmed once done. */}
       <img
         src={markImage(markOf(place))}
         alt=""
         draggable={false}
-        className="pointer-events-none col-start-1 row-start-1 size-11"
+        className={cn('pointer-events-none col-start-1 row-start-1 size-11', place.done && !selected && 'opacity-70')}
       />
     </button>
+  );
+}
+
+/** The ring in the app's accent colour around the selected marker. */
+function SelectedRing() {
+  return (
+    <span
+      aria-hidden
+      className="pointer-events-none col-start-1 row-start-1 size-12 rounded-full border-[3px] border-brand bg-black/30 shadow-[0_0_0_1.5px_rgb(0_0_0/0.45)]"
+    />
   );
 }
 
@@ -897,19 +917,12 @@ function QuestMarker({
       aria-label={`${quest.nameEn}, step ${quest.step.id}`}
       title={quest.nameEn}
       className={cn(
-        'absolute z-[5] grid size-11 place-items-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-white',
+        'absolute z-[5] grid size-11 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-brand',
         selected && 'z-10',
       )}
-      style={{ ...style, transform: 'translate(-50%, -50%) scale(var(--inv))' }}
+      style={{ ...style, transform: `translate(-50%, -50%) scale(calc(var(--inv) * ${selected ? 1.15 : 1}))` }}
     >
-      {selected && (
-        <img
-          src={markImage('selected')}
-          alt=""
-          draggable={false}
-          className="pointer-events-none col-start-1 row-start-1 size-[3.25rem] max-w-none"
-        />
-      )}
+      {selected && <SelectedRing />}
       <img
         src={questImage(quest.mark)}
         alt=""
@@ -1029,7 +1042,7 @@ function PlaceCard({
               style={{ backgroundColor: GRADE_DOT[place.chest.grade] ?? GRADE_DOT.normal }}
             />
           ) : (
-            <img src={markImage(markOf({ ...place, done: true }))} alt="" className="size-8 shrink-0" />
+            <img src={markImage(place.layer)} alt="" className="size-8 shrink-0" />
           )}
           <div className="min-w-0 flex-1">
             <h2 className="font-semibold">{name(place.name)}</h2>
@@ -1280,7 +1293,7 @@ function RegionList({
                     ? ' and adds their loot to the save, rolled the way the game rolls it.'
                     : '. Rewards are off in Settings, so they give nothing.'
                 }${allowUndo ? '' : ' Opened chests stay opened.'}`,
-                label: `Open ${formatNumber(left)}`,
+                label: `Complete ${formatNumber(left)}`,
                 target,
               });
               return true;
@@ -1291,7 +1304,7 @@ function RegionList({
                 description: `Activates ${formatNumber(left)} warp ${left === 1 ? 'point' : 'points'}; each gives 100 Mercenary Crew Grade EXP, as in the game.${
                   allowUndo ? '' : ' Activated warp points stay activated.'
                 }`,
-                label: `Activate ${formatNumber(left)}`,
+                label: `Complete ${formatNumber(left)}`,
                 target,
               });
               return true;
@@ -1340,7 +1353,7 @@ function RegionList({
                           {step?.layer === 'chest' ? (
                             <span aria-hidden className="size-2.5 rounded-full bg-[#ffb02e] ring-1 ring-black/30" />
                           ) : step ? (
-                            <img src={markImage(`${step.layer}-done`)} alt="" className="size-6" />
+                            <img src={markImage(step.layer)} alt="" className="size-6" />
                           ) : null}
                         </span>
                         <span
@@ -1363,12 +1376,19 @@ function RegionList({
                               if (!ask(left)) onApply(left, true);
                             }}
                           >
-                            {step.label}
+                            Complete
                           </Button>
                         )}
                         {step && allowUndo && doneHere.length > 0 && (
-                          <Button size="xs" variant="ghost" disabled={busy} onClick={() => onApply(doneHere, false)}>
-                            Undo
+                          <Button
+                            size="icon-xs"
+                            variant="ghost"
+                            aria-label={`Undo ${MISSIONS[mission.kind] ?? mission.kind}`}
+                            title="Undo"
+                            disabled={busy}
+                            onClick={() => onApply(doneHere, false)}
+                          >
+                            <Undo2 />
                           </Button>
                         )}
                       </li>

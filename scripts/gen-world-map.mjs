@@ -113,7 +113,7 @@ for (const { id, name } of world.worlds) {
     .png()
     .toBuffer();
   const output = Math.min(sideX, OUTPUT);
-  const image = await sharp(stitched).flip().resize(output, output).webp({ quality: 82, effort: 6 }).toBuffer();
+  const image = await sharp(stitched).flip().resize(output, output).webp({ lossless: true, effort: 6 }).toBuffer();
   writeFileSync(new URL(`../apps/desktop/src/assets/world-map-${id}.webp`, import.meta.url), image);
   placements[id] = { x0: centreX - size / 2, y0: centreY - size / 2, size };
   console.log(

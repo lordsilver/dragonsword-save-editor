@@ -46,6 +46,10 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';
 
+// Every image is written lossless, so the repository keeps the game's pixels;
+// the app's build encodes the copies it ships (apps/desktop/vite.config.ts).
+const LOSSLESS = { lossless: true, effort: 6 };
+
 const [assetsDir, extractDir, fxDir] = process.argv.slice(2);
 if (!assetsDir || !extractDir || !fxDir) {
   console.error('usage: node scripts/gen-icons.mjs <assets-dir> <extract-dir> <fx-dir>');
@@ -182,7 +186,7 @@ const sheet = await sharp({
   create: { width: COLUMNS * CELL, height: sheetRows * CELL, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
 })
   .composite(tiles)
-  .webp({ quality: 90, alphaQuality: 100, effort: 6 })
+  .webp(LOSSLESS)
   .toBuffer();
 writeFileSync(spritePath, sheet);
 
@@ -218,7 +222,7 @@ for (const [index, grade] of GRADES.entries()) {
     if (!exists(path)) fail(`grade texture ${path} is not in the export`);
     const out = await sharp(join(assetsDir, `${path}.png`))
       .resize({ width, kernel: 'lanczos3' })
-      .webp({ quality: 90, alphaQuality: 100, effort: 6 })
+      .webp(LOSSLESS)
       .toBuffer();
     writeFileSync(new URL(`grade-${kind}-${grade}.webp`, assetsOut), out);
   }
@@ -383,11 +387,7 @@ for (const [name, ring] of Object.entries(RINGS)) {
   }
 }
 for (const [name, image] of Object.entries(skillLayers)) {
-  // The rings are lossless: lossy coding shifts their faint, colour-divided light.
-  const lossless = name.startsWith('skill-ring-');
-  const out = await image
-    .webp(lossless ? { lossless, effort: 6 } : { quality: 90, alphaQuality: 100, effort: 6 })
-    .toBuffer();
+  const out = await image.webp(LOSSLESS).toBuffer();
   writeFileSync(new URL(`${name}.webp`, assetsOut), out);
 }
 
