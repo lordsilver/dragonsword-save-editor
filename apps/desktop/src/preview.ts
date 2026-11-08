@@ -46,11 +46,15 @@ const fixture: Fixture = await fetch(
 
 /**
  * The World map's edits, kept in the recording so they show and stay until
- * "saved", as in the app: a place's done state, and whether the session has
- * unsaved changes. Other edits still do nothing.
+ * "saved", as in the app: a place's done state, whether the session has
+ * unsaved changes, and the world before each edit for Undo. Other edits
+ * still do nothing.
  */
 let previewDirty = false;
+let previewRevision = 0;
+const previewHistory: Array<{ world: unknown; dirty: boolean }> = [];
 function worldEdit(kind: string, ids: number[], done: boolean): number {
+  const before = { world: structuredClone(fixture.world_get), dirty: previewDirty };
   const world = fixture.world_get as {
     waypoints: Array<{
       id: number;
@@ -86,7 +90,11 @@ function worldEdit(kind: string, ids: number[], done: boolean): number {
       changed += 1;
     }
   }
-  if (changed > 0) previewDirty = true;
+  if (changed > 0) {
+    previewHistory.push(before);
+    previewDirty = true;
+    previewRevision += 1;
+  }
   return changed;
 }
 
@@ -112,9 +120,25 @@ mockIPC(
     }
     // A copy, as the app gets from the backend: the World map keeps the last saved one to compare with.
     if (command === 'world_get') return structuredClone(fixture.world_get);
-    if (command === 'save_current') return { ...(fixture.save_current as object), dirty: previewDirty };
+    const handle = () => ({
+      ...(fixture.save_current as object),
+      dirty: previewDirty,
+      undoDepth: previewHistory.length,
+      revision: previewRevision,
+    });
+    if (command === 'save_current') return handle();
+    if (command === 'save_undo') {
+      const last = previewHistory.pop();
+      if (last) {
+        fixture.world_get = last.world;
+        previewDirty = last.dirty;
+        previewRevision += 1;
+      }
+      return handle();
+    }
     if (command === 'save_write') {
       previewDirty = false;
+      previewHistory.length = 0;
       const current = fixture.save_current as { path?: string; consistency?: unknown };
       return { backup: null, bytes: 0, path: current.path ?? '', consistency: current.consistency };
     }

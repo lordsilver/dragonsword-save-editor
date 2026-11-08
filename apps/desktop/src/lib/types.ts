@@ -64,6 +64,10 @@ export interface SaveHandle {
   slot: number;
   userId: number;
   dirty: boolean;
+  /** How many edits not written yet can be undone. */
+  undoDepth: number;
+  /** Changes whenever an edit or an undo changes the save. */
+  revision: number;
   warnings: string[];
   consistency: ConsistencyReport;
 }

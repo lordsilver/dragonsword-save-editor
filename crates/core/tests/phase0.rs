@@ -552,6 +552,47 @@ fn only_the_editors_own_last_output_skips_the_backup() {
 }
 
 #[test]
+fn undo_takes_back_edits_until_the_save_is_written() {
+    let path = fixture("undo");
+    let mut session = SaveSession::open(&path).expect("open");
+    let start = cook_count(&session, BASE);
+
+    // Reads leave nothing to undo.
+    let mark = session.edit_mark();
+    session.record_edit(mark).expect("record");
+    assert_eq!(session.undo_depth(), 0);
+
+    for count in [start + 2, start + 7] {
+        let mark = session.edit_mark();
+        Game::new(&mut session, Catalog::shared())
+            .set_stack("cook", BASE, count)
+            .expect("edit");
+        session.record_edit(mark).expect("record");
+    }
+    assert_eq!(session.undo_depth(), 2);
+    assert_eq!(cook_count(&session, BASE), start + 7);
+
+    assert!(session.undo().expect("undo"));
+    assert_eq!(cook_count(&session, BASE), start + 2);
+    assert!(session.dirty(), "the first edit is still unsaved");
+    assert!(session.undo().expect("undo"));
+    assert_eq!(cook_count(&session, BASE), start);
+    assert!(!session.dirty(), "back to the file as opened");
+    assert!(!session.undo().expect("nothing left"));
+
+    // Writing is the new starting point: nothing before it can be undone.
+    let mark = session.edit_mark();
+    Game::new(&mut session, Catalog::shared())
+        .set_stack("cook", BASE, start + 3)
+        .expect("edit");
+    session.record_edit(mark).expect("record");
+    session.write().expect("write");
+    assert_eq!(session.undo_depth(), 0);
+    let reopened = SaveSession::open(&path).expect("reopen");
+    assert_eq!(cook_count(&reopened, BASE), start + 3);
+}
+
+#[test]
 fn a_leftover_journal_or_wal_blocks_the_write() {
     let path = fixture("sidecars");
     let mut session = SaveSession::open(&path).expect("open");

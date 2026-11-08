@@ -72,6 +72,16 @@ const WORLD_VERBS: Record<PlaceKind, string> = {
   chest: 'opened',
 };
 
+/** One edit not written yet, newest last, as Undo takes them back. */
+export interface HistoryEntry {
+  /** What it did, as its progress label reads ("Opening chests"). */
+  label: string;
+  /** The screen it was made on. */
+  section: Section;
+  /** For a World map edit, which places it changed, so the map can take back just that one. */
+  world?: { kind: PlaceKind; ids: number[]; done: boolean };
+}
+
 export interface AppState {
   desktop: boolean;
   booted: boolean;
@@ -85,6 +95,8 @@ export interface AppState {
   draftCount: number;
   /** Edits since the last save or open, counted by the screen they were made on. */
   changes: Partial<Record<Section, number>>;
+  /** The edits Undo can take back, newest last. */
+  history: HistoryEntry[];
   section: Section;
   loading: boolean;
   pending: string | null;
@@ -126,6 +138,8 @@ export interface AppActions {
   discardCurrent(refresh?: boolean): Promise<void>;
   saveNow(): Promise<boolean>;
   backupNow(): Promise<void>;
+  /** Takes back the latest edit not saved yet, everything it changed included. */
+  undoLast(): Promise<void>;
   /** Record or release one field's uncommitted draft. */
   markDraft(active: boolean): void;
   setSettings(patch: Partial<Settings>): Promise<void>;
@@ -224,6 +238,7 @@ function initialState(): AppState {
     dirty: false,
     draftCount: 0,
     changes: {},
+    history: [],
     section: 'overview',
     loading: false,
     pending: null,
@@ -279,14 +294,30 @@ export const useApp = create<Store>((set, get) => {
     return run;
   }
 
-  async function attempt<T>(label: string, action: () => Promise<T>, after?: () => Promise<void>): Promise<T | null> {
+  async function attempt<T>(
+    label: string,
+    action: () => Promise<T>,
+    after?: () => Promise<void>,
+    world?: HistoryEntry['world'],
+  ): Promise<T | null> {
     try {
       return await enqueue(label, async () => {
+        const before = get().save?.revision;
         const result = await action();
-        set((state) => ({
-          dirty: true,
-          changes: { ...state.changes, [state.section]: (state.changes[state.section] ?? 0) + 1 },
-        }));
+        // The backend keeps the save as it was before each edit; note what
+        // this one was, unless it changed nothing.
+        const handle = await api.currentSave();
+        set((state) => {
+          const changed = handle === null || handle.revision !== before;
+          const history = changed ? [...state.history, { label, section: state.section, world }] : state.history;
+          return {
+            dirty: true,
+            changes: { ...state.changes, [state.section]: (state.changes[state.section] ?? 0) + 1 },
+            ...(handle && { save: handle }),
+            // The backend keeps a limited number of steps; the oldest go first.
+            history: handle ? history.slice(Math.max(0, history.length - handle.undoDepth)) : history,
+          };
+        });
         if (after) await after();
         return result;
       });
@@ -399,6 +430,7 @@ export const useApp = create<Store>((set, get) => {
             dirty: false,
             draftCount: 0,
             changes: {},
+            history: [],
             world: null,
             worldSaved: null,
             section: 'overview',
@@ -456,6 +488,7 @@ export const useApp = create<Store>((set, get) => {
             dirty: false,
             draftCount: 0,
             changes: {},
+            history: [],
             world: null,
             worldSaved: null,
             overview: null,
@@ -492,7 +525,8 @@ export const useApp = create<Store>((set, get) => {
             dirty: false,
             draftCount: 0,
             changes: {},
-            save: { ...current, dirty: false, consistency: report.consistency },
+            history: [],
+            save: { ...current, dirty: false, undoDepth: 0, consistency: report.consistency },
             worldSaved: state.world,
           }));
           toast.success(report.backup ? `Save written. Backup kept at ${report.backup}` : 'Save written.', {
@@ -532,6 +566,28 @@ export const useApp = create<Store>((set, get) => {
           toast.error(message(error));
         }
       });
+    },
+
+    async undoLast() {
+      const entry = get().history.at(-1);
+      if (!entry) return;
+      try {
+        await enqueue(`Undoing ${entry.label.toLowerCase()}`, async () => {
+          const handle = await api.undoSave();
+          set((state) => {
+            const left = (state.changes[entry.section] ?? 0) - 1;
+            const changes = { ...state.changes };
+            if (left > 0) changes[entry.section] = left;
+            else delete changes[entry.section];
+            return { save: handle, dirty: handle.dirty, history: state.history.slice(0, -1), changes };
+          });
+          await get().loadSection(get().section);
+          if (get().world && get().section !== 'world') await get().loadWorld();
+        });
+        toast.success(`Undone: ${entry.label.toLowerCase()}.`);
+      } catch (error) {
+        toast.error(message(error));
+      }
     },
 
     markDraft(active) {
@@ -1142,6 +1198,7 @@ export const useApp = create<Store>((set, get) => {
           await get().loadCurrencies();
           await get().loadOverview();
         },
+        { kind, ids, done: true },
       );
       if (progress && progress.done > 0) {
         const language = get().settings.language;
@@ -1171,6 +1228,7 @@ export const useApp = create<Store>((set, get) => {
         async () => {
           await get().loadWorld();
         },
+        { kind, ids, done: false },
       );
     },
 

@@ -116,6 +116,28 @@ pub struct SaveSession {
     /// Broken links as the save stood when this session opened it, or after the
     /// last successful write. Only issues beyond this baseline block a write.
     consistency: ConsistencyReport,
+    /// The working database as it stands, so the next edit can be undone.
+    current: Vec<u8>,
+    /// The working database before each edit not written yet, oldest first.
+    history: Vec<Snapshot>,
+    /// Counts edits, so a command can tell whether it changed anything.
+    revision: u64,
+}
+
+/// The working database before one edit, and whether it had unsaved edits.
+struct Snapshot {
+    plain: Vec<u8>,
+    dirty: bool,
+}
+
+/// How far back undo reaches: about 1 MB of database per step.
+const UNDO_DEPTH: usize = 50;
+
+/// Where the session stood before a command; see [`SaveSession::record_edit`].
+#[derive(Debug, Clone, Copy)]
+pub struct EditMark {
+    revision: u64,
+    dirty: bool,
 }
 
 impl SaveSession {
@@ -139,17 +161,7 @@ impl SaveSession {
         let temp = temp_path();
         write_private(&temp, &plain)?;
         let result = (|| -> Result<(Connection, i64, ConsistencyReport, i64)> {
-            let conn = Connection::open_with_flags(
-                &temp,
-                OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_NO_MUTEX,
-            )?;
-            conn.busy_timeout(Duration::from_secs(10))?;
-            conn.execute_batch(
-                "PRAGMA journal_mode=DELETE;
-                 PRAGMA foreign_keys=OFF;
-                 PRAGMA synchronous=FULL;
-                 PRAGMA temp_store=MEMORY;",
-            )?;
+            let conn = open_working(&temp)?;
             let integrity = integrity_check(&conn)?;
             if integrity != "ok" {
                 return Err(integrity_failure(&path, &integrity));
@@ -193,6 +205,9 @@ impl SaveSession {
                     warnings,
                     last_backup: None,
                     consistency,
+                    current: plain,
+                    history: Vec::new(),
+                    revision: 0,
                 })
             }
             Err(error) => {
@@ -246,6 +261,66 @@ impl SaveSession {
 
     pub(crate) fn touch(&mut self) {
         self.dirty = true;
+        self.revision += 1;
+    }
+
+    /// Where the session stands before a command that may edit it.
+    pub fn edit_mark(&self) -> EditMark {
+        EditMark {
+            revision: self.revision,
+            dirty: self.dirty,
+        }
+    }
+
+    /// After a command: when it changed the save, keeps the database as it
+    /// was before, so [`SaveSession::undo`] can put it back exactly, rewards
+    /// handed out with the edit included.
+    pub fn record_edit(&mut self, mark: EditMark) -> Result<()> {
+        if self.revision == mark.revision {
+            return Ok(());
+        }
+        self.conn().cache_flush()?;
+        let now = fs::read(&self.temp)?;
+        let before = std::mem::replace(&mut self.current, now);
+        self.history.push(Snapshot {
+            plain: before,
+            dirty: mark.dirty,
+        });
+        if self.history.len() > UNDO_DEPTH {
+            self.history.remove(0);
+        }
+        Ok(())
+    }
+
+    /// Counts the session's edits and undos; it changes whenever the save does.
+    pub fn revision(&self) -> u64 {
+        self.revision
+    }
+
+    /// How many edits [`SaveSession::undo`] can take back.
+    pub fn undo_depth(&self) -> usize {
+        self.history.len()
+    }
+
+    /// Puts the working database back as it was before the latest edit not
+    /// written yet. False when there is none.
+    pub fn undo(&mut self) -> Result<bool> {
+        let Some(snapshot) = self.history.pop() else {
+            return Ok(false);
+        };
+        if let Some(conn) = self.conn.take() {
+            drop(conn);
+        }
+        for suffix in ["-journal", "-wal", "-shm"] {
+            let _ = fs::remove_file(sidecar(&self.temp, suffix));
+        }
+        let _ = fs::remove_file(&self.temp);
+        write_private(&self.temp, &snapshot.plain)?;
+        self.conn = Some(open_working(&self.temp)?);
+        self.current = snapshot.plain;
+        self.dirty = snapshot.dirty;
+        self.revision += 1;
+        Ok(true)
     }
 
     pub fn catalog_game<'a>(&'a mut self, catalog: &'a Catalog) -> crate::domain::Game<'a> {
@@ -334,6 +409,8 @@ impl SaveSession {
         atomic_write(&self.path, &encrypted)?;
         self.written = Some(DiskState::of(&self.path, &encrypted));
         self.dirty = false;
+        // What is written is the new starting point, as a commit is.
+        self.history.clear();
         self.consistency = consistency.clone();
         Ok(WriteReport {
             backup,
@@ -530,6 +607,22 @@ fn process_alive(pid: u32) -> bool {
         .map(|status| status.success())
         // If the check itself fails, keeping the file is safer than deleting it.
         .unwrap_or(true)
+}
+
+/// Opens the session's plaintext working database.
+fn open_working(path: &Path) -> Result<Connection> {
+    let conn = Connection::open_with_flags(
+        path,
+        OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_NO_MUTEX,
+    )?;
+    conn.busy_timeout(Duration::from_secs(10))?;
+    conn.execute_batch(
+        "PRAGMA journal_mode=DELETE;
+         PRAGMA foreign_keys=OFF;
+         PRAGMA synchronous=FULL;
+         PRAGMA temp_store=MEMORY;",
+    )?;
+    Ok(conn)
 }
 
 fn write_private(path: &Path, bytes: &[u8]) -> Result<()> {

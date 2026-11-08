@@ -148,6 +148,11 @@ export async function closeWindow(): Promise<void> {
   await invoke('window_close');
 }
 
+/** Takes back the latest edit not written yet, everything it changed included. */
+export async function undoSave(): Promise<SaveHandle> {
+  return invoke<SaveHandle>('save_undo');
+}
+
 export async function writeSave(): Promise<WriteReport> {
   return invoke<WriteReport>('save_write');
 }

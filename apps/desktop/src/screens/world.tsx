@@ -231,6 +231,8 @@ export function WorldScreen() {
   const undoWorldPlaces = useApp((state) => state.undoWorldPlaces);
   const grantRewards = useApp((state) => state.settings.grantRewards);
   const allowUndo = useApp((state) => state.settings.allowUndo);
+  const lastEdit = useApp((state) => state.history.at(-1));
+  const undoLast = useApp((state) => state.undoLast);
   const [layers, setLayers] = useState<Set<Layer>>(() => new Set(['waypoint', 'statue', 'legacy', 'tower', 'dungeon']));
   const [show, setShow] = useState<Show>('all');
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -329,9 +331,34 @@ export function WorldScreen() {
     });
   }
 
-  // Doing a place hands out its reward when the settings say so; undoing
-  // one is only offered when the settings allow it.
+  /**
+   * Whether a place's unsaved change is the latest edit. Undo then puts the
+   * save back exactly as it was, taking back what the change handed out, so
+   * switching the place back is allowed whatever the settings say.
+   */
+  function revertible(place: Place): boolean {
+    const last = lastEdit?.world;
+    const edit = editTarget([place]);
+    return Boolean(
+      place.unsaved &&
+        last &&
+        edit &&
+        last.kind === edit.kind &&
+        last.done === place.done &&
+        last.ids.length === 1 &&
+        last.ids[0] === edit.ids[0],
+    );
+  }
+
+  // Doing a place hands out its reward when the settings say so. Switching
+  // back the latest unsaved change undoes it exactly; undoing anything else
+  // is only offered when the settings allow it, and keeps what it gave.
   function apply(target: Place[], done: boolean): void {
+    const only = target.length === 1 ? target[0] : undefined;
+    if (only && only.done !== done && revertible(only)) {
+      void undoLast();
+      return;
+    }
     const edit = editTarget(target.filter((place) => place.done !== done));
     if (!edit || edit.ids.length === 0) return;
     if (done) void completeWorldPlaces(edit.kind, edit.ids);
@@ -496,6 +523,7 @@ export function WorldScreen() {
               busy={busy}
               grantRewards={grantRewards}
               allowUndo={allowUndo}
+              revertible={revertible(selected)}
               onSet={(done) => apply([selected], done)}
               onClose={() => setSelectedKey(null)}
             />
@@ -1039,6 +1067,7 @@ function PlaceCard({
   busy,
   grantRewards,
   allowUndo,
+  revertible,
   onSet,
   onClose,
 }: {
@@ -1048,6 +1077,8 @@ function PlaceCard({
   busy: boolean;
   grantRewards: boolean;
   allowUndo: boolean;
+  /** Its unsaved change is the latest edit, which switching it back undoes exactly. */
+  revertible: boolean;
   onSet: (done: boolean) => void;
   onClose: () => void;
 }) {
@@ -1090,7 +1121,11 @@ function PlaceCard({
         : 'Rewards are off in Settings, so activating gives nothing.',
     );
   }
-  if (place.done && !allowUndo && !place.chest) {
+  if (revertible) {
+    notes.push('Not saved yet: switching it back takes back what it gave, as if it never happened.');
+  } else if (place.unsaved && !allowUndo) {
+    notes.push('Not saved yet. Undo (Ctrl+Z) takes back the latest changes first, then this one.');
+  } else if (place.done && !allowUndo && !place.chest) {
     notes.push('It stays this way: undoing progress is off in Settings.');
   }
   return (
@@ -1146,6 +1181,7 @@ function PlaceCard({
             busy={busy}
             grantRewards={grantRewards}
             allowUndo={allowUndo}
+            revertible={revertible}
             onSet={onSet}
           />
         ) : (
@@ -1154,7 +1190,7 @@ function PlaceCard({
             <Switch
               aria-labelledby="world-place-toggle"
               checked={place.done}
-              disabled={busy || (place.done && !allowUndo)}
+              disabled={busy || (place.done && !allowUndo && !revertible)}
               onCheckedChange={(value) => onSet(value)}
             />
           </div>
@@ -1185,6 +1221,7 @@ function ChestContents({
   busy,
   grantRewards,
   allowUndo,
+  revertible,
   onSet,
 }: {
   chest: ChestView;
@@ -1193,6 +1230,7 @@ function ChestContents({
   busy: boolean;
   grantRewards: boolean;
   allowUndo: boolean;
+  revertible: boolean;
   onSet: (done: boolean) => void;
 }) {
   const chestLoot = useApp((state) => state.chestLoot);
@@ -1257,7 +1295,16 @@ function ChestContents({
         )}
       </div>
       {opened ? (
-        allowUndo ? (
+        revertible ? (
+          <>
+            <Button variant="outline" className="w-full" disabled={busy} onClick={() => onSet(false)}>
+              Undo opening
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Not saved yet: this takes back its loot too, as if it was never opened.
+            </p>
+          </>
+        ) : allowUndo ? (
           <>
             <Button variant="outline" className="w-full" disabled={busy} onClick={() => onSet(false)}>
               Mark not opened

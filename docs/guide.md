@@ -107,6 +107,7 @@ The escape hatch. Pick a table, search every column, page through rows, and clic
 ## Saving, backups, and recovery
 
 - **Save changes** or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>S</kbd>: checks that the file on disk is still the one the editor opened or last wrote, runs SQLite's integrity check, refuses any gem link the edit would break, backs it up when it is not the editor's own output, re-encrypts, reads the temporary file back, and atomically replaces the save.
+- **Undo** in the top bar, or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Z</kbd> outside a text field: takes back the latest edit not saved yet, exactly, including anything it handed out (a chest's loot, a warp point's corps EXP), and steps further back each time, up to 50 edits. Saving is the new starting point, so edits before a save cannot be undone. On the World map, switching back a place you just changed does the same; a place changed but not saved has an orange dot.
 - **Backup now** in **Settings**, or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>B</kbd>: copies the current on-disk save to a timestamped `.bak` without writing edits.
 - **Open another save** or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>O</kbd>: blocked while there are unsaved changes.
 - **Close save** asks before discarding unsaved changes.
@@ -155,8 +156,9 @@ Backups look like `1000_Slot5.db.20261025-015501.bak`. To recover, close the edi
 
 ## Keyboard shortcuts
 
-| Shortcut                                    | Action            |
-| ------------------------------------------- | ----------------- |
-| <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>S</kbd> | Save changes      |
-| <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>B</kbd> | Write a backup    |
-| <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>O</kbd> | Open another save |
+| Shortcut                                    | Action             |
+| ------------------------------------------- | ------------------ |
+| <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>S</kbd> | Save changes       |
+| <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Z</kbd> | Undo the last edit |
+| <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>B</kbd> | Write a backup     |
+| <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>O</kbd> | Open another save  |

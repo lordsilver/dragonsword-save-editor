@@ -1,4 +1,4 @@
-import { Check, ChevronDown, FileUp, FolderOpen, LogOut, Save } from 'lucide-react';
+import { Check, ChevronDown, FileUp, FolderOpen, LogOut, Save, Undo2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,8 @@ export function TopBar() {
   const pending = useApp((state) => state.pending);
   const version = useApp((state) => state.info?.version);
   const saveNow = useApp((state) => state.saveNow);
+  const undoLast = useApp((state) => state.undoLast);
+  const lastEdit = useApp((state) => state.history.at(-1));
   const openSave = useApp((state) => state.openSave);
   const closeCurrent = useApp((state) => state.closeCurrent);
   const discardCurrent = useApp((state) => state.discardCurrent);
@@ -73,6 +75,16 @@ export function TopBar() {
       <Button variant="ghost" size="sm" title="Close this save" onClick={() => leave({ kind: 'close' })}>
         <LogOut />
         Close
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled={!lastEdit || pending !== null}
+        title={lastEdit ? `Undo ${lastEdit.label.toLowerCase()} (Ctrl+Z)` : 'Nothing to undo since the last save'}
+        onClick={() => void undoLast()}
+      >
+        <Undo2 />
+        Undo
       </Button>
       <Button
         size="sm"

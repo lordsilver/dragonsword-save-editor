@@ -65,6 +65,7 @@ export function App() {
   const saveNow = useApp((state) => state.saveNow);
   const discardCurrent = useApp((state) => state.discardCurrent);
   const backupNow = useApp((state) => state.backupNow);
+  const undoLast = useApp((state) => state.undoLast);
   const openSave = useApp((state) => state.openSave);
   const [closeRequestOpen, setCloseRequestOpen] = useState(false);
   const started = useRef(false);
@@ -130,6 +131,14 @@ export function App() {
         if (save) void saveNow();
         return;
       }
+      // Ctrl+Z takes back the latest edit, except while typing, where it undoes the typing.
+      if (key === 'z' && !event.shiftKey) {
+        const target = event.target as HTMLElement | null;
+        if (target?.closest('input, textarea, [contenteditable="true"]')) return;
+        event.preventDefault();
+        if (save) void undoLast();
+        return;
+      }
       if (key === 'b') {
         event.preventDefault();
         if (save) void backupNow();
@@ -153,7 +162,7 @@ export function App() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [backupNow, dirty, draftCount, openSave, save, saveNow]);
+  }, [backupNow, dirty, draftCount, openSave, save, saveNow, undoLast]);
 
   if (!booted) return <BootSplash />;
   if (!desktop) return <DesktopRequired />;

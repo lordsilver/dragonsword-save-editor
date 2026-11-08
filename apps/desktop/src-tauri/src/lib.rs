@@ -145,8 +145,14 @@ fn game<T>(
 ) -> CommandResult<T> {
     let mut guard = state.session();
     let session = guard.as_mut().ok_or(Error::NotOpen)?;
-    let mut game = session.catalog_game(Catalog::shared());
-    run(&mut game).map_err(Into::into)
+    // Every command runs here, reads and edits alike; an edit is kept for undo.
+    let mark = session.edit_mark();
+    let result = {
+        let mut game = session.catalog_game(Catalog::shared());
+        run(&mut game)
+    };
+    session.record_edit(mark)?;
+    result.map_err(Into::into)
 }
 
 /// `None` when no save is open, otherwise the session's dirty flag.
@@ -272,6 +278,10 @@ struct SaveHandle {
     slot: i64,
     user_id: i64,
     dirty: bool,
+    /// How many edits not written yet can be undone, newest first.
+    undo_depth: usize,
+    /// Changes whenever an edit or an undo changes the save.
+    revision: u64,
     /// Problems noticed at open, e.g. a journal the game left behind.
     warnings: Vec<String>,
     /// Broken cross-row links as the save stood at open.
@@ -285,6 +295,8 @@ fn handle(session: &SaveSession) -> SaveHandle {
         slot: session.slot(),
         user_id: session.user_id(),
         dirty: session.dirty(),
+        undo_depth: session.undo_depth(),
+        revision: session.revision(),
         warnings: session.warnings().to_vec(),
         consistency: session.consistency().clone(),
     }
@@ -338,6 +350,15 @@ fn save_write(state: State<'_, AppState>) -> CommandResult<WriteReport> {
     let mut guard = state.session();
     let session = guard.as_mut().ok_or(Error::NotOpen)?;
     Ok(session.write()?)
+}
+
+/// Takes back the latest edit not written yet, everything it changed included.
+#[tauri::command]
+fn save_undo(state: State<'_, AppState>) -> CommandResult<SaveHandle> {
+    let mut guard = state.session();
+    let session = guard.as_mut().ok_or(Error::NotOpen)?;
+    session.undo()?;
+    Ok(handle(session))
 }
 
 #[tauri::command]
@@ -740,7 +761,10 @@ fn raw_update(
     let rowid = instance_id(&rowid, "row id")?;
     let mut guard = state.session();
     let session = guard.as_mut().ok_or(Error::NotOpen)?;
-    Ok(session.raw_update(&table, rowid, &column, &value, advanced)?)
+    let mark = session.edit_mark();
+    let result = session.raw_update(&table, rowid, &column, &value, advanced);
+    session.record_edit(mark)?;
+    Ok(result?)
 }
 
 pub fn run() {
@@ -769,6 +793,7 @@ pub fn run() {
             window_close,
             save_write,
             save_backup,
+            save_undo,
             overview_get,
             player_name_set,
             adventure_set,
