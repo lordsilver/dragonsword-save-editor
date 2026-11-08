@@ -62,11 +62,11 @@ interface Place {
 }
 
 const LAYERS: Array<{ layer: Layer; label: string; mark: string }> = [
-  { layer: 'waypoint', label: 'Warp points', mark: 'waypoint' },
-  { layer: 'statue', label: 'Statues of Organa', mark: 'statue' },
-  { layer: 'legacy', label: "Eona's Legacy", mark: 'legacy' },
-  { layer: 'tower', label: 'Tower of Trials', mark: 'tower' },
-  { layer: 'dungeon', label: 'Dungeons', mark: 'dungeon' },
+  { layer: 'waypoint', label: 'Warp points', mark: 'waypoint-done' },
+  { layer: 'statue', label: 'Statues of Organa', mark: 'statue-done' },
+  { layer: 'legacy', label: "Eona's Legacy", mark: 'legacy-done' },
+  { layer: 'tower', label: 'Tower of Trials', mark: 'tower-done' },
+  { layer: 'dungeon', label: 'Dungeons', mark: 'dungeon-done' },
   { layer: 'chest', label: 'Chests', mark: 'chest' },
 ];
 
@@ -732,6 +732,7 @@ function MapView({
         drag.current = null;
       }}
     >
+      <MarkerFilters />
       <div ref={stage} className="group/stage absolute top-0 left-0 origin-top-left" style={{ width, height }}>
         {image && (
           <img
@@ -810,7 +811,7 @@ function MapView({
   );
 }
 
-/** The game's marker for a place: white while there is something to do, grey once it is done. */
+/** The game's marker for a place: periwinkle once it is done, grey before. */
 function markOf(place: Place): string {
   return place.layer === 'chest' || !place.done ? place.layer : `${place.layer}-done`;
 }
@@ -826,7 +827,7 @@ function Marker({
   style: { left: number; top: number };
   onSelect: (key: string) => void;
 }) {
-  const transform = `translate(-50%, -50%) scale(calc(var(--inv) * ${selected ? (place.chest ? 1.35 : 1.15) : 1}))`;
+  const transform = `translate(-50%, -50%) scale(calc(var(--inv) * ${place.chest && selected ? 1.35 : 1}))`;
   // The mouse selects through the map's press handling; this is for the keyboard.
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -843,8 +844,8 @@ function Marker({
         aria-label={`${place.name.en}${place.done ? ', opened' : ''}`}
         title={`${place.name.en}${place.done ? ' (opened)' : ''}`}
         className={cn(
-          'absolute size-2.5 rounded-full ring-1 ring-black/45 transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-brand',
-          selected && 'z-10 ring-2 ring-brand',
+          'absolute size-2.5 rounded-full ring-1 ring-black/45 transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-white',
+          selected && 'z-10 ring-2 ring-white',
         )}
         style={{
           ...style,
@@ -863,31 +864,71 @@ function Marker({
       aria-label={`${place.name.en}${place.done ? '' : ', not done'}`}
       title={place.name.en}
       className={cn(
-        'absolute z-[1] grid size-11 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-brand',
+        'absolute z-[1] grid size-11 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-white',
         selected && 'z-10',
       )}
       style={{ ...style, transform }}
     >
-      {selected && <SelectedRing />}
       {/* The game's own marker, about as large on screen as the game draws it (DUWG_MapPointIcon:
-          an 85-unit box at 1.3×): white while there is something to do, grey and dimmed once done. */}
-      <img
-        src={markImage(markOf(place))}
-        alt=""
-        draggable={false}
-        className={cn('pointer-events-none col-start-1 row-start-1 size-11', place.done && !selected && 'opacity-70')}
-      />
+          an 85-unit box at 1.3×), periwinkle once done and grey before, on its solid rim. */}
+      <MarkerArt src={markImage(markOf(place))} selected={selected} pin={place.layer in MARK_LIFT} />
     </button>
   );
 }
 
-/** The ring in the app's accent colour around the selected marker. */
-function SelectedRing() {
+/**
+ * A marker's icon with a soft shadow. Selected, it grows a little (about the
+ * tip of a pin) and is cut out in white along its own shape, with a dark edge
+ * outside (the `marker-selected` filter in MapView).
+ */
+function MarkerArt({ src, selected, pin = false }: { src: string | undefined; selected: boolean; pin?: boolean }) {
   return (
-    <span
-      aria-hidden
-      className="pointer-events-none col-start-1 row-start-1 size-12 rounded-full border-[3px] border-brand bg-black/30 shadow-[0_0_0_1.5px_rgb(0_0_0/0.45)]"
+    <img
+      src={src}
+      alt=""
+      draggable={false}
+      className={cn(
+        'pointer-events-none col-start-1 row-start-1 size-11 max-w-none',
+        pin && 'origin-[50%_92%]',
+        selected ? 'scale-[1.18] [filter:url(#marker-selected)]' : 'drop-shadow-[0_1.2px_1.4px_rgb(0_0_0/0.5)]',
+      )}
     />
+  );
+}
+
+/**
+ * The selected marker's outline, from the icon's own alpha: its opaque body
+ * and rim grown by 2.3 px in white and by 3.3 px in the rim's dark green,
+ * over a deeper shadow. The faint outer shade is left out, so the outline
+ * follows the icon instead of its square.
+ */
+function MarkerFilters() {
+  return (
+    <svg aria-hidden width="0" height="0" className="pointer-events-none absolute">
+      <defs>
+        <filter id="marker-selected" x="-40%" y="-40%" width="180%" height="190%" colorInterpolationFilters="sRGB">
+          <feComponentTransfer in="SourceAlpha" result="hard">
+            <feFuncA type="linear" slope="4" intercept="-1.2" />
+          </feComponentTransfer>
+          <feMorphology in="hard" operator="dilate" radius="2.3" result="halo" />
+          <feMorphology in="hard" operator="dilate" radius="3.3" result="outer" />
+          <feFlood floodColor="#0b2a22" />
+          <feComposite in2="outer" operator="in" result="outerDark" />
+          <feFlood floodColor="#ffffff" />
+          <feComposite in2="halo" operator="in" result="white" />
+          <feGaussianBlur in="outer" stdDeviation="2.5" />
+          <feOffset dy="3" result="blur" />
+          <feFlood floodColor="#000" floodOpacity="0.55" />
+          <feComposite in2="blur" operator="in" result="shadow" />
+          <feMerge>
+            <feMergeNode in="shadow" />
+            <feMergeNode in="outerDark" />
+            <feMergeNode in="white" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+    </svg>
   );
 }
 
@@ -917,18 +958,12 @@ function QuestMarker({
       aria-label={`${quest.nameEn}, step ${quest.step.id}`}
       title={quest.nameEn}
       className={cn(
-        'absolute z-[5] grid size-11 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-brand',
+        'absolute z-[5] grid size-11 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-white',
         selected && 'z-10',
       )}
-      style={{ ...style, transform: `translate(-50%, -50%) scale(calc(var(--inv) * ${selected ? 1.15 : 1}))` }}
+      style={{ ...style, transform: 'translate(-50%, -50%) scale(var(--inv))' }}
     >
-      {selected && <SelectedRing />}
-      <img
-        src={questImage(quest.mark)}
-        alt=""
-        draggable={false}
-        className="pointer-events-none col-start-1 row-start-1 size-11"
-      />
+      <MarkerArt src={questImage(quest.mark)} selected={selected} />
     </button>
   );
 }
@@ -1042,7 +1077,7 @@ function PlaceCard({
               style={{ backgroundColor: GRADE_DOT[place.chest.grade] ?? GRADE_DOT.normal }}
             />
           ) : (
-            <img src={markImage(place.layer)} alt="" className="size-8 shrink-0" />
+            <img src={markImage(markOf({ ...place, done: true }))} alt="" className="size-8 shrink-0" />
           )}
           <div className="min-w-0 flex-1">
             <h2 className="font-semibold">{name(place.name)}</h2>
@@ -1353,7 +1388,7 @@ function RegionList({
                           {step?.layer === 'chest' ? (
                             <span aria-hidden className="size-2.5 rounded-full bg-[#ffb02e] ring-1 ring-black/30" />
                           ) : step ? (
-                            <img src={markImage(step.layer)} alt="" className="size-6" />
+                            <img src={markImage(`${step.layer}-done`)} alt="" className="size-6" />
                           ) : null}
                         </span>
                         <span
