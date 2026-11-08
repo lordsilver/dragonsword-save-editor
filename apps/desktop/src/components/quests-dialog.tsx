@@ -222,7 +222,8 @@ function QuestTitle({ quest, language, htmlFor }: { quest: QuestRewards; languag
   );
 }
 
-function RewardChips({
+/** A quest's rewards as small chips; corps EXP is struck through unless `withCorpsExp`. */
+export function RewardChips({
   quest,
   language,
   withCorpsExp,

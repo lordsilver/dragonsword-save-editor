@@ -927,6 +927,8 @@ export const useApp = create<Store>((set, get) => {
           await get().loadMounts();
           await get().loadOverview();
           if (get().questLog) await get().loadQuestLog();
+          // The quest's mark moves to the next quest, or goes.
+          if (get().world) await get().loadWorld();
         },
       );
       if (completion) {

@@ -4,6 +4,7 @@ import { ConfirmButton, EmptyPanel } from '@/components/common';
 import { RichText } from '@/components/game-text';
 import { ItemIcon } from '@/components/item-icon';
 import { PageHeader } from '@/components/page';
+import { RewardChips } from '@/components/quests-dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,6 +17,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverAnchor, PopoverArrow, PopoverContent } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 import { formatNumber, itemName, useApp } from '@/lib/store';
 import type {
@@ -233,6 +235,10 @@ export function WorldScreen() {
   const allowUndo = useApp((state) => state.settings.allowUndo);
   const lastEdit = useApp((state) => state.history.at(-1));
   const undoLast = useApp((state) => state.undoLast);
+  const completeQuest = useApp((state) => state.completeQuest);
+  const chestLoot = useApp((state) => state.chestLoot);
+  // A chest's loot is read before its card opens, so the card opens at its full size.
+  const [loot, setLoot] = useState<{ id: number; draws: LootDraw[] } | null>(null);
   const [layers, setLayers] = useState<Set<Layer>>(() => new Set(['waypoint', 'statue', 'legacy', 'tower', 'dungeon']));
   const [show, setShow] = useState<Show>('all');
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -283,6 +289,18 @@ export function WorldScreen() {
   );
   const selected = places.find((place) => place.key === selectedKey) ?? null;
   const selectedQuest = quests.find((place) => place.key === selectedKey) ?? null;
+  const selectedChest = selected?.chest?.id ?? null;
+  useEffect(() => {
+    if (selectedChest === null) return;
+    let live = true;
+    void chestLoot(selectedChest).then((draws) => {
+      if (live) setLoot({ id: selectedChest, draws });
+    });
+    return () => {
+      live = false;
+    };
+  }, [selectedChest, chestLoot]);
+  const chestDraws = selectedChest !== null && loot?.id === selectedChest ? loot.draws : null;
   const visible = useMemo(
     () =>
       places.filter(
@@ -499,6 +517,31 @@ export function WorldScreen() {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <MapView
           key={shown.id}
+          card={
+            selectedQuest ? (
+              <QuestCard
+                place={selectedQuest}
+                language={language}
+                busy={busy}
+                grantRewards={grantRewards}
+                onComplete={() => void completeQuest(selectedQuest.quest.id)}
+                onClose={() => setSelectedKey(null)}
+              />
+            ) : selected && (selectedChest === null || chestDraws !== null) ? (
+              <PlaceCard
+                place={selected}
+                regionName={regions.find((region) => region.id === selected.region)?.name ?? null}
+                language={language}
+                busy={busy}
+                grantRewards={grantRewards}
+                allowUndo={allowUndo}
+                revertible={revertible(selected)}
+                loot={chestDraws}
+                onSet={(done) => apply([selected], done)}
+                onClose={() => setSelectedKey(null)}
+              />
+            ) : null
+          }
           image={MAPS[`../assets/world-map-${shown.id}.webp`]}
           backdrop={BACKDROP[shown.id] ?? '#000000'}
           places={places}
@@ -512,22 +555,6 @@ export function WorldScreen() {
           onSelect={setSelectedKey}
         />
         <div className="scroll-thin flex max-h-[max(420px,calc(100svh-17.5rem))] min-h-0 flex-col gap-3 overflow-y-auto">
-          {selectedQuest && (
-            <QuestCard place={selectedQuest} language={language} onClose={() => setSelectedKey(null)} />
-          )}
-          {selected && (
-            <PlaceCard
-              place={selected}
-              regionName={regions.find((region) => region.id === selected.region)?.name ?? null}
-              language={language}
-              busy={busy}
-              grantRewards={grantRewards}
-              allowUndo={allowUndo}
-              revertible={revertible(selected)}
-              onSet={(done) => apply([selected], done)}
-              onClose={() => setSelectedKey(null)}
-            />
-          )}
           <RegionList
             regions={regions}
             places={places}
@@ -567,6 +594,7 @@ function MapView({
   worldSize,
   player,
   selectedKey,
+  card,
   focus,
   onSelect,
 }: {
@@ -580,6 +608,8 @@ function MapView({
   worldSize: number;
   player: { across: number; down: number } | null;
   selectedKey: string | null;
+  /** The selected marker's card, shown beside it on the map. */
+  card: ReactNode;
   /** A region to zoom to. */
   focus: number | null;
   onSelect: (key: string | null) => void;
@@ -815,6 +845,8 @@ function MapView({
             selected={place.key === selectedKey}
             style={position(place.across, place.down)}
             onSelect={onSelect}
+            card={place.key === selectedKey ? card : null}
+            boundary={viewport.current}
           />
         ))}
         {quests.map((place) => (
@@ -824,6 +856,8 @@ function MapView({
             selected={place.key === selectedKey}
             style={position(place.across, place.down)}
             onSelect={onSelect}
+            card={place.key === selectedKey ? card : null}
+            boundary={viewport.current}
           />
         ))}
         {player && (
@@ -863,11 +897,15 @@ function Marker({
   selected,
   style,
   onSelect,
+  card,
+  boundary,
 }: {
   place: Place;
   selected: boolean;
   style: { left: number; top: number };
-  onSelect: (key: string) => void;
+  onSelect: (key: string | null) => void;
+  card: ReactNode;
+  boundary: HTMLElement | null;
 }) {
   const transform = `translate(-50%, -50%) scale(calc(var(--inv) * ${place.chest && selected ? 1.35 : 1}))`;
   // The mouse selects through the map's press handling; this is for the keyboard.
@@ -877,46 +915,51 @@ function Marker({
       onSelect(place.key);
     }
   };
+  const close = () => onSelect(null);
   if (place.chest) {
     return (
+      <WithCard card={card} boundary={boundary} onClose={close}>
+        <button
+          type="button"
+          data-place={place.key}
+          onKeyDown={onKeyDown}
+          aria-label={`${place.name.en}${place.done ? ', opened' : ''}`}
+          title={`${place.name.en}${place.done ? ' (opened)' : ''}`}
+          className={cn(
+            'absolute size-2.5 rounded-full ring-1 ring-black/45 transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-white',
+            place.unsaved && 'ring-2 ring-brand',
+            selected && 'z-10 ring-2 ring-white',
+          )}
+          style={{
+            ...style,
+            transform,
+            opacity: place.done && !place.unsaved ? 0.35 : 1,
+            backgroundColor: GRADE_DOT[place.chest.grade] ?? GRADE_DOT.normal,
+          }}
+        />
+      </WithCard>
+    );
+  }
+  return (
+    <WithCard card={card} boundary={boundary} onClose={close}>
       <button
         type="button"
         data-place={place.key}
         onKeyDown={onKeyDown}
-        aria-label={`${place.name.en}${place.done ? ', opened' : ''}`}
-        title={`${place.name.en}${place.done ? ' (opened)' : ''}`}
+        aria-label={`${place.name.en}${place.done ? '' : ', not done'}${place.unsaved ? ', not saved' : ''}`}
+        title={place.unsaved ? `${place.name.en} (not saved)` : place.name.en}
         className={cn(
-          'absolute size-2.5 rounded-full ring-1 ring-black/45 transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-white',
-          place.unsaved && 'ring-2 ring-brand',
-          selected && 'z-10 ring-2 ring-white',
+          'absolute z-[1] grid size-11 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-white',
+          selected && 'z-10',
         )}
-        style={{
-          ...style,
-          transform,
-          opacity: place.done && !place.unsaved ? 0.35 : 1,
-          backgroundColor: GRADE_DOT[place.chest.grade] ?? GRADE_DOT.normal,
-        }}
-      />
-    );
-  }
-  return (
-    <button
-      type="button"
-      data-place={place.key}
-      onKeyDown={onKeyDown}
-      aria-label={`${place.name.en}${place.done ? '' : ', not done'}${place.unsaved ? ', not saved' : ''}`}
-      title={place.unsaved ? `${place.name.en} (not saved)` : place.name.en}
-      className={cn(
-        'absolute z-[1] grid size-11 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-white',
-        selected && 'z-10',
-      )}
-      style={{ ...style, transform }}
-    >
-      {/* The game's own marker, about as large on screen as the game draws it (DUWG_MapPointIcon:
+        style={{ ...style, transform }}
+      >
+        {/* The game's own marker, about as large on screen as the game draws it (DUWG_MapPointIcon:
           an 85-unit box at 1.3×), periwinkle once done and grey before, on its solid rim. */}
-      <MarkerArt src={markImage(markOf(place))} selected={selected} pin={place.layer in MARK_LIFT} />
-      {place.unsaved && <UnsavedDot className="absolute top-0.5 right-0.5" />}
-    </button>
+        <MarkerArt src={markImage(markOf(place))} selected={selected} pin={place.layer in MARK_LIFT} />
+        {place.unsaved && <UnsavedDot className="absolute top-0.5 right-0.5" />}
+      </button>
+    </WithCard>
   );
 }
 
@@ -995,45 +1038,110 @@ function QuestMarker({
   selected,
   style,
   onSelect,
+  card,
+  boundary,
 }: {
   place: QuestPlace;
   selected: boolean;
   style: { left: number; top: number };
-  onSelect: (key: string) => void;
+  onSelect: (key: string | null) => void;
+  card: ReactNode;
+  boundary: HTMLElement | null;
 }) {
   const { quest } = place;
   return (
-    <button
-      type="button"
-      data-place={place.key}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          onSelect(place.key);
-        }
-      }}
-      aria-label={`${quest.nameEn}, step ${quest.step.id}`}
-      title={quest.nameEn}
-      className={cn(
-        'absolute z-[5] grid size-11 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-white',
-        selected && 'z-10',
-      )}
-      style={{ ...style, transform: 'translate(-50%, -50%) scale(var(--inv))' }}
-    >
-      <MarkerArt src={questImage(quest.mark)} selected={selected} />
-    </button>
+    <WithCard card={card} boundary={boundary} onClose={() => onSelect(null)}>
+      <button
+        type="button"
+        data-place={place.key}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onSelect(place.key);
+          }
+        }}
+        aria-label={`${quest.nameEn}, step ${quest.step.id}`}
+        title={quest.nameEn}
+        className={cn(
+          'absolute z-[5] grid size-11 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-white',
+          selected && 'z-10',
+        )}
+        style={{ ...style, transform: 'translate(-50%, -50%) scale(var(--inv))' }}
+      >
+        <MarkerArt src={questImage(quest.mark)} selected={selected} />
+      </button>
+    </WithCard>
   );
 }
 
-// ----------------------------------------------------------- side panel
+/**
+ * The selected marker's card, in a popover pointing at it from the side with
+ * the most room inside the map. It follows the marker while the map pans and
+ * zooms, hides when the marker leaves the map, and closes with Escape or its
+ * Close button; a click on the map elsewhere selects or clears as usual.
+ */
+function WithCard({
+  card,
+  boundary,
+  onClose,
+  children,
+}: {
+  card: ReactNode;
+  boundary: HTMLElement | null;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  if (!card) return children;
+  return (
+    <Popover open>
+      <PopoverAnchor asChild>{children}</PopoverAnchor>
+      <PopoverContent
+        side="right"
+        align="center"
+        sideOffset={14}
+        collisionBoundary={boundary ?? undefined}
+        collisionPadding={8}
+        updatePositionStrategy="always"
+        hideWhenDetached
+        onOpenAutoFocus={(event) => event.preventDefault()}
+        onInteractOutside={(event) => event.preventDefault()}
+        onEscapeKeyDown={onClose}
+        // React passes events up through the portal to the map, which would drag or deselect.
+        onPointerDown={(event) => event.stopPropagation()}
+        // A fixed height limit: one that waits for the placement (Radix's available height) arrives a
+        // frame late, and the card would visibly snap shorter after opening.
+        className="scroll-thin max-h-[min(32rem,calc(100svh-19rem))] w-80 gap-0 overflow-y-auto p-0"
+      >
+        {card}
+        <PopoverArrow width={14} height={7} className="-my-px" />
+      </PopoverContent>
+    </Popover>
+  );
+}
 
-/** The quest a mark stands for and the step it points at. */
-function QuestCard({ place, language, onClose }: { place: QuestPlace; language: string; onClose: () => void }) {
+// ----------------------------------------------------------- cards
+
+/** The quest a mark stands for, the step it points at, what it gives, and completing it. */
+function QuestCard({
+  place,
+  language,
+  busy,
+  grantRewards,
+  onComplete,
+  onClose,
+}: {
+  place: QuestPlace;
+  language: string;
+  busy: boolean;
+  grantRewards: boolean;
+  onComplete: () => void;
+  onClose: () => void;
+}) {
   const { quest } = place;
   const category = CATEGORIES.find(([value]) => value === quest.category)?.[1] ?? quest.category;
   const step = quest.step.text ? (language === 'fr' ? quest.step.text.fr : quest.step.text.en) : null;
   return (
-    <section className="rounded-xl border bg-card/40 p-4">
+    <section className="p-4">
       <div className="flex items-start gap-3">
         <img src={questImage(quest.mark)} alt="" className="size-8 shrink-0" />
         <div className="min-w-0 flex-1">
@@ -1053,9 +1161,24 @@ function QuestCard({ place, language, onClose }: { place: QuestPlace; language: 
         </span>
         {step ? <RichText text={step} /> : 'no text in the game data'}
       </p>
-      <p className="mt-2 text-xs text-muted-foreground">
-        The mark is where the game points this step, as its world map does. The Quests screen completes it.
-      </p>
+      <div className="mt-3 space-y-1.5">
+        <p className="text-xs font-medium text-muted-foreground">Rewards</p>
+        <RewardChips quest={quest.rewards} language={language} withCorpsExp />
+      </div>
+      {quest.rewards.blocked ? (
+        <p className="mt-3 text-xs text-warn-strong">The editor cannot complete it: {quest.rewards.blocked}.</p>
+      ) : (
+        <>
+          <Button className="mt-3 w-full" disabled={busy} onClick={onComplete}>
+            Complete the quest
+          </Button>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {grantRewards
+              ? 'Completes it the way the game does: its rewards are handed out and the quests waiting for it start.'
+              : 'Completes it and starts the quests waiting for it. Rewards are off in Settings, so it gives nothing.'}
+          </p>
+        </>
+      )}
     </section>
   );
 }
@@ -1068,6 +1191,7 @@ function PlaceCard({
   grantRewards,
   allowUndo,
   revertible,
+  loot,
   onSet,
   onClose,
 }: {
@@ -1079,6 +1203,8 @@ function PlaceCard({
   allowUndo: boolean;
   /** Its unsaved change is the latest edit, which switching it back undoes exactly. */
   revertible: boolean;
+  /** A chest's loot table, read before its card opens. */
+  loot: LootDraw[] | null;
   onSet: (done: boolean) => void;
   onClose: () => void;
 }) {
@@ -1129,9 +1255,9 @@ function PlaceCard({
     notes.push('It stays this way: undoing progress is off in Settings.');
   }
   return (
-    <section className="shrink-0 overflow-hidden rounded-xl border bg-card/40">
-      {/* The picture the game's card shows for the place (World_MapInfo_*). */}
-      {picture && <img src={picture} alt="" className="aspect-[662/360] w-full object-cover" />}
+    <section>
+      {/* The picture the game's card shows for the place (World_MapInfo_*), its lower part fading out. */}
+      {picture && <img src={picture} alt="" className="h-28 w-full object-cover object-top" />}
       <div className="p-4">
         <div className="flex items-start gap-3">
           {place.chest ? (
@@ -1161,7 +1287,7 @@ function PlaceCard({
           </Button>
         </div>
         {description && (
-          <p className="mt-3 text-sm text-muted-foreground">
+          <p className="mt-3 line-clamp-3 text-sm text-muted-foreground" title={name(description)}>
             <RichText text={name(description)} />
           </p>
         )}
@@ -1175,13 +1301,13 @@ function PlaceCard({
         )}
         {place.chest ? (
           <ChestContents
-            chest={place.chest}
             opened={place.done}
             language={language}
             busy={busy}
             grantRewards={grantRewards}
             allowUndo={allowUndo}
             revertible={revertible}
+            draws={loot}
             onSet={onSet}
           />
         ) : (
@@ -1215,36 +1341,25 @@ const LOOT_OPTIONS = 4;
  * allow undoing progress.
  */
 function ChestContents({
-  chest,
   opened,
   language,
   busy,
   grantRewards,
   allowUndo,
   revertible,
+  draws,
   onSet,
 }: {
-  chest: ChestView;
   opened: boolean;
   language: string;
   busy: boolean;
   grantRewards: boolean;
   allowUndo: boolean;
   revertible: boolean;
+  /** Its loot table, read before the card opens; null while it is read. */
+  draws: LootDraw[] | null;
   onSet: (done: boolean) => void;
 }) {
-  const chestLoot = useApp((state) => state.chestLoot);
-  const [loot, setLoot] = useState<{ id: number; draws: LootDraw[] } | null>(null);
-  useEffect(() => {
-    let live = true;
-    void chestLoot(chest.id).then((draws) => {
-      if (live) setLoot({ id: chest.id, draws });
-    });
-    return () => {
-      live = false;
-    };
-  }, [chest.id, chestLoot]);
-  const draws = loot?.id === chest.id ? loot.draws : null;
   const count = (min: number, max: number) =>
     min === max ? formatNumber(min) : `${formatNumber(min)}–${formatNumber(max)}`;
 

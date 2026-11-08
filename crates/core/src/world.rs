@@ -15,7 +15,7 @@ use rusqlite::{OptionalExtension, params};
 use serde::{Deserialize, Serialize};
 
 use crate::catalog::Item;
-use crate::domain::{Game, RewardGrant};
+use crate::domain::{Game, QuestRewards, RewardGrant};
 use crate::error::{Error, Result};
 use crate::gamedata::Text;
 use crate::growth::Growth;
@@ -293,6 +293,8 @@ pub struct QuestMark {
     /// 4 a bond quest, 6 a hero quest, 10 a promotion; odd ones are the `!`
     /// of a quest still to be taken from its giver.
     pub mark: i64,
+    /// What completing it hands out, and why the editor cannot, if it cannot.
+    pub rewards: QuestRewards,
 }
 
 /// One completion count of a region, in the order the game lists them.
@@ -433,6 +435,8 @@ pub struct QuestEntry {
     pub steps: i64,
     /// Why the editor cannot complete it, for a quest in progress.
     pub blocked: Option<String>,
+    /// What completing it hands out.
+    pub rewards: QuestRewards,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -781,6 +785,7 @@ impl Game<'_> {
                 x,
                 y,
                 mark,
+                rewards: self.quest_view(id, quest, self.completion_blocker(quest)?),
             });
         }
         Ok(out)
@@ -1087,6 +1092,7 @@ impl Game<'_> {
                 state: state.to_string(),
                 step,
                 steps: def.map_or(0, |def| def.steps.len() as i64),
+                rewards: self.quest_view(id, quest, blocked.clone()),
                 blocked,
             });
         }

@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { EmptyPanel } from '@/components/common';
 import { RichText } from '@/components/game-text';
 import { PageHeader, Panel, Toolbar } from '@/components/page';
+import { RewardChips } from '@/components/quests-dialog';
 import { InfoNote, StatTile } from '@/components/summary';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -203,6 +204,8 @@ function QuestRow({
   const step = quest.step?.text ? (language === 'fr' ? quest.step.text.fr : quest.step.text.en) : null;
   const description = quest.description ? (language === 'fr' ? quest.description.fr : quest.description.en) : null;
   const Icon = quest.state === 'done' ? CheckCircle2 : quest.state === 'active' ? CircleDot : Circle;
+  const { gold, advExp, items } = quest.rewards;
+  const hasRewards = gold > 0 || advExp > 0 || items.length > 0;
   return (
     <li className="px-5 py-3">
       <div className="flex items-start gap-3">
@@ -241,6 +244,12 @@ function QuestRow({
               <RichText text={description} />
             </p>
           )}
+          {/* What it gives: always for a quest in progress, which can be completed here, otherwise with the story. */}
+          {hasRewards && (quest.state === 'active' || expanded) && (
+            <div className="mt-2">
+              <RewardChips quest={quest.rewards} language={language} withCorpsExp={quest.state === 'active'} />
+            </div>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-1">
           {quest.state === 'active' && (
@@ -248,12 +257,12 @@ function QuestRow({
               Complete
             </Button>
           )}
-          {description && (
+          {(description || (hasRewards && quest.state !== 'active')) && (
             <Button
               size="icon-xs"
               variant="ghost"
               aria-expanded={expanded}
-              aria-label={expanded ? 'Hide the story' : 'Show the story'}
+              aria-label={expanded ? 'Hide the story and rewards' : 'Show the story and rewards'}
               onClick={onToggle}
             >
               <ChevronDown className={cn('transition-transform', expanded && 'rotate-180')} />

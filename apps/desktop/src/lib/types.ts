@@ -603,6 +603,8 @@ export interface QuestMark {
   y: number;
   /** The NN of the game's Icon_Mark_QuestMark_NN: 2 main story, 4 bond, 6 hero, 10 promotion; odd is a `!`. */
   mark: number;
+  /** What completing it hands out, and why the editor cannot, if it cannot. */
+  rewards: QuestRewards;
 }
 
 export interface WorldView {
@@ -650,6 +652,8 @@ export interface QuestEntry {
   steps: number;
   /** Why the editor cannot complete it, for a quest in progress. */
   blocked: string | null;
+  /** What completing it hands out. */
+  rewards: QuestRewards;
 }
 
 /** The rewards one completed quest lists in the game's quest table. */

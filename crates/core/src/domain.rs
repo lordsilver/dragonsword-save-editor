@@ -476,7 +476,12 @@ impl<'a> Game<'a> {
         Ok(out)
     }
 
-    fn quest_view(&self, id: i64, quest: &growth::Quest, blocked: Option<String>) -> QuestRewards {
+    pub(crate) fn quest_view(
+        &self,
+        id: i64,
+        quest: &growth::Quest,
+        blocked: Option<String>,
+    ) -> QuestRewards {
         QuestRewards {
             quest_id: id,
             category: quest.category.clone(),
@@ -2850,8 +2855,8 @@ impl<'a> Game<'a> {
 
 // -------------------------------------------------------------------- types
 
-/// The rewards of one completed quest.
-#[derive(Debug, Serialize)]
+/// The rewards of one quest.
+#[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct QuestRewards {
     pub quest_id: i64,
@@ -2867,7 +2872,7 @@ pub struct QuestRewards {
     pub blocked: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RewardItem {
     pub item: Item,
